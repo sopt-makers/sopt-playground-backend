@@ -1,3 +1,10 @@
 package org.sopt.makers.internal.dto;
 
-public record MemberSaveRequest (String name, Integer generation) {}
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record MemberSaveRequest (
+        String name,
+        @JsonProperty("auth_user_id")
+        Long authId,
+        Integer generation
+) {}
