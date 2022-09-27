@@ -1,1 +1,17 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/internal?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=KST
+    username: root
+    password: root
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        ddl-auto: none
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
