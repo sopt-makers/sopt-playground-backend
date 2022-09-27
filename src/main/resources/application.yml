@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:3306/internal?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=KST
+    url: jdbc:postgresql://localhost:5432/internal?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=KST
     username: root
     password: root
   jpa:
