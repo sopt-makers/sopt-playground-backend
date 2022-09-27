@@ -19,6 +19,7 @@ public class MemberService {
     public Member createMember (MemberSaveRequest request) {
         return memberRepository.save(Member.builder()
                 .name(request.name())
+                .authUserId(request.authId())
                 .generation(request.generation())
                 .build()
         );
