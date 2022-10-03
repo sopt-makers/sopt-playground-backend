@@ -19,8 +19,8 @@ public record ProjectSaveRequest(
         String logoImage,
         String thumbnailImage,
         String[] images,
-        List<ProjectMemberSaveRequest> member,
-        List<ProjectLinkSaveRequest> link
+        List<ProjectMemberSaveRequest> members,
+        List<ProjectLinkSaveRequest> links
 ) {
     public record ProjectMemberSaveRequest(
             Long memberId,

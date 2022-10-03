@@ -19,8 +19,8 @@ public record ProjectResponse(
         String logoImage,
         String thumbnailImage,
         String[] images,
-        List<ProjectMemberResponse> member,
-        List<ProjectLinkResponse> link
+        List<ProjectMemberResponse> members,
+        List<ProjectLinkResponse> links
 ) {
     public record ProjectMemberResponse(
             Long memberId,

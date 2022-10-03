@@ -15,8 +15,8 @@ public record ProjectUpdateRequest(
         String logoImage,
         String thumbnailImage,
         String[] images,
-        List<ProjectMemberUpdateRequest> member,
-        List<ProjectLinkUpdateRequest> link
+        List<ProjectMemberUpdateRequest> members,
+        List<ProjectLinkUpdateRequest> links
 ) {
     public record ProjectMemberUpdateRequest(
             Long memberId,
