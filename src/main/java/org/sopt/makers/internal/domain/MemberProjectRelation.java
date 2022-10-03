@@ -26,5 +26,5 @@ public class MemberProjectRelation {
     private String description;
 
     @Column(name = "is_team_member")
-    private String isTeamMember;
+    private Boolean isTeamMember;
 }
