@@ -1,4 +1,7 @@
 package org.sopt.makers.internal.repository;
 
-public interface ProjectRepository {
+import org.sopt.makers.internal.domain.Project;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ProjectRepository extends JpaRepository<Project, Long> {
 }
