@@ -69,4 +69,31 @@ public class Project {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    public void updateAll (
+            String name,
+            Integer generation,
+            String category,
+            LocalDate startAt,
+            LocalDate endAt,
+            Boolean isAvailable,
+            String summary,
+            String detail,
+            String logoImage,
+            String thumbnailImage,
+            String[] images
+    ) {
+        this.name = name == null ? this.name : name;
+        this.generation = generation == null ? this.generation : generation;
+        this.category = category == null ? this.category : category;
+        this.startAt = startAt == null ? this.startAt : startAt;
+        this.endAt = endAt == null ? this.endAt : endAt;
+        this.isAvailable = isAvailable == null ? this.isAvailable : isAvailable;
+        this.summary = summary == null ? this.summary : summary;
+        this.detail = detail == null ? this.detail : detail;
+        this.logoImage = logoImage == null ? this.logoImage : logoImage;
+        this.thumbnailImage = thumbnailImage == null ? this.thumbnailImage : thumbnailImage;
+        this.images = images == null ? this.images : images;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

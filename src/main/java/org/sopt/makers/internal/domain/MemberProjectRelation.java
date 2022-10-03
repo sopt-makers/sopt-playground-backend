@@ -27,4 +27,14 @@ public class MemberProjectRelation {
 
     @Column(name = "is_team_member")
     private Boolean isTeamMember;
+
+    public MemberProjectRelation updateAll (
+            String role,
+            String description,
+            Boolean isTeamMember
+    ) {
+        this.role = role == null ? this.role : role;
+        this.description = description == null ? this.description : description;
+        this.isTeamMember = isTeamMember == null ? this.isTeamMember : isTeamMember;
+    }
 }
