@@ -119,9 +119,9 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public ProjectDao fetchById (Long id) {
+    public List<ProjectDao> fetchById (Long id) {
         val project = projectQueryRepository.findById(id);
-        if (project == null) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
+        if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
         return project;
     }
 }

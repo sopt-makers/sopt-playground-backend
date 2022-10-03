@@ -43,8 +43,8 @@ public class ProjectQueryRepository {
         return getProjectQuery().fetch();
     }
 
-    public ProjectDao findById(Long id) {
+    public List<ProjectDao> findById(Long id) {
         val project = QProject.project;
-        return getProjectQuery().where(project.id.eq(id)).fetchOne();
+        return getProjectQuery().where(project.id.eq(id)).fetch();
     }
 }
