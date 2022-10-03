@@ -32,7 +32,11 @@ dependencies {
 	implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
 	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
 
+	// Postgresql Array type
 	implementation('com.vladmihalcea:hibernate-types-52:2.19.2')
+
+	// S3
+	implementation('software.amazon.awssdk:s3:2.17.285')
 
 	// lombok
 	compileOnly 'org.projectlombok:lombok'
