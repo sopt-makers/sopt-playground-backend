@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record ProjectResponse(
@@ -19,6 +20,8 @@ public record ProjectResponse(
         String logoImage,
         String thumbnailImage,
         String[] images,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         List<ProjectMemberResponse> members,
         List<ProjectLinkResponse> links
 ) {
