@@ -15,3 +15,12 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    credentials:
+      access-key: test
+      secret-key: test
+    bucket:
+      project: internal/test
