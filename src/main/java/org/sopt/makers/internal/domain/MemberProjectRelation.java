@@ -36,5 +36,6 @@ public class MemberProjectRelation {
         this.role = role == null ? this.role : role;
         this.description = description == null ? this.description : description;
         this.isTeamMember = isTeamMember == null ? this.isTeamMember : isTeamMember;
+        return this;
     }
 }
