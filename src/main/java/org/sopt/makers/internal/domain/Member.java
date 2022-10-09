@@ -22,6 +22,16 @@ public class Member {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "email")
+    private String email;
+
     @Column(name = "generation")
     private Integer generation;
+
+    @Column(name = "is_joined")
+    private Boolean isJoined;
+
+    public void makeMemberJoin() {
+        this.isJoined = true;
+    }
 }
