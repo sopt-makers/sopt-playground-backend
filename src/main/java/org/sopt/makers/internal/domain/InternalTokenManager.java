@@ -1,13 +1,12 @@
 package org.sopt.makers.internal.domain;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.exception.WrongTokenException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -19,16 +18,14 @@ import java.util.Date;
 @RequiredArgsConstructor
 @Service
 public class InternalTokenManager {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${SECRET_KEY}")
-    private String SECRET_KEY;
+    private final AuthConfig authConfig;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     public String createAuthToken(Long userId) {
         val signatureAlgorithm= SignatureAlgorithm.HS256;
-        val secretKeyBytes = DatatypeConverter.parseBase64Binary(SECRET_KEY);
+        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getSecretKey());
         val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
         val exp = new Date().toInstant().atZone(KST)
                 .toLocalDateTime().plusDays(10).atZone(KST).toInstant();
@@ -51,7 +48,7 @@ public class InternalTokenManager {
 
     public String createRegisterToken(String email) {
         val signatureAlgorithm= SignatureAlgorithm.HS256;
-        val secretKeyBytes = DatatypeConverter.parseBase64Binary(SECRET_KEY);
+        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getSecretKey());
         val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
         val exp = new Date().toInstant().atZone(KST)
                 .toLocalDateTime().plusHours(6).atZone(KST).toInstant();
@@ -74,7 +71,7 @@ public class InternalTokenManager {
 
     private Claims getClaimsFromToken (String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(DatatypeConverter.parseBase64Binary(SECRET_KEY))
+                .setSigningKey(DatatypeConverter.parseBase64Binary(authConfig.getSecretKey()))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

@@ -23,6 +23,8 @@ spring:
           starttls:
             enable: true
 
+jwt:
+  secret: test
 
 springdoc:
   swagger-ui:
@@ -38,11 +40,11 @@ cloud:
       project: internal/test
 
 oauth:
-  registerPage:
+  registerPage: testUrl
   fb:
     redirect:
-      auth:
-      register:
+      auth: testUrl
+      register: testUrl
     client:
-      appId:
-      secret:
+      appId: test
+      secret: test

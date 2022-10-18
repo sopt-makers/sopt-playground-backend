@@ -1,7 +1,10 @@
 package org.sopt.makers.internal.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.config.AuthConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -10,23 +13,25 @@ import javax.mail.MessagingException;
 import java.nio.charset.StandardCharsets;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class EmailSender {
 
+    private final AuthConfig authConfig;
     private final JavaMailSender mailSender;
 
     public void sendEmail(String to, String subject, String html) throws MessagingException {
         val message = mailSender.createMimeMessage();
         val helper = new MimeMessageHelper(message, "utf-8");
 
-        helper.setFrom("2kwon2lee@gmail.com");
+        helper.setFrom(authConfig.getFromEmail());
         helper.setTo(to);
         helper.setSubject(subject);
         message.setText(html, StandardCharsets.UTF_8.name());
         mailSender.send(message);
     }
 
-    public String createRegisterEmailHtml (String token, String registerPageUriTemplate) {
+    public String createRegisterEmailHtml (String token) {
+        val registerPageUriTemplate = authConfig.getRegisterPage();
         val registerPageUri = registerPageUriTemplate.replace("{{token}}", token);
         val buttonStyle = """
         background-color: ${backgroundColor};

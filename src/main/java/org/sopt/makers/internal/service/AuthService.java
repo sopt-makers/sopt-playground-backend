@@ -23,10 +23,7 @@ public class AuthService {
     private final FacebookTokenManager fbTokenManager;
     private final MemberRepository memberRepository;
     private final EmailSender emailSender;
-
-    @Value("${oauth.registerPage}")
-    private final String registerPageUri;
-
+    
     public String authByFb (String code) {
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");
         if (fbAccessToken == null) {
@@ -66,7 +63,7 @@ public class AuthService {
         if (member.getIsJoined()) return "alreadyTaken";
 
         val token = tokenManager.createRegisterToken(email);
-        val html = emailSender.createRegisterEmailHtml(token, registerPageUri);
+        val html = emailSender.createRegisterEmailHtml(token);
         try {
             emailSender.sendEmail(email, "SOPT 회원 인증", html);
             return "success";

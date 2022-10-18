@@ -20,6 +20,10 @@ spring:
           auth: true
           starttls:
             enable: true
+
+jwt:
+  secret: test
+
 cloud:
   aws:
     region: ap-northeast-2
