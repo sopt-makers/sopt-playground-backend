@@ -11,6 +11,20 @@ spring:
         format_sql: true
         use_sql_comments: true
         ddl-auto: none
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: <내 구글 계정>
+    password: <내 구글 계정 패스워드>
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  secret: test
 
 springdoc:
   swagger-ui:
@@ -24,3 +38,13 @@ cloud:
       secret-key: test
     bucket:
       project: internal/test
+
+oauth:
+  registerPage: testUrl
+  fb:
+    redirect:
+      auth: testUrl
+      register: testUrl
+    client:
+      appId: test
+      secret: test

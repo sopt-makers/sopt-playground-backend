@@ -3,6 +3,8 @@ package org.sopt.makers.internal.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.FacebookAuthFailureException;
+import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,6 +47,23 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
+
+    @ExceptionHandler(ForbiddenClientException.class)
+    public ResponseEntity<String> entityNotfoundException (ForbiddenClientException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(FacebookAuthFailureException.class)
+    public ResponseEntity<String> entityNotfoundException (FacebookAuthFailureException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ex.getMessage());
+    }
+
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> entityNotfoundException (RuntimeException ex) {
