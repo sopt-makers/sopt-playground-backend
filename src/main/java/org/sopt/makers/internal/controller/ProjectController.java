@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.dto.ProjectDao;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
+@SecurityRequirement(name = "Authorization")
+@Tag(name = "Project 관련 API", description = "Project와 관련 API들")
 public class ProjectController {
     private final ProjectService projectService;
 

@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.dto.MemberResponse;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
+@SecurityRequirement(name = "Authorization")
+@Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
     private final MemberService memberService;
     private final MemberMapper memberMapper;
