@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.exception.WrongTokenException;
-import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.service.MemberService;
+import org.sopt.makers.internal.service.CustomMemberDetailsService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,7 @@ import java.util.Date;
 public class InternalTokenManager {
 
     private final AuthConfig authConfig;
-    private final MemberService memberService;
+    private final CustomMemberDetailsService memberDetailsService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -63,7 +62,7 @@ public class InternalTokenManager {
 
     public Authentication getAuthentication(String token) {
         val userId = getUserIdFromAuthToken(token);
-        val userDetails = memberService.getMemberDetailsByUserId(userId);
+        val userDetails = memberDetailsService.loadUserByUsername(Long.toString(userId));
         return new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities());
     }
 
