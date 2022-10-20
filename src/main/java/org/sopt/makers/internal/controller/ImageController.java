@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +20,8 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/presigned-url")
+@SecurityRequirement(name = "Authorization")
+@Tag(name = "Image 관련 API", description = "Image upload와 관련있는 API들")
 public class ImageController {
 
     @Value("${cloud.aws.bucket.project}")
