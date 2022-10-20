@@ -7,6 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.exception.WrongTokenException;
+import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.service.MemberService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -20,6 +24,7 @@ import java.util.Date;
 public class InternalTokenManager {
 
     private final AuthConfig authConfig;
+    private final MemberService memberService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -36,7 +41,17 @@ public class InternalTokenManager {
                 .compact();
     }
 
-    public Long verifyAuthToken (String token) {
+    public boolean verifyAuthToken (String token) {
+        val claims = getClaimsFromToken(token);
+
+        val now = LocalDateTime.now(KST);
+        val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
+        if (exp.isBefore(now)) return false;
+
+        return true;
+    }
+
+    private Long getUserIdFromAuthToken (String token) {
         val claims = getClaimsFromToken(token);
 
         val now = LocalDateTime.now(KST);
@@ -44,6 +59,12 @@ public class InternalTokenManager {
         if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
 
         return Long.getLong(claims.getSubject());
+    }
+
+    public Authentication getAuthentication(String token) {
+        val userId = getUserIdFromAuthToken(token);
+        val userDetails = memberService.getMemberDetailsByUserId(userId);
+        return new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities());
     }
 
     public String createRegisterToken(String email) {
