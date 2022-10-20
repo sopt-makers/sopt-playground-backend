@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.dto.MemberSaveRequest;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -27,6 +29,11 @@ public class MemberService {
 
     public Member getMemberByName (String name) {
         return memberRepository.findByName(name).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+    }
+
+    public InternalMemberDetails getMemberDetailsByUserId(Long id) {
+        val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        return new InternalMemberDetails(member);
     }
 
 }
