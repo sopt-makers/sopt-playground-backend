@@ -33,6 +33,9 @@ jobs:
       - name: 'Check pwd'
         run: pwd
 
+      - name: 'Check directories'
+        run: ls
+
       - name: 'Get application.yml from AWS S3'
         run: |
           aws s3 cp \
