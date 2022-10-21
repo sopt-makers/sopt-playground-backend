@@ -2,7 +2,7 @@ name: Deploy to Test Instance
 
 on:
   push:
-    branches: [ develop, feature/deploy-to-test-instance ]
+    branches: [ develop ]
 
 jobs:
   build:
