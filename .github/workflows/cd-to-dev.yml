@@ -65,7 +65,7 @@ jobs:
         run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://sopt-makers-internal/dev/deploy/jar/$GITHUB_SHA.zip
 
       - name: Code Deploy
-        run: aws deploy wait deployment-successful create-deployment --application-name internal
+        run: aws deploy create-deployment --application-name internal
           --deployment-config-name CodeDeployDefault.OneAtATime
           --deployment-group-name dev
           --s3-location bucket=sopt-makers-internal,bundleType=zip,key=dev/deploy/jar/$GITHUB_SHA.zip
