@@ -62,4 +62,4 @@ jobs:
         run: aws deploy create-deployment --application-name internal
           --deployment-config-name CodeDeployDefault.OneAtATime
           --deployment-group-name dev
-          --s3-location bucket=sopt-makers-internal,bundleType=zip,key=/dev/deploy/jar/$GITHUB_SHA.zip
+          --s3-location bucket=sopt-makers-internal,bundleType=zip,key=dev/deploy/jar/$GITHUB_SHA.zip
