@@ -2,7 +2,7 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.Link;
+import org.sopt.makers.internal.domain.ProjectLink;
 import org.sopt.makers.internal.domain.MemberProjectRelation;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.ProjectDao;
@@ -55,7 +55,7 @@ public class ProjectService {
                 .isTeamMember(memberRequest.isTeamMember())
                 .build()).collect(Collectors.toList()));
 
-        linkRepository.saveAll(request.links().stream().map(linkRequest -> Link.builder()
+        linkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
                 .projectId(project.getId())
                 .title(linkRequest.linkTitle())
                 .url(linkRequest.linkUrl())
@@ -105,7 +105,7 @@ public class ProjectService {
             }
         }).collect(Collectors.toList()));
 
-        linkRepository.saveAll(request.links().stream().map(linkRequest -> Link.builder()
+        linkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
                 .projectId(project.getId())
                 .title(linkRequest.linkTitle())
                 .url(linkRequest.linkUrl())
