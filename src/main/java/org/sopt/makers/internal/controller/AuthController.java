@@ -2,7 +2,7 @@ package org.sopt.makers.internal.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.dto.*;
+import org.sopt.makers.internal.dto.auth.*;
 import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.sopt.makers.internal.service.AuthService;
 import org.springframework.http.HttpStatus;

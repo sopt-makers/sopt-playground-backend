@@ -8,7 +8,7 @@ import org.sopt.makers.internal.domain.QLink;
 import org.sopt.makers.internal.domain.QMember;
 import org.sopt.makers.internal.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.domain.QProject;
-import org.sopt.makers.internal.dto.ProjectDao;
+import org.sopt.makers.internal.dto.project.ProjectDao;
 import org.sopt.makers.internal.dto.QProjectDao;
 import org.springframework.stereotype.Repository;
 

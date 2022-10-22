@@ -2,7 +2,7 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.dto.MemberSaveRequest;
+import org.sopt.makers.internal.dto.member.MemberSaveRequest;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;

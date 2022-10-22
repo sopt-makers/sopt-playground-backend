@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto;
+package org.sopt.makers.internal.dto.member;
 
 public record MemberResponse(
     Long id,

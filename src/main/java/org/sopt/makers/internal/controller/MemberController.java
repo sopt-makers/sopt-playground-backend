@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.controller;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -8,8 +7,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.MemberResponse;
-import org.sopt.makers.internal.dto.MemberSaveRequest;
+import org.sopt.makers.internal.dto.member.MemberResponse;
+import org.sopt.makers.internal.dto.member.MemberSaveRequest;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;

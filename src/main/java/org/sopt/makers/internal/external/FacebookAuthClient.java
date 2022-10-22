@@ -1,9 +1,8 @@
 package org.sopt.makers.internal.external;
 
-import org.sopt.makers.internal.dto.FacebookAccessTokenResponse;
-import org.sopt.makers.internal.dto.FacebookUserInfoResponse;
+import org.sopt.makers.internal.dto.auth.FacebookAccessTokenResponse;
+import org.sopt.makers.internal.dto.auth.FacebookUserInfoResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
