@@ -30,18 +30,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
-      - name: 'Check pwd'
-        run: pwd
-
-      - name: 'Check directories'
-        run: ls
-
       - name: 'Get application.yml from AWS S3'
         run: |
           aws s3 cp \
             --region ap-northeast-2 \
             s3://sopt-makers-internal/dev/deploy/application-dev.yml src/main/resources/application.yml
-
+        
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
         shell: bash
