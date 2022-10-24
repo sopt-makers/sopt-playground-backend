@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 @OpenAPIDefinition(
         servers = {
-                @Server(url = "http://localhost:8080"),
-                @Server(url = "http://playground.dev.sopt.org:8080")
+                @Server(url = "http://playground.dev.sopt.org:8080", description = "개발 환경"),
+                @Server(url = "http://localhost:8080", description = "로컬 환경")
         },
         info = @Info(
                 title = "SOPT Makers Internal team API",
