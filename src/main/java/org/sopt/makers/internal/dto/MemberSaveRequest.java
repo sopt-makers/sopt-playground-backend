@@ -5,6 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record MemberSaveRequest (
         String name,
         @JsonProperty("auth_user_id")
-        Long authId,
+        String authId,
         Integer generation
 ) {}

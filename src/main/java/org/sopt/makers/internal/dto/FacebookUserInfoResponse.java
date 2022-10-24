@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record FacebookUserInfoResponse (
         @JsonProperty("id")
-        Long userId,
+        String userId,
 
         @JsonProperty("name")
-        Long userName
+        String userName
 ) {}
