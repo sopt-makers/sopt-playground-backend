@@ -2,13 +2,11 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.EmailSender;
-import org.sopt.makers.internal.domain.FacebookTokenManager;
-import org.sopt.makers.internal.domain.InternalTokenManager;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.exception.FacebookAuthFailureException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +20,7 @@ public class AuthService {
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
     private final MemberRepository memberRepository;
+    private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
     
     public String authByFb (String code) {
@@ -50,16 +49,16 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
-    public Optional<Member> findMemberByRegisterToken (String registerToken) {
+    public Optional<SoptMemberHistory> findMemberByRegisterToken (String registerToken) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
-        return memberRepository.findByEmail(registerTokenInfo);
+        return soptMemberHistoryRepository.findByEmail(registerTokenInfo);
     }
 
     public String sendRegisterLinkByEmail(String email) {
-        val optionalMember = memberRepository.findByEmail(email);
-        if (optionalMember.isEmpty()) return "invalidEmail";
+        val optionalMemberHistory = soptMemberHistoryRepository.findByEmail(email);
+        if (optionalMemberHistory.isEmpty()) return "invalidEmail";
 
-        val member = optionalMember.get();
+        val member = optionalMemberHistory.get();
         if (member.getIsJoined()) return "alreadyTaken";
 
         val token = tokenManager.createRegisterToken(email);
