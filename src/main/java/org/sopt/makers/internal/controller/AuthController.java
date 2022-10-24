@@ -30,9 +30,9 @@ public class AuthController {
 
     @PostMapping("/register/checkToken")
     public ResponseEntity<RegisterTokenInfoResponse> checkRegisterToken (@RequestBody RegisterTokenInfoRequest request) {
-        val member = authService.findMemberByRegisterToken(request.registerToken())
-                .orElseThrow(() -> new ForbiddenClientException("멤버를 찾을 수 없습니다."));
-        return ResponseEntity.status(200).body(new RegisterTokenInfoResponse(member.getName(), member.getGeneration()));
+        val memberHistory = authService.findMemberByRegisterToken(request.registerToken())
+                .orElseThrow(() -> new ForbiddenClientException("SOPT Member History를 찾을 수 없습니다."));
+        return ResponseEntity.status(200).body(new RegisterTokenInfoResponse(memberHistory.getName(), memberHistory.getGeneration()));
     }
 
     @PostMapping("/register/sendEmail")
