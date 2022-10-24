@@ -50,19 +50,19 @@ public class InternalTokenManager {
         return true;
     }
 
-    private Long getUserIdFromAuthToken (String token) {
+    private String getUserIdFromAuthToken (String token) {
         val claims = getClaimsFromToken(token);
 
         val now = LocalDateTime.now(KST);
         val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
         if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
 
-        return Long.getLong(claims.getSubject());
+        return claims.getSubject();
     }
 
     public Authentication getAuthentication(String token) {
         val userId = getUserIdFromAuthToken(token);
-        val userDetails = memberDetailsService.loadUserByUsername(Long.toString(userId));
+        val userDetails = memberDetailsService.loadUserByUsername(userId);
         return new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities());
     }
 

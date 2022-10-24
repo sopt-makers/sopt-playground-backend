@@ -14,7 +14,7 @@ public class InternalMemberDetails implements UserDetails {
 
     public InternalMemberDetails(Member member) {
         this.username = member.getName();
-        this.authUserId = Long.toString(member.getAuthUserId());
+        this.authUserId = member.getAuthUserId();
         this.authorities = List.of(new SimpleGrantedAuthority("Member"));
     }
 

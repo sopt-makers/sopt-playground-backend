@@ -17,7 +17,7 @@ public class Member {
     private Long id;
 
     @Column(name = "auth_user_id")
-    private Long authUserId;
+    private String authUserId;
 
     @Column(name = "name")
     private String name;
