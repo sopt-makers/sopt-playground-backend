@@ -10,6 +10,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import javax.mail.internet.MimeUtility;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -19,14 +21,14 @@ public class EmailSender {
     private final AuthConfig authConfig;
     private final JavaMailSender mailSender;
 
-    public void sendEmail(String to, String subject, String html) throws MessagingException {
+    public void sendEmail(String to, String subject, String html) throws MessagingException, UnsupportedEncodingException {
         val message = mailSender.createMimeMessage();
         val helper = new MimeMessageHelper(message, "utf-8");
 
         helper.setFrom(authConfig.getFromEmail());
         helper.setTo(to);
-        helper.setSubject(subject);
-        message.setText(html, StandardCharsets.UTF_8.name());
+        helper.setSubject(MimeUtility.encodeText(subject, "UTF-8", "B"));
+        helper.setText(html, true);
         mailSender.send(message);
     }
 

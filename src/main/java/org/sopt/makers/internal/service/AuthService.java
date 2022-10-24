@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.persistence.EntityNotFoundException;
+import java.io.UnsupportedEncodingException;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -76,7 +77,7 @@ public class AuthService {
         try {
             emailSender.sendEmail(email, "SOPT 회원 인증", html);
             return "success";
-        } catch (MessagingException exception) {
+        } catch (MessagingException | UnsupportedEncodingException exception) {
             exception.printStackTrace();
             return "cannotSendEmail";
         }
