@@ -41,10 +41,20 @@ public class AuthService {
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
         if (fbAccessToken == null) throw new FacebookAuthFailureException("facebook 인증에 실패했습니다.");
 
-        val member = memberRepository.findByEmail(registerTokenInfo)
-                .orElseThrow(() -> new EntityNotFoundException("Member email" + registerTokenInfo + " not found"));
-        if (member.getIsJoined()) throw new FacebookAuthFailureException("이미 가입된 사용자입니다.");
-        member.makeMemberJoin();
+        val memberHistory = soptMemberHistoryRepository.findByEmail(registerTokenInfo)
+                .orElseThrow(() -> new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found"));
+        if (memberHistory.getIsJoined()) throw new FacebookAuthFailureException("이미 가입된 사용자입니다.");
+
+        val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(fbUserInfo.userId())
+                        .name(memberHistory.getName())
+                        .email(memberHistory.getEmail())
+                        .generation(memberHistory.getGeneration())
+                        .build()
+        );
+        memberHistory.makeMemberJoin();
 
         return tokenManager.createAuthToken(member.getId());
     }

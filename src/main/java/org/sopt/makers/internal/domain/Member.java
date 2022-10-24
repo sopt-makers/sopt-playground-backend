@@ -27,11 +27,4 @@ public class Member {
 
     @Column(name = "generation")
     private Integer generation;
-
-    @Column(name = "is_joined")
-    private Boolean isJoined;
-
-    public void makeMemberJoin() {
-        this.isJoined = true;
-    }
 }
