@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +36,9 @@ public class MemberController {
 
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/me")
-    public ResponseEntity<MemberResponse> getMyInformation (@AuthenticationPrincipal InternalMemberDetails memberDetails) {
+    public ResponseEntity<MemberResponse> getMyInformation (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
         val member = memberService.getMemberById(memberDetails.getId());
         val response = memberMapper.toResponse(member);
         return ResponseEntity.status(HttpStatus.OK).body(response);
