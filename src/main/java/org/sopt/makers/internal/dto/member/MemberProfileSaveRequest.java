@@ -1,11 +1,13 @@
 package org.sopt.makers.internal.dto.member;
 
+import org.sopt.makers.internal.domain.MemberSoptActivity;
+
 import java.time.LocalDate;
 import java.util.List;
 
 public record MemberProfileSaveRequest(
-        String profileImage,
 		String name,
+		String profileImage,
 		LocalDate birthday,
 		String phone,
 		String email,
@@ -15,21 +17,21 @@ public record MemberProfileSaveRequest(
 		String introduction,
 		String skill,
 		List<MemberLinkSaveRequest> links,
-		List<MemberProjectSaveRequest> projects,
+		List<MemberSoptActivitySaveRequest> activities,
 		Boolean openToWork,
 		Boolean openToSideProject,
 		Boolean allowOfficial
 ) {
 
 	public record MemberLinkSaveRequest(
-			Long linkId,
-			String linkTitle,
-			String linkUrl
+			String title,
+			String url
 	){}
 
-	public record MemberProjectSaveRequest(
+	public record MemberSoptActivitySaveRequest(
 			Integer generation,
-			String type,
+			String part,
+			String category,
 			String teamName
 	){}
 }
