@@ -58,7 +58,7 @@ jobs:
         run: cat ./aws/start.sh
 
       - name: Move jar file
-        run: sudo find-L ./build/libs/ -name "*SNAPSHOT.jar" -exec cp {} ./INTERNAL.jar \;
+        run: sudo find -L ./build/libs/ -name "*SNAPSHOT.jar" -exec cp {} ./INTERNAL.jar \;
 
       - name: Make zip file
         run: zip -r ./aws/$GITHUB_SHA.zip ./INTERNAL.jar
