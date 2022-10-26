@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /INTERNAL.zip
-    destination: /home/ec2-user/deploy
+    destination: /home/ec2-user/deploy/
 hooks:
   ApplicationStop:
     - location: stop.sh
