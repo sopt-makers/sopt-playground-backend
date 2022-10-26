@@ -1,6 +1,19 @@
 name: Deploy to Test Instance
 
 on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+  repository_dispatch:
+    types: [deploy-to-test-event]
   push:
     branches: [ develop ]
 
