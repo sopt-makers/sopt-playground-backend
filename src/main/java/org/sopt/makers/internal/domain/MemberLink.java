@@ -15,7 +15,7 @@ public class MemberLink {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "member_id")
+    @Column(name = "user_id")
     private Long memberId;
 
     @Column(name = "title")
