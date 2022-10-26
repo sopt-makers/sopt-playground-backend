@@ -9,10 +9,12 @@ import java.util.List;
 
 public class InternalMemberDetails implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
+    private final Long id;
     private final String username;
     private final String authUserId;
 
     public InternalMemberDetails(Member member) {
+        this.id = member.getId();
         this.username = member.getName();
         this.authUserId = member.getAuthUserId();
         this.authorities = List.of(new SimpleGrantedAuthority("Member"));
@@ -22,6 +24,8 @@ public class InternalMemberDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
+
+    public Long getId() { return id; }
 
     @Override
     public String getPassword() {
