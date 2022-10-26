@@ -51,6 +51,12 @@ jobs:
           format: YYYY-MM-DDTHH-mm-ss
           utcOffset: "+09:00"
 
+      - name: Spring Boot env setting
+        run: sudo sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=dev/g' ./aws/start.sh
+
+      - name: Check env profile
+        run: cat ./aws/start.sh
+
       - name: Make zip file
         run: zip -qq -r ./$GITHUB_SHA.zip .
         shell: bash
