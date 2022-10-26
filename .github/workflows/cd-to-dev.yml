@@ -61,11 +61,11 @@ jobs:
         run: sudo find -L ./build/libs/ -name "*SNAPSHOT.jar" -exec cp {} ./aws/INTERNAL.jar \;
 
       - name: Make zip file
-        run: zip -j ./aws/INTERNAL.zip ./aws/INTERNAL.jar && rm -f ./aws/INTERNAL.jar && zip -j ./$GITHUB_SHA.zip ./aws/*
+        run: zip -j ./aws/INTERNAL.zip ./aws/INTERNAL.jar && rm -f ./aws/INTERNAL.jar && zip -j ./$GITHUB_SHA-INTERNAL.zip ./aws/*
         shell: bash
 
       - name: Upload to S3
-        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://sopt-makers-internal/dev/deploy/jar/$GITHUB_SHA.zip
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA-INTERNAL.zip s3://sopt-makers-internal/dev/deploy/jar/$GITHUB_SHA-INTERNAL.zip
 
       - name: Code Deploy
         run: aws deploy create-deployment --application-name internal
