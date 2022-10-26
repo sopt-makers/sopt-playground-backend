@@ -65,7 +65,7 @@ jobs:
         shell: bash
 
       - name: Upload to S3
-        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://sopt-makers-internal/dev/deploy/jar/$GITHUB_SHA.zip
+        run: aws s3 cp --region ap-northeast-2 ./aws/$GITHUB_SHA.zip s3://sopt-makers-internal/dev/deploy/jar/$GITHUB_SHA.zip
 
       - name: Code Deploy
         run: aws deploy create-deployment --application-name internal
