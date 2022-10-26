@@ -61,7 +61,7 @@ jobs:
         run: sudo find -L ./build/libs/ -name "*SNAPSHOT.jar" -exec cp {} ./aws/INTERNAL.jar \;
 
       - name: Make zip file
-        run: zip -j ./$GITHUB_SHA.zip ./aws/*
+        run: zip -r ./INTERNAL.zip ./aws/INTERNAL.jar && zip -j ./$GITHUB_SHA.zip ./aws/*
         shell: bash
 
       - name: Upload to S3
