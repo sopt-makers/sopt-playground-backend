@@ -73,7 +73,7 @@ public class MemberController {
     ) {
         val member = memberService.updateMemberProfile(memberDetails.getId(), request);
         val response = memberMapper.toProfileResponse(member);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "멤버 프로필 조회 API")
