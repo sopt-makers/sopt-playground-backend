@@ -3,6 +3,13 @@ os: linux
 files:
   - source: /INTERNAL.zip
     destination: /home/ec2-user/deploy/
+permissions:
+  - object: /home/ec-user/deploy
+    owner: root
+    mode: 777
+    type:
+      - directory
+      - files
 hooks:
   ApplicationStop:
     - location: stop.sh
