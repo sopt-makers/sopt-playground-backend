@@ -5,10 +5,6 @@ files:
   - source: /
     destination: /home/ec2-user/app # 인스턴스에서 파일이 저장될 위치
 hooks:
-  ApplicationStop:
-    - location: stop.sh
-      timeout: 60
-      runas: root
   AfterInstall:
     - location: aws/start.sh
       timeout: 60
