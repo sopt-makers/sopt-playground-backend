@@ -1,7 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: /
+  - source: /INTERNAL.zip
     destination: /home/ec2-user/deploy
 hooks:
   ApplicationStop:
@@ -12,7 +12,6 @@ hooks:
     - location: before.sh
       timeout: 180
       runas: root
-
   AfterInstall:
     - location: after.sh
       timeout: 180
