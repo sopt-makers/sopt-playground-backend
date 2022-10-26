@@ -1,16 +1,20 @@
 package org.sopt.makers.internal.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.MemberResponse;
 import org.sopt.makers.internal.dto.MemberSaveRequest;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +30,16 @@ public class MemberController {
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
         val member = memberService.getMemberById(id);
+        val response = memberMapper.toResponse(member);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "유저 id로 조회 API")
+    @GetMapping("/me")
+    public ResponseEntity<MemberResponse> getMyInformation (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val member = memberService.getMemberById(memberDetails.getId());
         val response = memberMapper.toResponse(member);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
