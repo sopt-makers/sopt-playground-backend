@@ -98,7 +98,7 @@ public class MemberController {
     }
 
     @Operation(summary = "멤버 프로필 활동 삭제 API")
-    @GetMapping("/profile/activity/{activityId}")
+    @DeleteMapping("/profile/activity/{activityId}")
     public ResponseEntity<CommonResponse> deleteUserProfileActivity (
             @PathVariable(name = "activityId") Long activityId,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
