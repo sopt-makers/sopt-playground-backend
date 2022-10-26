@@ -51,9 +51,6 @@ jobs:
           format: YYYY-MM-DDTHH-mm-ss
           utcOffset: "+09:00"
 
-      - name: Copy AWS script
-        run: cp -r aws ./
-
       - name: Spring Boot env setting
         run: sudo sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=dev/g' ./aws/start.sh
 
