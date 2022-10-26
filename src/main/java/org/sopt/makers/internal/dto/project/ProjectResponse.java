@@ -1,9 +1,10 @@
-package org.sopt.makers.internal.dto;
+package org.sopt.makers.internal.dto.project;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
-public record ProjectSaveRequest(
+public record ProjectResponse(
         Long id,
         String name,
         Long writerId,
@@ -19,17 +20,19 @@ public record ProjectSaveRequest(
         String logoImage,
         String thumbnailImage,
         String[] images,
-        List<ProjectMemberSaveRequest> members,
-        List<ProjectLinkSaveRequest> links
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        List<ProjectMemberResponse> members,
+        List<ProjectLinkResponse> links
 ) {
-    public record ProjectMemberSaveRequest(
+    public record ProjectMemberResponse(
             Long memberId,
             String memberRole,
             String memberDesc,
             Boolean isTeamMember
     ){}
 
-    public record ProjectLinkSaveRequest(
+    public record ProjectLinkResponse(
             Long linkId,
             String linkTitle,
             String linkUrl

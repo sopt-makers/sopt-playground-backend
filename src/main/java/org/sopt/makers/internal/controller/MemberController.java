@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.controller;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -8,8 +7,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.MemberResponse;
-import org.sopt.makers.internal.dto.MemberSaveRequest;
+import org.sopt.makers.internal.dto.CommonResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileSaveRequest;
+import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -52,12 +54,57 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "유저 생성 API")
-    @PostMapping("")
-    public ResponseEntity<MemberResponse> getMemberByName (@RequestBody MemberSaveRequest request) {
-        val member = memberService.createMember(request);
-        val response = memberMapper.toResponse(member);
+    @Operation(summary = "유저 프로필 생성 API")
+    @PostMapping("/profile")
+    public ResponseEntity<MemberProfileResponse> createUserProfile (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestBody MemberProfileSaveRequest request
+    ) {
+        val member = memberService.saveMemberProfile(memberDetails.getId(), request);
+        val response = memberMapper.toProfileResponse(member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "멤버 프로필 수정 API")
+    @PutMapping("/profile")
+    public ResponseEntity<MemberProfileResponse> updateUserProfile (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestBody MemberProfileUpdateRequest request
+    ) {
+        val member = memberService.updateMemberProfile(memberDetails.getId(), request);
+        val response = memberMapper.toProfileResponse(member);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 프로필 조회 API")
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<MemberProfileResponse> getUserProfile (
+            @PathVariable Long id
+    ) {
+        val member = memberService.getMemberById(id);
+        val response = memberMapper.toProfileResponse(member);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 프로필 링크 삭제 API")
+    @DeleteMapping("/profile/link/{linkId}")
+    public ResponseEntity<CommonResponse> deleteUserProfileLink (
+            @PathVariable(name = "linkId") Long linkId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        memberService.deleteUserProfileLink(linkId, memberDetails.getId());
+        val response = new CommonResponse(true, "성공적으로 link를 삭제했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 프로필 활동 삭제 API")
+    @DeleteMapping("/profile/activity/{activityId}")
+    public ResponseEntity<CommonResponse> deleteUserProfileActivity (
+            @PathVariable(name = "activityId") Long activityId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
+        val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 }

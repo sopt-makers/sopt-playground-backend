@@ -10,7 +10,7 @@ import javax.persistence.*;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "links")
-public class Link {
+public class ProjectLink {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

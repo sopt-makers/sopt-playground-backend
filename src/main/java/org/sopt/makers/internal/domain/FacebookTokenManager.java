@@ -1,12 +1,10 @@
 package org.sopt.makers.internal.domain;
 
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
-import org.sopt.makers.internal.dto.FacebookUserInfoResponse;
+import org.sopt.makers.internal.dto.auth.FacebookUserInfoResponse;
 import org.sopt.makers.internal.external.FacebookAuthClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
