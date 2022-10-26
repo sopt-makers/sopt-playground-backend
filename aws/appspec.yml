@@ -1,0 +1,27 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ec2-user/deploy
+hooks:
+  ApplicationStop:
+    - location: stop.sh
+      timeout: 180
+      runas: root
+  BeforeInstall:
+    - location: before.sh
+      timeout: 180
+      runas: root
+
+  AfterInstall:
+    - location: after.sh
+      timeout: 180
+      runas: root
+  ApplicationStart:
+    - locaiton: start.sh
+      timeout: 180
+      runas: root
+  ValidateService:
+    - location: valid.sh
+      timeout: 180
+      runas: root

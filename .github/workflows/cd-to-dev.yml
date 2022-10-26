@@ -2,7 +2,7 @@ name: Deploy to Test Instance
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, feature-deploy-specific ]
 
 jobs:
   build:
@@ -51,8 +51,20 @@ jobs:
           format: YYYY-MM-DDTHH-mm-ss
           utcOffset: "+09:00"
 
+      - name: Copy AWS script
+        run: cp -r aws ./
+
+      - name: Spring Boot env setting
+        run: sudo sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=dev/g' ./aws/start.sh
+
+      - name: Check env profile
+        run: cat ./aws/start.sh
+
+      - name: Move jar file
+        run: sudo find-L ./build/libs/ -name "*SNAPSHOT.jar" -exec cp {} ./INTERNAL.jar \;
+
       - name: Make zip file
-        run: zip -qq -r ./$GITHUB_SHA.zip .
+        run: zip -r ./aws/$GITHUB_SHA.zip ./INTERNAL.jar
         shell: bash
 
       - name: Upload to S3
