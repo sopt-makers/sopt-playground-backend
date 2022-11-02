@@ -84,18 +84,30 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val member = memberService.getMemberHasProfileById(id);
+        val memberProfileProjects = memberService.getMemberProfileProjects(id);
+        val activityMap = memberService.getMemberProfileActivity(
+                member.getActivities(),
+                memberProfileProjects
+        );
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(member, isMine);
+        val response = memberMapper.toProfileSpecificResponse(member, isMine, activityMap, memberProfileProjects);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/profile/me")
-    public ResponseEntity<MemberProfileResponse> getMyProfile (
+    public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        val member = memberService.getMemberHasProfileById(memberDetails.getId());
-        val response = memberMapper.toProfileResponse(member);
+        val id = memberDetails.getId();
+        val member = memberService.getMemberHasProfileById(id);
+        val memberProfileProjects = memberService.getMemberProfileProjects(id);
+        val activityMap = memberService.getMemberProfileActivity(
+                member.getActivities(),
+                memberProfileProjects
+        );
+        val isMine = Objects.equals(member.getId(), memberDetails.getId());
+        val response = memberMapper.toProfileSpecificResponse(member, isMine, activityMap, memberProfileProjects);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
