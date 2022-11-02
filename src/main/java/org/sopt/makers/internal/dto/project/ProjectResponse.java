@@ -28,8 +28,10 @@ public record ProjectResponse(
     public record ProjectMemberResponse(
             Long memberId,
             String memberRole,
-            String memberDesc,
-            Boolean isTeamMember
+            String memberDescription,
+            Boolean isTeamMember,
+            String memberName,
+            Integer memberGeneration
     ){}
 
     public record ProjectLinkResponse(
