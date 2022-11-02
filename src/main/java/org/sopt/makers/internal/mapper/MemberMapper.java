@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.dto.member.*;
@@ -19,5 +20,7 @@ public interface MemberMapper {
             List<MemberProfileProjectDao> projects
     );
     ActivityVo toActivityInfoVo (MemberSoptActivity activity, boolean isProject);
+
+    @Mapping(source = "project.name", target = "team")
     ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject);
 }

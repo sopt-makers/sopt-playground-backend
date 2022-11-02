@@ -31,7 +31,7 @@ public record MemberProfileSpecificResponse(
     ){}
 
     public record MemberProjectResponse(
-            Long projectId,
+            Long id,
             String name,
             String summary,
             Integer generation,
