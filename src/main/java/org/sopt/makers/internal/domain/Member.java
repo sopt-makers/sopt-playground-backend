@@ -50,10 +50,12 @@ public class Member {
     @Column
     private String major;
 
+    @Builder.Default
     @OneToMany
     @JoinColumn(name = "user_id")
     private List<MemberSoptActivity> activities = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany
     @JoinColumn(name = "user_id")
     private List<MemberLink> links = new ArrayList<>();
@@ -73,6 +75,7 @@ public class Member {
     @Column(name = "allow_official")
     private Boolean allowOfficial;
 
+    @Builder.Default
     @Column(name = "has_profile")
     private Boolean hasProfile = false;
 

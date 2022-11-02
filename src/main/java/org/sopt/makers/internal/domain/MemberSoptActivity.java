@@ -23,12 +23,9 @@ public class MemberSoptActivity {
     private String part;
 
     @Column
-    private String category;
-
-    @Column
     private Integer generation;
 
-    @Column(name = "team_name")
-    private String teamName;
+    @Column(name = "team")
+    private String team;
 
 }

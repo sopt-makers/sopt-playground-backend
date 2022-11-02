@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/members")
 @SecurityRequirement(name = "Authorization")
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
@@ -84,18 +84,40 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val member = memberService.getMemberHasProfileById(id);
+        val memberProfileProjects = memberService.getMemberProfileProjects(id);
+        val activityMap = memberService.getMemberProfileActivity(
+                member.getActivities(),
+                memberProfileProjects
+        );
+        val activityResponses = activityMap.entrySet().stream().map(entry ->
+                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
+                ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(member, isMine);
+        val response = memberMapper.toProfileSpecificResponse(
+                member, isMine, memberProfileProjects, activityResponses
+        );
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/profile/me")
-    public ResponseEntity<MemberProfileResponse> getMyProfile (
+    public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        val member = memberService.getMemberHasProfileById(memberDetails.getId());
-        val response = memberMapper.toProfileResponse(member);
+        val id = memberDetails.getId();
+        val member = memberService.getMemberHasProfileById(id);
+        val memberProfileProjects = memberService.getMemberProfileProjects(id);
+        val activityMap = memberService.getMemberProfileActivity(
+                member.getActivities(),
+                memberProfileProjects
+        );
+        val activityResponses = activityMap.entrySet().stream().map(entry ->
+                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
+        ).collect(Collectors.toList());
+        val isMine = Objects.equals(member.getId(), memberDetails.getId());
+        val response = memberMapper.toProfileSpecificResponse(
+                member, isMine, memberProfileProjects, activityResponses
+        );
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

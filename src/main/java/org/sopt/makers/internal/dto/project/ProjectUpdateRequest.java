@@ -21,7 +21,7 @@ public record ProjectUpdateRequest(
     public record ProjectMemberUpdateRequest(
             Long memberId,
             String memberRole,
-            String memberDesc,
+            String memberDescription,
             Boolean isTeamMember
     ){}
 

@@ -1,7 +1,5 @@
 package org.sopt.makers.internal.dto.member;
 
-import org.sopt.makers.internal.domain.MemberSoptActivity;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -31,7 +29,6 @@ public record MemberProfileSaveRequest(
 	public record MemberSoptActivitySaveRequest(
 			Integer generation,
 			String part,
-			String category,
-			String teamName
+			String team
 	){}
 }
