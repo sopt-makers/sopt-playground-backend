@@ -39,7 +39,7 @@ public class ImageController {
             @RequestParam(required = false) String type
     ) {
         val keyName = "%s-%s".formatted(UUID.randomUUID().toString(), filename);
-        val bucketName = type == null ? projectImageBucketName : profileImageBucketName;
+        val bucketName = type == null || type.equals("project") ? projectImageBucketName : profileImageBucketName;
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .acl("public-read")
