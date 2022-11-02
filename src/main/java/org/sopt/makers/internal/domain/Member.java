@@ -73,6 +73,9 @@ public class Member {
     @Column(name = "allow_official")
     private Boolean allowOfficial;
 
+    @Column(name = "has_profile")
+    private Boolean hasProfile = false;
+
     public void saveMemberProfile(
             String name,
             String profileImage,
@@ -105,5 +108,6 @@ public class Member {
         this.allowOfficial = Objects.requireNonNullElse(allowOfficial, this.allowOfficial);
         this.activities = activities;
         this.links = links;
+        this.hasProfile = true;
     }
 }
