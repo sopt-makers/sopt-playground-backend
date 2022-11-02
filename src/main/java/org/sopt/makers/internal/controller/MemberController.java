@@ -89,8 +89,13 @@ public class MemberController {
                 member.getActivities(),
                 memberProfileProjects
         );
+        val activityResponses = activityMap.entrySet().stream().map(entry ->
+                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
+                ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(member, isMine, activityMap, memberProfileProjects);
+        val response = memberMapper.toProfileSpecificResponse(
+                member, isMine, memberProfileProjects, activityResponses
+        );
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -106,8 +111,13 @@ public class MemberController {
                 member.getActivities(),
                 memberProfileProjects
         );
+        val activityResponses = activityMap.entrySet().stream().map(entry ->
+                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
+        ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(member, isMine, activityMap, memberProfileProjects);
+        val response = memberMapper.toProfileSpecificResponse(
+                member, isMine, memberProfileProjects, activityResponses
+        );
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

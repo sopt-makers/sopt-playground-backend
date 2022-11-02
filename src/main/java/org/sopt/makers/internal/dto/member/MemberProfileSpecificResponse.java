@@ -15,7 +15,7 @@ public record MemberProfileSpecificResponse(
         String major,
         String introduction,
         String skill,
-        Map<CardinalVo, List<ActivityVo>> activities,
+        List<MemberActivityResponse> activities,
         List<MemberLinkResponse> links,
         List<MemberProjectResponse> projects,
         Boolean openToWork,
@@ -38,5 +38,10 @@ public record MemberProfileSpecificResponse(
             String category,
             String logoImage,
             String thumbnailImage
+    ){}
+
+    public record MemberActivityResponse (
+            String cardinalInfo,
+            List<ActivityVo> cardinalActivities
     ){}
 }

@@ -13,12 +13,15 @@ import java.util.Map;
 public interface MemberMapper {
     MemberResponse toResponse(Member member);
     MemberProfileResponse toProfileResponse (Member member);
+
+    @Mapping(target = "activities", source = "activities")
     MemberProfileSpecificResponse toProfileSpecificResponse (
             Member member,
             boolean isMine,
-            Map<CardinalVo, List<ActivityVo>> activities,
-            List<MemberProfileProjectDao> projects
+            List<MemberProfileProjectDao> projects,
+            List<MemberProfileSpecificResponse.MemberActivityResponse> activities
     );
+
     ActivityVo toActivityInfoVo (MemberSoptActivity activity, boolean isProject);
 
     @Mapping(source = "project.name", target = "team")
