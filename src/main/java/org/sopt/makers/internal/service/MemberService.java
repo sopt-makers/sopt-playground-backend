@@ -14,6 +14,7 @@ import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -25,7 +26,12 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public Member getMemberById (Long id) {
-        return memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        return memberRepository.findByIdAndHasProfileTrue(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> getMembers () {
+        return memberRepository.findAllByHasProfileTrue();
     }
 
     @Transactional

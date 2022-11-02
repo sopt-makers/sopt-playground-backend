@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -84,6 +87,14 @@ public class MemberController {
         val member = memberService.getMemberById(id);
         val response = memberMapper.toProfileResponse(member);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 프로필 전체 조회 API")
+    @GetMapping("/profile")
+    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles () {
+        val members = memberService.getMembers();
+        val responses = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
     @Operation(summary = "멤버 프로필 링크 삭제 API")
