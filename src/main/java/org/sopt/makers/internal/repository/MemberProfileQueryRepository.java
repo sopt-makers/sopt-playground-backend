@@ -28,7 +28,7 @@ public class MemberProfileQueryRepository {
                         project.category, project.logoImage, project.thumbnailImage
                 )).from(project)
                 .innerJoin(relation).on(project.id.eq(relation.projectId))
-                .where(relation.isTeamMember.and(relation.userId.eq(memberId)))
+                .where(relation.isTeamMember.isTrue().and(relation.userId.eq(memberId)))
                 .fetch();
     }
 
