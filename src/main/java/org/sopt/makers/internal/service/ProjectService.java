@@ -8,12 +8,14 @@ import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.ProjectDao;
 import org.sopt.makers.internal.dto.project.ProjectSaveRequest;
 import org.sopt.makers.internal.dto.project.ProjectUpdateRequest;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -63,9 +65,10 @@ public class ProjectService {
     }
 
     @Transactional
-    public void updateProject (Long id, ProjectUpdateRequest request) {
+    public void updateProject (Long writerId, Long id, ProjectUpdateRequest request) {
         val project = projectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
+        if (!Objects.equals(project.getWriterId(), writerId)) throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         project.updateAll(
                 request.name(), request.generation(), request.category(), request.startAt(),
                 request.endAt(), request.isAvailable(), request.summary(), request.detail(),
