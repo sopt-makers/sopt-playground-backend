@@ -2,6 +2,7 @@ package org.sopt.makers.internal.dto.member;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public record MemberProfileSpecificResponse(
         String name,
@@ -14,8 +15,9 @@ public record MemberProfileSpecificResponse(
         String major,
         String introduction,
         String skill,
-        List<MemberSoptActivityResponse> activities,
+        Map<CardinalVo, List<ActivityVo>> activities,
         List<MemberLinkResponse> links,
+        List<MemberProjectResponse> projects,
         Boolean openToWork,
         Boolean openToSideProject,
         Boolean allowOfficial,
@@ -28,10 +30,13 @@ public record MemberProfileSpecificResponse(
             String url
     ){}
 
-    public record MemberSoptActivityResponse(
-            Long id,
+    public record MemberProjectResponse(
+            Long projectId,
+            String name,
+            String summary,
             Integer generation,
-            String part,
-            String team
+            String category,
+            String logoImage,
+            String thumbnailImage
     ){}
 }
