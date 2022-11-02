@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.dto.auth.*;
@@ -16,26 +17,30 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @Operation(summary = "Facebook auth API", description = "페이스북으로 로그인")
     @PostMapping("/idp/facebook/auth")
     public ResponseEntity<AccessTokenResponse> authByFacebook (@RequestBody AuthByFacebookRequest request) {
         val accessToken = authService.authByFb(request.code());
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
+    @Operation(summary = "Facebook register API")
     @PostMapping("/idp/facebook/register")
     public ResponseEntity<AccessTokenResponse> registerByFacebook (@RequestBody RegisterByFacebookRequest request) {
         val accessToken = authService.registerByFb(request.registerToken(), request.code());
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @PostMapping("/register/checkToken")
+    @Operation(summary = "register 토큰으로 자기 자신 확인 API")
+    @PostMapping("/registration/info")
     public ResponseEntity<RegisterTokenInfoResponse> checkRegisterToken (@RequestBody RegisterTokenInfoRequest request) {
         val memberHistory = authService.findMemberByRegisterToken(request.registerToken())
                 .orElseThrow(() -> new ForbiddenClientException("SOPT Member History를 찾을 수 없습니다."));
         return ResponseEntity.status(200).body(new RegisterTokenInfoResponse(memberHistory.getName(), memberHistory.getGeneration()));
     }
 
-    @PostMapping("/register/sendEmail")
+    @Operation(summary = "register 토큰이 전송되는 email 발송 API")
+    @PostMapping("/registration/email")
     public ResponseEntity<EmailResponse> sendRegistrationEmail (@RequestBody RegistrationEmailRequest request) {
         val status = authService.sendRegisterLinkByEmail(request.email());
         return switch (status) {
