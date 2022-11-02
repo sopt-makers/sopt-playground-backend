@@ -56,9 +56,8 @@ public class MemberService {
                         MemberSoptActivity.builder()
                                 .memberId(id)
                                 .part(activity.part())
-                                .category(activity.category())
                                 .generation(activity.generation())
-                                .teamName(activity.teamName())
+                                .team(activity.team())
                                 .build()).collect(Collectors.toList())
         );
         member.saveMemberProfile(
@@ -89,9 +88,8 @@ public class MemberService {
                                 .id(activity.id())
                                 .memberId(id)
                                 .part(activity.part())
-                                .category(activity.category())
                                 .generation(activity.generation())
-                                .teamName(activity.teamName())
+                                .team(activity.team())
                                 .build()).collect(Collectors.toList())
         );
         member.saveMemberProfile(
