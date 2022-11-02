@@ -5,17 +5,20 @@ import lombok.val;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
-import org.sopt.makers.internal.dto.member.MemberProfileSaveRequest;
-import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.MemberLinkRepository;
+import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 @Service
@@ -23,6 +26,9 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final MemberMapper memberMapper;
+
+    private final MemberProfileQueryRepository profileQueryRepository;
 
     @Transactional(readOnly = true)
     public Member getMemberById (Long id) {
@@ -34,6 +40,31 @@ public class MemberService {
         return memberRepository.findByIdAndHasProfileTrue(id).orElseThrow(() -> new NotFoundDBEntityException("Member without profile"));
     }
 
+    @Transactional(readOnly = true)
+    public List<MemberProfileProjectDao> getMemberProfileProjects (Long id) {
+        return profileQueryRepository.findMemberProfileProjectsByMemberId(id);
+    }
+
+    public Map<CardinalVo, List<ActivityVo>> getMemberProfileActivity (
+            List<MemberSoptActivity> memberActivities,
+            List<MemberProfileProjectDao> memberProfileProjects
+    ) {
+        val cardinalInfoMap = memberActivities.stream()
+                .collect(Collectors.toMap(
+                        MemberSoptActivity::getGeneration,
+                        MemberSoptActivity::getPart,
+                        (p1, p2) -> p1)
+                );
+        val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+        val projects = memberProfileProjects.stream().map(p -> memberMapper.toActivityInfoVo(p, true));
+        val genActivityMap = Stream.concat(activities, projects)
+                .collect(Collectors.groupingBy(ActivityVo::generation));
+        return genActivityMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> new CardinalVo(e.getKey(),cardinalInfoMap.get(e.getKey())),
+                        Map.Entry::getValue
+                ));
+    }
     @Transactional(readOnly = true)
     public List<Member> getMemberProfiles() {
         return memberRepository.findAllByHasProfileTrue();
