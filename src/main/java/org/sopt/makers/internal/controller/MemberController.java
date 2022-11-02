@@ -39,7 +39,7 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "유저 id로 조회 API")
+    @Operation(summary = "자신의 토큰으로 조회 API")
     @GetMapping("/me")
     public ResponseEntity<MemberResponse> getMyInformation (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
