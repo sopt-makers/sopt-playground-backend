@@ -45,7 +45,7 @@ public class MemberService {
         return profileQueryRepository.findMemberProfileProjectsByMemberId(id);
     }
 
-    public Map<CardinalVo, List<ActivityVo>> getMemberProfileActivity (
+    public Map<String, List<ActivityVo>> getMemberProfileActivity (
             List<MemberSoptActivity> memberActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
@@ -61,7 +61,7 @@ public class MemberService {
                 .collect(Collectors.groupingBy(ActivityVo::generation));
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
-                        e -> new CardinalVo(e.getKey(),cardinalInfoMap.get(e.getKey())),
+                        e -> e.getKey() + "," + cardinalInfoMap.get(e.getKey()),
                         Map.Entry::getValue
                 ));
     }
