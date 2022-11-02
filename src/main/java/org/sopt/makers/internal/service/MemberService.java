@@ -26,11 +26,16 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public Member getMemberById (Long id) {
-        return memberRepository.findByIdAndHasProfileTrue(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        return memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMembers () {
+    public Member getMemberHasProfileById (Long id) {
+        return memberRepository.findByIdAndHasProfileTrue(id).orElseThrow(() -> new NotFoundDBEntityException("Member without profile"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> getMemberProfiles() {
         return memberRepository.findAllByHasProfileTrue();
     }
 
