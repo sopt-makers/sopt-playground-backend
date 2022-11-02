@@ -1,10 +1,12 @@
 package org.sopt.makers.internal.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.project.ProjectDao;
 import org.sopt.makers.internal.dto.project.ProjectResponse;
 import org.sopt.makers.internal.dto.project.ProjectSaveRequest;
@@ -12,6 +14,7 @@ import org.sopt.makers.internal.dto.project.ProjectUpdateRequest;
 import org.sopt.makers.internal.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,9 +60,11 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Boolean>> updateProject (
             @PathVariable("id") Long projectId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody ProjectUpdateRequest request
     ) {
-        projectService.updateProject(projectId, request);
+        val writerId = memberDetails.getId();
+        projectService.updateProject(writerId, projectId, request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
