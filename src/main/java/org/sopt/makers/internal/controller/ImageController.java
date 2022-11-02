@@ -27,14 +27,21 @@ public class ImageController {
     @Value("${cloud.aws.bucket.project}")
     private String projectImageBucketName;
 
+    @Value("${cloud.aws.bucket.profile}")
+    private String profileImageBucketName;
+
     private final S3Presigner presigner;
 
-    @Operation(summary = "유저 id로 조회 API")
+    @Operation(summary = "이미지 업로드를 위한 presigned url 관련 API")
     @GetMapping("")
-    public ResponseEntity<Map<String, String>> getImagePath (@RequestParam String filename) {
+    public ResponseEntity<Map<String, String>> getImagePath (
+            @RequestParam String filename,
+            @RequestParam(required = false) String type
+    ) {
         val keyName = "%s-%s".formatted(UUID.randomUUID().toString(), filename);
+        val bucketName = type == null ? projectImageBucketName : profileImageBucketName;
         val objectRequest = PutObjectRequest.builder()
-                .bucket(projectImageBucketName)
+                .bucket(bucketName)
                 .acl("public-read")
                 .key(keyName)
                 .build();
