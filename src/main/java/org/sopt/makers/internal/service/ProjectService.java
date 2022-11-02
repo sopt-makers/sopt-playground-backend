@@ -53,7 +53,7 @@ public class ProjectService {
                 .projectId(project.getId())
                 .userId(memberRequest.memberId())
                 .role(memberRequest.memberRole())
-                .description(memberRequest.memberDesc())
+                .description(memberRequest.memberDescription())
                 .isTeamMember(memberRequest.isTeamMember())
                 .build()).collect(Collectors.toList()));
 
@@ -94,7 +94,7 @@ public class ProjectService {
                 return relations.get(memberRequest.memberId())
                         .updateAll(
                                 memberRequest.memberRole(),
-                                memberRequest.memberDesc(),
+                                memberRequest.memberDescription(),
                                 memberRequest.isTeamMember()
                         );
             } else {
@@ -102,7 +102,7 @@ public class ProjectService {
                         .projectId(project.getId())
                         .userId(memberRequest.memberId())
                         .role(memberRequest.memberRole())
-                        .description(memberRequest.memberDesc())
+                        .description(memberRequest.memberDescription())
                         .isTeamMember(memberRequest.isTeamMember())
                         .build();
             }

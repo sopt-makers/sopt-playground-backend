@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record ProjectSaveRequest(
-        Long id,
         String name,
         Long writerId,
         Integer generation,
@@ -25,12 +24,11 @@ public record ProjectSaveRequest(
     public record ProjectMemberSaveRequest(
             Long memberId,
             String memberRole,
-            String memberDesc,
+            String memberDescription,
             Boolean isTeamMember
     ){}
 
     public record ProjectLinkSaveRequest(
-            Long linkId,
             String linkTitle,
             String linkUrl
     ){}
