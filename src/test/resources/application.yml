@@ -31,7 +31,8 @@ cloud:
       access-key: test
       secret-key: test
     bucket:
-      project: internal/test
+      project: internal/test/project
+      profile: internal/test/profile
 oauth:
   registerPage: testUrl
   fb:
