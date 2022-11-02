@@ -31,7 +31,6 @@ public record MemberProfileResponse(
             Long id,
             Integer generation,
             String part,
-            String category,
-            String teamName
+            String team
     ){}
 }
