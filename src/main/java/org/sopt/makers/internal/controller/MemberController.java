@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/members")
 @SecurityRequirement(name = "Authorization")
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
