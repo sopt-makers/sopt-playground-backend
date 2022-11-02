@@ -8,6 +8,7 @@ import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.MessagingException;
 import javax.persistence.EntityNotFoundException;
@@ -22,7 +23,8 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
-    
+
+    @Transactional
     public String authByFb (String code) {
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");
         if (fbAccessToken == null) {
@@ -35,6 +37,7 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
+    @Transactional
     public String registerByFb (String registerToken, String code) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
@@ -60,11 +63,13 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
+    @Transactional
     public Optional<SoptMemberHistory> findMemberByRegisterToken (String registerToken) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         return soptMemberHistoryRepository.findTopByEmailOrderByIdDesc(registerTokenInfo);
     }
 
+    @Transactional
     public String sendRegisterLinkByEmail(String email) {
         val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(email);
         if (memberHistories.isEmpty()) return "invalidEmail";
