@@ -89,6 +89,16 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "자신의 토큰으로 프로필 조회 API")
+    @GetMapping("/profile/me")
+    public ResponseEntity<MemberProfileResponse> getMyProfile (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val member = memberService.getMemberById(memberDetails.getId());
+        val response = memberMapper.toProfileResponse(member);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @Operation(summary = "멤버 프로필 전체 조회 API")
     @GetMapping("/profile")
     public ResponseEntity<List<MemberProfileResponse>> getUserProfiles () {
