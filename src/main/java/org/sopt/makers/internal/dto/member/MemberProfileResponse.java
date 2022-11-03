@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record MemberProfileResponse(
+        Long id,
         String name,
         String profileImage,
         LocalDate birthday,
