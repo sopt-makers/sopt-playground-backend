@@ -24,13 +24,14 @@ import java.util.UUID;
 @Tag(name = "Image 관련 API", description = "Image upload와 관련있는 API들")
 public class ImageController {
 
-    @Value("${cloud.aws.bucket.project}")
-    private String projectImageBucketName;
-
-    @Value("${cloud.aws.bucket.profile}")
-    private String profileImageBucketName;
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+    @Value("${cloud.aws.bucket.image}")
+    private String imageBucketName;
 
     private final S3Presigner presigner;
+    private final String projectImageBucketPath = "/image/project/";
+    private final String profileImageBucketPath = "/image/profile/";
 
     @Operation(summary = "이미지 업로드를 위한 presigned url 관련 API")
     @GetMapping("")
@@ -38,8 +39,10 @@ public class ImageController {
             @RequestParam String filename,
             @RequestParam(required = false) String type
     ) {
-        val keyName = "%s-%s".formatted(UUID.randomUUID().toString(), filename);
-        val bucketName = type == null || type.equals("project") ? projectImageBucketName : profileImageBucketName;
+        val bucketPathName = type == null || type.equals("project") ? projectImageBucketPath : profileImageBucketPath;
+        val keyName = "/" + activeProfile + bucketPathName + "%s-%s".formatted(UUID.randomUUID().toString(), filename);
+        val bucketName = imageBucketName;
+        System.out.println(keyName);
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .acl("public-read")
