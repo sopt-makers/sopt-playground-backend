@@ -10,9 +10,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
@@ -44,9 +48,8 @@ public class ImageController {
         val bucketName = imageBucketName;
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .acl("public-read")
-                .contentType("image/png")
                 .key(keyName)
+                .contentType("image/png")
                 .build();
 
         val presignRequest = PutObjectPresignRequest.builder()
@@ -59,5 +62,4 @@ public class ImageController {
         val response = Map.of("signedUrl", signedUrl, "filename", keyName);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-
 }
