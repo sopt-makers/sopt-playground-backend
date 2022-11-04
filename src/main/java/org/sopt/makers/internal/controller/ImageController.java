@@ -43,6 +43,7 @@ public class ImageController {
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .acl("public-read")
+                .contentType("image/*")
                 .key(keyName)
                 .build();
 
