@@ -56,7 +56,10 @@ public class MemberService {
                         (p1, p2) -> p1)
                 );
         val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
-        val projects = memberProfileProjects.stream().map(p -> memberMapper.toActivityInfoVo(p, true));
+        val projects = memberProfileProjects.stream().map(p -> {
+            val part = cardinalInfoMap.getOrDefault(p.generation(), "");
+            return memberMapper.toActivityInfoVo(p, true, part);
+        });
         val genActivityMap = Stream.concat(activities, projects)
                 .collect(Collectors.groupingBy(ActivityVo::generation));
         return genActivityMap.entrySet().stream()
