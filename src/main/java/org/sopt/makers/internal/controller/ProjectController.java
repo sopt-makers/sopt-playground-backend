@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.project.ProjectDao;
+import org.sopt.makers.internal.dto.project.ProjectMemberDao;
+import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.dto.project.ProjectResponse;
 import org.sopt.makers.internal.dto.project.ProjectSaveRequest;
 import org.sopt.makers.internal.dto.project.ProjectUpdateRequest;
@@ -32,8 +34,9 @@ public class ProjectController {
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<ProjectResponse> getProject (@PathVariable Long id) {
-        val project = projectService.fetchById(id);
-        val response = toProjectResponse(project);
+        val projectMembers = projectService.fetchById(id);
+        val projectLinks = projectService.fetchLinksById(id);
+        val response = toProjectResponse(projectMembers, projectLinks);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -75,8 +78,47 @@ public class ProjectController {
         );
     }
 
+    private ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberDao project) {
+        return new ProjectResponse.ProjectMemberResponse(
+                project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
+                project.memberName(), project.memberGeneration()
+        );
+    }
+
+    private ProjectResponse.ProjectLinkResponse toProjectLinkResponse (ProjectLinkDao project) {
+        return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    }
+
     private ProjectResponse.ProjectLinkResponse toProjectLinkResponse (ProjectDao project) {
         return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    }
+
+    private ProjectResponse toProjectResponse (List<ProjectMemberDao> projectMembers, List<ProjectLinkDao> projectLinks) {
+        val projectInfo = projectMembers.get(0);
+        val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
+        val linkResponses = projectLinks.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
+
+        return new ProjectResponse(
+                projectInfo.id(),
+                projectInfo.name(),
+                projectInfo.writerId(),
+                projectInfo.generation(),
+                projectInfo.category(),
+                projectInfo.startAt(),
+                projectInfo.endAt(),
+                projectInfo.serviceType(),
+                projectInfo.isAvailable(),
+                projectInfo.isFounding(),
+                projectInfo.summary(),
+                projectInfo.detail(),
+                projectInfo.logoImage(),
+                projectInfo.thumbnailImage(),
+                projectInfo.images(),
+                projectInfo.createdAt(),
+                projectInfo.updatedAt(),
+                memberResponses,
+                linkResponses
+        );
     }
 
     private ProjectResponse toProjectResponse (List<ProjectDao> project) {

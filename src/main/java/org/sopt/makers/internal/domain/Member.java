@@ -51,12 +51,18 @@ public class Member {
     private String major;
 
     @Builder.Default
-    @OneToMany
+    @OneToMany(
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
     @JoinColumn(name = "user_id")
     private List<MemberSoptActivity> activities = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany
+    @OneToMany(
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
     @JoinColumn(name = "user_id")
     private List<MemberLink> links = new ArrayList<>();
 
@@ -109,8 +115,8 @@ public class Member {
         this.openToWork = Objects.requireNonNullElse(openToWork, this.openToWork);
         this.openToSideProject = Objects.requireNonNullElse(openToSideProject, this.openToSideProject);
         this.allowOfficial = Objects.requireNonNullElse(allowOfficial, this.allowOfficial);
-        this.activities = activities;
-        this.links = links;
+        this.activities.clear(); this.activities.addAll(activities);
+        this.links.clear(); this.links.addAll(links);
         this.hasProfile = true;
     }
 }

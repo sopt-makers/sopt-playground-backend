@@ -76,24 +76,28 @@ public class MemberService {
     @Transactional
     public Member saveMemberProfile (Long id, MemberProfileSaveRequest request) {
         val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        val memberLinks = memberLinkRepository.saveAll(
-                request.links().stream().map(link ->
+        val memberId = member.getId();
+        if (memberId == null) throw new NotFoundDBEntityException("Member id is null");
+        val memberLinkEntities = request.links().stream().map(link ->
                         MemberLink.builder()
-                                .memberId(id)
+                                .memberId(memberId)
                                 .title(link.title())
                                 .url(link.url())
-                                .build()).collect(Collectors.toList())
-        );
-
-        val memberActivities = memberSoptActivityRepository.saveAll(
-                request.activities().stream().map(activity ->
+                                .build()).collect(Collectors.toList());
+        memberLinkEntities.forEach(link -> link.setMemberId(memberId));
+        val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
+        
+        val memberActivityEntities = request.activities().stream().map(activity ->
                         MemberSoptActivity.builder()
-                                .memberId(id)
+                                .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
                                 .team(activity.team())
-                                .build()).collect(Collectors.toList())
-        );
+                                .build()).collect(Collectors.toList());
+        memberActivityEntities.forEach(a -> a.setMemberId(memberId));
+        val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
+        if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
+        val memberActivities = memberSoptActivityRepository.saveAll(memberActivityEntities);
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(), request.skill(),
@@ -106,11 +110,12 @@ public class MemberService {
     @Transactional
     public Member updateMemberProfile (Long id, MemberProfileUpdateRequest request) {
         val member = getMemberById(id);
+        val memberId = member.getId();
         val memberLinks = memberLinkRepository.saveAll(
                 request.links().stream().map(link ->
                         MemberLink.builder()
                                 .id(link.id())
-                                .memberId(id)
+                                .memberId(memberId)
                                 .title(link.title())
                                 .url(link.url())
                                 .build()).collect(Collectors.toList())
@@ -120,7 +125,7 @@ public class MemberService {
                 request.activities().stream().map(activity ->
                         MemberSoptActivity.builder()
                                 .id(activity.id())
-                                .memberId(id)
+                                .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
                                 .team(activity.team())
@@ -151,8 +156,8 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public Member getMemberByName (String name) {
-        return memberRepository.findByName(name).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+    public List<Member> getMemberByName (String name) {
+        return memberRepository.findAllByNameContaining(name);
     }
 
 }

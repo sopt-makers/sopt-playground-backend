@@ -28,4 +28,7 @@ public class MemberSoptActivity {
     @Column(name = "team")
     private String team;
 
+    public void setMemberId (Long memberId) {
+        this.memberId = memberId;
+    }
 }
