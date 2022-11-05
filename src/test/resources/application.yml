@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: test
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:internal;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
@@ -31,8 +33,7 @@ cloud:
       access-key: test
       secret-key: test
     bucket:
-      project: internal/test/project
-      profile: internal/test/profile
+      image: sopt-makers-internal
 oauth:
   registerPage: testUrl
   fb:
