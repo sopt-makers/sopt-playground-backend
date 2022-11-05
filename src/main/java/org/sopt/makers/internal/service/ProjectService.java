@@ -48,6 +48,7 @@ public class ProjectService {
                         .thumbnailImage(request.thumbnailImage())
                         .images(request.images())
                         .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
                         .build()
         );
 
