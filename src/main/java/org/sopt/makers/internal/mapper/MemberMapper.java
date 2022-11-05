@@ -25,5 +25,5 @@ public interface MemberMapper {
     ActivityVo toActivityInfoVo (MemberSoptActivity activity, boolean isProject);
 
     @Mapping(source = "project.name", target = "team")
-    ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject);
+    ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject, String part);
 }
