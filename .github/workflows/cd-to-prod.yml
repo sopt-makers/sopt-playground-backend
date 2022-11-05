@@ -15,7 +15,7 @@ on:
   repository_dispatch:
     types: [deploy-to-prod-event]
   push:
-    branches: [ main, feature/deploy-to-prod ]
+    branches: [ main ]
 
 jobs:
   build:
