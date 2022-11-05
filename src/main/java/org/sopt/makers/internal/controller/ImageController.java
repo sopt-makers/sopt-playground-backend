@@ -49,7 +49,7 @@ public class ImageController {
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(keyName)
-                .contentType("image/png")
+                .contentType("image/*")
                 .build();
 
         val presignRequest = PutObjectPresignRequest.builder()
