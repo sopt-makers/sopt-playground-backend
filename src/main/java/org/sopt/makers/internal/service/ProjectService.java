@@ -14,6 +14,7 @@ import org.sopt.makers.internal.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -46,6 +47,7 @@ public class ProjectService {
                         .logoImage(request.logoImage())
                         .thumbnailImage(request.thumbnailImage())
                         .images(request.images())
+                        .createdAt(LocalDateTime.now())
                         .build()
         );
 
