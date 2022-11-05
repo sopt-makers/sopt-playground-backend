@@ -46,10 +46,12 @@ public class ImageController {
         val bucketPathName = type == null || type.equals("project") ? projectImageBucketPath : profileImageBucketPath;
         val keyName = "/" + activeProfile + bucketPathName + "%s-%s".formatted(UUID.randomUUID().toString(), filename);
         val bucketName = imageBucketName;
+        val splittedFileName = filename.split("\\.");
+        val contentType = "image/" + splittedFileName[splittedFileName.length-1].toLowerCase();
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(keyName)
-                .contentType("image/*")
+                .contentType(contentType)
                 .build();
 
         val presignRequest = PutObjectPresignRequest.builder()
