@@ -61,7 +61,7 @@ public class MemberService {
                 .collect(Collectors.groupingBy(ActivityVo::generation));
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
-                        e -> e.getKey() + "," + cardinalInfoMap.get(e.getKey()),
+                        e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
                         Map.Entry::getValue
                 ));
     }
