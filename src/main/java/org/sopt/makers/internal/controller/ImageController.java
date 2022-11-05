@@ -47,7 +47,9 @@ public class ImageController {
         val keyName = "/" + activeProfile + bucketPathName + "%s-%s".formatted(UUID.randomUUID().toString(), filename);
         val bucketName = imageBucketName;
         val splittedFileName = filename.split("\\.");
-        val contentType = "image/" + splittedFileName[splittedFileName.length-1].toLowerCase();
+        var extension = splittedFileName[splittedFileName.length-1].toLowerCase();
+        if (extension.equals("jpg")) extension = "jpeg";
+        val contentType = "image/" + extension;
         val objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(keyName)
