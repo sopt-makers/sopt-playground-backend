@@ -35,17 +35,6 @@ public class EmailSender {
     public String createRegisterEmailHtml (String token) {
         val registerPageUriTemplate = authConfig.getRegisterPage();
         val registerPageUri = registerPageUriTemplate.replace("{{token}}", token);
-        val buttonStyle = """
-        background-color: ${backgroundColor};
-        color: white;
-        width: 420px;
-        height: 48px;
-        display: inline-block;
-        line-height: 48px;
-        text-decoration: none;
-        font-size: 16px;
-        border-radius: 6px;
-        """;
 
         return """
                         <div style="text-align:center;font-weight:400;">
@@ -53,9 +42,9 @@ public class EmailSender {
                             <h1 style="font-size: 32px;">SOPT 회원인증 완료</h1>
                             <p style="font-size: 16px;">SOPT 회원인증을 위한 메일입니다.<br>아래의 버튼을 눌러 회원가입 절차를 계속 진행해주세요.</p>
                             <br>
-                            <a href="%s" target="_blank" style="%s">회원가입 계속하기</a>
+                            <a style="color: blue;" href="%s" target="_blank">회원가입 계속하기</a>
                             <br><br>
                         </div>
-                """.formatted(registerPageUri, buttonStyle);
+                """.formatted(registerPageUri);
     }
 }
