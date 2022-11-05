@@ -1,0 +1,84 @@
+name: Deploy to Test Instance
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+  repository_dispatch:
+    types: [deploy-to-test-event]
+  push:
+    branches: [ develop ]
+
+jobs:
+  build:
+    name: CD Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 1.17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: 'Check Java Version'
+        run: |
+          java --version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: 'Get application.yml from AWS S3'
+        run: |
+          aws s3 cp \
+            --region ap-northeast-2 \
+            s3://sopt-makers-internal/dev/deploy/application-dev.yml src/main/resources/application.yml
+        
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+        shell: bash
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+        shell: bash
+
+      - name: Get current time
+        uses: 1466587594/get-current-time@v2
+        id: current-time
+        with:
+          format: YYYY-MM-DDTHH-mm-ss
+          utcOffset: "+09:00"
+
+      - name: Spring Boot env setting
+        run: sudo sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=dev/g' ./aws/start.sh
+
+      - name: Check env profile
+        run: cat ./aws/start.sh
+
+      - name: Make zip file
+        run: zip -qq -r ./$GITHUB_SHA.zip .
+        shell: bash
+
+      - name: Upload to S3
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://sopt-makers-internal/dev/deploy/jar/$GITHUB_SHA.zip
+
+      - name: Code Deploy
+        run: aws deploy create-deployment --application-name internal
+          --deployment-config-name CodeDeployDefault.OneAtATime
+          --deployment-group-name dev
+          --s3-location bucket=sopt-makers-internal,bundleType=zip,key=dev/deploy/jar/$GITHUB_SHA.zip

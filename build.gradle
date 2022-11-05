@@ -8,6 +8,9 @@ group = 'org.sopt.makers'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
+def queryDslVersion = "5.0.0"
+def mapstructVersion = "1.5.2.Final"
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -23,14 +26,45 @@ ext {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+	implementation "org.springframework.boot:spring-boot-starter-actuator"
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-mail"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
+	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
+
+	// Postgresql Array type
+	implementation('com.vladmihalcea:hibernate-types-52:2.19.2')
+
+	// S3
+	implementation('software.amazon.awssdk:s3:2.17.285')
+
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
+
+	// lombok
 	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
+	testCompileOnly "org.projectlombok:lombok"
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// Mapstruct
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+	// QueryDsl
+	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
+	annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jpa"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
