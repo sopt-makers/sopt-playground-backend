@@ -49,10 +49,10 @@ public class MemberController {
 
     @Operation(summary = "유저 이름으로 조회 API")
     @GetMapping("/search")
-    public ResponseEntity<MemberResponse> getMemberByName (@RequestParam String name) {
-        val member = memberService.getMemberByName(name);
-        val response = memberMapper.toResponse(member);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
+        val members = memberService.getMemberByName(name);
+        val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
     @Operation(summary = "유저 프로필 생성 API")

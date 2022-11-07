@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByName(String name);
+    List<Member> findAllByNameContaining(String name);
     Optional<Member> findByAuthUserId(String authId);
 
     Optional<Member> findByIdAndHasProfileTrue(Long id);
