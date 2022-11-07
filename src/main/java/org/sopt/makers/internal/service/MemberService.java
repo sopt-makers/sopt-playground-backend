@@ -151,8 +151,8 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public Member getMemberByName (String name) {
-        return memberRepository.findByName(name).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+    public List<Member> getMemberByName (String name) {
+        return memberRepository.findAllByNameContaining(name);
     }
 
 }
