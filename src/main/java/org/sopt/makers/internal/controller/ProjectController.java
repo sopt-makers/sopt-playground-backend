@@ -43,11 +43,13 @@ public class ProjectController {
     @Operation(summary = "Project 전체 조회 API")
     @GetMapping("")
     public ResponseEntity<List<ProjectResponse>> getProjects () {
-        val projects = projectService.fetchAll();
-        val responses = projects.stream()
-                .collect(Collectors.groupingBy(ProjectDao::id, Collectors.toList()))
-                .values().stream()
-                .map(this::toProjectResponse)
+        val projectMemberMap = projectService.fetchAll().stream()
+                .collect(Collectors.groupingBy(ProjectMemberDao::id, Collectors.toList()));
+        val projectLinkMap = projectService.fetchAllLinks().stream()
+                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
+        val projectIds = projectMemberMap.keySet();
+        val responses = projectIds.stream()
+                .map(id -> toProjectResponse(projectMemberMap.get(id), projectLinkMap.get(id)))
                 .collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
