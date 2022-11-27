@@ -23,30 +23,6 @@ import java.util.List;
 public class ProjectQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-    private JPAQuery<ProjectDao> getProjectListQuery () {
-        val project = QProject.project;
-        val member = QMember.member;
-        val relation = QMemberProjectRelation.memberProjectRelation;
-        val projectLink = QProjectLink.projectLink;
-
-        return queryFactory.select(
-                        new QProjectDao(
-                                project.id, project.name, project.writerId, project.generation, project.category,
-                                project.startAt, project.endAt, project.serviceType, project.isAvailable, project.isFounding,
-                                project.summary, project.detail, project.logoImage, project.thumbnailImage, project.images,
-                                project.createdAt, project.updatedAt,
-                                member.id, member.name, member.generation, relation.role, relation.description, relation.isTeamMember,
-                                projectLink.id, projectLink.title, projectLink.url
-                        )).from(project)
-                .leftJoin(relation).on(relation.projectId.eq(project.id))
-                .leftJoin(member).on(relation.userId.eq(member.id))
-                .leftJoin(projectLink).on(projectLink.projectId.eq(project.id));
-    }
-
-    public List<ProjectDao> findAll() {
-        return getProjectListQuery().fetch();
-    }
-
     private JPAQuery<ProjectMemberDao> getProjectQuery () {
         val project = QProject.project;
         val member = QMember.member;
@@ -64,11 +40,6 @@ public class ProjectQueryRepository {
                 .innerJoin(member).on(relation.userId.eq(member.id));
     }
 
-    public List<ProjectMemberDao> findById(Long id) {
-        val project = QProject.project;
-        return getProjectQuery().where(project.id.eq(id)).fetch();
-    }
-
     private JPAQuery<ProjectLinkDao> getProjectLinkQuery () {
         val project = QProject.project;
         val projectLink = QProjectLink.projectLink;
@@ -81,8 +52,21 @@ public class ProjectQueryRepository {
                 .innerJoin(projectLink).on(projectLink.projectId.eq(project.id));
     }
 
+    public List<ProjectMemberDao> findById(Long id) {
+        val project = QProject.project;
+        return getProjectQuery().where(project.id.eq(id)).fetch();
+    }
+
     public List<ProjectLinkDao> findLinksById(Long id) {
         val project = QProject.project;
         return getProjectLinkQuery().where(project.id.eq(id)).fetch();
+    }
+
+    public List<ProjectMemberDao> findAll() {
+        return getProjectQuery().fetch();
+    }
+
+    public List<ProjectLinkDao> findAllLinks() {
+        return getProjectLinkQuery().fetch();
     }
 }

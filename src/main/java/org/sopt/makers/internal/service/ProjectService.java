@@ -122,8 +122,13 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectDao> fetchAll () {
+    public List<ProjectMemberDao> fetchAll () {
         return projectQueryRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectLinkDao> fetchAllLinks () {
+        return projectQueryRepository.findAllLinks();
     }
 
     @Transactional(readOnly = true)
