@@ -24,4 +24,8 @@ public class MemberLink {
     @Column(name = "url")
     private String url;
 
+    public void setMemberId (Long memberId) {
+        this.memberId = memberId;
+    }
+
 }

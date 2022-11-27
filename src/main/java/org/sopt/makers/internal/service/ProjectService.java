@@ -6,6 +6,8 @@ import org.sopt.makers.internal.domain.ProjectLink;
 import org.sopt.makers.internal.domain.MemberProjectRelation;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.ProjectDao;
+import org.sopt.makers.internal.dto.project.ProjectMemberDao;
+import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.dto.project.ProjectSaveRequest;
 import org.sopt.makers.internal.dto.project.ProjectUpdateRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -120,14 +122,25 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectDao> fetchAll () {
+    public List<ProjectMemberDao> fetchAll () {
         return projectQueryRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectDao> fetchById (Long id) {
+    public List<ProjectLinkDao> fetchAllLinks () {
+        return projectQueryRepository.findAllLinks();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectMemberDao> fetchById (Long id) {
         val project = projectQueryRepository.findById(id);
         if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
+        return project;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectLinkDao> fetchLinksById (Long id) {
+        val project = projectQueryRepository.findLinksById(id);
         return project;
     }
 }
