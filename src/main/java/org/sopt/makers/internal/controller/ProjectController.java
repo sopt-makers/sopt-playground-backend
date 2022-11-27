@@ -49,7 +49,9 @@ public class ProjectController {
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMemberMap.keySet();
         val responses = projectIds.stream()
-                .map(id -> toProjectResponse(projectMemberMap.get(id), projectLinkMap.get(id)))
+                .map(id -> toProjectResponse(
+                        projectMemberMap.get(id),
+                        projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
