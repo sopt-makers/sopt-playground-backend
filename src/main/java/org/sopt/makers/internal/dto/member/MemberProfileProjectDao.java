@@ -10,7 +10,8 @@ public record MemberProfileProjectDao(
         Integer generation,
         String category,
         String logoImage,
-        String thumbnailImage
+        String thumbnailImage,
+        String[] serviceType
 ) {
     @QueryProjection
     public MemberProfileProjectDao {}

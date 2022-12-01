@@ -37,7 +37,8 @@ public record MemberProfileSpecificResponse(
             Integer generation,
             String category,
             String logoImage,
-            String thumbnailImage
+            String thumbnailImage,
+            String[] serviceType
     ){}
 
     public record MemberActivityResponse (
