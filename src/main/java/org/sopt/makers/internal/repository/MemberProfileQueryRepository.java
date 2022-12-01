@@ -3,7 +3,6 @@ package org.sopt.makers.internal.repository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.QMember;
 import org.sopt.makers.internal.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.domain.QProject;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
@@ -21,11 +20,10 @@ public class MemberProfileQueryRepository {
     public List<MemberProfileProjectDao> findMemberProfileProjectsByMemberId (Long memberId) {
         val project = QProject.project;
         val relation = QMemberProjectRelation.memberProjectRelation;
-        val member = QMember.member;
         return queryFactory.select(
                 new QMemberProfileProjectDao(
                         project.id, project.writerId, project.name, project.summary, project.generation,
-                        project.category, project.logoImage, project.thumbnailImage
+                        project.category, project.logoImage, project.thumbnailImage, project.serviceType
                 )).from(project)
                 .innerJoin(relation).on(project.id.eq(relation.projectId))
                 .where(relation.isTeamMember.isTrue().and(relation.userId.eq(memberId)))
