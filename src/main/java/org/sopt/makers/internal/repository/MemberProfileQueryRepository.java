@@ -25,7 +25,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.select(
                 new QMemberProfileProjectDao(
                         project.id, project.writerId, project.name, project.summary, project.generation,
-                        project.category, project.logoImage, project.thumbnailImage
+                        project.category, project.logoImage, project.thumbnailImage, project.serviceType
                 )).from(project)
                 .innerJoin(relation).on(project.id.eq(relation.projectId))
                 .where(relation.isTeamMember.isTrue().and(relation.userId.eq(memberId)))
