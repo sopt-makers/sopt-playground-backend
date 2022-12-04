@@ -121,10 +121,21 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "멤버 프로필 전체 조회 API")
+    @Operation(
+            summary = "멤버 프로필 전체 조회 API",
+            description =
+                    """
+                    filter 1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS, 
+                    참고로 asc(오름차순)로 정렬되어 있음
+                    """
+    )
     @GetMapping("/profile")
-    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles () {
-        val members = memberService.getMemberProfiles();
+    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles (
+            @RequestParam(required = false, name = "filter") Integer filter,
+            @RequestParam(required = false, name = "limit") Integer limit,
+            @RequestParam(required = false, name = "cursor") Integer cursor
+    ) {
+        val members = memberService.getMemberProfiles(filter, limit, cursor);
         val responses = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }

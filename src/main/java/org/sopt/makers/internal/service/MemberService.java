@@ -26,6 +26,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberMapper memberMapper;
 
     private final MemberProfileQueryRepository profileQueryRepository;
@@ -71,8 +72,27 @@ public class MemberService {
                 ));
     }
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles() {
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor) {
+        val part = getMemberPart(filter);
+        if (part != null && cursor != null && limit != null)
+            return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
+        if (part != null)
+            return memberProfileQueryRepository.findAllMemberProfileByPart(part);
+        if (limit != null && cursor != null)
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
         return memberRepository.findAllByHasProfileTrue();
+    }
+
+    private String getMemberPart (int filter) {
+        return switch (filter) {
+            case 1 -> "기획";
+            case 2 -> "디자인";
+            case 3 -> "웹";
+            case 4 -> "서버";
+            case 5 -> "안드로이드";
+            case 6 -> "iOS";
+            default -> null;
+        };
     }
 
     @Transactional
