@@ -73,11 +73,15 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
-    private ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectDao project) {
-        return new ProjectResponse.ProjectMemberResponse(
-                project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
-                project.memberName(), project.memberGeneration()
-        );
+    @Operation(summary = "Project 삭제 API")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Boolean>> delteProject (
+            @PathVariable("id") Long projectId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val writerId = memberDetails.getId();
+        projectService.deleteProject(writerId, projectId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
     private ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberDao project) {
@@ -91,42 +95,10 @@ public class ProjectController {
         return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
     }
 
-    private ProjectResponse.ProjectLinkResponse toProjectLinkResponse (ProjectDao project) {
-        return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
-    }
-
     private ProjectResponse toProjectResponse (List<ProjectMemberDao> projectMembers, List<ProjectLinkDao> projectLinks) {
         val projectInfo = projectMembers.get(0);
         val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
         val linkResponses = projectLinks.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
-
-        return new ProjectResponse(
-                projectInfo.id(),
-                projectInfo.name(),
-                projectInfo.writerId(),
-                projectInfo.generation(),
-                projectInfo.category(),
-                projectInfo.startAt(),
-                projectInfo.endAt(),
-                projectInfo.serviceType(),
-                projectInfo.isAvailable(),
-                projectInfo.isFounding(),
-                projectInfo.summary(),
-                projectInfo.detail(),
-                projectInfo.logoImage(),
-                projectInfo.thumbnailImage(),
-                projectInfo.images(),
-                projectInfo.createdAt(),
-                projectInfo.updatedAt(),
-                memberResponses,
-                linkResponses
-        );
-    }
-
-    private ProjectResponse toProjectResponse (List<ProjectDao> project) {
-        val projectInfo = project.get(0);
-        val memberResponses = project.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
-        val linkResponses = project.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
 
         return new ProjectResponse(
                 projectInfo.id(),

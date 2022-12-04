@@ -5,7 +5,6 @@ import lombok.val;
 import org.sopt.makers.internal.domain.ProjectLink;
 import org.sopt.makers.internal.domain.MemberProjectRelation;
 import org.sopt.makers.internal.domain.Project;
-import org.sopt.makers.internal.dto.project.ProjectDao;
 import org.sopt.makers.internal.dto.project.ProjectMemberDao;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.dto.project.ProjectSaveRequest;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 @Service
 public class ProjectService {
     private final ProjectRepository projectRepository;
-    private final LinkRepository linkRepository;
+    private final ProjectLinkRepository projectLinkRepository;
     private final MemberProjectRelationRepository relationRepository;
     private final ProjectQueryRepository projectQueryRepository;
 
@@ -62,7 +61,7 @@ public class ProjectService {
                 .isTeamMember(memberRequest.isTeamMember())
                 .build()).collect(Collectors.toList()));
 
-        linkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
+        projectLinkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
                 .projectId(project.getId())
                 .title(linkRequest.linkTitle())
                 .url(linkRequest.linkUrl())
@@ -113,12 +112,22 @@ public class ProjectService {
             }
         }).collect(Collectors.toList()));
 
-        linkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
+        projectLinkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
                 .projectId(project.getId())
                 .title(linkRequest.linkTitle())
                 .url(linkRequest.linkUrl())
                 .build()).collect(Collectors.toList()));
 
+    }
+
+    @Transactional
+    public void deleteProject (Long writerId, Long id) {
+        val project = projectRepository.findById(id)
+                .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
+        if (!Objects.equals(project.getWriterId(), writerId)) throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
+        projectLinkRepository.deleteAllByProjectId(id);
+        relationRepository.deleteAllByProjectId(id);
+        projectRepository.delete(project);
     }
 
     @Transactional(readOnly = true)
