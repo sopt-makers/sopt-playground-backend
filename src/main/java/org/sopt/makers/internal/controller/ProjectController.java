@@ -73,6 +73,17 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
+    @Operation(summary = "Project 삭제 API")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Boolean>> delteProject (
+            @PathVariable("id") Long projectId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val writerId = memberDetails.getId();
+        projectService.deleteProject(writerId, projectId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+    }
+
     private ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberDao project) {
         return new ProjectResponse.ProjectMemberResponse(
                 project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
