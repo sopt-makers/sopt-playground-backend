@@ -3,7 +3,7 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.*;
-import org.sopt.makers.internal.exception.FacebookAuthFailureException;
+import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
@@ -20,6 +20,8 @@ import java.util.Optional;
 public class AuthService {
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
+    private final GoogleTokenManager googleTokenManager;
+
     private final MemberRepository memberRepository;
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
@@ -28,11 +30,11 @@ public class AuthService {
     public String authByFb (String code) {
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");
         if (fbAccessToken == null) {
-            throw new FacebookAuthFailureException("Facebook 인증에 실패했습니다.");
+            throw new AuthFailureException("Facebook 인증에 실패했습니다.");
         }
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
         val member = memberRepository.findByAuthUserId(fbUserInfo.userId())
-                .orElseThrow(() -> new FacebookAuthFailureException("SOPT.org 회원이 아닙니다."));
+                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -42,11 +44,11 @@ public class AuthService {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
-        if (fbAccessToken == null) throw new FacebookAuthFailureException("facebook 인증에 실패했습니다.");
+        if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
 
         val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new FacebookAuthFailureException("이미 가입된 사용자입니다.");
+        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
@@ -61,6 +63,43 @@ public class AuthService {
         memberHistory.makeMemberJoin();
 
         return tokenManager.createAuthToken(member.getId());
+    }
+
+    @Transactional
+    public String authByGoogle (String accessToken) {
+        val googleAccessToken = googleTokenManager.verifyAccessToken(accessToken);
+        if (!googleAccessToken.verified()) {
+            throw new AuthFailureException("Google 인증에 실패했습니다.");
+        }
+        val member = memberRepository.findByAuthUserId(googleAccessToken.userId())
+                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    @Transactional
+    public String registerByGoogle(String registerToken, String googleAccessToken) {
+        val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
+        if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
+        val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
+        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
+        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
+
+        val memberHistory = memberHistories.get(0);
+        val googleUserInfo = googleTokenManager.verifyAccessToken(googleAccessToken);
+        if (!googleUserInfo.verified()) throw new WrongTokenException("Google AccessToken Invalid");
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(googleUserInfo.userId())
+                        .name(memberHistory.getName())
+                        .email(memberHistory.getEmail())
+                        .generation(memberHistory.getGeneration())
+                        .build()
+        );
+        memberHistory.makeMemberJoin();
+
+        return tokenManager.createAuthToken(member.getId());
+
     }
 
     @Transactional
