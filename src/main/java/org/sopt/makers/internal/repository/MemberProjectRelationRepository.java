@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface MemberProjectRelationRepository extends JpaRepository<MemberProjectRelation, Long> {
     List<MemberProjectRelation> findAllByProjectId(Long projectId);
+
+    void deleteAllByProjectId(Long projectId);
 }
