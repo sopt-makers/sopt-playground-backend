@@ -21,6 +21,12 @@ public class SoptMemberHistory {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "part")
+    private String part;
+
     @Column(name = "generation")
     private Integer generation;
 
