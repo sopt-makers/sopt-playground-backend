@@ -29,7 +29,7 @@ public class InternalTokenManager {
 
     public String createAuthToken(Long userId) {
         val signatureAlgorithm= SignatureAlgorithm.HS256;
-        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getSecretKey());
+        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey());
         val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
         val exp = new Date().toInstant().atZone(KST)
                 .toLocalDateTime().plusDays(10).atZone(KST).toInstant();
@@ -68,7 +68,7 @@ public class InternalTokenManager {
 
     public String createRegisterToken(String email) {
         val signatureAlgorithm= SignatureAlgorithm.HS256;
-        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getSecretKey());
+        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey());
         val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
         val exp = new Date().toInstant().atZone(KST)
                 .toLocalDateTime().plusHours(6).atZone(KST).toInstant();
@@ -91,7 +91,7 @@ public class InternalTokenManager {
 
     private Claims getClaimsFromToken (String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(DatatypeConverter.parseBase64Binary(authConfig.getSecretKey()))
+                .setSigningKey(DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey()))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
