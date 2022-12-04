@@ -23,6 +23,9 @@ public class Member {
     @Column(name = "auth_user_id")
     private String authUserId;
 
+    @Column(name = "idp_type")
+    private String idpType;
+
     @Column(name = "name")
     private String name;
 

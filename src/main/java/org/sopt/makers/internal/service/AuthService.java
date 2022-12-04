@@ -55,6 +55,7 @@ public class AuthService {
         val member = memberRepository.save(
                 Member.builder()
                         .authUserId(fbUserInfo.userId())
+                        .idpType("facebook")
                         .name(memberHistory.getName())
                         .email(memberHistory.getEmail())
                         .generation(memberHistory.getGeneration())
@@ -95,6 +96,7 @@ public class AuthService {
         val member = memberRepository.save(
                 Member.builder()
                         .authUserId(googleUserInfo.userId())
+                        .idpType("google")
                         .name(memberHistory.getName())
                         .email(memberHistory.getEmail())
                         .generation(memberHistory.getGeneration())
