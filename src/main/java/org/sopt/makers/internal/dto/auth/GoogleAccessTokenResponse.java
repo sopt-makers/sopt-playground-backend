@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.dto.auth;
 
-public record GoogleAccessTokenResponse (
-        boolean verified,
-        String userId
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record GoogleAccessTokenResponse(
+        @JsonProperty("access_token")
+        String accessToken
 ) {}
