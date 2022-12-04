@@ -28,4 +28,7 @@ public class AuthConfig {
     @Value("${oauth.registerPage}")
     private String registerPage;
 
+    @Value("${oauth.google.client.id}")
+    private String googleClientId;
+
 }
