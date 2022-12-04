@@ -123,8 +123,12 @@ public class MemberController {
 
     @Operation(summary = "멤버 프로필 전체 조회 API")
     @GetMapping("/profile")
-    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles () {
-        val members = memberService.getMemberProfiles();
+    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles (
+            @RequestParam(required = false, name = "filter") Integer filter,
+            @RequestParam(required = false, name = "limit") Integer limit,
+            @RequestParam(required = false, name = "cursor") Integer cursor
+    ) {
+        val members = memberService.getMemberProfiles(filter, limit, cursor);
         val responses = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
