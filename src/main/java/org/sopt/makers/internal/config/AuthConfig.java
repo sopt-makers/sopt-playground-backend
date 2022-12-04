@@ -8,19 +8,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AuthConfig {
     @Value("${jwt.secret}")
-    private String secretKey;
+    private String fbSecretKey;
 
     @Value("${oauth.fb.redirect.auth}")
-    private String redirectUriAuth;
+    private String fbRedirectUriAuth;
 
     @Value("${oauth.fb.redirect.register}")
-    private String redirectUriRegister;
+    private String fbRedirectUriRegister;
 
     @Value("${oauth.fb.client.appId}")
-    private String clientAppId;
+    private String fbClientAppId;
 
     @Value("${oauth.fb.client.secret}")
-    private String clientSecret;
+    private String fbClientSecret;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -30,5 +30,14 @@ public class AuthConfig {
 
     @Value("${oauth.google.client.id}")
     private String googleClientId;
+
+    @Value("${oauth.google.client.secret}")
+    private String googleClientSecret;
+
+    @Value("${oauth.google.redirect.auth}")
+    private String googleRedirectUriAuth;
+
+    @Value("${oauth.google.redirect.register}")
+    private String googleRedirectUriRegister;
 
 }
