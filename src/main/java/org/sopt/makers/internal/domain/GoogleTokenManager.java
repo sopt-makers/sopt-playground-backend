@@ -24,14 +24,9 @@ import java.util.Objects;
 public class GoogleTokenManager {
 
     private final AuthConfig authConfig;
-    private static final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-    private static final HttpTransport transport = new NetHttpTransport();
-
     private final GoogleAuthClient authClient;
+    private final GoogleIdTokenVerifier verifier;
     private final GoogleUserInfoResponse failResponse = new GoogleUserInfoResponse(false, null);
-    private final GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
-            .setAudience(List.of(authConfig.getGoogleClientId()))
-            .build();
 
     public String getAccessTokenByCode(String code, String redirectType) {
         val redirectUri = Objects.equals(redirectType, "auth") ? authConfig.getGoogleRedirectUriAuth() : authConfig.getGoogleRedirectUriRegister();

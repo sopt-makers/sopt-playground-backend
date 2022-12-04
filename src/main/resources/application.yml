@@ -48,3 +48,10 @@ oauth:
     client:
       appId: test
       secret: test
+  google:
+    redirect:
+      auth: testUrl
+      register: testUrl
+    client:
+      id: test
+      secret: test
