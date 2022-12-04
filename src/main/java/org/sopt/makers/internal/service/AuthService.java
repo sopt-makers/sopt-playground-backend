@@ -66,27 +66,31 @@ public class AuthService {
     }
 
     @Transactional
-    public String authByGoogle (String accessToken) {
-        val googleAccessToken = googleTokenManager.verifyAccessToken(accessToken);
-        if (!googleAccessToken.verified()) {
+    public String authByGoogle (String code) {
+        val googleAccessToken = googleTokenManager.getAccessTokenByCode(code, "auth");
+        if (googleAccessToken == null) {
             throw new AuthFailureException("Google 인증에 실패했습니다.");
         }
-        val member = memberRepository.findByAuthUserId(googleAccessToken.userId())
+        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
+        val member = memberRepository.findByAuthUserId(googleUserInfo.userId())
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
 
         return tokenManager.createAuthToken(member.getId());
     }
 
     @Transactional
-    public String registerByGoogle(String registerToken, String googleAccessToken) {
+    public String registerByGoogle(String registerToken, String code) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
+        val googleAccessToken = googleTokenManager.getAccessTokenByCode(code, "register");
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
+        if (googleAccessToken == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+
         val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
         if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
-        val googleUserInfo = googleTokenManager.verifyAccessToken(googleAccessToken);
+        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (!googleUserInfo.verified()) throw new WrongTokenException("Google AccessToken Invalid");
         val member = memberRepository.save(
                 Member.builder()
