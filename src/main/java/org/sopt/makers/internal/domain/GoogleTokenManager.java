@@ -32,7 +32,7 @@ public class GoogleTokenManager {
         val redirectUri = Objects.equals(redirectType, "auth") ? authConfig.getGoogleRedirectUriAuth() : authConfig.getGoogleRedirectUriRegister();
         val grantType = "authorization_code";
         val accessTokenResponse = authClient.getAccessToken(
-                authConfig.getFbClientAppId(), authConfig.getFbClientSecret(), code, grantType, redirectUri
+                authConfig.getGoogleClientId(), authConfig.getGoogleClientSecret(), code, grantType, redirectUri
         );
         return accessTokenResponse.accessToken();
     }
