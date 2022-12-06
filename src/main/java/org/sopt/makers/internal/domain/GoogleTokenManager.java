@@ -1,10 +1,6 @@
 package org.sopt.makers.internal.domain;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -15,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -31,9 +27,14 @@ public class GoogleTokenManager {
     public String getAccessTokenByCode(String code, String redirectType) {
         val redirectUri = Objects.equals(redirectType, "auth") ? authConfig.getGoogleRedirectUriAuth() : authConfig.getGoogleRedirectUriRegister();
         val grantType = "authorization_code";
-        val accessTokenResponse = authClient.getAccessToken(
-                authConfig.getGoogleClientId(), authConfig.getGoogleClientSecret(), code, grantType, redirectUri
+        val body = Map.of(
+                "client_id", authConfig.getGoogleClientId(),
+                "client_secret", authConfig.getGoogleClientSecret(),
+                "code", code,
+                "grant_type", grantType,
+                "redirect_uri", redirectUri
         );
+        val accessTokenResponse = authClient.getAccessToken(body);
         return accessTokenResponse.accessToken();
     }
 
