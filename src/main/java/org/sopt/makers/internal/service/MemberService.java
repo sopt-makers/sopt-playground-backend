@@ -83,7 +83,7 @@ public class MemberService {
         return memberRepository.findAllByHasProfileTrue();
     }
 
-    private String getMemberPart (int filter) {
+    private String getMemberPart (Integer filter) {
         if (filter == null) return null;
         return switch (filter) {
             case 1 -> "기획";
