@@ -84,6 +84,7 @@ public class MemberService {
     }
 
     private String getMemberPart (int filter) {
+        if (filter == null) return null;
         return switch (filter) {
             case 1 -> "기획";
             case 2 -> "디자인";
