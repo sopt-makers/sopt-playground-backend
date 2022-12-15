@@ -32,6 +32,17 @@ public class EmailSender {
         mailSender.send(message);
     }
 
+    public void sendEmail(String to, String from, String subject, String html) throws MessagingException, UnsupportedEncodingException {
+        val message = mailSender.createMimeMessage();
+        val helper = new MimeMessageHelper(message, "utf-8");
+
+        helper.setFrom(from);
+        helper.setTo(to);
+        helper.setSubject(MimeUtility.encodeText(subject, "UTF-8", "B"));
+        helper.setText(html, true);
+        mailSender.send(message);
+    }
+
     public String createRegisterEmailHtml (String token) {
         val registerPageUriTemplate = authConfig.getRegisterPage();
         val registerPageUri = registerPageUriTemplate.replace("{{token}}", token);
