@@ -1,8 +1,5 @@
 package org.sopt.makers.internal.config;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -45,12 +42,5 @@ public class AuthConfig {
 
     @Value("${oauth.google.redirect.register}")
     private String googleRedirectUriRegister;
-
-    @Bean
-    public GoogleIdTokenVerifier googleIdTokenVerifier () {
-        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(List.of(this.getGoogleClientId()))
-                .build();
-    }
 
 }
