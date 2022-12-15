@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface LinkRepository extends JpaRepository<ProjectLink, Long> {
+public interface ProjectLinkRepository extends JpaRepository<ProjectLink, Long> {
     List<ProjectLink> findAllByProjectId(Long projectId);
+
+    void deleteAllByProjectId(Long projectId);
 }

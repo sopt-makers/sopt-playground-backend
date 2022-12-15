@@ -16,9 +16,9 @@ public class FacebookTokenManager {
     private final FacebookAuthClient authClient;
 
     public String getAccessTokenByCode(String code, String redirectType) {
-        val redirectUri = Objects.equals(redirectType, "auth") ? authConfig.getRedirectUriAuth() : authConfig.getRedirectUriRegister();
+        val redirectUri = Objects.equals(redirectType, "auth") ? authConfig.getFbRedirectUriAuth() : authConfig.getFbRedirectUriRegister();
         val accessTokenResponse = authClient.getAccessToken(
-                authConfig.getClientAppId(), redirectUri, authConfig.getClientSecret(), code
+                authConfig.getFbClientAppId(), redirectUri, authConfig.getFbClientSecret(), code
         );
         return accessTokenResponse.accessToken();
     }
