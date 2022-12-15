@@ -68,12 +68,13 @@ public class AuthService {
 
     @Transactional
     public String authByGoogle (String code) {
-        val googleAccessToken = googleTokenManager.getAccessTokenByCode(code, "auth");
-        if (googleAccessToken == null) {
+        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "auth");
+        if (googleAccessTokenResponse == null) {
             throw new AuthFailureException("Google 인증에 실패했습니다.");
         }
-        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
-        val member = memberRepository.findByAuthUserId(googleUserInfo.userId())
+        val googleAccessToken = googleAccessTokenResponse.idToken();
+        val googleUserInfoResponse = googleTokenManager.getUserInfo(googleAccessToken);
+        val member = memberRepository.findByAuthUserId(googleUserInfoResponse)
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
 
         return tokenManager.createAuthToken(member.getId());
@@ -82,9 +83,10 @@ public class AuthService {
     @Transactional
     public String registerByGoogle(String registerToken, String code) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
-        val googleAccessToken = googleTokenManager.getAccessTokenByCode(code, "register");
+        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
-        if (googleAccessToken == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+        if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+        val googleAccessToken = googleAccessTokenResponse.idToken();
 
         val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
@@ -92,10 +94,10 @@ public class AuthService {
 
         val memberHistory = memberHistories.get(0);
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
-        if (!googleUserInfo.verified()) throw new WrongTokenException("Google AccessToken Invalid");
+        if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
         val member = memberRepository.save(
                 Member.builder()
-                        .authUserId(googleUserInfo.userId())
+                        .authUserId(googleUserInfo)
                         .idpType("google")
                         .name(memberHistory.getName())
                         .email(memberHistory.getEmail())
