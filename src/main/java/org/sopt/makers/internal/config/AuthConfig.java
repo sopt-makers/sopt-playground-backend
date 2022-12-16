@@ -43,4 +43,6 @@ public class AuthConfig {
     @Value("${oauth.google.redirect.register}")
     private String googleRedirectUriRegister;
 
+    @Value("${coffeechat.profile}")
+    private String profileUrl;
 }

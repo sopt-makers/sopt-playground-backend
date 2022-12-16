@@ -18,16 +18,26 @@ public class CoffeeChatService {
     private final EmailSender emailSender;
     private final MemberRepository memberRepository;
 
-    public void sendCoffeeChatRequest (CoffeeChatRequest request) {
+    public void sendCoffeeChatRequest (CoffeeChatRequest request, Long senderId) {
         val receiver  = memberRepository.findById(request.receiverId())
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-
+        val sender = memberRepository.findById(senderId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        val html = emailSender.createCoffeeChatEmailHtml(
+                sender.getName(),
+                request.senderEmail(),
+                senderId,
+                request.category(),
+                sender.getProfileImage(),
+                request.content()
+        );
+        val subject = """
+                띠링, %s님이 보낸 쪽지가 도착했어요!""".formatted(sender.getName());
         try {
             emailSender.sendEmail(
                     receiver.getEmail(),
-                    request.senderEmail(),
-                    "SUBJECT",
-                    "HTML"
+                    subject,
+                    html
             );
         } catch (MessagingException | UnsupportedEncodingException exception) {
             exception.printStackTrace();
