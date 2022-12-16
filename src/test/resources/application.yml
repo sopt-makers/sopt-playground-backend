@@ -50,3 +50,5 @@ oauth:
     client:
       id: test
       secret: test
+coffeechat:
+  profile: testUrl
