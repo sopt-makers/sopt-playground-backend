@@ -53,6 +53,7 @@ public class EmailSender {
             String profilePicUrl,
             String content
     ) {
+        val profilePictureUrl = profilePicUrl == null ? authConfig.getProfileDefaultUrl() : profilePicUrl;
         val profileUrl = authConfig.getProfileUrl() + senderId;
         val originHtml = """
 <!DOCTYPE htmlPUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -88,7 +89,7 @@ public class EmailSender {
             <table style="width:100%" align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation">
               <tbody>
                 <tr>
-                  <td><img alt="SOPT" src="https://playground.sopt.org/icons/logo/time%3D30.svg" width="90" height="30" style="display:block;outline:none;border:none;text-decoration:none;margin:20px auto 0 auto" /></td>
+                  <td><img alt="SOPT" src="{{LOGO_URL}}" width="90" height="30" style="display:block;outline:none;border:none;text-decoration:none;margin:20px auto 0 auto" /></td>
                 </tr>
               </tbody>
             </table>
@@ -105,7 +106,8 @@ public class EmailSender {
                 .replace("{{TOPIC}}", category)
                 .replace("{{CONTENT}}", content)
                 .replace("{{EMAIL}}", senderEmail)
-                .replace("{{PROFILE_PICTURE_URL}}", profilePicUrl)
-                .replace("{{PROFILE_URL}}", profileUrl);
+                .replace("{{PROFILE_PICTURE_URL}}", profilePictureUrl)
+                .replace("{{PROFILE_URL}}", profileUrl)
+                .replace("{{LOGO_URL}}", authConfig.getLogoUrl());
     }
 }

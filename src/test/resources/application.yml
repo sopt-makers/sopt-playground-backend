@@ -52,3 +52,5 @@ oauth:
       secret: test
 coffeechat:
   profile: testUrl
+  logo: testUrl
+  default: testUrl
