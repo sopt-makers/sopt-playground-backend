@@ -39,6 +39,7 @@ public class MemberProfileQueryRepository {
                         .and(activities.part.contains(part))
                         .and(member.id.gt(cursor))
                 ).limit(limit)
+                .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
     }
@@ -50,7 +51,9 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .where(member.hasProfile.eq(true)
                         .and(activities.part.contains(part))
-                ).orderBy(member.id.asc())
+                )
+                .groupBy(member.id)
+                .orderBy(member.id.asc())
                 .fetch();
     }
 
@@ -59,7 +62,9 @@ public class MemberProfileQueryRepository {
         return queryFactory.selectFrom(member)
                 .where(member.hasProfile.eq(true)
                         .and(member.id.gt(cursor))
-                ).limit(limit)
+                )
+                .groupBy(member.id)
+                .limit(limit)
                 .orderBy(member.id.asc())
                 .fetch();
     }

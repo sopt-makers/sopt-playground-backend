@@ -10,6 +10,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.mapper.MemberMapper;
+import org.sopt.makers.internal.service.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
     private final MemberService memberService;
+    private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
 
     @Operation(summary = "유저 id로 조회 API")
@@ -159,6 +161,17 @@ public class MemberController {
     ) {
         memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커피챗")
+    @PostMapping("/coffeechat")
+    public ResponseEntity<CommonResponse> requestCoffeeChat(
+            @RequestBody CoffeeChatRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
+        val response = new CommonResponse(true, "성공적으로 커피챗 이메일을 보냈습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
