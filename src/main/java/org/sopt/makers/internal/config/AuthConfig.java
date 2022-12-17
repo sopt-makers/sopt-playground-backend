@@ -45,4 +45,10 @@ public class AuthConfig {
 
     @Value("${coffeechat.profile}")
     private String profileUrl;
+
+    @Value("${coffeechat.logo}")
+    private String logoUrl;
+
+    @Value("${coffeechat.default}")
+    private String profileDefaultUrl;
 }
