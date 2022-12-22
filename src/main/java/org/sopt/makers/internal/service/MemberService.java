@@ -3,18 +3,21 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.dto.member.*;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.repository.MemberLinkRepository;
-import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
-import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
+import org.sopt.makers.internal.repository.*;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +29,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberMapper memberMapper;
 
@@ -121,11 +125,22 @@ public class MemberService {
         val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
         if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
         val memberActivities = memberSoptActivityRepository.saveAll(memberActivityEntities);
+
+        val memberCareerEntities = request.careers().stream().map(career ->
+                MemberCareer.builder()
+                        .memberId(memberId)
+                        .companyName(career.companyName())
+                        .title(career.title())
+                        .startDate(career.startDate())
+                        .endDate(career.endDate())
+                        .isCurrent(career.isCurrent())
+                        .build()).collect(Collectors.toList());
+        val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(), request.skill(),
                 request.openToWork(), request.openToSideProject(), request.allowOfficial(),
-                memberActivities, memberLinks
+                memberActivities, memberLinks, memberCareers
         );
         return member;
     }
@@ -154,11 +169,31 @@ public class MemberService {
                                 .team(activity.team())
                                 .build()).collect(Collectors.toList())
         );
+
+        val memberCareers = request.careers().stream().map(career -> {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            try {
+                val start = YearMonth.parse(career.startDate(), formatter);
+                val end = YearMonth.parse(career.endDate(), formatter);
+                if (start.isAfter(end)) throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+            } catch (DateTimeParseException e) {
+                throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
+            }
+            return MemberCareer.builder()
+                    .memberId(memberId)
+                    .companyName(career.companyName())
+                    .title(career.title())
+                    .startDate(career.startDate())
+                    .endDate(career.endDate())
+                    .isCurrent(career.isCurrent())
+                    .build();
+        }).collect(Collectors.toList());
+
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(), request.skill(),
                 request.openToWork(), request.openToSideProject(), request.allowOfficial(),
-                memberActivities, memberLinks
+                memberActivities, memberLinks, memberCareers
         );
         return member;
     }
@@ -182,5 +217,4 @@ public class MemberService {
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
     }
-
 }
