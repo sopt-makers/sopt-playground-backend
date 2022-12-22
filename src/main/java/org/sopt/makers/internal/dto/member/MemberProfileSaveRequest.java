@@ -1,6 +1,9 @@
 package org.sopt.makers.internal.dto.member;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 public record MemberProfileSaveRequest(
@@ -16,6 +19,7 @@ public record MemberProfileSaveRequest(
 		String skill,
 		List<MemberLinkSaveRequest> links,
 		List<MemberSoptActivitySaveRequest> activities,
+		List<MemberCareerSaveRequest> careers,
 		Boolean openToWork,
 		Boolean openToSideProject,
 		Boolean allowOfficial
@@ -30,5 +34,17 @@ public record MemberProfileSaveRequest(
 			Integer generation,
 			String part,
 			String team
+	){}
+
+	public record MemberCareerSaveRequest(
+			String companyName,
+			String title,
+
+			@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM")
+			String startDate,
+
+			@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM")
+			String endDate,
+			Boolean isCurrent
 	){}
 }
