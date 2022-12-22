@@ -126,8 +126,10 @@ public class MemberController {
             }
             index += 1;
         }
-        response.careers().add(0, currentCareer);
-        response.careers().remove(index+1);
+        if (currentCareer != null) {
+            response.careers().add(0, currentCareer);
+            response.careers().remove(index+1);
+        }
     }
 
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")

@@ -49,6 +49,7 @@ public record MemberProfileSpecificResponse(
 
     public record MemberCareerResponse(
             Long id,
+            String companyName,
             String title,
             String startDate,
             String endDate,

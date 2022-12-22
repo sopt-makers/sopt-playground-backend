@@ -39,6 +39,7 @@ public record MemberProfileResponse(
 
     public record MemberCareerResponse(
             Long id,
+            String companyName,
             String title,
             String startDate,
             String endDate,

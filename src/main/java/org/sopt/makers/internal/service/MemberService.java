@@ -126,15 +126,26 @@ public class MemberService {
         if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
         val memberActivities = memberSoptActivityRepository.saveAll(memberActivityEntities);
 
-        val memberCareerEntities = request.careers().stream().map(career ->
-                MemberCareer.builder()
-                        .memberId(memberId)
-                        .companyName(career.companyName())
-                        .title(career.title())
-                        .startDate(career.startDate())
-                        .endDate(career.endDate())
-                        .isCurrent(career.isCurrent())
-                        .build()).collect(Collectors.toList());
+        val memberCareerEntities = request.careers().stream().map(career -> {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            try {
+                val start = YearMonth.parse(career.startDate(), formatter);
+                if (!career.isCurrent()) {
+                    val end = YearMonth.parse(career.endDate(), formatter);
+                    if (start.isAfter(end)) throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+                }
+            } catch (DateTimeParseException e) {
+                throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
+            }
+            return MemberCareer.builder()
+                    .memberId(memberId)
+                    .companyName(career.companyName())
+                    .title(career.title())
+                    .startDate(career.startDate())
+                    .endDate(career.endDate())
+                    .isCurrent(career.isCurrent())
+                    .build();
+        }).collect(Collectors.toList());
         val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
@@ -174,8 +185,10 @@ public class MemberService {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             try {
                 val start = YearMonth.parse(career.startDate(), formatter);
-                val end = YearMonth.parse(career.endDate(), formatter);
-                if (start.isAfter(end)) throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+                if (!career.isCurrent()) {
+                    val end = YearMonth.parse(career.endDate(), formatter);
+                    if (start.isAfter(end)) throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+                }
             } catch (DateTimeParseException e) {
                 throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
             }
