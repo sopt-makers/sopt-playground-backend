@@ -69,6 +69,14 @@ public class Member {
     @JoinColumn(name = "user_id")
     private List<MemberLink> links = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JoinColumn(name = "user_id")
+    private List<MemberCareer> careers = new ArrayList<>();
+
     @Column
     private String introduction;
 
@@ -103,23 +111,25 @@ public class Member {
             Boolean openToSideProject,
             Boolean allowOfficial,
             List<MemberSoptActivity> activities,
-            List<MemberLink> links
+            List<MemberLink> links,
+            List<MemberCareer> careers
     ) {
-        this.name = Objects.requireNonNullElse(name, this.name);
-        this.profileImage = Objects.requireNonNullElse(profileImage, this.profileImage);
-        this.birthday = Objects.requireNonNullElse(birthday, this.birthday);
-        this.phone = Objects.requireNonNullElse(phone, this.phone);
-        this.email =Objects.requireNonNullElse(email, this.email);
-        this.address = Objects.requireNonNullElse(address, this.address);
-        this.university = Objects.requireNonNullElse(university, this.university);
-        this.major = Objects.requireNonNullElse(major, this.major);
-        this.introduction = Objects.requireNonNullElse(introduction, this.introduction);
-        this.skill = Objects.requireNonNullElse(skill, this.skill);
-        this.openToWork = Objects.requireNonNullElse(openToWork, this.openToWork);
-        this.openToSideProject = Objects.requireNonNullElse(openToSideProject, this.openToSideProject);
-        this.allowOfficial = Objects.requireNonNullElse(allowOfficial, this.allowOfficial);
+        this.name = name;
+        this.profileImage = profileImage;
+        this.birthday = birthday;
+        this.phone = phone;
+        this.email =email;
+        this.address = address;
+        this.university = university;
+        this.major = major;
+        this.introduction = introduction;
+        this.skill = skill;
+        this.openToWork = openToWork;
+        this.openToSideProject = openToSideProject;
+        this.allowOfficial = allowOfficial;
         this.activities.clear(); this.activities.addAll(activities);
         this.links.clear(); this.links.addAll(links);
+        this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
     }
 }
