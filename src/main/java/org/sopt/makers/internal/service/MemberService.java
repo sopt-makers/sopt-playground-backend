@@ -205,6 +205,14 @@ public class MemberService {
         memberLinkRepository.delete(link);
     }
 
+    @Transactional
+    public void deleteUserProfileActivity (Long activityId, Long memberId) {
+        val activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
+        memberSoptActivityRepository.delete(activity);
+
+    }
+
     @Transactional(readOnly = true)
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
