@@ -18,6 +18,7 @@ public record MemberProfileSpecificResponse(
         List<MemberActivityResponse> activities,
         List<MemberLinkResponse> links,
         List<MemberProjectResponse> projects,
+        List<MemberCareerResponse> careers,
         Boolean openToWork,
         Boolean openToSideProject,
         Boolean allowOfficial,
@@ -44,5 +45,14 @@ public record MemberProfileSpecificResponse(
     public record MemberActivityResponse (
             String cardinalInfo,
             List<ActivityVo> cardinalActivities
+    ){}
+
+    public record MemberCareerResponse(
+            Long id,
+            String companyName,
+            String title,
+            String startDate,
+            String endDate,
+            Boolean isCurrent
     ){}
 }

@@ -9,6 +9,7 @@ import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
@@ -17,6 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -63,6 +67,8 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileSaveRequest request
     ) {
+        val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
+        if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.saveMemberProfile(memberDetails.getId(), request);
         val response = memberMapper.toProfileResponse(member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -74,6 +80,8 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileUpdateRequest request
     ) {
+        val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
+        if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(memberDetails.getId(), request);
         val response = memberMapper.toProfileResponse(member);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -98,7 +106,30 @@ public class MemberController {
         val response = memberMapper.toProfileSpecificResponse(
                 member, isMine, memberProfileProjects, activityResponses
         );
+        sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    private void sortProfileCareer (MemberProfileSpecificResponse response) {
+        response.careers().sort((a, b) -> {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            val start = YearMonth.parse(a.startDate(), formatter);
+            val end = YearMonth.parse(b.startDate(), formatter);
+            return end.compareTo(start);
+        });
+        MemberProfileSpecificResponse.MemberCareerResponse currentCareer = null;
+        int index = 0;
+        for (val career: response.careers()) {
+            if (career.isCurrent()) {
+                currentCareer = career;
+                break;
+            }
+            index += 1;
+        }
+        if (currentCareer != null) {
+            response.careers().add(0, currentCareer);
+            response.careers().remove(index+1);
+        }
     }
 
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
@@ -120,6 +151,7 @@ public class MemberController {
         val response = memberMapper.toProfileSpecificResponse(
                 member, isMine, memberProfileProjects, activityResponses
         );
+        sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
