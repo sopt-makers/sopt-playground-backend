@@ -112,6 +112,7 @@ public class ProjectService {
             }
         }).collect(Collectors.toList()));
 
+        projectLinkRepository.deleteAllByProjectId(id);
         projectLinkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
                 .projectId(project.getId())
                 .title(linkRequest.linkTitle())
