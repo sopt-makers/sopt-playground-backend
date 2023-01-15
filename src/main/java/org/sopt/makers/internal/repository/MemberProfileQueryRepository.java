@@ -68,4 +68,57 @@ public class MemberProfileQueryRepository {
                 .orderBy(member.id.asc())
                 .fetch();
     }
+
+    public List<Member> findAllLimitedMemberProfileByPartAndName(String part, int limit, int cursor, String name) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.selectFrom(member)
+                .innerJoin(member.activities, activities)
+                .where(member.hasProfile.eq(true)
+                        .and(activities.part.contains(part))
+                        .and(member.id.gt(cursor))
+                        .and(member.name.eq(name))
+                ).limit(limit)
+                .groupBy(member.id)
+                .orderBy(member.id.asc())
+                .fetch();
+    }
+
+    public List<Member> findAllMemberProfileByPartAndName (String part, String name) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.selectFrom(member)
+                .innerJoin(member.activities, activities)
+                .where(member.hasProfile.eq(true)
+                        .and(activities.part.contains(part))
+                        .and(member.name.eq(name))
+                )
+                .groupBy(member.id)
+                .orderBy(member.id.asc())
+                .fetch();
+    }
+
+    public List<Member> findAllLimitedMemberProfileByName(int limit, int cursor, String name) {
+        val member = QMember.member;
+        return queryFactory.selectFrom(member)
+                .where(member.hasProfile.eq(true)
+                        .and(member.id.gt(cursor))
+                        .and(member.name.eq(name))
+                )
+                .groupBy(member.id)
+                .limit(limit)
+                .orderBy(member.id.asc())
+                .fetch();
+    }
+
+    public List<Member> findAllByName(String name) {
+        val member = QMember.member;
+        return queryFactory.selectFrom(member)
+                .where(member.hasProfile.eq(true)
+                        .and(member.name.eq(name))
+                )
+                .groupBy(member.id)
+                .orderBy(member.id.asc())
+                .fetch();
+    }
 }
