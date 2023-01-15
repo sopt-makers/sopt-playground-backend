@@ -167,9 +167,10 @@ public class MemberController {
     public ResponseEntity<List<MemberProfileResponse>> getUserProfiles (
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Integer cursor
+            @RequestParam(required = false, name = "cursor") Integer cursor,
+            @RequestParam(required = false, name = "name") String name
     ) {
-        val members = memberService.getMemberProfiles(filter, limit, cursor);
+        val members = memberService.getMemberProfiles(filter, limit, cursor, name);
         val responses = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
