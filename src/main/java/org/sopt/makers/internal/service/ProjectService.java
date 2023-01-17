@@ -132,8 +132,8 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectMemberDao> fetchAll () {
-        return projectQueryRepository.findAll();
+    public List<Project> fetchAll () {
+        return projectRepository.findAll();
     }
 
     @Transactional(readOnly = true)
@@ -144,6 +144,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectMemberDao> fetchById (Long id) {
         val project = projectQueryRepository.findById(id);
+        val projectMembers = project.stream().filter(p -> p.memberHasProfile())
         if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
         return project;
     }
