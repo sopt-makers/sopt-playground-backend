@@ -34,7 +34,7 @@ public class ProjectQueryRepository {
                                 project.startAt, project.endAt, project.serviceType, project.isAvailable, project.isFounding,
                                 project.summary, project.detail, project.logoImage, project.thumbnailImage, project.images,
                                 project.createdAt, project.updatedAt,
-                                member.id, member.name, member.generation, relation.role, relation.description, relation.isTeamMember
+                                member.id, member.name, member.generation, member.profileImage, relation.role, relation.description, relation.isTeamMember
                         )).from(project)
                 .innerJoin(relation).on(relation.projectId.eq(project.id))
                 .innerJoin(member).on(relation.userId.eq(member.id));

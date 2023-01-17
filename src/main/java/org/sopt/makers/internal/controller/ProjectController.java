@@ -87,7 +87,7 @@ public class ProjectController {
     private ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberDao project) {
         return new ProjectResponse.ProjectMemberResponse(
                 project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
-                project.memberName(), project.memberGeneration()
+                project.memberName(), project.memberGeneration(), project.memberProfileImage()
         );
     }
 

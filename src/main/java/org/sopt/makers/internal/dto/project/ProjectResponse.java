@@ -31,7 +31,8 @@ public record ProjectResponse(
             String memberDescription,
             Boolean isTeamMember,
             String memberName,
-            Integer memberGeneration
+            Integer memberGeneration,
+            String memberProfileImage
     ){}
 
     public record ProjectLinkResponse(
