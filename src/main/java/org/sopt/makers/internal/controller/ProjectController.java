@@ -81,10 +81,10 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
-    private ProjectDetailResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberDao project) {
+    private ProjectDetailResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
         return new ProjectDetailResponse.ProjectMemberResponse(
                 project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
-                project.memberName(), project.memberGeneration(), project.memberProfileImage(), project.memberHasProfile()
+                project.memberName(), project.memberGenerations(), project.memberProfileImage(), project.memberHasProfile()
         );
     }
 
@@ -112,7 +112,7 @@ public class ProjectController {
         );
     }
 
-    private ProjectDetailResponse toProjectDetailResponse (List<ProjectMemberDao> projectMembers, List<ProjectLinkDao> projectLinks) {
+    private ProjectDetailResponse toProjectDetailResponse (List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
         val projectInfo = projectMembers.get(0);
         val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
         val linkResponses = projectLinks.stream().map(this::toProjectDetailLinkResponse).collect(Collectors.toList());

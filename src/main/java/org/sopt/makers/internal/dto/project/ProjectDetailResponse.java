@@ -31,7 +31,7 @@ public record ProjectDetailResponse(
             String memberDescription,
             Boolean isTeamMember,
             String memberName,
-            Integer memberGeneration,
+            List<Integer> memberGenerations,
             String memberProfileImage,
             Boolean memberHasProfile
     ){}
