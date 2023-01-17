@@ -8,6 +8,7 @@ import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
@@ -42,7 +43,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public Member getMemberHasProfileById (Long id) {
-        return memberRepository.findByIdAndHasProfileTrue(id).orElseThrow(() -> new NotFoundDBEntityException("Member without profile"));
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다."));
+        if (member.getHasProfile()) return member;
+        else throw new MemberHasNotProfileException("해당 Member는 프로필이 없습니다.");
     }
 
     @Transactional(readOnly = true)
