@@ -62,11 +62,7 @@ public class ProjectQueryRepository {
         val project = QProject.project;
         return getProjectLinkQuery().where(project.id.eq(id)).fetch();
     }
-
-    public List<ProjectMemberDao> findAll() {
-        return getProjectQuery().fetch();
-    }
-
+    
     public List<ProjectLinkDao> findAllLinks() {
         return getProjectLinkQuery().fetch();
     }
