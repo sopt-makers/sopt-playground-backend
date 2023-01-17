@@ -28,6 +28,7 @@ public record ProjectMemberDao (
         String memberName,
         Integer memberGeneration,
         String memberProfileImage,
+        Boolean memberHasProfile,
 
         String memberRole,
         String memberDesc,
