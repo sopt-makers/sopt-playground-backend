@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ClientBadRequestException.class)
-    public ResponseEntity<String> entityNotfoundException (ClientBadRequestException ex) {
+    public ResponseEntity<String> clientBadRequestException (ClientBadRequestException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ForbiddenClientException.class)
-    public ResponseEntity<String> entityNotfoundException (ForbiddenClientException ex) {
+    public ResponseEntity<String> forbiddenClientException (ForbiddenClientException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AuthFailureException.class)
-    public ResponseEntity<String> entityNotfoundException (AuthFailureException ex) {
+    public ResponseEntity<String> authFailureException (AuthFailureException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> entityNotfoundException (RuntimeException ex) {
+    public ResponseEntity<String> unknownException (RuntimeException ex) {
         log.error("[Unknown Error] : " + ex.getMessage());
         ex.printStackTrace();
         return ResponseEntity
