@@ -8,6 +8,7 @@ import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
@@ -42,7 +43,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public Member getMemberHasProfileById (Long id) {
-        return memberRepository.findByIdAndHasProfileTrue(id).orElseThrow(() -> new NotFoundDBEntityException("Member without profile"));
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다."));
+        if (member.getHasProfile()) return member;
+        else throw new MemberHasNotProfileException("해당 Member는 프로필이 없습니다.");
     }
 
     @Transactional(readOnly = true)
@@ -76,14 +80,24 @@ public class MemberService {
                 ));
     }
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor) {
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name) {
         val part = getMemberPart(filter);
-        if (part != null && cursor != null && limit != null)
-            return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
-        if (part != null)
-            return memberProfileQueryRepository.findAllMemberProfileByPart(part);
-        if (limit != null && cursor != null)
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
+        if (name == null) {
+            if (part != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
+            if (part != null)
+                return memberProfileQueryRepository.findAllMemberProfileByPart(part);
+            if (limit != null && cursor != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
+        } else {
+            if (part != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndName(part, limit, cursor, name);
+            if (part != null)
+                return memberProfileQueryRepository.findAllMemberProfileByPartAndName(part, name);
+            if (limit != null && cursor != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByName(limit, cursor, name);
+            return memberProfileQueryRepository.findAllByName(name);
+        }
         return memberRepository.findAllByHasProfileTrue();
     }
 

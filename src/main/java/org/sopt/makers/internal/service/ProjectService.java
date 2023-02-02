@@ -2,21 +2,21 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.ProjectLink;
 import org.sopt.makers.internal.domain.MemberProjectRelation;
 import org.sopt.makers.internal.domain.Project;
-import org.sopt.makers.internal.dto.project.ProjectMemberDao;
-import org.sopt.makers.internal.dto.project.ProjectLinkDao;
-import org.sopt.makers.internal.dto.project.ProjectSaveRequest;
-import org.sopt.makers.internal.dto.project.ProjectUpdateRequest;
+import org.sopt.makers.internal.dto.project.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.mapper.ProjectMapper;
 import org.sopt.makers.internal.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -29,6 +29,8 @@ public class ProjectService {
     private final ProjectLinkRepository projectLinkRepository;
     private final MemberProjectRelationRepository relationRepository;
     private final ProjectQueryRepository projectQueryRepository;
+    private final MemberSoptActivityRepository soptActivityRepository;
+    private final ProjectMapper projectMapper;
 
     @Transactional
     public void createProject (ProjectSaveRequest request) {
@@ -132,8 +134,8 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectMemberDao> fetchAll () {
-        return projectQueryRepository.findAll();
+    public List<Project> fetchAll () {
+        return projectRepository.findAll();
     }
 
     @Transactional(readOnly = true)
@@ -142,10 +144,22 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectMemberDao> fetchById (Long id) {
+    public List<ProjectMemberVo> fetchById (Long id) {
         val project = projectQueryRepository.findById(id);
         if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
-        return project;
+
+        val projectMemberIds = project.stream()
+                .filter(ProjectMemberDao::memberHasProfile)
+                .map(ProjectMemberDao::memberId)
+                .collect(Collectors.toList());
+        val memberActivityMap = soptActivityRepository.findAllByMemberIdIn(projectMemberIds)
+                .stream().collect(Collectors.groupingBy(MemberSoptActivity::getMemberId, Collectors.toList()));
+        val memberGenerationMap = memberActivityMap.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey, e -> e.getValue().stream().map(MemberSoptActivity::getGeneration).collect(Collectors.toList())
+        ));
+        return project.stream().map(p -> projectMapper.projectMemberDaoToProjectMemberVo(
+                p, memberGenerationMap.getOrDefault(p.memberId(), List.of())
+                )).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
