@@ -1,10 +1,7 @@
 package org.sopt.makers.internal.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.AuthFailureException;
-import org.sopt.makers.internal.exception.ForbiddenClientException;
+import org.sopt.makers.internal.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -64,6 +61,13 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(WrongAccessTokenException.class)
+    public ResponseEntity<String> wrongAccessTokenException (WrongAccessTokenException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ex.getMessage());
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> unknownException (RuntimeException ex) {
