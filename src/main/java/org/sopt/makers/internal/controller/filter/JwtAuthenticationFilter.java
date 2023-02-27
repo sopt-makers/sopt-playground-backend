@@ -26,8 +26,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
     ) throws ServletException, IOException {
         val jwtToken = parseJwt(request);
-        if (jwtToken == null || !tokenManager.verifyAuthToken(jwtToken)) {
-            throw new WrongAccessTokenException("Token is empty or not verified");
+        if (request.getRequestURI().startsWith("/api")) {
+            if (jwtToken == null || !tokenManager.verifyAuthToken(jwtToken)) {
+                throw new WrongAccessTokenException("Token is empty or not verified");
+            }
         }
         val auth = tokenManager.getAuthentication(jwtToken);
         SecurityContextHolder.getContext().setAuthentication(auth);
