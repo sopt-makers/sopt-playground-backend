@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
+import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.service.CustomMemberDetailsService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
+import java.security.SignatureException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -41,23 +43,31 @@ public class InternalTokenManager {
     }
 
     public boolean verifyAuthToken (String token) {
-        val claims = getClaimsFromToken(token);
+        try {
+            val claims = getClaimsFromToken(token);
 
-        val now = LocalDateTime.now(KST);
-        val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
-        if (exp.isBefore(now)) return false;
+            val now = LocalDateTime.now(KST);
+            val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
+            if (exp.isBefore(now)) return false;
 
-        return true;
+            return true;
+        } catch (SignatureException e) {
+            return false;
+        }
     }
 
     private String getUserIdFromAuthToken (String token) {
-        val claims = getClaimsFromToken(token);
+        try {
+            val claims = getClaimsFromToken(token);
 
-        val now = LocalDateTime.now(KST);
-        val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
-        if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
+            val now = LocalDateTime.now(KST);
+            val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
+            if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
 
-        return claims.getSubject();
+            return claims.getSubject();
+        } catch (SignatureException e) {
+            throw new WrongAccessTokenException("Wrong signature is used");
+        }
     }
 
     public Authentication getAuthentication(String token) {
@@ -80,16 +90,20 @@ public class InternalTokenManager {
     }
 
     public String verifyRegisterToken (String token) {
-        val claims = getClaimsFromToken(token);
+        try {
+            val claims = getClaimsFromToken(token);
 
-        val now = LocalDateTime.now(KST);
-        val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
-        if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
+            val now = LocalDateTime.now(KST);
+            val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
+            if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
 
-        return claims.getAudience();
+            return claims.getAudience();
+        } catch (SignatureException e) {
+            throw new WrongAccessTokenException("Wrong signature is used");
+        }
     }
 
-    private Claims getClaimsFromToken (String token) {
+    private Claims getClaimsFromToken (String token) throws SignatureException {
         return Jwts.parserBuilder()
                 .setSigningKey(DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey()))
                 .build()
