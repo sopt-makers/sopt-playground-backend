@@ -29,10 +29,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (request.getRequestURI().startsWith("/api")) {
             if (jwtToken == null || !tokenManager.verifyAuthToken(jwtToken)) {
                 throw new WrongAccessTokenException("Token is empty or not verified");
+            } else {
+                val auth = tokenManager.getAuthentication(jwtToken);
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }
-        val auth = tokenManager.getAuthentication(jwtToken);
-        SecurityContextHolder.getContext().setAuthentication(auth);
         filterChain.doFilter(request, response);
     }
 
