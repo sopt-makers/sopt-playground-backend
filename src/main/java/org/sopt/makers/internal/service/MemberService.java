@@ -79,6 +79,12 @@ public class MemberService {
                         Map.Entry::getValue
                 ));
     }
+
+    @Transactional(readOnly = true)
+    public List<Member> getAllMemberProfiles() {
+        return memberRepository.findAllByHasProfileTrue();
+    }
+
     @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name) {
         val part = getMemberPart(filter);
