@@ -69,6 +69,14 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(WrongSecretHeaderException.class)
+    public ResponseEntity<String> wrongSecretHeaderException (WrongSecretHeaderException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ex.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> unknownException (RuntimeException ex) {
         log.error("[Unknown Error] : " + ex.getMessage());
