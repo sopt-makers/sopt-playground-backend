@@ -20,18 +20,19 @@ import lombok.NoArgsConstructor;
 @Table(name = "member_makers_activity")
 public class MemberMakersActivity {
 
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(name = "user_id")
-  private Long memberId;
+    @Column(name = "user_id")
+    private Long memberId;
 
-  @Column
-  private Long teamId;
+    @Column
+    private Long teamId;
 
-  @Column
-  private String part;
+    @Column
+    private String part;
 
-  @Column
-  private Integer generation;
+    @Column
+    private Integer generation;
 }

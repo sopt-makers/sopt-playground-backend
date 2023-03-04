@@ -12,6 +12,6 @@ public record MakersMemberActivityDao(
     String makersTeamName,
     String makersTeamDesc
 ) {
-  @QueryProjection
-  public MakersMemberActivityDao {}
+    @QueryProjection
+    public MakersMemberActivityDao {}
 }

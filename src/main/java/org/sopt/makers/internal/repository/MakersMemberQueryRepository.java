@@ -16,31 +16,29 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class MakersMemberQueryRepository {
 
-  private final JPAQueryFactory queryFactory;
+    private final JPAQueryFactory queryFactory;
 
-  public List<MakersMemberActivityDao> findAllMakersTeam() {
-    val member = QMember.member;
-    val mt = QMakersTeam.makersTeam;
-    val mma = QMemberMakersActivity.memberMakersActivity;
+    public List<MakersMemberActivityDao> findAllMakersTeam() {
+        val member = QMember.member;
+        val mt = QMakersTeam.makersTeam;
+        val mma = QMemberMakersActivity.memberMakersActivity;
 
-    val makersActivities = queryFactory.select(
-        new QMakersMemberActivityDao(
-            mma.id, mma.memberId, mma.teamId, mma.part, mma.generation,
-            mt.name, mt.description
-        ))
-        .from(mma)
-        .innerJoin(mt)
-        .on(mma.teamId.eq(mt.id))
-        .fetch();
-    val makersMemberIds = makersActivities.stream()
-        .map(MakersMemberActivityDao::memberId)
-        .distinct()
-        .collect(Collectors.toList());
+        val makersActivities = queryFactory.select(
+                new QMakersMemberActivityDao(
+                        mma.id, mma.memberId, mma.teamId, mma.part, mma.generation,
+                        mt.name, mt.description
+                ))
+                .from(mma)
+                .innerJoin(mt)
+                .on(mma.teamId.eq(mt.id))
+                .fetch();
+        val makersMemberIds = makersActivities.stream()
+                .map(MakersMemberActivityDao::memberId)
+                .distinct()
+                .collect(Collectors.toList());
 
-    val makersMembers = queryFactory.selectFrom(member)
-        .where(member.id.in(makersMemberIds))
-        .fetch();
-
-
-
+        val makersMembers = queryFactory.selectFrom(member)
+                .where(member.id.in(makersMemberIds))
+                .fetch();
+    }
 }

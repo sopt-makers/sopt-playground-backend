@@ -20,13 +20,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "makers_team")
 public class MakersTeam {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column
-  private String name;
+    @Column
+    private String name;
 
-  @Column
-  private String description;
+    @Column
+    private String description;
 }
