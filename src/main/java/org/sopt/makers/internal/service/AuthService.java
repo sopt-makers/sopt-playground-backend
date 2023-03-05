@@ -26,6 +26,15 @@ public class AuthService {
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
 
+    public String createCode(Long userId) {
+        return tokenManager.createCode(userId);
+    }
+
+    public String authByCode(String code) {
+        val userId = tokenManager.getUserIdFromCode(code);
+        return tokenManager.createAuthToken(userId);
+    }
+
     @Transactional
     public String authByFb (String code) {
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");

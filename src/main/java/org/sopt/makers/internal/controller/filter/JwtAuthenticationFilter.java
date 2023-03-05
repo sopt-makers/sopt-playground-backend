@@ -3,6 +3,7 @@ package org.sopt.makers.internal.controller.filter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalTokenManager;
+import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -25,11 +26,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
     ) throws ServletException, IOException {
         val jwtToken = parseJwt(request);
-        if (jwtToken != null && tokenManager.verifyAuthToken(jwtToken)) {
+        val isTokenAvailable = checkJwtAvailable(jwtToken);
+        val uri = request.getRequestURI();
+        if (uri.startsWith("/api") && !uri.contains("idp") && !uri.contains("registration")) {
+            if (!isTokenAvailable)
+                throw new WrongAccessTokenException("Token is empty or not verified");
+        }
+
+        if (isTokenAvailable) {
             val auth = tokenManager.getAuthentication(jwtToken);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean checkJwtAvailable (String jwtToken) {
+        return jwtToken != null && tokenManager.verifyAuthToken(jwtToken);
     }
 
     private String parseJwt (HttpServletRequest request) {

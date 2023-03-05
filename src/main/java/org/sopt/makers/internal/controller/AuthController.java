@@ -17,6 +17,20 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @Operation(summary = "SSO Code Test API", description = "SSO 코드 발급을 위한 테스트 엔드포인트")
+    @PostMapping("/idp/sso/code")
+    public ResponseEntity<AccessTokenResponse> createCode (@RequestBody CodeRequest request) {
+        val code = authService.createCode(request.id());
+        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(code));
+    }
+
+    @Operation(summary = "SSO Access Token API", description = "SSO AccessToken 발급을 위한 엔드포인트")
+    @PostMapping("/idp/sso/auth")
+    public ResponseEntity<AccessTokenResponse> ssoAccessToken (@RequestBody AuthRequest request) {
+        val accessToken = authService.authByCode(request.code());
+        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
+    }
+
     @Operation(summary = "Facebook auth API", description = "페이스북으로 로그인")
     @PostMapping("/idp/facebook/auth")
     public ResponseEntity<AccessTokenResponse> authByFacebook (@RequestBody AuthRequest request) {
