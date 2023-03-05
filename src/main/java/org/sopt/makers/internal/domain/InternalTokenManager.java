@@ -89,6 +89,33 @@ public class InternalTokenManager {
                 .compact();
     }
 
+    public String createCode(Long userId) {
+        val signatureAlgorithm= SignatureAlgorithm.HS256;
+        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getSecretForCode());
+        val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
+        val exp = new Date().toInstant().atZone(KST)
+                .toLocalDateTime().plusMinutes(1).atZone(KST).toInstant();
+        return Jwts.builder()
+                .setSubject(Long.toString(userId))
+                .setExpiration(Date.from(exp))
+                .signWith(signingKey, signatureAlgorithm)
+                .compact();
+    }
+
+    public Long getUserIdFromCode (String code) {
+        try {
+            val claims = getClaimsFromToken(code);
+
+            val now = LocalDateTime.now(KST);
+            val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
+            if (exp.isBefore(now)) throw new WrongTokenException("잘못된 코드입니다.");
+
+            return Long.parseLong(claims.getSubject());
+        } catch (SignatureException e) {
+            throw new WrongAccessTokenException("Wrong signature is used");
+        }
+    }
+
     public String verifyRegisterToken (String token) {
         try {
             val claims = getClaimsFromToken(token);
