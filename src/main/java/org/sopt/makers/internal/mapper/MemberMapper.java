@@ -14,6 +14,8 @@ public interface MemberMapper {
     MemberResponse toResponse(Member member);
     MemberProfileResponse toProfileResponse (Member member);
 
+    MakersMemberProfileResponse toMakersMemberProfileResponse (Member member);
+
     @Mapping(target = "activities", source = "activities")
     MemberProfileSpecificResponse toProfileSpecificResponse (
             Member member,
