@@ -51,7 +51,4 @@ public class AuthConfig {
 
     @Value("${coffeechat.default}")
     private String profileDefaultUrl;
-
-    @Value("${makers.secret}")
-    private String makersSecretKey;
 }
