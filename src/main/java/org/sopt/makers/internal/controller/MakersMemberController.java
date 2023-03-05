@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
+import org.sopt.makers.internal.dto.member.MakersMemberProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberProfileResponse;
 import org.sopt.makers.internal.exception.WrongSecretHeaderException;
 import org.sopt.makers.internal.mapper.MemberMapper;
@@ -28,16 +29,12 @@ public class MakersMemberController {
 
     private final MemberService memberService;
     private final MemberMapper memberMapper;
-    private final AuthConfig config;
 
     @Operation(summary = "메이커스 만든 사람들을 위한 전체 조회 API")
     @GetMapping("/makers/profile")
-    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles(
-            @RequestHeader(name = "X-Admin-Access-Secret") String secret
-    ) {
-        if (!Objects.equals(secret, config.getMakersSecretKey())) throw new WrongSecretHeaderException("키가 일치하지 않습니다.");
-        val members = memberService.getAllMemberProfiles();
-        val responses = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
+    public ResponseEntity<List<MakersMemberProfileResponse>> getUserProfiles() {
+        val members = memberService.getAllMakersMemberProfiles();
+        val responses = members.stream().map(memberMapper::toMakersMemberProfileResponse).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 }
