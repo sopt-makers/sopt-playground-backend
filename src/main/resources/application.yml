@@ -25,6 +25,7 @@ spring:
 
 jwt:
   secret: test
+  code: test
 
 springdoc:
   swagger-ui:
