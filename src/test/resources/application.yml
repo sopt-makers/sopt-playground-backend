@@ -54,6 +54,3 @@ coffeechat:
   profile: testUrl
   logo: testUrl
   default: testUrl
-
-makers:
-  secret: test
