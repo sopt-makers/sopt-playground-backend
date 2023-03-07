@@ -16,6 +16,7 @@ import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.YearMonth;
@@ -171,8 +172,12 @@ public class MemberController {
     ) {
         val members = memberService.getMemberProfiles(filter, limit, cursor, name);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        val response = (memberList.size() == 0) ?
-                new MemberAllProfileResponse(memberList, false) : new MemberAllProfileResponse(memberList, true);
+        MemberAllProfileResponse response;
+        if(memberList.size() == 0) {
+            response = new MemberAllProfileResponse(memberList, false);
+        } else {
+            response = new MemberAllProfileResponse(memberList, true);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
