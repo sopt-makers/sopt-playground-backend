@@ -55,9 +55,15 @@ public class MemberController {
 
     @Operation(summary = "유저 이름으로 조회 API")
     @GetMapping("/search")
-    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
+    public ResponseEntity<MemberAllResponse> getMemberByName (@RequestParam String name) {
         val members = memberService.getMemberByName(name);
-        val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
+        val memberList = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
+        MemberAllResponse responses;
+        if(memberList.size() == 0) {
+            responses = new MemberAllResponse(memberList, false);
+        } else {
+            responses = new MemberAllResponse(memberList, true);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
