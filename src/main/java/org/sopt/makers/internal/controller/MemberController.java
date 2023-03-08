@@ -56,13 +56,9 @@ public class MemberController {
     public ResponseEntity<MemberAllResponse> getMemberByName (@RequestParam String name) {
         val members = memberService.getMemberByName(name);
         val memberList = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
-        MemberAllResponse responses;
-        if(memberList.size() == 0) {
-            responses = new MemberAllResponse(memberList, false);
-        } else {
-            responses = new MemberAllResponse(memberList, true);
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
+        val hasNextMember = memberList.size() > 0;
+        val response = new MemberAllResponse(memberList, hasNextMember);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "유저 프로필 생성 API")
@@ -176,12 +172,8 @@ public class MemberController {
     ) {
         val members = memberService.getMemberProfiles(filter, limit, cursor, name);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        MemberAllProfileResponse response;
-        if(memberList.size() == 0) {
-            response = new MemberAllProfileResponse(memberList, false);
-        } else {
-            response = new MemberAllProfileResponse(memberList, true);
-        }
+        val hasNextMember = memberList.size() > 0;
+        val response = new MemberAllProfileResponse(memberList, hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
