@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
@@ -53,12 +54,10 @@ public class MemberController {
 
     @Operation(summary = "유저 이름으로 조회 API")
     @GetMapping("/search")
-    public ResponseEntity<MemberAllResponse> getMemberByName (@RequestParam String name) {
+    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
         val members = memberService.getMemberByName(name);
-        val memberList = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
-        val hasNextMember = memberList.size() > 0;
-        val response = new MemberAllResponse(memberList, hasNextMember);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
     @Operation(summary = "유저 프로필 생성 API")
