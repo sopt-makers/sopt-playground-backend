@@ -163,15 +163,17 @@ public class MemberController {
                     """
     )
     @GetMapping("/profile")
-    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles (
+    public ResponseEntity<MemberAllProfileResponse> getUserProfiles (
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
             @RequestParam(required = false, name = "name") String name
     ) {
         val members = memberService.getMemberProfiles(filter, limit, cursor, name);
-        val responses = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
+        val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
+        val hasNextMember = memberList.size() > 0;
+        val response = new MemberAllProfileResponse(memberList, hasNextMember);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "멤버 프로필 링크 삭제 API")
