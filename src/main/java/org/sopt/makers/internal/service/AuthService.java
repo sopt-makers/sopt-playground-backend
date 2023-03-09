@@ -26,7 +26,8 @@ public class AuthService {
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
 
-    public String createCode(Long userId) {
+    public String createCode(String accessToken) {
+        val userId = Long.parseLong(tokenManager.getUserIdFromAuthToken(accessToken));
         return tokenManager.createCode(userId);
     }
 
