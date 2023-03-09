@@ -20,7 +20,7 @@ public class AuthController {
     @Operation(summary = "SSO Code Test API", description = "SSO 코드 발급을 위한 테스트 엔드포인트")
     @PostMapping("/idp/sso/code")
     public ResponseEntity<AccessTokenResponse> createCode (@RequestBody CodeRequest request) {
-        val code = authService.createCode(request.id());
+        val code = authService.createCode(request.accessToken());
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(code));
     }
 

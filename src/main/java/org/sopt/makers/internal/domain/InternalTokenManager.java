@@ -56,7 +56,7 @@ public class InternalTokenManager {
         }
     }
 
-    private String getUserIdFromAuthToken (String token) {
+    public String getUserIdFromAuthToken (String token) {
         try {
             val claims = getClaimsFromToken(token);
 
