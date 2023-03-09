@@ -39,7 +39,11 @@ cloud:
       secret-key: test
     bucket:
       image: sopt-makers-internal
-
+naver-cloud-sms:
+  accessKey: test
+  secretKey: test
+  senderPhone: test
+  serviceId: test
 oauth:
   registerPage: testUrl
   fb:
