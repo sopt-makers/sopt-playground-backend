@@ -163,7 +163,7 @@ public class MemberController {
                     """
     )
     @GetMapping("/profile")
-    public ResponseEntity<List<MemberProfileResponse>> getUserProfiles (
+    public ResponseEntity<MemberAllProfileResponse> getUserProfiles (
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
