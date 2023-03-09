@@ -172,8 +172,7 @@ public class MemberController {
         if(limit != null) limit += 1;
         val members = memberService.getMemberProfiles(filter, limit, cursor, name);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        val hasNextMember = (limit != null && memberList.size() > 0);
-        if(hasNextMember) memberList.remove(members.size() - 1);
+        val hasNextMember = (limit != null && memberList.size() > limit);
         val response = new MemberAllProfileResponse(memberList, hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
