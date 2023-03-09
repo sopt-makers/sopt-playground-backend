@@ -171,7 +171,11 @@ public class MemberController {
     ) {
         val members = memberService.getMemberProfiles(filter, limit, cursor, name);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        val hasNextMember = memberList.size() > 0;
+
+        val nextMember = memberService.getMemberProfiles(filter, limit, cursor + limit, name);
+        val nextMemberList = nextMember.stream().map(memberMapper::toProfileResponse).toList();
+        val hasNextMember = nextMemberList.size() > 0;
+
         val response = new MemberAllProfileResponse(memberList, hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
