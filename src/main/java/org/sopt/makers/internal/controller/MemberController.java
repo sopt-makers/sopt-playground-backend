@@ -169,9 +169,10 @@ public class MemberController {
             @RequestParam(required = false, name = "cursor") Integer cursor,
             @RequestParam(required = false, name = "name") String name
     ) {
+        if(limit != null) limit += 1;
         val members = memberService.getMemberProfiles(filter, limit, cursor, name);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        val hasNextMember = memberList.size() > 0;
+        val hasNextMember = (limit != null && memberList.size() > limit);
         val response = new MemberAllProfileResponse(memberList, hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
