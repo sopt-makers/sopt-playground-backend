@@ -17,10 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -69,7 +66,7 @@ public class AuthService {
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
         if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
 
-        val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
+        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
         if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
@@ -81,6 +78,7 @@ public class AuthService {
                         .idpType("facebook")
                         .name(memberHistory.getName())
                         .email(memberHistory.getEmail())
+                        .phone(memberHistory.getPhone())
                         .generation(memberHistory.getGeneration())
                         .build()
         );
@@ -111,8 +109,8 @@ public class AuthService {
         if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
         val googleAccessToken = googleAccessTokenResponse.idToken();
 
-        val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
-        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
+        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
+        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
         if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
@@ -124,6 +122,7 @@ public class AuthService {
                         .idpType("google")
                         .name(memberHistory.getName())
                         .email(memberHistory.getEmail())
+                        .phone(memberHistory.getPhone())
                         .generation(memberHistory.getGeneration())
                         .build()
         );
@@ -136,7 +135,20 @@ public class AuthService {
     @Transactional
     public Optional<SoptMemberHistory> findMemberByRegisterToken (String registerToken) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
-        return soptMemberHistoryRepository.findTopByEmailOrderByIdDesc(registerTokenInfo);
+        if(registerTokenInfo.startsWith("010")){
+            return soptMemberHistoryRepository.findTopByPhoneOrderByIdDesc(registerTokenInfo);
+        } else {
+            return soptMemberHistoryRepository.findTopByEmailOrderByIdDesc(registerTokenInfo);
+        }
+    }
+
+    @Transactional
+    public List<SoptMemberHistory> findAllMemberHistoriesByRegisterTokenInfo (String registerTokenInfo) {
+        if(registerTokenInfo.startsWith("010")){
+            return soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(registerTokenInfo);
+        } else {
+            return soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(registerTokenInfo);
+        }
     }
 
     @Transactional
