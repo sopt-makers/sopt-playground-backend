@@ -183,9 +183,9 @@ public class AuthService {
         if (isExistedCode) throw new WrongSixNumberCodeException("다시 시도해주세요.");
 
         val message = "[SOPT Makers] 인증번호 [" + sixNumberCode + "]를 입력해주세요.";
-        log.debug(message);
-        log.debug("Map size : " + memberAndSmsTokenMap.size());
+        log.info(message);
         smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
+        clearMapByRandomAccess();
     }
 
     public String getRegisterTokenBySixNumberCode (String sixNumberCode) {
@@ -197,6 +197,28 @@ public class AuthService {
         if (isExpiredSmsToken) throw new WrongSixNumberCodeException("만료된 숫자 코드입니다. 재시도 해주세요.");
         val phone = smsToken.split("@")[0];
         return tokenManager.createRegisterToken(phone);
+    }
+
+    private void clearMapByRandomAccess () {
+        log.info("[Before clear Map] Map size : " + memberAndSmsTokenMap.size());
+        val isMapEmpty = memberAndSmsTokenMap.size() == 0;
+        if (!isMapEmpty) {
+            val smsToken = memberAndSmsTokenMap.entrySet().iterator().next().getValue();
+            val isExpiredSmsToken = checkIsExpiredSmsToken(smsToken);
+            if (isExpiredSmsToken) {
+                memberAndSmsTokenMap.keySet().removeAll(findShouldDeleteKeys());
+                log.info("[After clear Map] Map size : " + memberAndSmsTokenMap.size());
+            }
+        }
+    }
+
+    private Set<String> findShouldDeleteKeys () {
+        val shouldDeleteKeys = new HashSet<String>();
+        for (val elem: memberAndSmsTokenMap.entrySet()) {
+            val isTokenShouldBeDeleted = checkIsExpiredSmsToken(elem.getValue());
+            if (isTokenShouldBeDeleted) shouldDeleteKeys.add(elem.getKey());
+        }
+        return shouldDeleteKeys;
     }
 
     public boolean checkIsExpiredSmsToken (String smsToken) {
