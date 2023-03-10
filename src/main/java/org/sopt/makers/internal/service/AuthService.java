@@ -3,6 +3,7 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.*;
+import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
@@ -13,7 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.mail.MessagingException;
 import javax.persistence.EntityNotFoundException;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 @RequiredArgsConstructor
 @Service
@@ -25,6 +32,12 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
+
+    private final SmsSender smsSender;
+
+    private final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    private final Map<String, String> memberAndSmsTokenMap = new HashMap<>();
 
     public String createCode(String accessToken) {
         val userId = Long.parseLong(tokenManager.getUserIdFromAuthToken(accessToken));
@@ -141,5 +154,41 @@ public class AuthService {
             exception.printStackTrace();
             return "cannotSendEmail";
         }
+    }
+
+    public void sendSixNumberSmsCode (String phone) {
+        val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
+        if (memberHistories.isEmpty()) throw new AuthFailureException("없는 SOPT User입니다.");
+        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입한 유저입니다.");
+        val exp = LocalDateTime.now(KST).plusMinutes(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        val smsToken = phone + "@" + exp;
+        var sixNumberCode = getRandomNumberString();
+        var isExistedCode = memberAndSmsTokenMap.putIfAbsent(sixNumberCode, smsToken) != null;
+        if (isExistedCode) throw new AuthFailureException("다시 시도해주세요.");
+        val message = "[SOPT Makers] 인증번호 [" + sixNumberCode + "]를 입력해주세요.";
+        System.out.println(message);
+        smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
+    }
+
+    public String getRegisterTokenBySixNumberCode (String sixNumberCode) {
+        val smsToken = memberAndSmsTokenMap.get(sixNumberCode);
+        if (smsToken == null) throw new AuthFailureException("잘못된 숫자 코드입니다. 재시도 해주세요.");
+        val isExpiredSmsToken = checkIsExpiredSmsToken(smsToken);
+        if (isExpiredSmsToken) throw new AuthFailureException("만료된 숫자 코드입니다. 재시도 해주세요.");
+        memberAndSmsTokenMap.remove(sixNumberCode);
+        val phone = smsToken.split("@")[0];
+        return tokenManager.createRegisterToken(phone);
+    }
+
+    public boolean checkIsExpiredSmsToken (String smsToken) {
+        val exp = LocalDateTime.parse(smsToken.split("@")[1], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        val now = LocalDateTime.now(KST);
+        return exp.isBefore(now);
+    }
+
+    private static String getRandomNumberString() {
+        val random = new Random();
+        int number = random.nextInt(999999);
+        return String.format("%06d", number);
     }
 }

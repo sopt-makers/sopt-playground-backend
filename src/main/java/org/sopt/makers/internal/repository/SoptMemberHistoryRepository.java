@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface SoptMemberHistoryRepository extends JpaRepository<SoptMemberHistory, Long> {
     List<SoptMemberHistory> findAllByEmailOrderByIdDesc(String email);
     Optional<SoptMemberHistory> findTopByEmailOrderByIdDesc(String email);
+
+    List<SoptMemberHistory> findAllByPhoneOrderByIdDesc(String phone);
 }
