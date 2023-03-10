@@ -1,10 +1,12 @@
 package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
+import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
@@ -19,6 +21,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AuthService {
@@ -172,22 +175,26 @@ public class AuthService {
         val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
         if (memberHistories.isEmpty()) throw new AuthFailureException("없는 SOPT User입니다.");
         if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입한 유저입니다.");
+
         val exp = LocalDateTime.now(KST).plusMinutes(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         val smsToken = phone + "@" + exp;
         var sixNumberCode = getRandomNumberString();
         var isExistedCode = memberAndSmsTokenMap.putIfAbsent(sixNumberCode, smsToken) != null;
-        if (isExistedCode) throw new AuthFailureException("다시 시도해주세요.");
+        if (isExistedCode) throw new WrongSixNumberCodeException("다시 시도해주세요.");
+
         val message = "[SOPT Makers] 인증번호 [" + sixNumberCode + "]를 입력해주세요.";
-        System.out.println(message);
+        log.debug(message);
+        log.debug("Map size : " + memberAndSmsTokenMap.size());
         smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
     }
 
     public String getRegisterTokenBySixNumberCode (String sixNumberCode) {
         val smsToken = memberAndSmsTokenMap.get(sixNumberCode);
-        if (smsToken == null) throw new AuthFailureException("잘못된 숫자 코드입니다. 재시도 해주세요.");
-        val isExpiredSmsToken = checkIsExpiredSmsToken(smsToken);
-        if (isExpiredSmsToken) throw new AuthFailureException("만료된 숫자 코드입니다. 재시도 해주세요.");
+        if (smsToken == null) throw new WrongSixNumberCodeException("존재하지 않는 숫자 코드입니다. 재시도 해주세요.");
+
         memberAndSmsTokenMap.remove(sixNumberCode);
+        val isExpiredSmsToken = checkIsExpiredSmsToken(smsToken);
+        if (isExpiredSmsToken) throw new WrongSixNumberCodeException("만료된 숫자 코드입니다. 재시도 해주세요.");
         val phone = smsToken.split("@")[0];
         return tokenManager.createRegisterToken(phone);
     }
