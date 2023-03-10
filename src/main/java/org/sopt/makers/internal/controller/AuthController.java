@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.dto.auth.*;
+import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.sopt.makers.internal.service.AuthService;
 import org.springframework.http.HttpStatus;
@@ -82,5 +83,21 @@ public class AuthController {
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new EmailResponse(false, "UnknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
         };
+    }
+
+    @Operation(summary = "Get 6 numbers code")
+    @PostMapping("/registration/sms/code")
+    public ResponseEntity<String> sendRegistrationSms (@RequestBody RegistrationPhoneRequest request) {
+        if (!request.phone().startsWith("010")) throw new AuthFailureException("전화번호가 옳지 않습니다.");
+        authService.sendSixNumberSmsCode(request.phone());
+        return ResponseEntity.ok("Success!");
+    }
+
+    @Operation(summary = "Get registerToken by 6 number Code")
+    @PostMapping("/registration/sms/token")
+    public ResponseEntity<RegisterTokenResponse> getRegistrationToken (@RequestBody RegistrationTokenBySmsRequest request) {
+        if (request.sixNumberCode().length() != 6) throw new AuthFailureException("6자리 코드가 옳지 않습니다.");
+        val registerToken = authService.getRegisterTokenBySixNumberCode(request.sixNumberCode());
+        return ResponseEntity.ok(new RegisterTokenResponse(registerToken));
     }
 }
