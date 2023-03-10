@@ -77,6 +77,14 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(WrongSixNumberCodeException.class)
+    public ResponseEntity<String> wrongSixNumberCodeException (WrongSixNumberCodeException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ex.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> unknownException (RuntimeException ex) {
         log.error("[Unknown Error] : " + ex.getMessage());

@@ -54,4 +54,16 @@ public class AuthConfig {
 
     @Value("${jwt.code}")
     private String secretForCode;
+
+    @Value("${naver-cloud-sms.accessKey}")
+    private String smsAccessKey;
+
+    @Value("${naver-cloud-sms.secretKey}")
+    private String smsSecretKey;
+
+    @Value("${naver-cloud-sms.serviceId}")
+    private String smsServiceId;
+
+    @Value("${naver-cloud-sms.senderPhone}")
+    private String smsSenderPhone;
 }
