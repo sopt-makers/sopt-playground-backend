@@ -6,7 +6,6 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
 @Getter
@@ -53,6 +52,9 @@ public class Member {
     @Column
     private String major;
 
+    @Column(name = "key_introduction")
+    private String keyIntroduction;
+
     @Builder.Default
     @OneToMany(
         cascade = CascadeType.ALL,
@@ -60,6 +62,42 @@ public class Member {
     )
     @JoinColumn(name = "user_id")
     private List<MemberSoptActivity> activities = new ArrayList<>();
+
+    @Column
+    private String mbti;
+
+    @Column
+    private String personality;
+
+    @Column(name = "soju_capacity")
+    private Integer sojuCapacity;
+
+    @Column(name = "interested_in")
+    private String interestedIn;
+
+    @Column(name = "pour_sauce")
+    private Boolean pourSauce;
+
+    @Column(name = "hard_peach")
+    private Boolean hardPeach;
+
+    @Column(name = "mint_choco")
+    private Boolean mintChoco;
+
+    @Column(name = "red_bean_fish")
+    private Boolean redBeanFish;
+
+    @Column
+    private Boolean soju;
+
+    @Column(name = "rice_tteok")
+    private Boolean riceTteok;
+
+    @Column(name = "ideal_type")
+    private String idealType;
+
+    @Column(name = "self_introduction")
+    private String selfIntroduction;
 
     @Builder.Default
     @OneToMany(
@@ -78,16 +116,7 @@ public class Member {
     private List<MemberCareer> careers = new ArrayList<>();
 
     @Column
-    private String introduction;
-
-    @Column
     private String skill;
-
-    @Column(name = "open_to_work")
-    private Boolean openToWork;
-
-    @Column(name = "open_to_side_project")
-    private Boolean openToSideProject;
 
     @Column(name = "allow_official")
     private Boolean allowOfficial;
@@ -105,10 +134,20 @@ public class Member {
             String address,
             String university,
             String major,
-            String introduction,
+            String keyIntroduction,
             String skill,
-            Boolean openToWork,
-            Boolean openToSideProject,
+            String mbti,
+            String personality,
+            Integer sojuCapacity,
+            String interestedIn,
+            Boolean pourSauce,
+            Boolean hardPeach,
+            Boolean mintChoco,
+            Boolean redBeanFish,
+            Boolean soju,
+            Boolean riceTteok,
+            String idealType,
+            String selfIntroduction,
             Boolean allowOfficial,
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
@@ -122,10 +161,20 @@ public class Member {
         this.address = address;
         this.university = university;
         this.major = major;
-        this.introduction = introduction;
+        this.keyIntroduction = keyIntroduction;
         this.skill = skill;
-        this.openToWork = openToWork;
-        this.openToSideProject = openToSideProject;
+        this.mbti = mbti;
+        this.personality = personality;
+        this.sojuCapacity = sojuCapacity;
+        this.interestedIn = interestedIn;
+        this.pourSauce = pourSauce;
+        this.hardPeach = hardPeach;
+        this.mintChoco = mintChoco;
+        this.redBeanFish = redBeanFish;
+        this.soju = soju;
+        this.riceTteok = riceTteok;
+        this.idealType = idealType;
+        this.selfIntroduction = selfIntroduction;
         this.allowOfficial = allowOfficial;
         this.activities.clear(); this.activities.addAll(activities);
         this.links.clear(); this.links.addAll(links);
