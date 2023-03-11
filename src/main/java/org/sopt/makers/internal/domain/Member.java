@@ -181,8 +181,6 @@ public class Member {
         this.isRiceTteokLover = isRiceTteokLover;
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
-        this.openToWork = openToWork;
-        this.openToSideProject = openToSideProject;
         this.allowOfficial = allowOfficial;
         this.activities.clear(); this.activities.addAll(activities);
         this.links.clear(); this.links.addAll(links);
