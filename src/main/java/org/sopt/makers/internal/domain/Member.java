@@ -154,8 +154,6 @@ public class Member {
             Boolean isRiceTteokLover,
             String idealType,
             String selfIntroduction,
-            Boolean openToWork,
-            Boolean openToSideProject,
             Boolean allowOfficial,
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
