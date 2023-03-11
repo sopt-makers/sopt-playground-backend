@@ -66,32 +66,32 @@ public class Member {
     @Column
     private String mbti;
 
-    @Column
-    private String personality;
+    @Column(name = "mbti_description")
+    private String mbtiDescription;
 
     @Column(name = "soju_capacity")
-    private Integer sojuCapacity;
-
-    @Column(name = "interested_in")
-    private String interestedIn;
-
-    @Column(name = "pour_sauce")
-    private Boolean pourSauce;
-
-    @Column(name = "hard_peach")
-    private Boolean hardPeach;
-
-    @Column(name = "mint_choco")
-    private Boolean mintChoco;
-
-    @Column(name = "red_bean_fish")
-    private Boolean redBeanFish;
+    private Double sojuCapacity;
 
     @Column
-    private Boolean soju;
+    private String interest;
 
-    @Column(name = "rice_tteok")
-    private Boolean riceTteok;
+    @Column(name = "is_pour_sauce_lover")
+    private Boolean isPourSauceLover;
+
+    @Column(name = "is_hard_peach_lover")
+    private Boolean isHardPeachLover;
+
+    @Column(name = "is_mint_choco_lover")
+    private Boolean isMintChocoLover;
+
+    @Column(name = "is_red_bean_lover")
+    private Boolean isRedBeanLover;
+
+    @Column(name = "is_soju_lover")
+    private Boolean isSojuLover;
+
+    @Column(name = "is_rice_tteok_lover")
+    private Boolean isRiceTteokLover;
 
     @Column(name = "ideal_type")
     private String idealType;
@@ -143,15 +143,15 @@ public class Member {
             String introduction,
             String skill,
             String mbti,
-            String personality,
-            Integer sojuCapacity,
-            String interestedIn,
-            Boolean pourSauce,
-            Boolean hardPeach,
-            Boolean mintChoco,
-            Boolean redBeanFish,
-            Boolean soju,
-            Boolean riceTteok,
+            String mbtiDescription,
+            Double sojuCapacity,
+            String interest,
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover,
             String idealType,
             String selfIntroduction,
             Boolean openToWork,
@@ -172,15 +172,15 @@ public class Member {
         this.introduction = introduction;
         this.skill = skill;
         this.mbti = mbti;
-        this.personality = personality;
+        this.mbtiDescription = mbtiDescription;
         this.sojuCapacity = sojuCapacity;
-        this.interestedIn = interestedIn;
-        this.pourSauce = pourSauce;
-        this.hardPeach = hardPeach;
-        this.mintChoco = mintChoco;
-        this.redBeanFish = redBeanFish;
-        this.soju = soju;
-        this.riceTteok = riceTteok;
+        this.interest = interest;
+        this.isPourSauceLover = isPourSauceLover;
+        this.isHardPeachLover = isHardPeachLover;
+        this.isMintChocoLover = isMintChocoLover;
+        this.isRedBeanLover = isRedBeanLover;
+        this.isSojuLover = isSojuLover;
+        this.isRiceTteokLover = isRiceTteokLover;
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
         this.openToWork = openToWork;
