@@ -52,8 +52,8 @@ public class Member {
     @Column
     private String major;
 
-    @Column(name = "key_introduction")
-    private String keyIntroduction;
+    @Column
+    private String introduction;
 
     @Builder.Default
     @OneToMany(
@@ -118,6 +118,12 @@ public class Member {
     @Column
     private String skill;
 
+    @Column(name = "open_to_work")
+    private Boolean openToWork;
+
+    @Column(name = "open_to_side_project")
+    private Boolean openToSideProject;
+
     @Column(name = "allow_official")
     private Boolean allowOfficial;
 
@@ -134,7 +140,7 @@ public class Member {
             String address,
             String university,
             String major,
-            String keyIntroduction,
+            String introduction,
             String skill,
             String mbti,
             String personality,
@@ -148,6 +154,8 @@ public class Member {
             Boolean riceTteok,
             String idealType,
             String selfIntroduction,
+            Boolean openToWork,
+            Boolean openToSideProject,
             Boolean allowOfficial,
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
@@ -161,7 +169,7 @@ public class Member {
         this.address = address;
         this.university = university;
         this.major = major;
-        this.keyIntroduction = keyIntroduction;
+        this.introduction = introduction;
         this.skill = skill;
         this.mbti = mbti;
         this.personality = personality;
@@ -175,6 +183,8 @@ public class Member {
         this.riceTteok = riceTteok;
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
+        this.openToWork = openToWork;
+        this.openToSideProject = openToSideProject;
         this.allowOfficial = allowOfficial;
         this.activities.clear(); this.activities.addAll(activities);
         this.links.clear(); this.links.addAll(links);
