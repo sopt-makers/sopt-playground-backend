@@ -84,8 +84,8 @@ public class Member {
     @Column(name = "is_mint_choco_lover")
     private Boolean isMintChocoLover;
 
-    @Column(name = "is_red_bean_lover")
-    private Boolean isRedBeanLover;
+    @Column(name = "is_red_bean_fish_bread_lover")
+    private Boolean isRedBeanFishBreadLover;
 
     @Column(name = "is_soju_lover")
     private Boolean isSojuLover;
@@ -149,7 +149,7 @@ public class Member {
             Boolean isPourSauceLover,
             Boolean isHardPeachLover,
             Boolean isMintChocoLover,
-            Boolean isRedBeanLover,
+            Boolean isRedBeanFishBreadLover,
             Boolean isSojuLover,
             Boolean isRiceTteokLover,
             String idealType,
@@ -176,7 +176,7 @@ public class Member {
         this.isPourSauceLover = isPourSauceLover;
         this.isHardPeachLover = isHardPeachLover;
         this.isMintChocoLover = isMintChocoLover;
-        this.isRedBeanLover = isRedBeanLover;
+        this.isRedBeanFishBreadLover = isRedBeanFishBreadLover;
         this.isSojuLover = isSojuLover;
         this.isRiceTteokLover = isRiceTteokLover;
         this.idealType = idealType;

@@ -21,7 +21,7 @@ public record MemberProfileSpecificResponse(
         Boolean isPourSauceLover,
         Boolean isHardPeachLover,
         Boolean isMintChocoLover,
-        Boolean isRedBeanLover,
+        Boolean isRedBeanFishBreadLover,
         Boolean isSojuLover,
         Boolean isRiceTteokLover,
         String idealType,
