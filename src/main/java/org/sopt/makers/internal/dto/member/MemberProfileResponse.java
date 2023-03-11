@@ -1,7 +1,6 @@
 package org.sopt.makers.internal.dto.member;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
 
 public record MemberProfileResponse(
