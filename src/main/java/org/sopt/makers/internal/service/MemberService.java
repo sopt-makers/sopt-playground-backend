@@ -174,10 +174,10 @@ public class MemberService {
         val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
-                request.address(), request.university(), request.major(), request.keyIntroduction(),
-                request.skill(), request.mbti(), request.personality(), request.sojuCapacity(),
-                request.interestedIn(), request.pourSauce(), request.hardPeach(), request.mintChoco(),
-                request.redBeanFish(), request.soju(), request.riceTteok(), request.idealType(),
+                request.address(), request.university(), request.major(), request.introduction(),
+                request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
+                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
+                request.isRedBeanLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
@@ -232,10 +232,10 @@ public class MemberService {
 
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
-                request.address(), request.university(), request.major(), request.keyIntroduction(),
-                request.skill(), request.mbti(), request.personality(), request.sojuCapacity(),
-                request.interestedIn(), request.pourSauce(), request.hardPeach(), request.mintChoco(),
-                request.redBeanFish(), request.soju(), request.riceTteok(), request.idealType(),
+                request.address(), request.university(), request.major(), request.introduction(),
+                request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
+                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
+                request.isRedBeanLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
