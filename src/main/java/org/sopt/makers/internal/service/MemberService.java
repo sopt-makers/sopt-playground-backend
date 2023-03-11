@@ -174,8 +174,11 @@ public class MemberService {
         val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
-                request.address(), request.university(), request.major(), request.introduction(), request.skill(),
-                request.openToWork(), request.openToSideProject(), request.allowOfficial(),
+                request.address(), request.university(), request.major(), request.keyIntroduction(),
+                request.skill(), request.mbti(), request.personality(), request.sojuCapacity(),
+                request.interestedIn(), request.pourSauce(), request.hardPeach(), request.mintChoco(),
+                request.redBeanFish(), request.soju(), request.riceTteok(), request.idealType(),
+                request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
         return member;
