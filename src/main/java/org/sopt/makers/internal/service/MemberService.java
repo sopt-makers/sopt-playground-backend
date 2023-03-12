@@ -174,8 +174,11 @@ public class MemberService {
         val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
-                request.address(), request.university(), request.major(), request.introduction(), request.skill(),
-                request.openToWork(), request.openToSideProject(), request.allowOfficial(),
+                request.address(), request.university(), request.major(), request.introduction(),
+                request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
+                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
+                request.isRedBeanFishBreadLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
+                request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
         return member;
@@ -229,8 +232,11 @@ public class MemberService {
 
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
-                request.address(), request.university(), request.major(), request.introduction(), request.skill(),
-                request.openToWork(), request.openToSideProject(), request.allowOfficial(),
+                request.address(), request.university(), request.major(), request.introduction(),
+                request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
+                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
+                request.isRedBeanFishBreadLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
+                request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
         return member;

@@ -3,7 +3,6 @@ package org.sopt.makers.internal.dto.member;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
 
 public record MemberProfileUpdateRequest (
@@ -17,11 +16,21 @@ public record MemberProfileUpdateRequest (
         String major,
         String introduction,
         String skill,
+        String mbti,
+        String mbtiDescription,
+        Double sojuCapacity,
+        String interest,
+        Boolean isPourSauceLover,
+        Boolean isHardPeachLover,
+        Boolean isMintChocoLover,
+        Boolean isRedBeanFishBreadLover,
+        Boolean isSojuLover,
+        Boolean isRiceTteokLover,
+        String idealType,
+        String selfIntroduction,
         List<MemberLinkUpdateRequest> links,
         List<MemberSoptActivityUpdateRequest> activities,
         List<MemberCareerUpdateRequest> careers,
-        Boolean openToWork,
-        Boolean openToSideProject,
         Boolean allowOfficial
 ){
 

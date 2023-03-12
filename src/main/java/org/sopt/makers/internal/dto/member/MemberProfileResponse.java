@@ -1,7 +1,6 @@
 package org.sopt.makers.internal.dto.member;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
 
 public record MemberProfileResponse(
@@ -16,11 +15,21 @@ public record MemberProfileResponse(
         String major,
         String introduction,
         String skill,
+        String mbti,
+        String mbtiDescription,
+        Double sojuCapacity,
+        String interest,
+        Boolean isPourSauceLover,
+        Boolean isHardPeachLover,
+        Boolean isMintChocoLover,
+        Boolean isRedBeanFishBreadLover,
+        Boolean isSojuLover,
+        Boolean isRiceTteokLover,
+        String idealType,
+        String selfIntroduction,
         List<MemberSoptActivityResponse> activities,
         List<MemberLinkResponse> links,
         List<MemberCareerResponse> careers,
-        Boolean openToWork,
-        Boolean openToSideProject,
         Boolean allowOfficial
 ) {
 
