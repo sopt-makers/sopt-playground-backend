@@ -19,12 +19,7 @@ public record MemberProfileResponse(
         String mbtiDescription,
         Double sojuCapacity,
         String interest,
-        Boolean isPourSauceLover,
-        Boolean isHardPeachLover,
-        Boolean isMintChocoLover,
-        Boolean isRedBeanFishBreadLover,
-        Boolean isSojuLover,
-        Boolean isRiceTteokLover,
+        UserFavorResponse userFavor,
         String idealType,
         String selfIntroduction,
         List<MemberSoptActivityResponse> activities,
@@ -33,18 +28,27 @@ public record MemberProfileResponse(
         Boolean allowOfficial
 ) {
 
+    public record UserFavorResponse(
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanFishBreadLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover
+    ) {}
+
     public record MemberLinkResponse(
             Long id,
             String title,
             String url
-    ){}
+    ) {}
 
     public record MemberSoptActivityResponse(
             Long id,
             Integer generation,
             String part,
             String team
-    ){}
+    ) {}
 
     public record MemberCareerResponse(
             Long id,
@@ -53,5 +57,5 @@ public record MemberProfileResponse(
             String startDate,
             String endDate,
             Boolean isCurrent
-    ){}
+    ) {}
 }

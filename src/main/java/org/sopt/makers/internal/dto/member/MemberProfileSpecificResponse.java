@@ -18,12 +18,7 @@ public record MemberProfileSpecificResponse(
         String mbtiDescription,
         Double sojuCapacity,
         String interest,
-        Boolean isPourSauceLover,
-        Boolean isHardPeachLover,
-        Boolean isMintChocoLover,
-        Boolean isRedBeanFishBreadLover,
-        Boolean isSojuLover,
-        Boolean isRiceTteokLover,
+        UserFavorResponse userFavor,
         String idealType,
         String selfIntroduction,
         List<MemberActivityResponse> activities,
@@ -33,6 +28,14 @@ public record MemberProfileSpecificResponse(
         Boolean allowOfficial,
         Boolean isMine
 ) {
+    public record UserFavorResponse(
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanFishBreadLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover
+    ) {}
 
     public record MemberLinkResponse(
             Long id,
