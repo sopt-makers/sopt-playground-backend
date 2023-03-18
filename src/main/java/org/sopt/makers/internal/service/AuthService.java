@@ -171,30 +171,31 @@ public class AuthService {
         }
     }
 
-    public void sendSixNumberSmsCode (String phone) {
+    public String sendSixNumberSmsCode (String phone) {
         val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
-        if (memberHistories.isEmpty()) throw new AuthFailureException("없는 SOPT User입니다.");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입한 유저입니다.");
+        if (memberHistories.isEmpty()) return "emptySoptUser";
+        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) return "alreadyTaken";
 
         val exp = LocalDateTime.now(KST).plusMinutes(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         val smsToken = phone + "@" + exp;
         var sixNumberCode = getRandomNumberString();
         var isExistedCode = memberAndSmsTokenMap.putIfAbsent(sixNumberCode, smsToken) != null;
-        if (isExistedCode) throw new WrongSixNumberCodeException("다시 시도해주세요.");
+        if (isExistedCode) return "shouldRetry";
 
         val message = "[SOPT Makers] 인증번호 [" + sixNumberCode + "]를 입력해주세요.";
         log.info(message);
         smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
         clearMapByRandomAccess();
+        return "success";
     }
 
     public String getRegisterTokenBySixNumberCode (String sixNumberCode) {
         val smsToken = memberAndSmsTokenMap.get(sixNumberCode);
-        if (smsToken == null) throw new WrongSixNumberCodeException("존재하지 않는 숫자 코드입니다. 재시도 해주세요.");
+        if (smsToken == null) throw new WrongSixNumberCodeException("notExistedCode");
 
         memberAndSmsTokenMap.remove(sixNumberCode);
         val isExpiredSmsToken = checkIsExpiredSmsToken(smsToken);
-        if (isExpiredSmsToken) throw new WrongSixNumberCodeException("만료된 숫자 코드입니다. 재시도 해주세요.");
+        if (isExpiredSmsToken) throw new WrongSixNumberCodeException("expiredCode");
         val phone = smsToken.split("@")[0];
         return tokenManager.createRegisterToken(phone);
     }
