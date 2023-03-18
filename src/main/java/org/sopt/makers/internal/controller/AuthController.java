@@ -81,23 +81,39 @@ public class AuthController {
             case "invalidEmail" -> ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new EmailResponse(false, status, "가입할 수 없는 이메일입니다."));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new EmailResponse(false, "UnknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
+                    .body(new EmailResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
         };
     }
 
     @Operation(summary = "Get 6 numbers code")
     @PostMapping("/registration/sms/code")
-    public ResponseEntity<String> sendRegistrationSms (@RequestBody RegistrationPhoneRequest request) {
-        if (!request.phone().startsWith("010")) throw new AuthFailureException("전화번호가 옳지 않습니다.");
-        authService.sendSixNumberSmsCode(request.phone());
-        return ResponseEntity.ok("Success!");
+    public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@RequestBody RegistrationPhoneRequest request) {
+        if (!request.phone().startsWith("010")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new SmsCodeResponse(false, "wrongPhoneNumber", "잘못된 핸드폰 번호입니다."));
+        }
+        val status = authService.sendSixNumberSmsCode(request.phone());
+        return switch (status) {
+            case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null));
+            case "emptySoptUser" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new SmsCodeResponse(false, status, "인증할 수 없는 유저입니다. 문의해주세요."));
+            case "shouldRetry" -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SmsCodeResponse(false, status, "재시도 해주세요."));
+            case "alreadyTaken" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new SmsCodeResponse(false, status, "이미 가입한 유저입니다."));
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SmsCodeResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
+        };
     }
 
     @Operation(summary = "Get registerToken by 6 number Code")
     @PostMapping("/registration/sms/token")
-    public ResponseEntity<RegisterTokenResponse> getRegistrationToken (@RequestBody RegistrationTokenBySmsRequest request) {
-        if (request.sixNumberCode().length() != 6) throw new AuthFailureException("6자리 코드가 옳지 않습니다.");
+    public ResponseEntity<RegisterTokenBySmsResponse> getRegistrationToken (@RequestBody RegistrationTokenBySmsRequest request) {
+        if (request.sixNumberCode().length() != 6) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new RegisterTokenBySmsResponse(false, "wrongCode", "잘못된 코드입니다.", null));
+        }
         val registerToken = authService.getRegisterTokenBySixNumberCode(request.sixNumberCode());
-        return ResponseEntity.ok(new RegisterTokenResponse(registerToken));
+        return ResponseEntity.ok(new RegisterTokenBySmsResponse(true, null, null, registerToken));
     }
 }
