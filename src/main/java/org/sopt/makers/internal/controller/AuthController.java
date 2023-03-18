@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.dto.auth.*;
-import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.sopt.makers.internal.service.AuthService;
 import org.springframework.http.HttpStatus;
