@@ -1,10 +1,14 @@
 package org.sopt.makers.internal.dto.member;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDate;
 import java.util.List;
 
 public record MemberProfileResponse(
+        @Schema(required = true)
         Long id,
+        @Schema(required = true)
         String name,
         String profileImage,
         LocalDate birthday,
@@ -27,6 +31,7 @@ public record MemberProfileResponse(
         Boolean isRiceTteokLover,
         String idealType,
         String selfIntroduction,
+        @Schema(required = true)
         List<MemberSoptActivityResponse> activities,
         List<MemberLinkResponse> links,
         List<MemberCareerResponse> careers,

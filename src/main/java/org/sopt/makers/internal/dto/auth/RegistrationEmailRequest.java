@@ -1,4 +1,6 @@
 package org.sopt.makers.internal.dto.auth;
 
-public record RegistrationEmailRequest(String email) {
+import io.swagger.v3.oas.annotations.media.Schema;
+
+public record RegistrationEmailRequest(@Schema(required = true) String email) {
 }

@@ -1,11 +1,13 @@
 package org.sopt.makers.internal.dto.member;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public record MemberProfileUpdateRequest (
+        @Schema(required = true)
         String name,
         String profileImage,
         LocalDate birthday,
@@ -29,6 +31,7 @@ public record MemberProfileUpdateRequest (
         String idealType,
         String selfIntroduction,
         List<MemberLinkUpdateRequest> links,
+        @Schema(required = true)
         List<MemberSoptActivityUpdateRequest> activities,
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial
