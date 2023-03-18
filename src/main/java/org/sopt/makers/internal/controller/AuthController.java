@@ -81,7 +81,7 @@ public class AuthController {
             case "invalidEmail" -> ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new EmailResponse(false, status, "가입할 수 없는 이메일입니다."));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new EmailResponse(false, "UnknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
+                    .body(new EmailResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
         };
     }
 
@@ -102,7 +102,7 @@ public class AuthController {
             case "alreadyTaken" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new SmsCodeResponse(false, status, "이미 가입한 유저입니다."));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new SmsCodeResponse(false, "UnknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
+                    .body(new SmsCodeResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
         };
     }
 
