@@ -104,7 +104,7 @@ public class InternalTokenManager {
 
     public Long getUserIdFromCode (String code) {
         try {
-            val claims = getClaimsFromToken(code);
+            val claims = getClaimsFromCode(code);
 
             val now = LocalDateTime.now(KST);
             val exp = claims.getExpiration().toInstant().atZone(KST).toLocalDateTime();
@@ -138,4 +138,11 @@ public class InternalTokenManager {
                 .getBody();
     }
 
+    private Claims getClaimsFromCode (String code) throws SignatureException {
+        return Jwts.parserBuilder()
+                .setSigningKey(DatatypeConverter.parseBase64Binary(authConfig.getSecretForCode()))
+                .build()
+                .parseClaimsJws(code)
+                .getBody();
+    }
 }

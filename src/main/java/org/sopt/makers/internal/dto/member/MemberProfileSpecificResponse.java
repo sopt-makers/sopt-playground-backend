@@ -2,7 +2,6 @@ package org.sopt.makers.internal.dto.member;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 public record MemberProfileSpecificResponse(
         String name,
@@ -15,12 +14,22 @@ public record MemberProfileSpecificResponse(
         String major,
         String introduction,
         String skill,
+        String mbti,
+        String mbtiDescription,
+        Double sojuCapacity,
+        String interest,
+        Boolean isPourSauceLover,
+        Boolean isHardPeachLover,
+        Boolean isMintChocoLover,
+        Boolean isRedBeanFishBreadLover,
+        Boolean isSojuLover,
+        Boolean isRiceTteokLover,
+        String idealType,
+        String selfIntroduction,
         List<MemberActivityResponse> activities,
         List<MemberLinkResponse> links,
         List<MemberProjectResponse> projects,
         List<MemberCareerResponse> careers,
-        Boolean openToWork,
-        Boolean openToSideProject,
         Boolean allowOfficial,
         Boolean isMine
 ) {
