@@ -35,20 +35,20 @@ public record MemberProfileResponse(
             Boolean isRedBeanFishBreadLover,
             Boolean isSojuLover,
             Boolean isRiceTteokLover
-    ) {}
+    ){}
 
     public record MemberLinkResponse(
             Long id,
             String title,
             String url
-    ) {}
+    ){}
 
     public record MemberSoptActivityResponse(
             Long id,
             Integer generation,
             String part,
             String team
-    ) {}
+    ){}
 
     public record MemberCareerResponse(
             Long id,
@@ -57,5 +57,5 @@ public record MemberProfileResponse(
             String startDate,
             String endDate,
             Boolean isCurrent
-    ) {}
+    ){}
 }

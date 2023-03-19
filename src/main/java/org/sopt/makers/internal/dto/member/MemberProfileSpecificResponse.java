@@ -35,7 +35,7 @@ public record MemberProfileSpecificResponse(
             Boolean isRedBeanFishBreadLover,
             Boolean isSojuLover,
             Boolean isRiceTteokLover
-    ) {}
+    ){}
 
     public record MemberLinkResponse(
             Long id,
