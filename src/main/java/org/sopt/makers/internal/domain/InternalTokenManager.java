@@ -34,7 +34,7 @@ public class InternalTokenManager {
         val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey());
         val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
         val exp = new Date().toInstant().atZone(KST)
-                .toLocalDateTime().plusDays(10).atZone(KST).toInstant();
+                .toLocalDateTime().plusHours(8).atZone(KST).toInstant();
         return Jwts.builder()
                 .setSubject(Long.toString(userId))
                 .setExpiration(Date.from(exp))
