@@ -22,12 +22,7 @@ public record MemberProfileUpdateRequest (
         String mbtiDescription,
         Double sojuCapacity,
         String interest,
-        Boolean isPourSauceLover,
-        Boolean isHardPeachLover,
-        Boolean isMintChocoLover,
-        Boolean isRedBeanFishBreadLover,
-        Boolean isSojuLover,
-        Boolean isRiceTteokLover,
+        UserFavorRequest userFavor,
         String idealType,
         String selfIntroduction,
         List<MemberLinkUpdateRequest> links,
@@ -36,7 +31,14 @@ public record MemberProfileUpdateRequest (
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial
 ){
-
+    public record UserFavorRequest(
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanFishBreadLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover
+    ){}
     public record MemberLinkUpdateRequest(
             Long id,
             String title,
