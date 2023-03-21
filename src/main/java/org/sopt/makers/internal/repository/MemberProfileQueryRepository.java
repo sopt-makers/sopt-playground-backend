@@ -201,7 +201,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .where(member.hasProfile.eq(true)
-                        .and(activities.generation.eq(generation))
+                        .and(activities.generation.in(generation))
                         .and(member.id.gt(cursor))
                         .and(member.name.contains(name))
                 ).limit(limit)
