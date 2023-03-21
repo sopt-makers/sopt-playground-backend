@@ -190,8 +190,8 @@ public class MemberService {
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
-                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
-                request.isRedBeanFishBreadLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
+                request.interest(), request.userFavor().isPourSauceLover(), request.userFavor().isHardPeachLover(), request.userFavor().isMintChocoLover(),
+                request.userFavor().isRedBeanFishBreadLover(), request.userFavor().isSojuLover(), request.userFavor().isRiceTteokLover(), request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
@@ -248,8 +248,8 @@ public class MemberService {
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
-                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
-                request.isRedBeanFishBreadLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
+                request.interest(), request.userFavor().isPourSauceLover(), request.userFavor().isHardPeachLover(), request.userFavor().isMintChocoLover(),
+                request.userFavor().isRedBeanFishBreadLover(), request.userFavor().isSojuLover(), request.userFavor().isRiceTteokLover(), request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
