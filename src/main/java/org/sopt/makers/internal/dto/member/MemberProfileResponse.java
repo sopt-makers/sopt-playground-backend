@@ -23,12 +23,7 @@ public record MemberProfileResponse(
         String mbtiDescription,
         Double sojuCapacity,
         String interest,
-        Boolean isPourSauceLover,
-        Boolean isHardPeachLover,
-        Boolean isMintChocoLover,
-        Boolean isRedBeanFishBreadLover,
-        Boolean isSojuLover,
-        Boolean isRiceTteokLover,
+        UserFavorResponse userFavor,
         String idealType,
         String selfIntroduction,
         @Schema(required = true)
@@ -37,6 +32,15 @@ public record MemberProfileResponse(
         List<MemberCareerResponse> careers,
         Boolean allowOfficial
 ) {
+
+    public record UserFavorResponse(
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanFishBreadLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover
+    ){}
 
     public record MemberLinkResponse(
             Long id,

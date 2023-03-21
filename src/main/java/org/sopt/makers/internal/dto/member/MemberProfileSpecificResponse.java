@@ -21,12 +21,7 @@ public record MemberProfileSpecificResponse(
         String mbtiDescription,
         Double sojuCapacity,
         String interest,
-        Boolean isPourSauceLover,
-        Boolean isHardPeachLover,
-        Boolean isMintChocoLover,
-        Boolean isRedBeanFishBreadLover,
-        Boolean isSojuLover,
-        Boolean isRiceTteokLover,
+        UserFavorResponse userFavor,
         String idealType,
         String selfIntroduction,
         @Schema(required = true)
@@ -38,6 +33,14 @@ public record MemberProfileSpecificResponse(
         @Schema(required = true)
         Boolean isMine
 ) {
+    public record UserFavorResponse(
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanFishBreadLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover
+    ){}
 
     public record MemberLinkResponse(
             Long id,
