@@ -130,7 +130,7 @@ public class MemberProfileQueryRepository {
                 .where(member.hasProfile.eq(true)
                         .and(activities.part.contains(part))
                         .and(member.id.gt(cursor))
-                        .and(activities.generation.in(generation))
+                        .and(activities.generation.eq(generation))
                 ).limit(limit)
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
@@ -158,7 +158,7 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .where(member.hasProfile.eq(true)
                         .and(activities.part.contains(part))
-                        .and(activities.generation.in(generation))
+                        .and(activities.generation.eq(generation))
                 )
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
@@ -168,7 +168,6 @@ public class MemberProfileQueryRepository {
     public List<Member> findAllMemberProfileByGeneration(Integer generation) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
-        System.out.println(activities.generation.in(generation));
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .where(member.hasProfile.eq(true)
@@ -189,7 +188,7 @@ public class MemberProfileQueryRepository {
                         .and(activities.part.contains(part))
                         .and(member.id.gt(cursor))
                         .and(member.name.contains(name))
-                        .and(activities.generation.in(generation))
+                        .and(activities.generation.eq(generation))
                 ).limit(limit)
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
@@ -202,7 +201,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .where(member.hasProfile.eq(true)
-                        .and(activities.generation.in(generation))
+                        .and(activities.generation.eq(generation))
                         .and(member.id.gt(cursor))
                         .and(member.name.contains(name))
                 ).limit(limit)
