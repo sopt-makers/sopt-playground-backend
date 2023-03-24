@@ -1,6 +1,10 @@
 package org.sopt.makers.internal.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
@@ -11,8 +15,10 @@ import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,20 +27,25 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class MemberService {
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberMapper memberMapper;
-
     private final MemberProfileQueryRepository profileQueryRepository;
+    private final SlackClient slackClient;
+    private final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Transactional(readOnly = true)
     public Member getMemberById (Long id) {
@@ -203,7 +214,45 @@ public class MemberService {
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
+        try {
+            if (Objects.equals(activeProfile, "prod")) {
+                val slackRequest = createSlackRequest(member.getId(), request.name(), request.idealType());
+                slackClient.postMessage(slackRequest.toString());
+            }
+        } catch (RuntimeException ex) {
+            log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
+        }
         return member;
+    }
+
+    private JsonNode createSlackRequest(Long id, String name, String idealType) {
+        val rootNode = jsonMapper.createObjectNode();
+        rootNode.put("text", "새로운 유저가 프로필을 만들었어요!");
+        val blocks = jsonMapper.createArrayNode();
+
+        val textField = jsonMapper.createObjectNode();
+        textField.put("type", "section");
+        textField.set("text", createTextFieldNode("새로운 유저가 프로필을 만들었어요!"));
+
+        val contentNode = jsonMapper.createObjectNode();
+        contentNode.put("type", "section");
+        val fields = jsonMapper.createArrayNode();
+        fields.add(createTextFieldNode("*이름:*\n" + name));
+        fields.add(createTextFieldNode("*프로필링크:*\n<https://playground.sopt.org/members/" + id + "|멤버프로필>"));
+        fields.add(createTextFieldNode("*이상형:*\n" + idealType));
+        contentNode.set("fields", fields);
+
+        blocks.add(textField);
+        blocks.add(contentNode);
+        rootNode.set("blocks", blocks);
+        return rootNode;
+    }
+
+    private JsonNode createTextFieldNode (String text) {
+        val textField = jsonMapper.createObjectNode();
+        textField.put("type", "mrkdwn");
+        textField.put("text", text);
+        return textField;
     }
 
     @Transactional
