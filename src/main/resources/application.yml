@@ -64,3 +64,5 @@ coffeechat:
   profile: testUrl
   logo: testUrl
   default: testUrl
+slack:
+  url: test
