@@ -60,7 +60,14 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
-    @Operation(summary = "유저 프로필 생성 API")
+    @Operation(summary = "유저 프로필 생성 API",
+            description =
+                    """
+                        주량 : Double 
+                        0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
+                        2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상               
+                    """
+    )
     @PostMapping("/profile")
     public ResponseEntity<MemberProfileResponse> createUserProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
@@ -73,7 +80,14 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "멤버 프로필 수정 API")
+    @Operation(summary = "멤버 프로필 수정 API",
+            description =
+                    """
+                        주량 : Double 
+                        0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
+                        2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상               
+                    """
+    )
     @PutMapping("/profile")
     public ResponseEntity<MemberProfileResponse> updateUserProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
@@ -167,9 +181,10 @@ public class MemberController {
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
-            @RequestParam(required = false, name = "name") String name
+            @RequestParam(required = false, name = "name") String name,
+            @RequestParam(required = false, name = "generation") Integer generation
     ) {
-        val members = limit == null ? memberService.getMemberProfiles(filter, limit, cursor, name) : memberService.getMemberProfiles(filter, limit + 1, cursor, name);
+        val members = limit == null ? memberService.getMemberProfiles(filter, limit, cursor, name, generation) : memberService.getMemberProfiles(filter, limit + 1, cursor, name, generation);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);

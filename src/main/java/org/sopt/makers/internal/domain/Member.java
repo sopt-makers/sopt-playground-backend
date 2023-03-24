@@ -75,23 +75,8 @@ public class Member {
     @Column
     private String interest;
 
-    @Column(name = "is_pour_sauce_lover")
-    private Boolean isPourSauceLover;
-
-    @Column(name = "is_hard_peach_lover")
-    private Boolean isHardPeachLover;
-
-    @Column(name = "is_mint_choco_lover")
-    private Boolean isMintChocoLover;
-
-    @Column(name = "is_red_bean_fish_bread_lover")
-    private Boolean isRedBeanFishBreadLover;
-
-    @Column(name = "is_soju_lover")
-    private Boolean isSojuLover;
-
-    @Column(name = "is_rice_tteok_lover")
-    private Boolean isRiceTteokLover;
+    @Embedded
+    private UserFavor userFavor;
 
     @Column(name = "ideal_type")
     private String idealType;
@@ -146,12 +131,7 @@ public class Member {
             String mbtiDescription,
             Double sojuCapacity,
             String interest,
-            Boolean isPourSauceLover,
-            Boolean isHardPeachLover,
-            Boolean isMintChocoLover,
-            Boolean isRedBeanFishBreadLover,
-            Boolean isSojuLover,
-            Boolean isRiceTteokLover,
+            UserFavor userFavor,
             String idealType,
             String selfIntroduction,
             Boolean allowOfficial,
@@ -173,12 +153,7 @@ public class Member {
         this.mbtiDescription = mbtiDescription;
         this.sojuCapacity = sojuCapacity;
         this.interest = interest;
-        this.isPourSauceLover = isPourSauceLover;
-        this.isHardPeachLover = isHardPeachLover;
-        this.isMintChocoLover = isMintChocoLover;
-        this.isRedBeanFishBreadLover = isRedBeanFishBreadLover;
-        this.isSojuLover = isSojuLover;
-        this.isRiceTteokLover = isRiceTteokLover;
+        this.userFavor = userFavor;
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
         this.allowOfficial = allowOfficial;

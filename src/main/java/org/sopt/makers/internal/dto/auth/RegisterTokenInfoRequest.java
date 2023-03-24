@@ -1,3 +1,5 @@
 package org.sopt.makers.internal.dto.auth;
 
-public record RegisterTokenInfoRequest (String registerToken) {}
+import io.swagger.v3.oas.annotations.media.Schema;
+
+public record RegisterTokenInfoRequest (@Schema(required = true) String registerToken) {}

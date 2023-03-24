@@ -6,6 +6,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
+import org.sopt.makers.internal.domain.UserFavor;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
@@ -91,20 +92,34 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name) {
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
         val part = getMemberPart(filter);
         if (name == null) {
+            if (part != null && cursor != null && limit != null && generation != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndGeneration(part, limit, cursor, generation);
+            if (generation != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByGeneration(generation, limit, cursor);
             if (part != null && cursor != null && limit != null)
                 return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
+            if (part != null && generation != null)
+                return memberProfileQueryRepository.findAllMemberProfileByPartAndGeneration(part, generation);
             if (part != null)
                 return memberProfileQueryRepository.findAllMemberProfileByPart(part);
+            if (generation != null)
+                return memberProfileQueryRepository.findAllMemberProfileByGeneration(generation);
             if (limit != null && cursor != null)
                 return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
         } else {
+            if (part != null && cursor != null && limit != null && generation != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndNameAndGeneration(part, limit, cursor, name, generation);
             if (part != null && cursor != null && limit != null)
                 return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndName(part, limit, cursor, name);
+            if (generation != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByGenerationAndName(generation, limit, cursor, name);
             if (part != null)
                 return memberProfileQueryRepository.findAllMemberProfileByPartAndName(part, name);
+            if (generation != null)
+                return memberProfileQueryRepository.findAllMemberProfileByGenerationAndName(generation, name);
             if (limit != null && cursor != null)
                 return memberProfileQueryRepository.findAllLimitedMemberProfileByName(limit, cursor, name);
             return memberProfileQueryRepository.findAllByName(name);
@@ -172,12 +187,19 @@ public class MemberService {
                     .build();
         }).collect(Collectors.toList());
         val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
+        val userFavor = UserFavor.builder().isMintChocoLover(request.userFavor().isMintChocoLover())
+                .isSojuLover(request.userFavor().isSojuLover())
+                .isPourSauceLover(request.userFavor().isPourSauceLover())
+                .isRedBeanFishBreadLover(request.userFavor().isRedBeanFishBreadLover())
+                .isRiceTteokLover(request.userFavor().isRiceTteokLover())
+                .isHardPeachLover(request.userFavor().isHardPeachLover())
+                .build();
+
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
-                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
-                request.isRedBeanFishBreadLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
+                request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
@@ -230,12 +252,18 @@ public class MemberService {
                     .build();
         }).collect(Collectors.toList());
 
+        val userFavor = UserFavor.builder().isMintChocoLover(request.userFavor().isMintChocoLover())
+                        .isSojuLover(request.userFavor().isSojuLover())
+                        .isPourSauceLover(request.userFavor().isPourSauceLover())
+                         .isRedBeanFishBreadLover(request.userFavor().isRedBeanFishBreadLover())
+                         .isRiceTteokLover(request.userFavor().isRiceTteokLover())
+                         .isHardPeachLover(request.userFavor().isHardPeachLover())
+                                 .build();
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
-                request.interest(), request.isPourSauceLover(), request.isHardPeachLover(), request.isMintChocoLover(),
-                request.isRedBeanFishBreadLover(), request.isSojuLover(), request.isRiceTteokLover(), request.idealType(),
+                request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
