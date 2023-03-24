@@ -9,7 +9,6 @@ import java.util.List;
 public record MemberProfileSaveRequest(
 		@Schema(required = true)
 		String name,
-
 		String profileImage,
 		LocalDate birthday,
 		String phone,
@@ -23,12 +22,7 @@ public record MemberProfileSaveRequest(
 		String mbtiDescription,
 		Double sojuCapacity,
 		String interest,
-		Boolean isPourSauceLover,
-		Boolean isHardPeachLover,
-		Boolean isMintChocoLover,
-		Boolean isRedBeanFishBreadLover,
-		Boolean isSojuLover,
-		Boolean isRiceTteokLover,
+		UserFavorRequest userFavor,
 		String idealType,
 		String selfIntroduction,
 		List<MemberLinkSaveRequest> links,
@@ -37,6 +31,14 @@ public record MemberProfileSaveRequest(
 		List<MemberCareerSaveRequest> careers,
 		Boolean allowOfficial
 ) {
+	public record UserFavorRequest(
+			Boolean isPourSauceLover,
+			Boolean isHardPeachLover,
+			Boolean isMintChocoLover,
+			Boolean isRedBeanFishBreadLover,
+			Boolean isSojuLover,
+			Boolean isRiceTteokLover
+	){}
 
 	public record MemberLinkSaveRequest(
 			String title,

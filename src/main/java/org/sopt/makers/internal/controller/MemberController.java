@@ -60,7 +60,14 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
-    @Operation(summary = "유저 프로필 생성 API")
+    @Operation(summary = "유저 프로필 생성 API",
+            description =
+                    """
+                        주량 : Double 
+                        0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
+                        2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상               
+                    """
+    )
     @PostMapping("/profile")
     public ResponseEntity<MemberProfileResponse> createUserProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
@@ -73,7 +80,14 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "멤버 프로필 수정 API")
+    @Operation(summary = "멤버 프로필 수정 API",
+            description =
+                    """
+                        주량 : Double 
+                        0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
+                        2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상               
+                    """
+    )
     @PutMapping("/profile")
     public ResponseEntity<MemberProfileResponse> updateUserProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
