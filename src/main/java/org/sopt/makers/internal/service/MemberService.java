@@ -6,6 +6,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
+import org.sopt.makers.internal.domain.UserFavor;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
@@ -186,12 +187,19 @@ public class MemberService {
                     .build();
         }).collect(Collectors.toList());
         val memberCareers = memberCareerRepository.saveAll(memberCareerEntities);
+        val userFavor = UserFavor.builder().isMintChocoLover(request.userFavor().isMintChocoLover())
+                .isSojuLover(request.userFavor().isSojuLover())
+                .isPourSauceLover(request.userFavor().isPourSauceLover())
+                .isRedBeanFishBreadLover(request.userFavor().isRedBeanFishBreadLover())
+                .isRiceTteokLover(request.userFavor().isRiceTteokLover())
+                .isHardPeachLover(request.userFavor().isHardPeachLover())
+                .build();
+
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
-                request.interest(), request.userFavor().isPourSauceLover(), request.userFavor().isHardPeachLover(), request.userFavor().isMintChocoLover(),
-                request.userFavor().isRedBeanFishBreadLover(), request.userFavor().isSojuLover(), request.userFavor().isRiceTteokLover(), request.idealType(),
+                request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
@@ -244,12 +252,18 @@ public class MemberService {
                     .build();
         }).collect(Collectors.toList());
 
+        val userFavor = UserFavor.builder().isMintChocoLover(request.userFavor().isMintChocoLover())
+                        .isSojuLover(request.userFavor().isSojuLover())
+                        .isPourSauceLover(request.userFavor().isPourSauceLover())
+                         .isRedBeanFishBreadLover(request.userFavor().isRedBeanFishBreadLover())
+                         .isRiceTteokLover(request.userFavor().isRiceTteokLover())
+                         .isHardPeachLover(request.userFavor().isHardPeachLover())
+                                 .build();
         member.saveMemberProfile(
                 request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
-                request.interest(), request.userFavor().isPourSauceLover(), request.userFavor().isHardPeachLover(), request.userFavor().isMintChocoLover(),
-                request.userFavor().isRedBeanFishBreadLover(), request.userFavor().isSojuLover(), request.userFavor().isRiceTteokLover(), request.idealType(),
+                request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
