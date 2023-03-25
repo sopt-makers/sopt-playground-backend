@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.domain;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.SignatureException;
@@ -51,7 +52,7 @@ public class InternalTokenManager {
             if (exp.isBefore(now)) return false;
 
             return true;
-        } catch (SignatureException e) {
+        } catch (SignatureException | ExpiredJwtException e) {
             return false;
         }
     }
@@ -125,8 +126,8 @@ public class InternalTokenManager {
             if (exp.isBefore(now)) throw new WrongTokenException("잘못된 토큰입니다.");
 
             return claims.getAudience();
-        } catch (SignatureException e) {
-            throw new WrongAccessTokenException("Wrong signature is used");
+        } catch (SignatureException | ExpiredJwtException e) {
+            throw new WrongAccessTokenException("Wrong token is used");
         }
     }
 
