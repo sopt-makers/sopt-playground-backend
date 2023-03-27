@@ -17,7 +17,13 @@ public record MemberProfileSpecificResponse(
         String major,
         String introduction,
         String skill,
+        String mbti,
+        String mbtiDescription,
+        Double sojuCapacity,
         String interest,
+        UserFavorResponse userFavor,
+        String idealType,
+        String selfIntroduction,
         @Schema(required = true)
         List<MemberActivityResponse> activities,
         List<MemberLinkResponse> links,
@@ -31,6 +37,15 @@ public record MemberProfileSpecificResponse(
             Long id,
             String title,
             String url
+    ){}
+
+    public record UserFavorResponse(
+            Boolean isPourSauceLover,
+            Boolean isHardPeachLover,
+            Boolean isMintChocoLover,
+            Boolean isRedBeanFishBreadLover,
+            Boolean isSojuLover,
+            Boolean isRiceTteokLover
     ){}
 
     public record MemberProjectResponse(
