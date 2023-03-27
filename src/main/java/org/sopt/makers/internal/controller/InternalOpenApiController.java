@@ -2,6 +2,7 @@ package org.sopt.makers.internal.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -33,7 +34,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/api/v1")
-@Tag(name = "내부 서버 관련 오픈될 API")
+@SecurityRequirement(name = "Authorization")
+@Tag(name = "내부 서비스 오픈 API")
 public class InternalOpenApiController {
 
     private final InternalApiService internalApiService;
