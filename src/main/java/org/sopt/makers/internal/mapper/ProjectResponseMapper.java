@@ -2,6 +2,8 @@ package org.sopt.makers.internal.mapper;
 
 import lombok.val;
 import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.dto.internal.InternalProjectDetailResponse;
+import org.sopt.makers.internal.dto.internal.InternalProjectResponse;
 import org.sopt.makers.internal.dto.project.ProjectDetailResponse;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.dto.project.ProjectMemberVo;
@@ -73,4 +75,65 @@ public class ProjectResponseMapper {
                 linkResponses
         );
     }
+
+    public InternalProjectDetailResponse toInternalProjectDetailResponse (List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
+        val projectInfo = projectMembers.get(0);
+        val memberResponses = projectMembers.stream().map(this::toInternalProjectMemberResponse).collect(Collectors.toList());
+        val linkResponses = projectLinks.stream().map(this::toInternalProjectDetailLinkResponse).collect(Collectors.toList());
+
+        return new InternalProjectDetailResponse(
+                projectInfo.id(),
+                projectInfo.name(),
+                projectInfo.writerId(),
+                projectInfo.generation(),
+                projectInfo.category(),
+                projectInfo.startAt(),
+                projectInfo.endAt(),
+                projectInfo.serviceType(),
+                projectInfo.isAvailable(),
+                projectInfo.isFounding(),
+                projectInfo.summary(),
+                projectInfo.detail(),
+                projectInfo.logoImage(),
+                projectInfo.thumbnailImage(),
+                projectInfo.images(),
+                projectInfo.createdAt(),
+                projectInfo.updatedAt(),
+                memberResponses,
+                linkResponses
+        );
+    }
+
+    public InternalProjectResponse toInternalProjectResponse (Project project, List<ProjectLinkDao> projectLinks) {
+        val linkResponses = projectLinks.stream().map(this::toIntenralProjectLinkResponse).collect(Collectors.toList());
+
+        return new InternalProjectResponse(
+                project.getId(),
+                project.getName(),
+                project.getGeneration(),
+                project.getCategory(),
+                project.getServiceType(),
+                project.getSummary(),
+                project.getDetail(),
+                project.getLogoImage(),
+                project.getThumbnailImage(),
+                linkResponses
+        );
+    }
+
+    public InternalProjectDetailResponse.ProjectMemberResponse toInternalProjectMemberResponse (ProjectMemberVo project) {
+        return new InternalProjectDetailResponse.ProjectMemberResponse(
+                project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
+                project.memberName(), project.memberGenerations(), project.memberProfileImage(), project.memberHasProfile()
+        );
+    }
+
+    public InternalProjectResponse.ProjectLinkResponse toIntenralProjectLinkResponse (ProjectLinkDao project) {
+        return new InternalProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    }
+
+    public InternalProjectDetailResponse.ProjectLinkResponse toInternalProjectDetailLinkResponse (ProjectLinkDao project) {
+        return new InternalProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    }
+
 }
