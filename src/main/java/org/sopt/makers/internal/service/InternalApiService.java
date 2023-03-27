@@ -32,7 +32,7 @@ public class InternalApiService {
     private final ProjectMapper projectMapper;
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
-    private final MemberProfileQueryRepository profileQueryRepository;
+    private final MemberProfileQueryRepository memberProfileQueryRepository;
 
     @Transactional(readOnly = true)
     public List<ProjectMemberVo> fetchById (Long id) {
@@ -84,7 +84,7 @@ public class InternalApiService {
 
     @Transactional(readOnly = true)
     public List<MemberProfileProjectDao> getMemberProfileProjects (Long id) {
-        return profileQueryRepository.findMemberProfileProjectsByMemberId(id);
+        return memberProfileQueryRepository.findMemberProfileProjectsByMemberId(id);
     }
 
     public Map<String, List<ActivityVo>> getMemberProfileActivity (
@@ -111,5 +111,54 @@ public class InternalApiService {
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
                         Map.Entry::getValue
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
+        val part = getMemberPart(filter);
+        if (name == null) {
+            if (part != null && cursor != null && limit != null && generation != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndGeneration(part, limit, cursor, generation);
+            if (generation != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByGeneration(generation, limit, cursor);
+            if (part != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
+            if (part != null && generation != null)
+                return memberProfileQueryRepository.findAllMemberProfileByPartAndGeneration(part, generation);
+            if (part != null)
+                return memberProfileQueryRepository.findAllMemberProfileByPart(part);
+            if (generation != null)
+                return memberProfileQueryRepository.findAllMemberProfileByGeneration(generation);
+            if (limit != null && cursor != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
+        } else {
+            if (part != null && cursor != null && limit != null && generation != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndNameAndGeneration(part, limit, cursor, name, generation);
+            if (part != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndName(part, limit, cursor, name);
+            if (generation != null && cursor != null && limit != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByGenerationAndName(generation, limit, cursor, name);
+            if (part != null)
+                return memberProfileQueryRepository.findAllMemberProfileByPartAndName(part, name);
+            if (generation != null)
+                return memberProfileQueryRepository.findAllMemberProfileByGenerationAndName(generation, name);
+            if (limit != null && cursor != null)
+                return memberProfileQueryRepository.findAllLimitedMemberProfileByName(limit, cursor, name);
+            return memberProfileQueryRepository.findAllByName(name);
+        }
+        return memberRepository.findAllByHasProfileTrue();
+    }
+
+    private String getMemberPart (Integer filter) {
+        if (filter == null) return null;
+        return switch (filter) {
+            case 1 -> "기획";
+            case 2 -> "디자인";
+            case 3 -> "웹";
+            case 4 -> "서버";
+            case 5 -> "안드로이드";
+            case 6 -> "iOS";
+            default -> null;
+        };
     }
 }

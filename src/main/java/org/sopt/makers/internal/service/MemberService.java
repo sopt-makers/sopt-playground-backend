@@ -43,7 +43,6 @@ public class MemberService {
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberMapper memberMapper;
-    private final MemberProfileQueryRepository profileQueryRepository;
     private final SlackClient slackClient;
     private final ObjectMapper jsonMapper = new ObjectMapper();
 
@@ -62,7 +61,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<MemberProfileProjectDao> getMemberProfileProjects (Long id) {
-        return profileQueryRepository.findMemberProfileProjectsByMemberId(id);
+        return memberProfileQueryRepository.findMemberProfileProjectsByMemberId(id);
     }
 
     public Map<String, List<ActivityVo>> getMemberProfileActivity (
