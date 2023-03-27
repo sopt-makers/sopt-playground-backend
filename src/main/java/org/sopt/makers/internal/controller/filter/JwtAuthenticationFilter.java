@@ -28,7 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         val jwtToken = parseJwt(request);
         val isTokenAvailable = checkJwtAvailable(jwtToken);
         val uri = request.getRequestURI();
-        if (uri.startsWith("/api") && !uri.contains("idp") && !uri.contains("registration")) {
+        if ((uri.startsWith("/api") || uri.startsWith("/internal"))
+                && !uri.contains("idp") && !uri.contains("registration")) {
             if (!isTokenAvailable)
                 throw new WrongAccessTokenException("Token is empty or not verified");
         }

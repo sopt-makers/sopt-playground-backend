@@ -9,6 +9,7 @@ import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.*;
+import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +28,14 @@ import java.util.stream.Collectors;
 @Tag(name = "Project 관련 API", description = "Project와 관련 API들")
 public class ProjectController {
     private final ProjectService projectService;
+    private final ProjectResponseMapper projectMapper;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDetailResponse> getProject (@PathVariable Long id) {
         val projectMembers = projectService.fetchById(id);
         val projectLinks = projectService.fetchLinksById(id);
-        val response = toProjectDetailResponse(projectMembers, projectLinks);
+        val response = projectMapper.toProjectDetailResponse(projectMembers, projectLinks);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -46,7 +48,7 @@ public class ProjectController {
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
         val responses = projectIds.stream()
-                .map(id -> toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
@@ -79,64 +81,5 @@ public class ProjectController {
         val writerId = memberDetails.getId();
         projectService.deleteProject(writerId, projectId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
-    }
-
-    private ProjectDetailResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
-        return new ProjectDetailResponse.ProjectMemberResponse(
-                project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
-                project.memberName(), project.memberGenerations(), project.memberProfileImage(), project.memberHasProfile()
-        );
-    }
-
-    private ProjectResponse.ProjectLinkResponse toProjectLinkResponse (ProjectLinkDao project) {
-        return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
-    }
-
-    private ProjectDetailResponse.ProjectLinkResponse toProjectDetailLinkResponse (ProjectLinkDao project) {
-        return new ProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
-    }
-    private ProjectResponse toProjectResponse (Project project, List<ProjectLinkDao> projectLinks) {
-        val linkResponses = projectLinks.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
-
-        return new ProjectResponse(
-                project.getId(),
-                project.getName(),
-                project.getGeneration(),
-                project.getCategory(),
-                project.getServiceType(),
-                project.getSummary(),
-                project.getDetail(),
-                project.getLogoImage(),
-                project.getThumbnailImage(),
-                linkResponses
-        );
-    }
-
-    private ProjectDetailResponse toProjectDetailResponse (List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
-        val projectInfo = projectMembers.get(0);
-        val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
-        val linkResponses = projectLinks.stream().map(this::toProjectDetailLinkResponse).collect(Collectors.toList());
-
-        return new ProjectDetailResponse(
-                projectInfo.id(),
-                projectInfo.name(),
-                projectInfo.writerId(),
-                projectInfo.generation(),
-                projectInfo.category(),
-                projectInfo.startAt(),
-                projectInfo.endAt(),
-                projectInfo.serviceType(),
-                projectInfo.isAvailable(),
-                projectInfo.isFounding(),
-                projectInfo.summary(),
-                projectInfo.detail(),
-                projectInfo.logoImage(),
-                projectInfo.thumbnailImage(),
-                projectInfo.images(),
-                projectInfo.createdAt(),
-                projectInfo.updatedAt(),
-                memberResponses,
-                linkResponses
-        );
     }
 }
