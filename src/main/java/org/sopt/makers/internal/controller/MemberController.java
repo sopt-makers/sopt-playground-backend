@@ -73,6 +73,12 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileSaveRequest request
     ) {
+        val normalRequestNumber = request.activities().stream().filter(activity ->
+                activity.team().equals("해당 없음")
+                        || activity.team().equals("운영팀")
+                        || activity.team().equals("미디어팀")
+        ).count();
+        if (request.activities().size() != normalRequestNumber) throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.saveMemberProfile(memberDetails.getId(), request);
