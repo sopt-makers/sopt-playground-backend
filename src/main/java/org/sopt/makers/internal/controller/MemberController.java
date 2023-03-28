@@ -112,12 +112,16 @@ public class MemberController {
                 member.getActivities(),
                 memberProfileProjects
         );
+        val soptActivityResponse = memberService.getMemberProfileProjects(
+                member.getActivities(),
+                memberProfileProjects
+        );
         val activityResponses = activityMap.entrySet().stream().map(entry ->
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
         val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -160,9 +164,13 @@ public class MemberController {
         val activityResponses = activityMap.entrySet().stream().map(entry ->
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
         ).collect(Collectors.toList());
+        val soptActivityResponse = memberService.getMemberProfileProjects(
+                member.getActivities(),
+                memberProfileProjects
+        );
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
         val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
