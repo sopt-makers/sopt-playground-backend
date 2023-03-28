@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -88,6 +87,21 @@ public class MemberService {
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
                         Map.Entry::getValue
                 ));
+    }
+
+    public  List<MemberProfileProjectVo> getMemberProfileProjects (
+            List<MemberSoptActivity> memberActivities,
+            List<MemberProfileProjectDao> memberProfileProjects
+    ) {
+        return memberActivities.stream()
+                .map(m -> {
+                    val projects = memberProfileProjects.stream()
+                            .filter(p -> p.generation() != null)
+                            .filter(p -> p.generation().equals(m.getGeneration()))
+                            .map(memberMapper::toActivityInfoVo).collect(Collectors.toList());
+                    return memberMapper.toSoptMemberProfileProjectVo(m, projects);
+                })
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
