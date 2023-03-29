@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -90,6 +89,21 @@ public class MemberService {
                 ));
     }
 
+    public  List<MemberProfileProjectVo> getMemberProfileProjects (
+            List<MemberSoptActivity> memberActivities,
+            List<MemberProfileProjectDao> memberProfileProjects
+    ) {
+        return memberActivities.stream()
+                .map(m -> {
+                    val projects = memberProfileProjects.stream()
+                            .filter(p -> p.generation() != null)
+                            .filter(p -> p.generation().equals(m.getGeneration()))
+                            .map(memberMapper::toActivityInfoVo).collect(Collectors.toList());
+                    return memberMapper.toSoptMemberProfileProjectVo(m, projects);
+                })
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public List<Member> getAllMakersMemberProfiles() {
         val makersMembers = List.of(
@@ -169,7 +183,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team())
+                                .team(activity.team().equals("해당 없음") ? null : activity.team())
                                 .build()).collect(Collectors.toList());
         memberActivityEntities.forEach(a -> a.setMemberId(memberId));
         val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
@@ -275,7 +289,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team())
+                                .team(activity.team().equals("해당 없음") ? null : activity.team())
                                 .build()).collect(Collectors.toList())
         );
 

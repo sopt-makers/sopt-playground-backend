@@ -10,7 +10,6 @@ import org.sopt.makers.internal.dto.internal.InternalMemberResponse;
 import org.sopt.makers.internal.dto.member.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
@@ -20,6 +19,18 @@ public interface MemberMapper {
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
 
     MakersMemberProfileResponse toMakersMemberProfileResponse (Member member);
+
+    @Mapping(target = "projects", source = "projects")
+    MemberProfileProjectVo toSoptMemberProfileProjectVo(MemberSoptActivity member, List<MemberProjectVo> projects);
+
+    @Mapping(target = "activities", source = "activities")
+    MemberProfileSpecificResponse toProfileSpecificResponse (
+            Member member,
+            boolean isMine,
+            List<MemberProfileProjectDao> projects,
+            List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
+            List<MemberProfileProjectVo> soptActivities
+    );
 
     @Mapping(target = "activities", source = "activities")
     MemberProfileSpecificResponse toProfileSpecificResponse (
@@ -41,4 +52,6 @@ public interface MemberMapper {
 
     @Mapping(source = "project.name", target = "team")
     ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject, String part);
+
+    MemberProjectVo toActivityInfoVo (MemberProfileProjectDao project);
 }
