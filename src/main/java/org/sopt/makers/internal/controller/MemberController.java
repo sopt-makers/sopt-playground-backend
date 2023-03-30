@@ -74,7 +74,8 @@ public class MemberController {
             @RequestBody MemberProfileSaveRequest request
     ) {
         val normalRequestNumber = request.activities().stream().filter(activity ->
-                activity.team().equals("해당 없음")
+                        activity.team() == null
+                        || activity.team().equals("해당 없음")
                         || activity.team().equals("운영팀")
                         || activity.team().equals("미디어팀")
         ).count();
@@ -100,7 +101,8 @@ public class MemberController {
             @RequestBody MemberProfileUpdateRequest request
     ) {
         val normalRequestNumber = request.activities().stream().filter(activity ->
-                activity.team().equals("해당 없음")
+                activity.team() == null
+                || activity.team().equals("해당 없음")
                 || activity.team().equals("운영팀")
                 || activity.team().equals("미디어팀")
         ).count();
