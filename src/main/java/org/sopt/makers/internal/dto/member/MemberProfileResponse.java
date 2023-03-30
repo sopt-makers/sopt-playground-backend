@@ -53,7 +53,14 @@ public record MemberProfileResponse(
             Integer generation,
             String part,
             String team
-    ){}
+    ){
+        public MemberSoptActivityResponse(Long id, Integer generation, String part, String team){
+            this.id = id;
+            this.generation = generation;
+            this.part = part;
+            this.team = team == null || team.equals("해당 없음") ? null : team;
+        }
+    }
 
     public record MemberCareerResponse(
             Long id,
