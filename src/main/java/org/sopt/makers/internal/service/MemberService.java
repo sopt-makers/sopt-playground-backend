@@ -183,7 +183,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team().equals("해당 없음") ? null : activity.team())
+                                .team(activity.team() == null || activity.team().equals("해당 없음") ? null : activity.team())
                                 .build()).collect(Collectors.toList());
         memberActivityEntities.forEach(a -> a.setMemberId(memberId));
         val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
@@ -289,7 +289,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team().equals("해당 없음") ? null : activity.team())
+                                .team(activity.team() == null || activity.team().equals("해당 없음") ? null : activity.team())
                                 .build()).collect(Collectors.toList())
         );
 
