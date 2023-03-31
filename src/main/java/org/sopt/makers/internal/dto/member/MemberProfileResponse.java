@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
-import lombok.val;
 
 public record MemberProfileResponse(
         @Schema(required = true)
@@ -54,18 +53,7 @@ public record MemberProfileResponse(
             Integer generation,
             String part,
             String team
-    ){
-        public MemberSoptActivityResponse(Long id, Integer generation, String part, String team){
-            this.id = id;
-            this.generation = generation;
-            this.part = part;
-            val teamNullCondition = (team == null || team.equals("해당 없음"));
-            if(teamNullCondition) {
-                team = null;
-            }
-            this.team = team;
-        }
-    }
+    ){}
 
     public record MemberCareerResponse(
             Long id,
