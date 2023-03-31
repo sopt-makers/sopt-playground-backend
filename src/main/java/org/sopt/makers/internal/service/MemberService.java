@@ -2,6 +2,7 @@ package org.sopt.makers.internal.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -164,6 +165,15 @@ public class MemberService {
         };
     }
 
+    private String checkActivityTeamConditions (String team) {
+
+        Predicate<String> teamIsEmpty = String::isEmpty;
+        Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
+        boolean isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
+        if(isNullResult) return null;
+        else return team;
+    }
+
     @Transactional
     public Member saveMemberProfile (Long id, MemberProfileSaveRequest request) {
         val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
@@ -183,7 +193,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team() == null || activity.team().equals("해당 없음") ? null : activity.team())
+                                .team(checkActivityTeamConditions(activity.team()))
                                 .build()).collect(Collectors.toList());
         memberActivityEntities.forEach(a -> a.setMemberId(memberId));
         val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
@@ -289,7 +299,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team() == null || activity.team().equals("해당 없음") ? null : activity.team())
+                                .team(checkActivityTeamConditions(activity.team()))
                                 .build()).collect(Collectors.toList())
         );
 
