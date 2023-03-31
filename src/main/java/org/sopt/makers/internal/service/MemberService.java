@@ -167,9 +167,9 @@ public class MemberService {
 
     private String checkActivityTeamConditions (String team) {
 
-        Predicate<String> teamIsEmpty = String::isEmpty;
+        Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
-        boolean isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
+        val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
         if(isNullResult) return null;
         else return team;
     }
