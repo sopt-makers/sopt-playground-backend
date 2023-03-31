@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
@@ -73,13 +74,11 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileSaveRequest request
     ) {
-        val normalRequestNumber = request.activities().stream().filter(activity ->
-                        activity.team() == null
-                        || activity.team().equals("해당 없음")
-                        || activity.team().equals("운영팀")
-                        || activity.team().equals("미디어팀")
-        ).count();
-        if (request.activities().size() != normalRequestNumber) throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        val normalTeamNameRequest = request.activities().stream().filter(activity ->
+                ActivityTeam.hasActivityTeam(activity.team())).count();
+        if (request.activities().size() != normalTeamNameRequest) {
+            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.saveMemberProfile(memberDetails.getId(), request);
@@ -100,13 +99,11 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileUpdateRequest request
     ) {
-        val normalRequestNumber = request.activities().stream().filter(activity ->
-                activity.team() == null
-                || activity.team().equals("해당 없음")
-                || activity.team().equals("운영팀")
-                || activity.team().equals("미디어팀")
-        ).count();
-        if (request.activities().size() != normalRequestNumber) throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        val normalTeamNameRequest = request.activities().stream().filter(activity ->
+                ActivityTeam.hasActivityTeam(activity.team())).count();
+        if (request.activities().size() != normalTeamNameRequest) {
+            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(memberDetails.getId(), request);
