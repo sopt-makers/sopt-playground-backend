@@ -123,10 +123,13 @@ public class MemberController {
                 member.getActivities(),
                 memberProfileProjects
         );
-        val soptActivityResponse = memberService.getMemberProfileProjects(
+        val soptActivity = memberService.getMemberProfileProjects(
                 member.getActivities(),
                 memberProfileProjects
         );
+        val soptActivityResponse = soptActivity.stream()
+                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()), m.projects()))
+                .collect(Collectors.toList());
         val activityResponses = activityMap.entrySet().stream().map(entry ->
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
@@ -158,6 +161,14 @@ public class MemberController {
             response.careers().add(0, currentCareer);
             response.careers().remove(index+1);
         }
+    }
+
+    private String checkTeamNullCondition (String team) {
+        val teamNullCondition = (team == null || team.equals("해당 없음"));
+        if (teamNullCondition) {
+            team = null;
+        }
+        return team;
     }
 
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
