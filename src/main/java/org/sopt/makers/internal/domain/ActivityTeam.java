@@ -16,7 +16,7 @@ public enum ActivityTeam {
 
     public static boolean hasActivityTeam(String team) {
         val rightTeam = Arrays.stream(ActivityTeam.values())
-                .filter(v -> v.teamName.equals(team)).findAny();
+                .filter(v -> (team == null || team.equals(v.teamName))).findAny();
         return rightTeam.isPresent();
     }
 }
