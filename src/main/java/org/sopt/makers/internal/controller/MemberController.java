@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
@@ -73,12 +74,11 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileSaveRequest request
     ) {
-        val normalRequestNumber = request.activities().stream().filter(activity ->
-                activity.team().equals("해당 없음")
-                        || activity.team().equals("운영팀")
-                        || activity.team().equals("미디어팀")
-        ).count();
-        if (request.activities().size() != normalRequestNumber) throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        val normalTeamNameRequest = request.activities().stream().filter(activity ->
+                ActivityTeam.hasActivityTeam(activity.team())).count();
+        if (request.activities().size() != normalTeamNameRequest) {
+            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.saveMemberProfile(memberDetails.getId(), request);
@@ -99,12 +99,11 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody MemberProfileUpdateRequest request
     ) {
-        val normalRequestNumber = request.activities().stream().filter(activity ->
-                activity.team().equals("해당 없음")
-                || activity.team().equals("운영팀")
-                || activity.team().equals("미디어팀")
-        ).count();
-        if (request.activities().size() != normalRequestNumber) throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        val normalTeamNameRequest = request.activities().stream().filter(activity ->
+                ActivityTeam.hasActivityTeam(activity.team())).count();
+        if (request.activities().size() != normalTeamNameRequest) {
+            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+        }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(memberDetails.getId(), request);
@@ -124,12 +123,19 @@ public class MemberController {
                 member.getActivities(),
                 memberProfileProjects
         );
+        val soptActivity = memberService.getMemberProfileProjects(
+                member.getActivities(),
+                memberProfileProjects
+        );
+        val soptActivityResponse = soptActivity.stream()
+                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()), m.projects()))
+                .collect(Collectors.toList());
         val activityResponses = activityMap.entrySet().stream().map(entry ->
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
         val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -157,6 +163,14 @@ public class MemberController {
         }
     }
 
+    private String checkTeamNullCondition (String team) {
+        val teamNullCondition = (team == null || team.equals("해당 없음"));
+        if (teamNullCondition) {
+            team = null;
+        }
+        return team;
+    }
+
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/profile/me")
     public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
@@ -172,9 +186,13 @@ public class MemberController {
         val activityResponses = activityMap.entrySet().stream().map(entry ->
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
         ).collect(Collectors.toList());
+        val soptActivityResponse = memberService.getMemberProfileProjects(
+                member.getActivities(),
+                memberProfileProjects
+        );
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
         val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);

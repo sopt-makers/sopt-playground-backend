@@ -26,6 +26,8 @@ public record MemberProfileSpecificResponse(
         String selfIntroduction,
         @Schema(required = true)
         List<MemberActivityResponse> activities,
+        @Schema(required = true)
+        List<SoptMemberActivityResponse> soptActivities,
         List<MemberLinkResponse> links,
         List<MemberProjectResponse> projects,
         List<MemberCareerResponse> careers,
@@ -62,6 +64,13 @@ public record MemberProfileSpecificResponse(
     public record MemberActivityResponse (
             String cardinalInfo,
             List<ActivityVo> cardinalActivities
+    ){}
+
+    public record SoptMemberActivityResponse (
+            Integer generation,
+            String part,
+            String team,
+            List<MemberProjectVo> projects
     ){}
 
     public record MemberCareerResponse(

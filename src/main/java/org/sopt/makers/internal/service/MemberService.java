@@ -1,8 +1,8 @@
 package org.sopt.makers.internal.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -90,6 +90,21 @@ public class MemberService {
                 ));
     }
 
+    public  List<MemberProfileProjectVo> getMemberProfileProjects (
+            List<MemberSoptActivity> memberActivities,
+            List<MemberProfileProjectDao> memberProfileProjects
+    ) {
+        return memberActivities.stream()
+                .map(m -> {
+                    val projects = memberProfileProjects.stream()
+                            .filter(p -> p.generation() != null)
+                            .filter(p -> p.generation().equals(m.getGeneration()))
+                            .map(memberMapper::toActivityInfoVo).collect(Collectors.toList());
+                    return memberMapper.toSoptMemberProfileProjectVo(m, projects);
+                })
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public List<Member> getAllMakersMemberProfiles() {
         val makersMembers = List.of(
@@ -150,6 +165,15 @@ public class MemberService {
         };
     }
 
+    private String checkActivityTeamConditions (String team) {
+
+        Predicate<String> teamIsEmpty = Objects::isNull;
+        Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
+        val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
+        if(isNullResult) return null;
+        else return team;
+    }
+
     @Transactional
     public Member saveMemberProfile (Long id, MemberProfileSaveRequest request) {
         val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
@@ -169,7 +193,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team())
+                                .team(checkActivityTeamConditions(activity.team()))
                                 .build()).collect(Collectors.toList());
         memberActivityEntities.forEach(a -> a.setMemberId(memberId));
         val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
@@ -275,7 +299,7 @@ public class MemberService {
                                 .memberId(memberId)
                                 .part(activity.part())
                                 .generation(activity.generation())
-                                .team(activity.team())
+                                .team(checkActivityTeamConditions(activity.team()))
                                 .build()).collect(Collectors.toList())
         );
 
