@@ -56,7 +56,7 @@ public class AuthService {
             throw new AuthFailureException("Facebook 인증에 실패했습니다.");
         }
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
-        log.info("Facebook user id : " + fbUserInfo.userId());
+        log.info("Facebook user id : " + fbUserInfo.userId() + " / name : " + fbUserInfo.userName());
         val member = memberRepository.findByAuthUserId(fbUserInfo.userId())
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
 
