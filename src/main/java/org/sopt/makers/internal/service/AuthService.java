@@ -58,7 +58,7 @@ public class AuthService {
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
         log.info("Facebook user id : " + fbUserInfo.userId() + " / name : " + fbUserInfo.userName());
         val member = memberRepository.findByAuthUserId(fbUserInfo.userId())
-                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
+                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다.[Facebook] : " + fbUserInfo.userId()));
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -101,7 +101,7 @@ public class AuthService {
         val googleUserInfoResponse = googleTokenManager.getUserInfo(googleAccessToken);
         log.info("Google user id : " + googleUserInfoResponse);
         val member = memberRepository.findByAuthUserId(googleUserInfoResponse)
-                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다."));
+                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Google] : " + googleUserInfoResponse));
 
         return tokenManager.createAuthToken(member.getId());
     }
