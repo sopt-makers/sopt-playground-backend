@@ -40,7 +40,7 @@ public class AuthController {
 
     @Operation(summary = "Facebook register API")
     @PostMapping("/idp/facebook/register")
-    public ResponseEntity<AccessTokenResponse> registerByFacebook (@RequestBody RegisterByFacebookRequest request) {
+    public ResponseEntity<AccessTokenResponse> registerByFacebook (@RequestBody RegisterRequest request) {
         val accessToken = authService.registerByFb(request.registerToken(), request.code());
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
@@ -54,10 +54,25 @@ public class AuthController {
 
     @Operation(summary = "Google register API")
     @PostMapping("/idp/google/register")
-    public ResponseEntity<AccessTokenResponse> registerByGoogle (@RequestBody RegisterByFacebookRequest request) {
+    public ResponseEntity<AccessTokenResponse> registerByGoogle (@RequestBody RegisterRequest request) {
         val accessToken = authService.registerByGoogle(request.registerToken(), request.code());
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
+
+    @Operation(summary = "Apple auth API", description = "애플로 로그인")
+    @PostMapping("/idp/apple/auth")
+    public ResponseEntity<AccessTokenResponse> authByApple (@RequestBody AuthRequest request) {
+        val accessToken = authService.authByApple(request.code());
+        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
+    }
+
+    @Operation(summary = "Apple register API")
+    @PostMapping("/idp/apple/register")
+    public ResponseEntity<AccessTokenResponse> registerByApple (@RequestBody RegisterRequest request) {
+        val accessToken = authService.registerByApple(request.registerToken(), request.code());
+        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
+    }
+
 
     @Operation(summary = "register 토큰으로 자기 자신 확인 API")
     @PostMapping("/registration/info")
