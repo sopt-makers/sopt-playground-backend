@@ -16,6 +16,8 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.sopt.makers.internal.dto.auth.AppleAccessTokenResponse;
 import org.sopt.makers.internal.dto.auth.AppleKeysVo;
+import org.sopt.makers.internal.exception.AuthFailureException;
+import org.sopt.makers.internal.exception.WrongTokenException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
@@ -67,7 +69,7 @@ public class AppleTokenManager {
 
     public AppleAccessTokenResponse getAccessTokenByCode (String code) {
         return generateAppleAuthToken(code)
-                .orElseThrow(() -> new IllegalArgumentException("코드가 유효하지 않습니다."));
+                .orElseThrow(() -> new AuthFailureException("코드가 유효하지 않습니다."));
     }
 
     public String getUserInfo (AppleAccessTokenResponse tokenResponse) {
@@ -78,7 +80,7 @@ public class AppleTokenManager {
             val userId = payload.getSubject();
             return userId;
         } catch (ParseException e) {
-            throw new IllegalArgumentException("잘못된 토큰이 전달되었습니다.");
+            throw new AuthFailureException("잘못된 토큰이 전달되었습니다.");
         }
     }
 
@@ -104,7 +106,7 @@ public class AppleTokenManager {
     private String createClientSecret() {
         val now = new Date();
         val privateKey = getPrivateKey()
-                .orElseThrow(() -> new IllegalArgumentException("Private key 읽기 실패"));
+                .orElseThrow(() -> new AuthFailureException("Private key 읽기 실패"));
 
         return Jwts.builder()
                 .setHeaderParam("kid", KEY_ID)
