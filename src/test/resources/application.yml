@@ -56,6 +56,20 @@ oauth:
     client:
       id: test
       secret: test
+  apple:
+    auth:
+      token:
+        url: https://appleid.apple.com/auth/token
+    revoke:
+      url: https://appleid.apple.com/auth/revoke
+    key:
+      id: keyname
+      url: https://appleid.apple.com/auth/keys
+      path: static/AuthKey_keyname.p8
+    aud: https://appleid.apple.com
+    sub: bundle_id
+    team:
+      id: team_id
 coffeechat:
   profile: testUrl
   logo: testUrl

@@ -38,28 +38,28 @@ import java.util.Optional;
 @Service
 public class AppleTokenManager {
 
-    @Value("${apple.key.url}")
+    @Value("${oauth.apple.key.url}")
     private String APPLE_PUBLIC_KEYS_URL;
 
-    @Value("${apple.aud}")
+    @Value("${oauth.apple.aud}")
     private String AUD;
 
-    @Value("${apple.sub}")
+    @Value("${oauth.apple.sub}")
     private String SUB;
 
-    @Value("${apple.team.id}")
+    @Value("${oauth.apple.team.id}")
     private String TEAM_ID;
 
-    @Value("${apple.key.id}")
+    @Value("${oauth.apple.key.id}")
     private String KEY_ID;
 
-    @Value("${apple.key.path}")
+    @Value("${oauth.apple.key.path}")
     private String KEY_PATH;
 
-    @Value("${apple.auth.token.url}")
+    @Value("${oauth.apple.auth.token.url}")
     private String AUTH_TOKEN_URL;
 
-    @Value("${apple.revoke.url}")
+    @Value("${oauth.apple.revoke.url}")
     private String REVOKE_URL;
 
     private final RestTemplate appleVerifyClient = new RestTemplate();
