@@ -74,6 +74,8 @@ oauth:
     sub: bundle_id
     team:
       id: team_id
+    magic-number: test
+    register-token: test
 coffeechat:
   profile: testUrl
   logo: testUrl
