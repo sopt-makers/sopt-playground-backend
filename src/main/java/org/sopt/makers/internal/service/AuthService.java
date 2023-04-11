@@ -53,6 +53,60 @@ public class AuthService {
         return tokenManager.createAuthToken(userId);
     }
 
+    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code) {
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+        if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+        val googleAccessToken = googleAccessTokenResponse.idToken();
+
+        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
+        if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(googleUserInfo)
+                        .idpType("google")
+                        .build()
+        );
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    public String registerByFbAndMagicRegisterToken(String registerToken, String code) {
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+        if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
+
+        val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(fbUserInfo.userId())
+                        .idpType("facebook")
+                        .build()
+        );
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    public String registerByAppleAndMagicRegisterToken(String registerToken, String code) {
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+        if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
+
+        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
+        if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(appleUserInfo)
+                        .idpType("apple")
+                        .build()
+        );
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+
     @Transactional
     public String authByFb (String code) {
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");
@@ -251,7 +305,7 @@ public class AuthService {
     }
 
     public String getRegisterTokenByMagicNumber () {
-        return authConfig.getAppleRegisterToken();
+        return authConfig.getMagicRegisterToken();
     }
 
 
