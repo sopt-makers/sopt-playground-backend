@@ -78,3 +78,6 @@ coffeechat:
   default: testUrl
 slack:
   url: test
+internal:
+  app:
+    secret: test

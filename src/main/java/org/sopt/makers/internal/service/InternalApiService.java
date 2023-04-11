@@ -2,9 +2,11 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.InternalTokenManager;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.dto.internal.InternalAuthVo;
 import org.sopt.makers.internal.dto.member.ActivityVo;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
@@ -33,6 +35,7 @@ public class InternalApiService {
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
+    private final InternalTokenManager internalTokenManager;
 
     @Transactional(readOnly = true)
     public List<ProjectMemberVo> fetchById (Long id) {
@@ -160,5 +163,13 @@ public class InternalApiService {
             case 6 -> "iOS";
             default -> null;
         };
+    }
+
+    public InternalAuthVo authByToken (String previousAccessToken, String serviceName) {
+        val isVerified = internalTokenManager.verifyAuthToken(previousAccessToken);
+        if (!isVerified) return new InternalAuthVo(null, "invalidToken");
+        val userId = Long.parseLong(internalTokenManager.getUserIdFromAuthToken(previousAccessToken));
+        val accessToken = internalTokenManager.createAuthToken(userId ,30, serviceName);
+        return new InternalAuthVo(accessToken, null);
     }
 }
