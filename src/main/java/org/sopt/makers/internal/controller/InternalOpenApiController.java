@@ -6,15 +6,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Project;
-import org.sopt.makers.internal.dto.auth.AccessTokenResponse;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.service.InternalApiService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,8 +37,7 @@ public class InternalOpenApiController {
     private final ProjectResponseMapper projectMapper;
     private final MemberMapper memberMapper;
 
-    @Value("${internal.app.secret}")
-    private final String appApiSecretKey;
+    private final AuthConfig authConfig;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/projects/{id}")
@@ -150,7 +148,7 @@ public class InternalOpenApiController {
             @RequestHeader("x-request-from") String serviceName,
             @RequestBody InternalAuthRequest request
     ) {
-        if (apiKey.equals(appApiSecretKey) && serviceName.equals("app")) {
+        if (apiKey.equals(authConfig.getAppApiSecretKey()) && serviceName.equals("app")) {
             val authVo = internalApiService.authByToken(request.accessToken(), serviceName);
             val response = new InternalAuthResponse(authVo.accessToken(), authVo.errorCode());
             if (authVo.errorCode() != null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);

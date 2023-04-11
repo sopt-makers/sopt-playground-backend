@@ -96,4 +96,6 @@ public class AuthConfig {
     @Value("${oauth.apple.revoke.url}")
     private String appleRevokeUrl;
 
+    @Value("${internal.app.secret}")
+    private String appApiSecretKey;
 }
