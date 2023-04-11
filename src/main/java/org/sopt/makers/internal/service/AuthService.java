@@ -3,6 +3,7 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
@@ -25,6 +26,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class AuthService {
+    private final AuthConfig authConfig;
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
     private final GoogleTokenManager googleTokenManager;
@@ -247,6 +249,11 @@ public class AuthService {
         val phone = smsToken.split("@")[0];
         return tokenManager.createRegisterToken(phone);
     }
+
+    public String getRegisterTokenByMagicNumber () {
+        return authConfig.getAppleRegisterToken();
+    }
+
 
     private void clearMapByRandomAccess () {
         log.info("[Before clear Map] Map size : " + memberAndSmsTokenMap.size());

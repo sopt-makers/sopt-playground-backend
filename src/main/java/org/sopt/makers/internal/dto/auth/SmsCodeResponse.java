@@ -5,5 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record SmsCodeResponse(
         @Schema(required = true) boolean success,
         String code,
-        String message
+        String message,
+        boolean isSkipped,
+        String registerToken
 ) {}

@@ -3,6 +3,7 @@ package org.sopt.makers.internal.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.dto.auth.*;
 import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.sopt.makers.internal.service.AuthService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthConfig authConfig;
 
     @Operation(summary = "SSO Code Test API", description = "SSO 코드 발급을 위한 테스트 엔드포인트")
     @PostMapping("/idp/sso/code")
@@ -102,21 +104,27 @@ public class AuthController {
     @Operation(summary = "Get 6 numbers code")
     @PostMapping("/registration/sms/code")
     public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@RequestBody RegistrationPhoneRequest request) {
+        if (request.phone().equals(authConfig.getMagicNumber())) {
+            val registerToken = authService.getRegisterTokenByMagicNumber();
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new SmsCodeResponse(true, null, null, true, registerToken));
+        }
+
         if (!request.phone().startsWith("010")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, "wrongPhoneNumber", "잘못된 핸드폰 번호입니다."));
+                    .body(new SmsCodeResponse(false, "wrongPhoneNumber", "잘못된 핸드폰 번호입니다.", false, null));
         }
         val status = authService.sendSixNumberSmsCode(request.phone());
         return switch (status) {
-            case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null));
+            case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null, false, null));
             case "emptySoptUser" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, status, "인증할 수 없는 유저입니다. 문의해주세요."));
+                    .body(new SmsCodeResponse(false, status, "인증할 수 없는 유저입니다. 문의해주세요.", false, null));
             case "shouldRetry" -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new SmsCodeResponse(false, status, "재시도 해주세요."));
+                    .body(new SmsCodeResponse(false, status, "재시도 해주세요.", false, null));
             case "alreadyTaken" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, status, "이미 가입한 유저입니다."));
+                    .body(new SmsCodeResponse(false, status, "이미 가입한 유저입니다.", false, null));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new SmsCodeResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다."));
+                    .body(new SmsCodeResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다.", false, null));
         };
     }
 
