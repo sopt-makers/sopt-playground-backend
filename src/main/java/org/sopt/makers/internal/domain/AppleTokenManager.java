@@ -9,11 +9,13 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.dto.auth.AppleAccessTokenResponse;
 import org.sopt.makers.internal.dto.auth.AppleKeysVo;
 import org.sopt.makers.internal.exception.AuthFailureException;
@@ -38,31 +40,9 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AppleTokenManager {
-
-    @Value("${oauth.apple.key.url}")
-    private String APPLE_PUBLIC_KEYS_URL;
-
-    @Value("${oauth.apple.aud}")
-    private String AUD;
-
-    @Value("${oauth.apple.sub}")
-    private String SUB;
-
-    @Value("${oauth.apple.team.id}")
-    private String TEAM_ID;
-
-    @Value("${oauth.apple.key.id}")
-    private String KEY_ID;
-
-    @Value("${oauth.apple.key.path}")
-    private String KEY_PATH;
-
-    @Value("${oauth.apple.auth.token.url}")
-    private String AUTH_TOKEN_URL;
-
-    @Value("${oauth.apple.revoke.url}")
-    private String REVOKE_URL;
+    private final AuthConfig authConfig;
 
     private final RestTemplate appleVerifyClient = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -86,7 +66,7 @@ public class AppleTokenManager {
 
     private boolean verifyPublicKey(SignedJWT signedJWT) {
         try {
-            val appleKeys = appleVerifyClient.getForEntity(APPLE_PUBLIC_KEYS_URL, AppleKeysVo.class).getBody();
+            val appleKeys = appleVerifyClient.getForEntity(authConfig.getApplePublicKeysUrl(), AppleKeysVo.class).getBody();
             if (appleKeys == null) return false;
 
             for (val appleKey : appleKeys.keys()) {
@@ -109,20 +89,20 @@ public class AppleTokenManager {
                 .orElseThrow(() -> new AuthFailureException("Private key 읽기 실패"));
 
         return Jwts.builder()
-                .setHeaderParam("kid", KEY_ID)
+                .setHeaderParam("kid", authConfig.getAppleKeyId())
                 .setHeaderParam("alg", "ES256")
                 .setIssuedAt(now)
                 .setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000))
-                .setIssuer(TEAM_ID)
-                .setAudience(AUD)
-                .setSubject(SUB)
+                .setIssuer(authConfig.getAppleTeamId())
+                .setAudience(authConfig.getAppleAud())
+                .setSubject(authConfig.getAppleSub())
                 .signWith(privateKey, SignatureAlgorithm.ES256)
                 .compact();
     }
 
     private Optional<PrivateKey> getPrivateKey() {
         try {
-            val resource = new ClassPathResource(KEY_PATH);
+            val resource = new ClassPathResource(authConfig.getAppleKeyPath());
             val privateKey = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             val pemReader = new StringReader(privateKey);
             val pemParser = new PEMParser(pemReader);
@@ -138,7 +118,7 @@ public class AppleTokenManager {
     private Optional<AppleAccessTokenResponse> generateAppleAuthToken(String code) {
         val tokenRequest = new LinkedMultiValueMap<>();
         val clientSecret = createClientSecret();
-        tokenRequest.add("client_id", SUB);
+        tokenRequest.add("client_id", authConfig.getAppleSub());
         tokenRequest.add("client_secret", clientSecret);
         tokenRequest.add("code", code);
         tokenRequest.add("grant_type", "authorization_code");
@@ -149,7 +129,7 @@ public class AppleTokenManager {
         val entity = new HttpEntity<>(tokenRequest, headers);
 
         try {
-            val responseEntity = appleVerifyClient.postForEntity(AUTH_TOKEN_URL, entity, AppleAccessTokenResponse.class);
+            val responseEntity = appleVerifyClient.postForEntity(authConfig.getAppleAuthTokenUrl(), entity, AppleAccessTokenResponse.class);
             return Optional.ofNullable(responseEntity.getBody());
         } catch (HttpClientErrorException e) {
             e.printStackTrace();
@@ -166,7 +146,7 @@ public class AppleTokenManager {
             return false;
         }
 
-        if (!AUD.equals(payload.getIssuer()) || !SUB.equals(payload.getAudience().get(0))) {
+        if (!authConfig.getAppleAud().equals(payload.getIssuer()) || !authConfig.getAppleSub().equals(payload.getAudience().get(0))) {
             return false;
         }
 
