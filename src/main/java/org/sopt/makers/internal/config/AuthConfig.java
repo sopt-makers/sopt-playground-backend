@@ -65,4 +65,35 @@ public class AuthConfig {
 
     @Value("${naver-cloud-sms.senderPhone}")
     private String smsSenderPhone;
+
+    @Value("${oauth.apple.magic-number}")
+    private String magicNumber;
+
+    @Value("${oauth.apple.register-token}")
+    private String magicRegisterToken;
+
+    @Value("${oauth.apple.key.url}")
+    private String applePublicKeysUrl;
+
+    @Value("${oauth.apple.aud}")
+    private String appleAud;
+
+    @Value("${oauth.apple.sub}")
+    private String appleSub;
+
+    @Value("${oauth.apple.team.id}")
+    private String appleTeamId;
+
+    @Value("${oauth.apple.key.id}")
+    private String appleKeyId;
+
+    @Value("${oauth.apple.key.path}")
+    private String appleKeyPath;
+
+    @Value("${oauth.apple.auth.token.url}")
+    private String appleAuthTokenUrl;
+
+    @Value("${oauth.apple.revoke.url}")
+    private String appleRevokeUrl;
+
 }
