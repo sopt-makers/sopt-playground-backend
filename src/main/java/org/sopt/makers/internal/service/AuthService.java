@@ -62,12 +62,10 @@ public class AuthService {
 
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = memberRepository.save(
-                Member.builder()
-                        .authUserId(googleUserInfo)
-                        .idpType("google")
-                        .build()
-        );
+        val member = memberRepository.findByName("Tester")
+                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(googleUserInfo, "google");
+
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -78,12 +76,9 @@ public class AuthService {
         if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
 
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
-        val member = memberRepository.save(
-                Member.builder()
-                        .authUserId(fbUserInfo.userId())
-                        .idpType("facebook")
-                        .build()
-        );
+        val member = memberRepository.findByName("Tester")
+                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(fbUserInfo.userId(), "facebook");
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -96,12 +91,9 @@ public class AuthService {
 
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = memberRepository.save(
-                Member.builder()
-                        .authUserId(appleUserInfo)
-                        .idpType("apple")
-                        .build()
-        );
+        val member = memberRepository.findByName("Tester")
+                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(appleUserInfo, "apple");
 
         return tokenManager.createAuthToken(member.getId());
     }
