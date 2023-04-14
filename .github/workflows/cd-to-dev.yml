@@ -48,6 +48,12 @@ jobs:
           aws s3 cp \
             --region ap-northeast-2 \
             s3://sopt-makers-internal/dev/deploy/application-dev.yml src/main/resources/application.yml
+
+      - name: 'Get key from AWS S3'
+        run: |
+          aws s3 cp \
+            --region ap-northeast-2 \
+            s3://sopt-makers-internal/dev/deploy/${{ secrets.APPLE_KEY }} src/main/resources/static/${{ secrets.APPLE_KEY }}
         
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
