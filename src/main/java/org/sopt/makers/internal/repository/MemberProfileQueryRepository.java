@@ -55,7 +55,7 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(hasProfileEq(),partContains(part),cursorEq(cursor),generationEq(generation),nameContains(name))
+                .where(hasProfileEq(),containPart(part),cursorEq(cursor),generationEq(generation), containName(name))
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
@@ -67,7 +67,7 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(hasProfileEq(),partContains(part),cursorEq(cursor),generationEq(generation),nameContains(name))
+                .where(hasProfileEq(),containPart(part),cursorEq(cursor),generationEq(generation), containName(name))
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
