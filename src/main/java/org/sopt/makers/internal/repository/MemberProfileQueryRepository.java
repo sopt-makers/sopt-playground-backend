@@ -31,11 +31,11 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-    private BooleanExpression nameContains(String name) {
+    private BooleanExpression containName(String name) {
         if(name == null) return null;
         return QMember.member.name.contains(name);
     }
-    private BooleanExpression partContains(String part) {
+    private BooleanExpression containPart(String part) {
         if(part == null) return null;
         return QMemberSoptActivity.memberSoptActivity.part.contains(part);
     }
