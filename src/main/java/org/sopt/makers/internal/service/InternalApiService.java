@@ -119,37 +119,12 @@ public class InternalApiService {
     @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
         val part = getMemberPart(filter);
-        if (name == null) {
-            if (part != null && cursor != null && limit != null && generation != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndGeneration(part, limit, cursor, generation);
-            if (generation != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByGeneration(generation, limit, cursor);
-            if (part != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
-            if (part != null && generation != null)
-                return memberProfileQueryRepository.findAllMemberProfileByPartAndGeneration(part, generation);
-            if (part != null)
-                return memberProfileQueryRepository.findAllMemberProfileByPart(part);
-            if (generation != null)
-                return memberProfileQueryRepository.findAllMemberProfileByGeneration(generation);
-            if (limit != null && cursor != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
-        } else {
-            if (part != null && cursor != null && limit != null && generation != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndNameAndGeneration(part, limit, cursor, name, generation);
-            if (part != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndName(part, limit, cursor, name);
-            if (generation != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByGenerationAndName(generation, limit, cursor, name);
-            if (part != null)
-                return memberProfileQueryRepository.findAllMemberProfileByPartAndName(part, name);
-            if (generation != null)
-                return memberProfileQueryRepository.findAllMemberProfileByGenerationAndName(generation, name);
-            if (limit != null && cursor != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByName(limit, cursor, name);
-            return memberProfileQueryRepository.findAllByName(name);
+        if(limit != null) {
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation);
         }
-        return memberRepository.findAllByHasProfileTrue();
+        else {
+            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation);
+        }
     }
 
     private String getMemberPart (Integer filter) {
