@@ -53,6 +53,7 @@ public class AuthService {
         return tokenManager.createAuthToken(userId);
     }
 
+    @Transactional
     public String registerByGoogleAndMagicRegisterToken(String registerToken, String code) {
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
@@ -69,6 +70,7 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
+    @Transactional
     public String registerByFbAndMagicRegisterToken(String registerToken, String code) {
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
@@ -83,6 +85,7 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
+    @Transactional
     public String registerByAppleAndMagicRegisterToken(String registerToken, String code) {
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
