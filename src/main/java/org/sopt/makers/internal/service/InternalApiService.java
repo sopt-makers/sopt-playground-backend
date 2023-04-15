@@ -2,9 +2,11 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.domain.InternalTokenManager;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.dto.internal.InternalAuthVo;
 import org.sopt.makers.internal.dto.member.ActivityVo;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
@@ -33,6 +35,7 @@ public class InternalApiService {
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
+    private final InternalTokenManager internalTokenManager;
 
     @Transactional(readOnly = true)
     public List<ProjectMemberVo> fetchById (Long id) {
@@ -116,37 +119,12 @@ public class InternalApiService {
     @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
         val part = getMemberPart(filter);
-        if (name == null) {
-            if (part != null && cursor != null && limit != null && generation != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndGeneration(part, limit, cursor, generation);
-            if (generation != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByGeneration(generation, limit, cursor);
-            if (part != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPart(part, limit, cursor);
-            if (part != null && generation != null)
-                return memberProfileQueryRepository.findAllMemberProfileByPartAndGeneration(part, generation);
-            if (part != null)
-                return memberProfileQueryRepository.findAllMemberProfileByPart(part);
-            if (generation != null)
-                return memberProfileQueryRepository.findAllMemberProfileByGeneration(generation);
-            if (limit != null && cursor != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfile(limit, cursor);
-        } else {
-            if (part != null && cursor != null && limit != null && generation != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndNameAndGeneration(part, limit, cursor, name, generation);
-            if (part != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByPartAndName(part, limit, cursor, name);
-            if (generation != null && cursor != null && limit != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByGenerationAndName(generation, limit, cursor, name);
-            if (part != null)
-                return memberProfileQueryRepository.findAllMemberProfileByPartAndName(part, name);
-            if (generation != null)
-                return memberProfileQueryRepository.findAllMemberProfileByGenerationAndName(generation, name);
-            if (limit != null && cursor != null)
-                return memberProfileQueryRepository.findAllLimitedMemberProfileByName(limit, cursor, name);
-            return memberProfileQueryRepository.findAllByName(name);
+        if(limit != null) {
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation);
         }
-        return memberRepository.findAllByHasProfileTrue();
+        else {
+            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation);
+        }
     }
 
     private String getMemberPart (Integer filter) {
@@ -160,5 +138,13 @@ public class InternalApiService {
             case 6 -> "iOS";
             default -> null;
         };
+    }
+
+    public InternalAuthVo authByToken (String previousAccessToken, String serviceName) {
+        val isVerified = internalTokenManager.verifyAuthToken(previousAccessToken);
+        if (!isVerified) return new InternalAuthVo(null, "invalidToken");
+        val userId = Long.parseLong(internalTokenManager.getUserIdFromAuthToken(previousAccessToken));
+        val accessToken = internalTokenManager.createAuthToken(userId ,30, serviceName);
+        return new InternalAuthVo(accessToken, null);
     }
 }

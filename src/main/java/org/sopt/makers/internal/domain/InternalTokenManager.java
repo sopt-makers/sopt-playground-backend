@@ -43,6 +43,20 @@ public class InternalTokenManager {
                 .compact();
     }
 
+    public String createAuthToken(Long userId, long days, String serviceName) {
+        val signatureAlgorithm= SignatureAlgorithm.HS256;
+        val secretKeyBytes = DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey());
+        val signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
+        val exp = new Date().toInstant().atZone(KST)
+                .toLocalDateTime().plusDays(days).atZone(KST).toInstant();
+        return Jwts.builder()
+                .setAudience(serviceName)
+                .setSubject(Long.toString(userId))
+                .setExpiration(Date.from(exp))
+                .signWith(signingKey, signatureAlgorithm)
+                .compact();
+    }
+
     public boolean verifyAuthToken (String token) {
         try {
             val claims = getClaimsFromToken(token);
@@ -129,6 +143,10 @@ public class InternalTokenManager {
         } catch (SignatureException | ExpiredJwtException e) {
             throw new WrongAccessTokenException("Wrong token is used");
         }
+    }
+
+    public boolean verifyMagicRegisterToken (String token) {
+        return authConfig.getMagicRegisterToken().equals(token);
     }
 
     private Claims getClaimsFromToken (String token) throws SignatureException {

@@ -116,6 +116,11 @@ public class Member {
     @Column(name = "has_profile")
     private Boolean hasProfile = false;
 
+    public void updateMemberAuth (String authUserId, String idpType) {
+        this.authUserId = authUserId;
+        this.idpType = idpType;
+    }
+
     public void saveMemberProfile(
             String name,
             String profileImage,

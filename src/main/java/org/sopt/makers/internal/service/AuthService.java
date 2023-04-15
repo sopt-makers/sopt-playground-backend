@@ -3,6 +3,7 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
@@ -25,9 +26,12 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class AuthService {
+    private final AuthConfig authConfig;
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
     private final GoogleTokenManager googleTokenManager;
+
+    private final AppleTokenManager appleTokenManager;
 
     private final MemberRepository memberRepository;
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
@@ -48,6 +52,55 @@ public class AuthService {
         val userId = tokenManager.getUserIdFromCode(code);
         return tokenManager.createAuthToken(userId);
     }
+
+    @Transactional
+    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code) {
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+        if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+        val googleAccessToken = googleAccessTokenResponse.idToken();
+
+        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
+        if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
+        val member = memberRepository.findByName("Tester")
+                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(googleUserInfo, "google");
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    @Transactional
+    public String registerByFbAndMagicRegisterToken(String registerToken, String code) {
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+        if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
+
+        val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
+        val member = memberRepository.findByName("Tester")
+                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(fbUserInfo.userId(), "facebook");
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    @Transactional
+    public String registerByAppleAndMagicRegisterToken(String registerToken, String code) {
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+        if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
+
+        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
+        if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
+        val member = memberRepository.findByName("Tester")
+                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(appleUserInfo, "apple");
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
 
     @Transactional
     public String authByFb (String code) {
@@ -138,6 +191,50 @@ public class AuthService {
     }
 
     @Transactional
+    public String authByApple (String code) {
+        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+        if (appleAccessTokenResponse == null) {
+            throw new AuthFailureException("Apple 인증에 실패했습니다.");
+        }
+        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
+        log.info("Apple user id : " + appleUserInfo);
+        val member = memberRepository.findByAuthUserId(appleUserInfo)
+                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
+
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    @Transactional
+    public String registerByApple (String registerToken, String code) {
+        val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
+        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+        if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
+        if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
+
+        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
+        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
+        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
+
+        val memberHistory = memberHistories.get(0);
+        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
+        if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(appleUserInfo)
+                        .idpType("apple")
+                        .name(memberHistory.getName())
+                        .email(memberHistory.getEmail())
+                        .phone(memberHistory.getPhone())
+                        .generation(memberHistory.getGeneration())
+                        .build()
+        );
+        memberHistory.makeMemberJoin();
+
+        return tokenManager.createAuthToken(member.getId());
+
+    }
+
+    @Transactional
     public Optional<SoptMemberHistory> findMemberByRegisterToken (String registerToken) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         if(registerTokenInfo.startsWith("010")){
@@ -201,6 +298,11 @@ public class AuthService {
         val phone = smsToken.split("@")[0];
         return tokenManager.createRegisterToken(phone);
     }
+
+    public String getRegisterTokenByMagicNumber () {
+        return authConfig.getMagicRegisterToken();
+    }
+
 
     private void clearMapByRandomAccess () {
         log.info("[Before clear Map] Map size : " + memberAndSmsTokenMap.size());
