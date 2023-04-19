@@ -121,8 +121,14 @@ public class InternalOpenApiController {
             summary = "멤버 프로필 전체 조회 API",
             description =
                     """
-                    filter 1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS, 
-                    참고로 asc(오름차순)로 정렬되어 있음
+                    filter : 
+                        1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS, 
+                        참고로 asc(오름차순)로 정렬되어 있음 \n
+                    sojuCapacity :  
+                        0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
+                        2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상 \n
+                    orderByDropDown : 
+                        1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순
                     """
     )
     @GetMapping("/profile")
@@ -131,9 +137,14 @@ public class InternalOpenApiController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
             @RequestParam(required = false, name = "name") String name,
-            @RequestParam(required = false, name = "generation") Integer generation
+            @RequestParam(required = false, name = "generation") Integer generation,
+            @RequestParam(required = false, name = "sojuCapactiy") Double sojuCapactiy,
+            @RequestParam(required = false, name = "orderByDropDown") Integer orderByDropDown,
+            @RequestParam(required = false, name = "mbti") String mbti
     ) {
-        val members = limit == null ? internalApiService.getMemberProfiles(filter, limit, cursor, name, generation) : internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation);
+        val members = limit == null ?
+            internalApiService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti) :
+            internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti);
         val memberList = members.stream().map(memberMapper::toInternalProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
