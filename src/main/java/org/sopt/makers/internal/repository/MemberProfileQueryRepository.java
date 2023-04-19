@@ -82,21 +82,26 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor),
+                        checkActivityContainsGeneration(generation), checkMemberContainsName(name),
+                        checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .limit(limit)
                 .groupBy(member.id)
-                .orderBy(member.id.asc())
+                .orderBy(getOrderByDropDownNumber(orderByDropDown))
                 .fetch();
     }
 
-    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation) {
+    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation,
+                       Double sojuCapactiy, Integer orderByDropDown, String mbti) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor),
+                        checkActivityContainsGeneration(generation), checkMemberContainsName(name),
+                        checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .groupBy(member.id)
-                .orderBy(member.id.asc())
+                .orderBy(getOrderByDropDownNumber(orderByDropDown))
                 .fetch();
     }
 
