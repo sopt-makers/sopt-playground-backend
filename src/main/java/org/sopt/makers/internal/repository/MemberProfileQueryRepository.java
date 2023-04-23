@@ -73,20 +73,19 @@ public class MemberProfileQueryRepository {
         return QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
 
-    private OrderSpecifier getOrderByDropDownNumber(Integer orderByDropDown) {
-        if (orderByDropDown == null) return QMember.member.id.desc();
-        switch (orderByDropDown) {
-            case 1 -> { // 최근에 등록했순 (프로필 등록 최근순)
-                return QMember.member.id.desc();
-            }
-            case 2 -> { // 예전에 등록했순 (프로필 등록 오래된순)
+    private OrderSpecifier getOrderByNumber(OrderByCondition orderByNum) {
+        switch (orderByNum) {
+            case OLDEST_REGISTERED -> { // 예전에 등록했순 (프로필 등록 오래된순)
                 return QMember.member.id.asc();
             }
-            case 3 -> { // 최근에 활동했순 (최근 기수순)
+            case LATEST_GENERATION -> { // 최근에 활동했순 (최근 기수순)
                 return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
             }
-            default -> { // 예전에 활동했순 (오래된 기수순)
+            case OLDEST_GENERATION -> { // 최근에 활동했순 (최근 기수순)
                 return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
+            }
+            default -> { // LATEST_REGISTERED 최근에 등록했순 (프로필 등록 최근순)
+                return QMember.member.id.desc();
             }
         }
     }
@@ -250,7 +249,7 @@ public class MemberProfileQueryRepository {
                         checkMemberContainsName(name), checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .limit(limit)
                 .groupBy(member.id)
-                .orderBy(getOrderByDropDownNumber(orderByDropDown))
+                .orderBy(getOrderByNumber(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
 
@@ -264,7 +263,7 @@ public class MemberProfileQueryRepository {
                         checkMemberGenerationAndTeamAndPart(generation, team, part),
                         checkMemberContainsName(name), checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .groupBy(member.id)
-                .orderBy(getOrderByDropDownNumber(orderByDropDown))
+                .orderBy(getOrderByNumber(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
 
