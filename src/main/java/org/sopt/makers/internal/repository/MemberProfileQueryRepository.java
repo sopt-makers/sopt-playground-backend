@@ -287,6 +287,7 @@ public class MemberProfileQueryRepository {
                         checkMemberGenerationAndTeamAndPart(generation, team, part),
                         checkMemberContainsName(name), checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .groupBy(member.id)
+                .orderBy(getOrderByNumber(OrderByCondition.valueOf(orderBy)))
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
