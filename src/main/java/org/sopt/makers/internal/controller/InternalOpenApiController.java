@@ -128,7 +128,8 @@ public class InternalOpenApiController {
                         0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
                         2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상 \n
                     orderByDropDown : 
-                        1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순
+                        1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \n
+                    team : 임원진, 운영팀, 미디어팀, 메이커스
                     """
     )
     @GetMapping("/profile")
@@ -140,11 +141,12 @@ public class InternalOpenApiController {
             @RequestParam(required = false, name = "generation") Integer generation,
             @RequestParam(required = false, name = "sojuCapactiy") Double sojuCapactiy,
             @RequestParam(required = false, name = "orderByDropDown") Integer orderByDropDown,
-            @RequestParam(required = false, name = "mbti") String mbti
+            @RequestParam(required = false, name = "mbti") String mbti,
+            @RequestParam(required = false, name = "team") String team
     ) {
         val members = limit == null ?
-            internalApiService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti) :
-            internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti);
+            internalApiService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti, team) :
+            internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti, team);
         val memberList = members.stream().map(memberMapper::toInternalProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
