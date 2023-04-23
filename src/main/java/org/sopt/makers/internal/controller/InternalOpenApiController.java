@@ -11,6 +11,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.service.InternalApiService;
@@ -140,6 +141,42 @@ public class InternalOpenApiController {
         val response = new InternalMemberAllProfileResponse(memberList, hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @Operation(
+            summary = "공홈팀 멤버 프로필 조회 API",
+            description =
+                    """
+                    filter 1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS
+                    """
+    )
+    @GetMapping("/official/members/profile")
+    public ResponseEntity<List<InternalOfficialMemberResponse>> getMemberProfilesByGenerationAndPart (
+            @RequestParam(name = "filter") Integer filter,
+            @RequestParam(name = "generation") Integer generation
+    ) {
+        if (filter == null || generation == null) throw new ClientBadRequestException("잘못된 요청입니다.");
+        val part = internalApiService.getPartName(filter);
+        if (part == null) throw new ClientBadRequestException("잘못된 파트 값입니다.");
+        val members = internalApiService.getMemberProfiles(filter, null, null, null, generation);
+        val memberList = members.stream().map(member -> {
+            if (member.getAllowOfficial()) {
+                return new InternalOfficialMemberResponse(
+                        member.getId(),
+                        member.getName(),
+                        member.getProfileImage(),
+                        member.getIntroduction(),
+                        part,
+                        generation
+                );
+            } else {
+                return new InternalOfficialMemberResponse(
+                        member.getId(), member.getName(), null, null, part, generation
+                );
+            }
+        }).collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(memberList);
+    }
+
 
     @Operation(summary = "Auth token", description = "토큰 교환을 위한 엔드포인트")
     @PostMapping("/idp/auth/token")
