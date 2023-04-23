@@ -137,11 +137,11 @@ public class InternalOpenApiController {
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
-            @RequestParam(required = false, name = "name") String name
+            @RequestParam(required = false, name = "name") String name,
+            @RequestParam(required = false, name = "generation") Integer generation
     ) {
-        val members = limit == null ?
-            internalApiService.getMemberProfiles(filter, limit, cursor, name) :
-            internalApiService.getMemberProfiles(filter, limit + 1, cursor, name);
+        val members = limit == null ? internalApiService.getMemberProfiles(filter, limit, cursor, name, generation) :
+                internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation);
         val memberList = members.stream().map(memberMapper::toInternalProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
