@@ -118,15 +118,15 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
-                                          Double sojuCapactiy, Integer orderByDropDown, String mbti) {
+                                          Double sojuCapactiy, Integer orderByDropDown, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
             return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
-                    sojuCapactiy, orderByDropDown, mbti);
+                    sojuCapactiy, orderByDropDown, mbti, team);
         }
         else {
             return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation,
-                    sojuCapactiy, orderByDropDown, mbti);
+                    sojuCapactiy, orderByDropDown, mbti, team);
         }
     }
 
