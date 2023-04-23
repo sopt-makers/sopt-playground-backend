@@ -116,14 +116,13 @@ public class InternalApiService {
                 ));
     }
 
-    @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name) {
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name);
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name);
+            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation);
         }
     }
 
