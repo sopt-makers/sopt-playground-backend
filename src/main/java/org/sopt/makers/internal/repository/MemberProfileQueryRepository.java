@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.repository;
 
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class MemberProfileQueryRepository {
         if(name == null) return null;
         return QMember.member.name.contains(name);
     }
+
     private BooleanExpression checkActivityContainsPart(String part) {
         if(part == null) return null;
         return QMemberSoptActivity.memberSoptActivity.part.contains(part);
@@ -44,21 +46,26 @@ public class MemberProfileQueryRepository {
         if(cursor == null) return null;
         return QMember.member.id.gt(cursor);
     }
+
     private BooleanExpression checkActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
         return QMemberSoptActivity.memberSoptActivity.generation.eq(generation);
     }
+
     private BooleanExpression checkMemberHasProfile() {
         return QMember.member.hasProfile.eq(true);
     }
+
     private BooleanExpression checkMemberMbti(String mbti) {
         if(mbti == null) return null;
         return QMember.member.mbti.eq(mbti);
     }
+
     private BooleanExpression checkMemberSojuCapactiy(Double sojuCapactiy) {
         if(sojuCapactiy == null) return null;
         return QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
+
     private OrderSpecifier getOrderByDropDownNumber(Integer orderByDropDown) {
         if (orderByDropDown == null) return QMember.member.id.desc();
         switch (orderByDropDown) {
