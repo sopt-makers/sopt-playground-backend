@@ -208,7 +208,7 @@ public class MemberController {
                     sojuCapacity :  
                         0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
                         2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상 \n
-                    orderByDropDown : 
+                    orderBy : 
                         1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \n
                     team : 
                         임원진, 운영팀, 미디어팀, 메이커스
