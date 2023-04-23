@@ -127,6 +127,10 @@ public class InternalApiService {
         }
     }
 
+    public String getPartName(Integer partFilter) {
+        return getMemberPart(partFilter);
+    }
+
     private String getMemberPart (Integer filter) {
         if (filter == null) return null;
         return switch (filter) {
