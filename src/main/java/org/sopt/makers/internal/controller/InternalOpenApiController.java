@@ -137,16 +137,11 @@ public class InternalOpenApiController {
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
-            @RequestParam(required = false, name = "name") String name,
-            @RequestParam(required = false, name = "generation") Integer generation,
-            @RequestParam(required = false, name = "sojuCapactiy") Double sojuCapactiy,
-            @RequestParam(required = false, name = "orderByDropDown") Integer orderByDropDown,
-            @RequestParam(required = false, name = "mbti") String mbti,
-            @RequestParam(required = false, name = "team") String team
+            @RequestParam(required = false, name = "name") String name
     ) {
         val members = limit == null ?
-            internalApiService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti, team) :
-            internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderByDropDown, mbti, team);
+            internalApiService.getMemberProfiles(filter, limit, cursor, name) :
+            internalApiService.getMemberProfiles(filter, limit + 1, cursor, name);
         val memberList = members.stream().map(memberMapper::toInternalProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);

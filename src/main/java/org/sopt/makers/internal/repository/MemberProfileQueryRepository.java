@@ -238,6 +238,19 @@ public class MemberProfileQueryRepository {
         }
     }
 
+    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.selectFrom(member)
+                .innerJoin(member.activities, activities)
+                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor), checkActivityContainsPart(part),
+                        checkMemberContainsName(name))
+                .limit(limit)
+                .groupBy(member.id)
+                .orderBy(member.id.asc())
+                .fetch();
+    }
+
     public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name,
                         Integer generation, Double sojuCapactiy, Integer orderBy, String mbti, String team) {
         val member = QMember.member;
@@ -250,6 +263,18 @@ public class MemberProfileQueryRepository {
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(getOrderByNumber(OrderByCondition.valueOf(orderBy)))
+                .fetch();
+    }
+
+    public List<Member> findAllMemberProfile(String part, Integer cursor, String name) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.selectFrom(member)
+                .innerJoin(member.activities, activities)
+                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor), checkActivityContainsPart(part),
+                        checkMemberContainsName(name))
+                .groupBy(member.id)
+                .orderBy(member.id.asc())
                 .fetch();
     }
 
