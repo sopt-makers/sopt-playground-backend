@@ -6,5 +6,6 @@ public record InternalOfficialMemberResponse(
         String profileImage,
         String introduction,
         String part,
-        Integer generation
+        Integer generation,
+        boolean allowOfficial
 ) {}

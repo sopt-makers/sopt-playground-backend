@@ -72,4 +72,16 @@ public class MemberProfileQueryRepository {
                 .orderBy(member.id.asc())
                 .fetch();
     }
+
+    public int countMembersByGeneration(Integer generation) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.select(member.id)
+                .from(member)
+                .innerJoin(member.activities, activities).on(activities.memberId.eq(member.id))
+                .where(checkMemberHasProfile(), checkActivityContainsGeneration(generation))
+                .groupBy(member.id)
+                .fetch()
+                .size();
+    }
 }

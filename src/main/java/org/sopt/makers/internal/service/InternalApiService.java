@@ -127,6 +127,11 @@ public class InternalApiService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public int getMemberCountByGeneration (Integer generation) {
+        return memberProfileQueryRepository.countMembersByGeneration(generation);
+    }
+
     public String getPartName(Integer partFilter) {
         return getMemberPart(partFilter);
     }
