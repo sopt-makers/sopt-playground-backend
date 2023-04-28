@@ -150,13 +150,12 @@ public class InternalOpenApiController {
                     """
     )
     @GetMapping("/official/members/profile")
-    public ResponseEntity<List<InternalOfficialMemberResponse>> getMemberProfilesByGenerationAndPart (
-            @RequestParam(name = "filter") Integer filter,
+    public ResponseEntity<InternalAllOfficialMemberResponse> getMemberProfilesByGenerationAndPart (
+            @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(name = "generation") Integer generation
     ) {
-        if (filter == null || generation == null) throw new ClientBadRequestException("잘못된 요청입니다.");
+        if (generation == null) throw new ClientBadRequestException("잘못된 요청입니다.");
         val part = internalApiService.getPartName(filter);
-        if (part == null) throw new ClientBadRequestException("잘못된 파트 값입니다.");
         val members = internalApiService.getMemberProfiles(filter, null, null, null, generation);
         val memberList = members.stream().map(member -> {
             if (member.getAllowOfficial()) {
@@ -166,15 +165,18 @@ public class InternalOpenApiController {
                         member.getProfileImage(),
                         member.getIntroduction(),
                         part,
-                        generation
+                        generation,
+                        true
                 );
             } else {
                 return new InternalOfficialMemberResponse(
-                        member.getId(), member.getName(), null, null, part, generation
+                        member.getId(), member.getName(), null, null, part, generation, false
                 );
             }
         }).collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(memberList);
+        val generationMemberCount = internalApiService.getMemberCountByGeneration(generation);
+        val response = new InternalAllOfficialMemberResponse(memberList, generationMemberCount);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 
