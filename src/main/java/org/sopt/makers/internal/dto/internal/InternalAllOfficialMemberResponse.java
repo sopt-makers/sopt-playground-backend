@@ -4,6 +4,6 @@ import java.util.List;
 
 public record InternalAllOfficialMemberResponse(
         List<InternalOfficialMemberResponse> members,
-        Integer numberOfMembers
+        int numberOfMembersAtGeneration
 ) {
 }
