@@ -63,16 +63,16 @@ public class MemberProfileQueryRepository {
 
     private OrderSpecifier getOrderByNumber(OrderByCondition orderByNum) {
         switch (orderByNum) {
-            case OLDEST_REGISTERED -> { // 예전에 등록했순 (프로필 등록 오래된순)
+            case OLDEST_REGISTERED -> {
                 return QMember.member.id.asc();
             }
-            case LATEST_GENERATION -> { // 최근에 활동했순 (최근 기수순)
+            case LATEST_GENERATION -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
             }
-            case OLDEST_GENERATION -> { // 최근에 활동했순 (최근 기수순)
+            case OLDEST_GENERATION -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
             }
-            default -> { // LATEST_REGISTERED 최근에 등록했순 (프로필 등록 최근순)
+            default -> {
                 return QMember.member.id.desc();
             }
         }
