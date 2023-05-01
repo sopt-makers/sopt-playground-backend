@@ -116,6 +116,7 @@ public class InternalApiService {
                 ));
     }
 
+    @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
         val part = getMemberPart(filter);
         if(limit != null) {
