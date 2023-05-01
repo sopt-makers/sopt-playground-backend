@@ -73,8 +73,8 @@ public class MemberProfileQueryRepository {
         return QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
 
-    private OrderSpecifier getOrderByNumber(OrderByCondition orderByNum) {
-        switch (orderByNum) {
+    private OrderSpecifier getOrderByCondition(OrderByCondition sortCondition) {
+        switch (sortCondition) {
             case OLDEST_REGISTERED -> {
                 return QMember.member.id.asc();
             }
@@ -261,7 +261,7 @@ public class MemberProfileQueryRepository {
                         checkMemberContainsName(name), checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .limit(limit)
                 .groupBy(member.id)
-                .orderBy(getOrderByNumber(OrderByCondition.valueOf(orderBy)))
+                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
 
@@ -287,7 +287,7 @@ public class MemberProfileQueryRepository {
                         checkMemberGenerationAndTeamAndPart(generation, team, part),
                         checkMemberContainsName(name), checkMemberMbti(mbti), checkMemberSojuCapactiy(sojuCapactiy))
                 .groupBy(member.id)
-                .orderBy(getOrderByNumber(OrderByCondition.valueOf(orderBy)))
+                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
 
