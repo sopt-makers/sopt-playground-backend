@@ -206,7 +206,6 @@ public class MemberProfileQueryRepository {
 
     private BooleanExpression checkMemberBelongToTeamAndGeneration(String team, Integer generation) {
         if (team == null) return null;
-        System.out.println(team + " " + generation);
         switch (team) {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
