@@ -128,9 +128,8 @@ public class InternalOpenApiController {
             summary = "멤버 프로필 전체 조회 API",
             description =
                     """
-                    filter : 
-                        1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS, 
-                        참고로 asc(오름차순)로 정렬되어 있음 
+                    filter 1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS,\s
+                    참고로 asc(오름차순)로 정렬되어 있음
                     """
     )
     @GetMapping("/profile")
@@ -141,8 +140,7 @@ public class InternalOpenApiController {
             @RequestParam(required = false, name = "name") String name,
             @RequestParam(required = false, name = "generation") Integer generation
     ) {
-        val members = limit == null ? internalApiService.getMemberProfiles(filter, limit, cursor, name, generation) :
-                internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation);
+        val members = limit == null ? internalApiService.getMemberProfiles(filter, limit, cursor, name, generation) : internalApiService.getMemberProfiles(filter, limit + 1, cursor, name, generation);
         val memberList = members.stream().map(memberMapper::toInternalProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
