@@ -117,13 +117,16 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
+                                          Double sojuCapactiy, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation);
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
+                    sojuCapactiy, orderBy, mbti, team);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation);
+            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation,
+                    sojuCapactiy, orderBy, mbti, team);
         }
     }
 
@@ -141,7 +144,6 @@ public class MemberService {
     }
 
     private String checkActivityTeamConditions (String team) {
-
         Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
         val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
