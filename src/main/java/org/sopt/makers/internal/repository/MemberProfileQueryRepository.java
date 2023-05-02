@@ -110,19 +110,19 @@ public class MemberProfileQueryRepository {
         switch (team) {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무"))
+                        .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드"))
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
                                 .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")));
+                        .and(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"))
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장"));
             }
             case "미디어팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀")
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")));
+                        .and(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"))
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장"));
             }
             case "메이커스" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
@@ -180,8 +180,8 @@ public class MemberProfileQueryRepository {
         switch (team) {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무"))
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")
@@ -210,8 +210,8 @@ public class MemberProfileQueryRepository {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무"))
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
