@@ -202,8 +202,16 @@ public class MemberController {
             summary = "멤버 프로필 전체 조회 API",
             description =
                     """
-                    filter 1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS, 
-                    참고로 asc(오름차순)로 정렬되어 있음
+                    filter :
+                    1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS,
+                    참고로 asc(오름차순)로 정렬되어 있음 \\n
+                    sojuCapacity :\s
+                    0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
+                    2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상 \\n
+                    orderBy :
+                    1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \\n
+                    team :
+                    임원진, 운영팀, 미디어팀, 메이커스
                     """
     )
     @GetMapping("/profile")
@@ -212,9 +220,15 @@ public class MemberController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
             @RequestParam(required = false, name = "name") String name,
-            @RequestParam(required = false, name = "generation") Integer generation
+            @RequestParam(required = false, name = "generation") Integer generation,
+            @RequestParam(required = false, name = "sojuCapactiy") Double sojuCapactiy,
+            @RequestParam(required = false, name = "orderBy") Integer orderBy,
+            @RequestParam(required = false, name = "mbti") String mbti,
+            @RequestParam(required = false, name = "team") String team
     ) {
-        val members = limit == null ? memberService.getMemberProfiles(filter, limit, cursor, name, generation) : memberService.getMemberProfiles(filter, limit + 1, cursor, name, generation);
+        val members = limit == null ?
+                memberService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderBy, mbti, team)
+                : memberService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderBy, mbti, team);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
