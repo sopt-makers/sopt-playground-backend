@@ -59,23 +59,6 @@ public class MemberProfileQueryRepository {
         if(generation == null) return null;
         return QMemberSoptActivity.memberSoptActivity.generation.eq(generation);
     }
-
-    private OrderSpecifier getOrderByCondition(OrderByCondition sortCondition) {
-        switch (sortCondition) {
-            case OLDEST_REGISTERED -> {
-                return QMember.member.id.asc();
-            }
-            case LATEST_GENERATION -> {
-                return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
-            }
-            case OLDEST_GENERATION -> {
-                return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
-            }
-            default -> {
-                return QMember.member.id.desc();
-            }
-        }
-    }
     private BooleanExpression checkMemberHasProfile() {
         return QMember.member.hasProfile.eq(true);
     }
@@ -90,7 +73,7 @@ public class MemberProfileQueryRepository {
         return QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
 
-    private OrderSpecifier getOrderByNumber(OrderByCondition orderByNum) {
+    private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
         if(orderByNum == null) return QMember.member.id.desc();
         else if(orderByNum == OLDEST_REGISTERED) return QMember.member.id.asc();
         else if(orderByNum == LATEST_GENERATION) return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
@@ -119,26 +102,26 @@ public class MemberProfileQueryRepository {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드"))
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
                                 .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
                         .and(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"))
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장"));
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장"));
             }
             case "미디어팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
                         .and(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"))
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장"));
+                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장"));
             }
             case "메이커스" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains(part)
                         .and(QMember.member.id.in(
                                 1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
-                        5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
-                        186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
-                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L));
+                                5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
+                                186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
+                                115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L));
             }
             default -> {
                 return null;
@@ -152,30 +135,30 @@ public class MemberProfileQueryRepository {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드"))
+                                .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드"))
                                 .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
+                                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"))
+                                .and(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"))
                                 .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")));
             }
             case "미디어팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"))
+                                .and(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"))
                                 .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")));
             }
             case "메이커스" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains(part)
-                        .and(QMember.member.id.in(
-                                1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
-                        5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
-                        186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
-                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L)));
+                                .and(QMember.member.id.in(
+                                        1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
+                                        5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
+                                        186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
+                                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L)));
             }
             default -> {
                 return null;
@@ -189,7 +172,7 @@ public class MemberProfileQueryRepository {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
                         .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")
@@ -218,26 +201,26 @@ public class MemberProfileQueryRepository {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
+                                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
             }
             case "운영팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")));
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")));
             }
             case "미디어팀" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")));
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")));
             }
             case "메이커스" -> {
                 return QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
                         .and(QMember.member.id.in(
-                        1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
-                        5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
-                        186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
-                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L));
+                                1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
+                                5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
+                                186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
+                                115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L));
             }
             default -> {
                 return null;
