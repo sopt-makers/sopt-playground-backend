@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.repository;
 
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,7 @@ import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
 import org.springframework.stereotype.Repository;
+import static org.sopt.makers.internal.domain.OrderByCondition.*;
 
 import java.util.List;
 
