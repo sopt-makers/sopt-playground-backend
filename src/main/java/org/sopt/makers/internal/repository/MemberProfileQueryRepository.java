@@ -38,10 +38,12 @@ public class MemberProfileQueryRepository {
         if(name == null) return null;
         return QMember.member.name.contains(name);
     }
+
     private BooleanExpression checkActivityContainsPart(String part) {
         if(part == null) return null;
         return QMemberSoptActivity.memberSoptActivity.part.contains(part);
     }
+
     private BooleanExpression checkIdGtThanCursor(Integer cursor) {
         if(cursor == null) return null;
         return QMember.member.id.gt(cursor);
@@ -49,6 +51,23 @@ public class MemberProfileQueryRepository {
     private BooleanExpression checkActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
         return QMemberSoptActivity.memberSoptActivity.generation.eq(generation);
+    }
+
+    private OrderSpecifier getOrderByCondition(OrderByCondition sortCondition) {
+        switch (sortCondition) {
+            case OLDEST_REGISTERED -> {
+                return QMember.member.id.asc();
+            }
+            case LATEST_GENERATION -> {
+                return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
+            }
+            case OLDEST_GENERATION -> {
+                return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
+            }
+            default -> {
+                return QMember.member.id.desc();
+            }
+        }
     }
     private BooleanExpression checkMemberHasProfile() {
         return QMember.member.hasProfile.eq(true);
@@ -65,20 +84,11 @@ public class MemberProfileQueryRepository {
     }
 
     private OrderSpecifier getOrderByNumber(OrderByCondition orderByNum) {
-        switch (orderByNum) {
-            case OLDEST_REGISTERED -> {
-                return QMember.member.id.asc();
-            }
-            case LATEST_GENERATION -> {
-                return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
-            }
-            case OLDEST_GENERATION -> {
-                return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
-            }
-            default -> {
-                return QMember.member.id.desc();
-            }
-        }
+        if(orderByNum == null) return QMember.member.id.desc();
+        else if(orderByNum == OLDEST_REGISTERED) return QMember.member.id.asc();
+        else if(orderByNum == LATEST_GENERATION) return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
+        else if(orderByNum == OLDEST_GENERATION) return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
+        else return QMember.member.id.desc();
     }
 
     private Predicate checkMemberGenerationAndTeamAndPart(Integer generation, String team, String part) {
