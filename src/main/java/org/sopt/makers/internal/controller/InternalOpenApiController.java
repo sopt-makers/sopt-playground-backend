@@ -163,11 +163,20 @@ public class InternalOpenApiController {
         if (generation == null) throw new ClientBadRequestException("잘못된 요청입니다.");
         val members = internalApiService.getMemberProfiles(filter, null, null, null, generation);
         val memberList = members.stream().map(m -> {
-            val optionalActivity = m.getActivities().stream()
-                    .filter(activity -> activity.getGeneration().equals(generation))
-                    .filter(activity -> !organizerPartName.contains(activity.getPart()))
-                    .findFirst();
-            val part = optionalActivity.map(MemberSoptActivity::getPart).orElse(null);
+            val generationActivities = m.getActivities().stream()
+                    .filter(activity -> activity.getGeneration().equals(generation)).toList();
+            String part;
+            if (generationActivities.size() > 1) {
+                val hasOnlyMemberRoleActivities = generationActivities.stream().filter(
+                        activity -> !organizerPartName.contains(activity.getPart())).toList();
+                if (hasOnlyMemberRoleActivities.isEmpty()) {
+                    part = generationActivities.get(0).getPart();
+                } else {
+                    part = hasOnlyMemberRoleActivities.get(0).getPart();
+                }
+            } else {
+                part = generationActivities.get(0).getPart();
+            }
             return memberMapper.toOfficialResponse(m, part, generation);
         }).collect(Collectors.toList());
         val generationMemberCount = internalApiService.getMemberCountByGeneration(generation);

@@ -52,5 +52,7 @@ public interface MemberMapper {
     ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject, String part);
 
     MemberProjectVo toActivityInfoVo (MemberProfileProjectDao project);
+
+    @Mapping(source = "generation", target = "generation")
     InternalOfficialMemberResponse toOfficialResponse(Member member, String part, Integer generation);
 }
