@@ -44,16 +44,14 @@ hotfix : 출시 버전에서 발생한 버그를 수정 하는 브랜치
 ## 🧑‍💻 Server Member
 <div>
 
-| [<img src="https://avatars.githubusercontent.com/u/37579681?v=4" width="100">](https://github.com/bluayer) | [<img src="https://avatars.githubusercontent.com/u/78431728?v=4" width="100">](https://github.com/yujindonut) |
-|:----------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------:|
-|                                                    송정우                                                     |                                                      한유진                                                      |
+| [<img src="https://avatars.githubusercontent.com/u/37579681?v=4" width="100">](https://github.com/bluayer) |
+ :-------------------------------------: 
+| 송정우 |
 
 </div>
 
 ## ☎ Contact
 
 **bluayer@gmail.com**
-
-**bbb3631@naver.com**
 
 p.s. 메일, 슬랙, 개인 메신저 순으로 연락이 빠릅니다.
