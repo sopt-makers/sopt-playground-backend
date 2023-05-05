@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/internal/api/v1")
 @SecurityRequirement(name = "Authorization")
+@Slf4j
 @Tag(name = "내부 서비스 오픈 API")
 public class InternalOpenApiController {
 
@@ -39,6 +42,9 @@ public class InternalOpenApiController {
     private final MemberMapper memberMapper;
 
     private final AuthConfig authConfig;
+    private final List<String> organizerPartName = List.of(
+            "운영 팀장", "미디어 팀장", "총무", "회장", "부회장", "웹 파트장", "기획 파트장",
+            "서버 파트장", "디자인 파트장", "안드로이드 파트장", "iOS 파트장", "메이커스 리드");
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/projects/{id}")
@@ -157,24 +163,14 @@ public class InternalOpenApiController {
             @RequestParam(name = "generation") Integer generation
     ) {
         if (generation == null) throw new ClientBadRequestException("잘못된 요청입니다.");
-        val part = internalApiService.getPartName(filter);
         val members = internalApiService.getMemberProfiles(filter, null, null, null, generation);
-        val memberList = members.stream().map(member -> {
-            if (member.getAllowOfficial()) {
-                return new InternalOfficialMemberResponse(
-                        member.getId(),
-                        member.getName(),
-                        member.getProfileImage(),
-                        member.getIntroduction(),
-                        part,
-                        generation,
-                        true
-                );
-            } else {
-                return new InternalOfficialMemberResponse(
-                        member.getId(), member.getName(), null, null, part, generation, false
-                );
-            }
+        val memberList = members.stream().map(m -> {
+            val optionalActivity = m.getActivities().stream()
+                    .filter(activity -> activity.getGeneration().equals(generation))
+                    .filter(activity -> !organizerPartName.contains(activity.getPart()))
+                    .findFirst();
+            val part = optionalActivity.map(MemberSoptActivity::getPart).orElse(null);
+            return memberMapper.toOfficialResponse(m, part, generation);
         }).collect(Collectors.toList());
         val generationMemberCount = internalApiService.getMemberCountByGeneration(generation);
         val response = new InternalAllOfficialMemberResponse(memberList, generationMemberCount);
