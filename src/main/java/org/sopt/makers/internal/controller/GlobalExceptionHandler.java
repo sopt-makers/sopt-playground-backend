@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.dto.CommonExceptionResponse;
 import org.sopt.makers.internal.dto.auth.RegisterTokenBySmsResponse;
 import org.sopt.makers.internal.exception.*;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(WrongImageInputException.class)
+    public ResponseEntity<CommonExceptionResponse> wrongImageInputException (WrongImageInputException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new CommonExceptionResponse(ex.getMessage(), ex.code));
     }
 
     @ExceptionHandler(ForbiddenClientException.class)

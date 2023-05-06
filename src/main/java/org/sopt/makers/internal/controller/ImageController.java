@@ -7,18 +7,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.dto.ImageRequest;
 import org.sopt.makers.internal.dto.ImageResponse;
+import org.sopt.makers.internal.exception.WrongImageInputException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -72,9 +69,11 @@ public class ImageController {
 
     @Operation(summary = "multiple 이미지 업로드를 위한 presigned url 관련 API")
     @PostMapping("")
-    public ResponseEntity<List<ImageResponse>> getImagePath (
-            List<ImageRequest> imageRequests
+    public ResponseEntity<List<ImageResponse>> getImagesUrls (
+            @RequestBody List<ImageRequest> imageRequests
     ) {
+        if (imageRequests.size() > 10) throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");
+
         val responses = imageRequests.stream().map(request -> {
             val type = request.type();
             val filename = request.filename();
