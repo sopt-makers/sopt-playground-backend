@@ -1,7 +1,7 @@
 package org.sopt.makers.internal.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +10,8 @@ import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
 import org.springframework.stereotype.Repository;
-import static org.sopt.makers.internal.domain.OrderByCondition.*;
 
+import static org.sopt.makers.internal.domain.OrderByCondition.*;
 import java.util.List;
 
 @Repository
@@ -58,7 +58,6 @@ public class MemberProfileQueryRepository {
         return QMember.member.hasProfile.eq(true);
     }
 
-
     private BooleanExpression checkMemberMbti(String mbti) {
         if(mbti == null) return null;
         return QMember.member.mbti.eq(mbti);
@@ -69,33 +68,34 @@ public class MemberProfileQueryRepository {
         return QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
 
-    private BooleanExpression checkMemberBelongToTeam(String team) {
-        if (team == null) return null;
-        switch (team) {
-            case "임원진" -> {
-                return QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
+    public BooleanBuilder checkActivityContainsPartAndTeamAndGeneration(String part, String team, Integer generation) {
+        val builder = new BooleanBuilder();
+        if (generation != null) {
+            builder.and(QMemberSoptActivity.memberSoptActivity.generation.eq(generation));
+        }
+        if(part != null) {
+            builder.and(QMemberSoptActivity.memberSoptActivity.part.contains(part));
+        }
+        if(team != null) {
+            if(team.equals("임원진"))  {
+                builder.and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
                         .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장
-            }
-            case "운영팀" -> {
-                return QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장"));
-            }
-            case "미디어팀" -> {
-                return QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장"));
-            }
-            case "메이커스" -> {
-                return QMember.member.id.in(
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장)
+            } else if(team.equals("운영팀")) {
+                builder.and(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")
+                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")));
+            } else if(team.equals("미디어팀")) {
+                builder.and(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")
+                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀")));
+            } else if(team.equals("메이커스")) {
+                builder.and(QMember.member.id.in(
                         1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
                         5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
                         186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
-                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L);
-            }
-            default -> {
-                return null;
+                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L));
             }
         }
+        return builder;
     }
 
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
@@ -124,9 +124,9 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation),
+                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
                         checkMemberContainsName(name), checkMemberSojuCapactiy(sojuCapactiy),
-                        checkMemberBelongToTeam(team), checkActivityContainsPart(part),
+                        checkActivityContainsPartAndTeamAndGeneration(part,team,generation),
                         checkMemberMbti(mbti))
                 .limit(limit)
                 .groupBy(member.id)
@@ -151,9 +151,9 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation),
+                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
                         checkMemberContainsName(name), checkMemberSojuCapactiy(sojuCapactiy),
-                        checkMemberBelongToTeam(team), checkActivityContainsPart(part),
+                        checkActivityContainsPartAndTeamAndGeneration(part,team,generation),
                         checkMemberMbti(mbti))
                 .groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
