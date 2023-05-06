@@ -68,34 +68,26 @@ public class MemberProfileQueryRepository {
         return QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
 
-    public BooleanBuilder checkActivityContainsPartAndTeamAndGeneration(String part, String team, Integer generation) {
-        val builder = new BooleanBuilder();
-        if (generation != null) {
-            builder.and(QMemberSoptActivity.memberSoptActivity.generation.eq(generation));
+    private BooleanExpression checkActivityContainsTeam(String team) {
+        if(team == null) return null;
+        else if(team.equals("임원진"))  {
+             return QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
+                    .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
+                            .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장)
+        } else if(team.equals("운영팀")) {
+            return QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")
+                    .or(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"));
+        } else if(team.equals("미디어팀")) {
+            return QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")
+                    .or(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"));
+        } else if(team.equals("메이커스")) {
+            return QMember.member.id.in(
+                    1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
+                    5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
+                    186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
+                    115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L);
         }
-        if(part != null) {
-            builder.and(QMemberSoptActivity.memberSoptActivity.part.contains(part));
-        }
-        if(team != null) {
-            if(team.equals("임원진"))  {
-                builder.and(QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
-                        .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
-                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장)
-            } else if(team.equals("운영팀")) {
-                builder.and(QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")
-                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀")));
-            } else if(team.equals("미디어팀")) {
-                builder.and(QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")
-                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀")));
-            } else if(team.equals("메이커스")) {
-                builder.and(QMember.member.id.in(
-                        1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
-                        5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
-                        186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
-                        115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L));
-            }
-        }
-        return builder;
+        return null;
     }
 
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
@@ -126,8 +118,8 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
                         checkMemberContainsName(name), checkMemberSojuCapactiy(sojuCapactiy),
-                        checkActivityContainsPartAndTeamAndGeneration(part,team,generation),
-                        checkMemberMbti(mbti))
+                        checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
+                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
@@ -153,8 +145,8 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
                         checkMemberContainsName(name), checkMemberSojuCapactiy(sojuCapactiy),
-                        checkActivityContainsPartAndTeamAndGeneration(part,team,generation),
-                        checkMemberMbti(mbti))
+                        checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
+                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
                 .groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
