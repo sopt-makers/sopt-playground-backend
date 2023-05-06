@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.dto.ImageRequest;
+import org.sopt.makers.internal.dto.ImageResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -65,5 +68,38 @@ public class ImageController {
         val signedUrl = presignedRequest.url().toString();
         val response = Map.of("signedUrl", signedUrl, "filename", keyName);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "multiple 이미지 업로드를 위한 presigned url 관련 API")
+    @PostMapping("")
+    public ResponseEntity<List<ImageResponse>> getImagePath (
+            List<ImageRequest> imageRequests
+    ) {
+        val responses = imageRequests.stream().map(request -> {
+            val type = request.type();
+            val filename = request.filename();
+            val bucketPathName = type == null || type.equals("project") ? projectImageBucketPath : profileImageBucketPath;
+            val keyName = "/" + activeProfile + bucketPathName + "%s-%s".formatted(UUID.randomUUID().toString(), filename);
+            val bucketName = imageBucketName;
+            val splittedFileName = filename.split("\\.");
+            var extension = splittedFileName[splittedFileName.length-1].toLowerCase();
+            if (extension.equals("jpg")) extension = "jpeg";
+            val contentType = "image/" + extension;
+            val objectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(keyName)
+                    .contentType(contentType)
+                    .build();
+
+            val presignRequest = PutObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(10))
+                    .putObjectRequest(objectRequest)
+                    .build();
+
+            val presignedRequest = presigner.presignPutObject(presignRequest);
+            val signedUrl = presignedRequest.url().toString();
+            return new ImageResponse(signedUrl, keyName);
+        }).toList();
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 }
