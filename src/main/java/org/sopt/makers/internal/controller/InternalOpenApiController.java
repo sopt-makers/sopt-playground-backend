@@ -5,12 +5,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.service.InternalApiService;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/internal/api/v1")
 @SecurityRequirement(name = "Authorization")
+@Slf4j
 @Tag(name = "내부 서비스 오픈 API")
 public class InternalOpenApiController {
 
@@ -38,6 +42,9 @@ public class InternalOpenApiController {
     private final MemberMapper memberMapper;
 
     private final AuthConfig authConfig;
+    private final List<String> organizerPartName = List.of(
+            "운영 팀장", "미디어 팀장", "총무", "회장", "부회장", "웹 파트장", "기획 파트장",
+            "서버 파트장", "디자인 파트장", "안드로이드 파트장", "iOS 파트장", "메이커스 리드");
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/projects/{id}")
@@ -140,6 +147,43 @@ public class InternalOpenApiController {
         val response = new InternalMemberAllProfileResponse(memberList, hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @Operation(
+            summary = "공홈팀 멤버 프로필 조회 API",
+            description =
+                    """
+                    filter 1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS
+                    """
+    )
+    @GetMapping("/official/members/profile")
+    public ResponseEntity<InternalAllOfficialMemberResponse> getMemberProfilesByGenerationAndPart (
+            @RequestParam(required = false, name = "filter") Integer filter,
+            @RequestParam(name = "generation") Integer generation
+    ) {
+        if (generation == null) throw new ClientBadRequestException("잘못된 요청입니다.");
+        val members = internalApiService.getMemberProfiles(filter, null, null, null, generation);
+        val memberList = members.stream().map(m -> {
+            val generationActivities = m.getActivities().stream()
+                    .filter(activity -> activity.getGeneration().equals(generation)).toList();
+            String part;
+            if (generationActivities.size() > 1) {
+                val hasOnlyMemberRoleActivities = generationActivities.stream().filter(
+                        activity -> !organizerPartName.contains(activity.getPart())).toList();
+                if (hasOnlyMemberRoleActivities.isEmpty()) {
+                    part = generationActivities.get(0).getPart();
+                } else {
+                    part = hasOnlyMemberRoleActivities.get(0).getPart();
+                }
+            } else {
+                part = generationActivities.get(0).getPart();
+            }
+            return memberMapper.toOfficialResponse(m, part, generation);
+        }).collect(Collectors.toList());
+        val generationMemberCount = internalApiService.getMemberCountByGeneration(generation);
+        val response = new InternalAllOfficialMemberResponse(memberList, generationMemberCount);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
 
     @Operation(summary = "Auth token", description = "토큰 교환을 위한 엔드포인트")
     @PostMapping("/idp/auth/token")

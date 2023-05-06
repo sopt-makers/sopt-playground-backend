@@ -4,9 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
-import org.sopt.makers.internal.dto.internal.InternalMemberProfileResponse;
-import org.sopt.makers.internal.dto.internal.InternalMemberProfileSpecificResponse;
-import org.sopt.makers.internal.dto.internal.InternalMemberResponse;
+import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.member.*;
 
 import java.util.List;
@@ -54,4 +52,7 @@ public interface MemberMapper {
     ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject, String part);
 
     MemberProjectVo toActivityInfoVo (MemberProfileProjectDao project);
+
+    @Mapping(source = "generation", target = "generation")
+    InternalOfficialMemberResponse toOfficialResponse(Member member, String part, Integer generation);
 }
