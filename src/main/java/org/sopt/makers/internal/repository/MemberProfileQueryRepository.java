@@ -49,7 +49,7 @@ public class MemberProfileQueryRepository {
         return QMember.member.id.gt(cursor);
     }
 
-    private Predicate checkActivityContainsGeneration(Integer generation) {
+    private BooleanExpression checkActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
         return QMemberSoptActivity.memberSoptActivity.generation.eq(generation);
     }
