@@ -171,6 +171,11 @@ public class MemberController {
         return team;
     }
 
+    private int checkLimitForPagination(Integer limit) {
+        if(Objects.isNull(limit)) return limit;
+        else return limit + 1;
+    }
+
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/profile/me")
     public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
@@ -226,8 +231,7 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = limit == null ? memberService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderBy, mbti, team)
-                : memberService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderBy, mbti, team);
+        val members = memberService.getMemberProfiles(filter, checkLimitForPagination(limit), cursor, name, generation, sojuCapactiy, orderBy, mbti, team);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
