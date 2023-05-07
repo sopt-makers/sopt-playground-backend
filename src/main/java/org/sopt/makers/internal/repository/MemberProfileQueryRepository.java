@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.repository;
 
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -11,8 +10,6 @@ import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
 import org.springframework.stereotype.Repository;
-
-import static org.sopt.makers.internal.domain.OrderByCondition.*;
 import java.util.List;
 
 @Repository
@@ -70,29 +67,42 @@ public class MemberProfileQueryRepository {
     }
 
     private BooleanExpression checkActivityContainsTeam(String team) {
-        if(team == null) return null;
-        else if(team.equals("임원진"))  {
-             return QMemberSoptActivity.memberSoptActivity.part.contains("메이커스 리드")
-                    .or(QMemberSoptActivity.memberSoptActivity.part.contains("총무")
-                            .or(QMemberSoptActivity.memberSoptActivity.part.contains("장"))); // 회장, 부회장, ~파트장, 운영 팀장, 미디어 팀장)
-        } else if(team.equals("운영팀")) {
-            return QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")
-                    .or(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"));
-        } else if(team.equals("미디어팀")) {
-            return QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")
-                    .or(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"));
-        } else if(team.equals("메이커스")) {
-            return QMember.member.id.in(MakersMemberId.getMakersMember());
+        if(checkNull(team)) return null;
+        switch (team) {
+            case "임원진" -> {
+                return QMemberSoptActivity.memberSoptActivity.part.eq("메이커스 리드")
+                        .or(QMemberSoptActivity.memberSoptActivity.part.eq("총무")
+                                .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")));
+            }
+            case "운영팀" -> {
+                return QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")
+                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"));
+            }
+            case "미디어팀" -> {
+                return QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")
+                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"));
+            }
+            case "메이커스" -> {
+                return QMember.member.id.in(MakersMemberId.getMakersMember());
+            }
+            default -> {
+                return null;
+            }
         }
-        return null;
+    }
+
+    private Boolean checkNull(Object var) {
+        return var == null;
     }
 
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
-        if(orderByNum == null) return QMember.member.id.desc();
-        else if(orderByNum == OLDEST_REGISTERED) return QMember.member.id.asc();
-        else if(orderByNum == LATEST_GENERATION) return QMemberSoptActivity.memberSoptActivity.generation.max().desc();
-        else if(orderByNum == OLDEST_GENERATION) return QMemberSoptActivity.memberSoptActivity.generation.min().asc();
-        else return QMember.member.id.desc();
+        if(checkNull(orderByNum)) return QMember.member.id.desc();
+        return switch (orderByNum) {
+            case OLDEST_REGISTERED -> QMember.member.id.asc();
+            case LATEST_GENERATION -> QMemberSoptActivity.memberSoptActivity.generation.max().desc();
+            case OLDEST_GENERATION -> QMemberSoptActivity.memberSoptActivity.generation.min().asc();
+            default -> QMember.member.id.desc();
+        };
     }
 
     public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
