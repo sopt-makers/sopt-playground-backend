@@ -226,8 +226,7 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = limit == null ?
-                memberService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderBy, mbti, team)
+        val members = limit == null ? memberService.getMemberProfiles(filter, limit, cursor, name, generation, sojuCapactiy, orderBy, mbti, team)
                 : memberService.getMemberProfiles(filter, limit + 1, cursor, name, generation, sojuCapactiy, orderBy, mbti, team);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
