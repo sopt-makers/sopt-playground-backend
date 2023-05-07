@@ -10,7 +10,10 @@ import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
 import org.springframework.stereotype.Repository;
+
+import org.springframework.util.StringUtils;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -57,17 +60,18 @@ public class MemberProfileQueryRepository {
     }
 
     private BooleanExpression checkMemberMbti(String mbti) {
-        if(mbti == null) return null;
-        return QMember.member.mbti.eq(mbti);
+        val isMbtiEmpty = !StringUtils.hasText(mbti);
+        return isMbtiEmpty ? null : QMember.member.mbti.eq(mbti);
     }
 
     private BooleanExpression checkMemberSojuCapactiy(Double sojuCapactiy) {
-        if(sojuCapactiy == null) return null;
-        return QMember.member.sojuCapacity.eq(sojuCapactiy);
+        val isSojuCapacityEmpty = Objects.isNull(sojuCapactiy);
+        return isSojuCapacityEmpty ? null : QMember.member.sojuCapacity.eq(sojuCapactiy);
     }
 
     private BooleanExpression checkActivityContainsTeam(String team) {
-        if(checkNull(team)) return null;
+        val isTeamEmpty = !StringUtils.hasText(team);
+        if(isTeamEmpty) return null;
         switch (team) {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.eq("메이커스 리드")
@@ -91,12 +95,9 @@ public class MemberProfileQueryRepository {
         }
     }
 
-    private Boolean checkNull(Object var) {
-        return var == null;
-    }
-
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
-        if(checkNull(orderByNum)) return QMember.member.id.desc();
+        val orderByNumIsEmpty = Objects.isNull(orderByNum);
+        if(orderByNumIsEmpty) return QMember.member.id.desc();
         return switch (orderByNum) {
             case OLDEST_REGISTERED -> QMember.member.id.asc();
             case LATEST_GENERATION -> QMemberSoptActivity.memberSoptActivity.generation.max().desc();
