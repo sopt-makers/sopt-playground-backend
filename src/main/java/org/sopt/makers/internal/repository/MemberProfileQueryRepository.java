@@ -39,7 +39,7 @@ public class MemberProfileQueryRepository {
 
     private BooleanExpression checkActivityContainsPart(String part) {
         if(part == null) return null;
-        return QMemberSoptActivity.memberSoptActivity.part.contains(part);
+        return QMemberSoptActivity.memberSoptActivity.part.eq(part);
     }
 
     private BooleanExpression checkIdGtThanCursor(Integer cursor) {
@@ -75,12 +75,12 @@ public class MemberProfileQueryRepository {
                                 .or(QMemberSoptActivity.memberSoptActivity.part.contains("장")));
             }
             case "운영팀" -> {
-                return QMemberSoptActivity.memberSoptActivity.part.contains("운영 팀장")
-                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("운영팀"));
+                return QMemberSoptActivity.memberSoptActivity.part.eq("운영 팀장")
+                        .or(QMemberSoptActivity.memberSoptActivity.team.eq("운영팀"));
             }
             case "미디어팀" -> {
-                return QMemberSoptActivity.memberSoptActivity.part.contains("미디어 팀장")
-                        .or(QMemberSoptActivity.memberSoptActivity.team.contains("미디어팀"));
+                return QMemberSoptActivity.memberSoptActivity.part.eq("미디어 팀장")
+                        .or(QMemberSoptActivity.memberSoptActivity.team.eq("미디어팀"));
             }
             case "메이커스" -> {
                 return QMember.member.id.in(MakersMemberId.getMakersMember());
