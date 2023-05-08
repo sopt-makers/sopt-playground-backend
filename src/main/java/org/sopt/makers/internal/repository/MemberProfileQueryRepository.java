@@ -172,8 +172,17 @@ public class MemberProfileQueryRepository {
                 .size();
     }
 
-    public int countAllMemberProfile(String part, Integer cursor, String name, Integer generation,
-                                     Double sojuCapactiy, Integer orderBy, String mbti, String team) {
-        return findAllMemberProfile(part, cursor, name, generation,sojuCapactiy, orderBy, mbti, team).size();
+    public int countAllMemberProfile(String part, String name, Integer generation, Double sojuCapactiy, String mbti, String team) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.selectFrom(member)
+                .innerJoin(member.activities, activities)
+                .where(checkMemberHasProfile(),
+                        checkMemberContainsName(name), checkMemberSojuCapactiy(sojuCapactiy),
+                        checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
+                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
+                .groupBy(member.id)
+                .fetch()
+                .size();
     }
 }
