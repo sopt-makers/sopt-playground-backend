@@ -268,7 +268,7 @@ public class MemberController {
     }
 
     private Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = limit == null;
+        val isLimitEmpty = (limit == null);
         return isLimitEmpty ? null : limit + 1;
     }
 }
