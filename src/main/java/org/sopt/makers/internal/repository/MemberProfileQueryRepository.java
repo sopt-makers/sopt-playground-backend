@@ -56,8 +56,8 @@ public class MemberProfileQueryRepository {
     }
 
     private BooleanExpression checkActivityContainsTeam(String team) {
-        val isTeamEmpty = !StringUtils.hasText(team);
-        if(isTeamEmpty) return null;
+        val isTeamEmpty = Objects.isNull(team);
+        if (isTeamEmpty) return null;
         switch (team) {
             case "임원진" -> {
                 return QMemberSoptActivity.memberSoptActivity.part.eq("메이커스 리드")
@@ -83,7 +83,7 @@ public class MemberProfileQueryRepository {
 
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
         val orderByNumIsEmpty = Objects.isNull(orderByNum);
-        if(orderByNumIsEmpty) return QMember.member.id.desc();
+        if (orderByNumIsEmpty) return QMember.member.id.desc();
         return switch (orderByNum) {
             case OLDEST_REGISTERED -> QMember.member.id.asc();
             case LATEST_GENERATION -> QMemberSoptActivity.memberSoptActivity.generation.max().desc();
