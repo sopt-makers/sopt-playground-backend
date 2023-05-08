@@ -112,6 +112,13 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
+    public int getMemberProfilesCount(Integer filter, Integer integer, Integer cursor, String name, Integer generation,
+           Double sojuCapactiy, Integer orderBy, String mbti, String team) {
+        val part = getMemberPart(filter);
+        return memberProfileQueryRepository.countAllMemberProfile(part, cursor, name, generation, sojuCapactiy, orderBy, mbti, team);
+    }
+
+    @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
                                           Double sojuCapactiy, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
