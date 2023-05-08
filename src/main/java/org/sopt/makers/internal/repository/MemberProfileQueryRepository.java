@@ -171,4 +171,9 @@ public class MemberProfileQueryRepository {
                 .fetch()
                 .size();
     }
+
+    public int countAllMemberProfile(String part, Integer cursor, String name, Integer generation,
+                                     Double sojuCapactiy, Integer orderBy, String mbti, String team) {
+        return findAllMemberProfile(part, cursor, name, generation,sojuCapactiy, orderBy, mbti, team).size();
+    }
 }
