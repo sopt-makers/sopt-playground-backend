@@ -21,20 +21,6 @@ public class MemberProfileQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<MemberProfileProjectDao> findMemberProfileProjectsByMemberId (Long memberId) {
-        val project = QProject.project;
-        val relation = QMemberProjectRelation.memberProjectRelation;
-        val member = QMember.member;
-        return queryFactory.select(
-                new QMemberProfileProjectDao(
-                        project.id, project.writerId, project.name, project.summary, project.generation,
-                        project.category, project.logoImage, project.thumbnailImage, project.serviceType
-                )).from(project)
-                .innerJoin(relation).on(project.id.eq(relation.projectId))
-                .where(relation.isTeamMember.isTrue().and(relation.userId.eq(memberId)))
-                .fetch();
-    }
-
     private BooleanExpression checkMemberContainsName(String name) {
         if(name == null) return null;
         return QMember.member.name.contains(name);
@@ -104,6 +90,20 @@ public class MemberProfileQueryRepository {
             case OLDEST_GENERATION -> QMemberSoptActivity.memberSoptActivity.generation.min().asc();
             default -> QMember.member.id.desc();
         };
+    }
+
+    public List<MemberProfileProjectDao> findMemberProfileProjectsByMemberId (Long memberId) {
+        val project = QProject.project;
+        val relation = QMemberProjectRelation.memberProjectRelation;
+        val member = QMember.member;
+        return queryFactory.select(
+                        new QMemberProfileProjectDao(
+                                project.id, project.writerId, project.name, project.summary, project.generation,
+                                project.category, project.logoImage, project.thumbnailImage, project.serviceType
+                        )).from(project)
+                .innerJoin(relation).on(project.id.eq(relation.projectId))
+                .where(relation.isTeamMember.isTrue().and(relation.userId.eq(memberId)))
+                .fetch();
     }
 
     public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
