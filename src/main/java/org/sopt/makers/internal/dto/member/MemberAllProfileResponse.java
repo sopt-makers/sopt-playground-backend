@@ -4,5 +4,6 @@ import java.util.List;
 
 public record MemberAllProfileResponse(
         List<MemberProfileResponse> members,
-        Boolean hasNext
+        Boolean hasNext,
+        Integer totalMembersCount
 ) {}
