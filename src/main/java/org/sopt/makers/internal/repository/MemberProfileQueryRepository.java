@@ -175,7 +175,8 @@ public class MemberProfileQueryRepository {
     public int countAllMemberProfile(String part, String name, Integer generation, Double sojuCapactiy, String mbti, String team) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
-        return queryFactory.selectFrom(member)
+        return queryFactory.select(member.id)
+                .from(member)
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(),
                         checkMemberContainsName(name), checkMemberSojuCapactiy(sojuCapactiy),
