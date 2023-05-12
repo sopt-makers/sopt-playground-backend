@@ -141,6 +141,18 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
+        val memberSoptActivitys = memberHistories.stream()
+            .map(soptMemberOperationTeam -> memberSoptActivityRepository.save(
+                memberSoptActivityRepository.save(
+                    MemberSoptActivity.builder()
+                    .memberId(member.getId())
+                    .team(isInOperationTeam(memberHistory.getPart()) ? "운영진" : "")
+                    .part(soptMemberOperationTeam.getPart())
+                    .generation(soptMemberOperationTeam.getGeneration())
+                    .build()
+                )
+            )
+        );
         memberHistory.makeMemberJoin();
 
         return tokenManager.createAuthToken(member.getId());
@@ -186,10 +198,21 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
+        val memberSoptActivitys = memberHistories.stream()
+            .map(soptMemberOperationTeam -> memberSoptActivityRepository.save(
+                memberSoptActivityRepository.save(
+                    MemberSoptActivity.builder()
+                        .memberId(member.getId())
+                        .team(isInOperationTeam(memberHistory.getPart()) ? "운영진" : "")
+                        .part(soptMemberOperationTeam.getPart())
+                        .generation(soptMemberOperationTeam.getGeneration())
+                        .build()
+                )
+            )
+        );
         memberHistory.makeMemberJoin();
 
         return tokenManager.createAuthToken(member.getId());
-
     }
 
     @Transactional
@@ -230,10 +253,21 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
+        val memberSoptActivitys = memberHistories.stream()
+            .map(soptMemberOperationTeam -> memberSoptActivityRepository.save(
+                memberSoptActivityRepository.save(
+                    MemberSoptActivity.builder()
+                    .memberId(member.getId())
+                    .team(isInOperationTeam(memberHistory.getPart()) ? "운영진" : "")
+                    .part(soptMemberOperationTeam.getPart())
+                    .generation(soptMemberOperationTeam.getGeneration())
+                    .build()
+                )
+            )
+        );
         memberHistory.makeMemberJoin();
 
         return tokenManager.createAuthToken(member.getId());
-
     }
 
     @Transactional
