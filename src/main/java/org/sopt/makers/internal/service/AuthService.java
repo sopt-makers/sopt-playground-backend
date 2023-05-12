@@ -10,6 +10,7 @@ import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class AuthService {
+    private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final AuthConfig authConfig;
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
@@ -303,6 +305,9 @@ public class AuthService {
         return authConfig.getMagicRegisterToken();
     }
 
+    private boolean isInOperationTeam(String part) {
+        return (part.contains("장") || part.equals("총무"));
+    }
 
     private void clearMapByRandomAccess () {
         log.info("[Before clear Map] Map size : " + memberAndSmsTokenMap.size());
