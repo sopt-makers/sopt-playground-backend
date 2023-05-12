@@ -141,14 +141,13 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
-        val memberSoptActivitys = memberHistories.stream()
-            .map(soptMemberOperationTeam -> memberSoptActivityRepository.save(
+        memberHistories.forEach(soptMemberHistory -> memberSoptActivityRepository.save(
                 memberSoptActivityRepository.save(
                     MemberSoptActivity.builder()
                     .memberId(member.getId())
-                    .team(isInOperationTeam(memberHistory.getPart()) ? "운영진" : "")
-                    .part(soptMemberOperationTeam.getPart())
-                    .generation(soptMemberOperationTeam.getGeneration())
+                    .team(isInOperationTeam(soptMemberHistory.getPart()) ? "운영진" : "")
+                    .part(soptMemberHistory.getPart())
+                    .generation(soptMemberHistory.getGeneration())
                     .build()
                 )
             )
@@ -198,14 +197,13 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
-        val memberSoptActivitys = memberHistories.stream()
-            .map(soptMemberOperationTeam -> memberSoptActivityRepository.save(
+        memberHistories.forEach(soptMemberHistory -> memberSoptActivityRepository.save(
                 memberSoptActivityRepository.save(
                     MemberSoptActivity.builder()
                         .memberId(member.getId())
-                        .team(isInOperationTeam(memberHistory.getPart()) ? "운영진" : "")
-                        .part(soptMemberOperationTeam.getPart())
-                        .generation(soptMemberOperationTeam.getGeneration())
+                        .team(isInOperationTeam(soptMemberHistory.getPart()) ? "운영진" : "")
+                        .part(soptMemberHistory.getPart())
+                        .generation(soptMemberHistory.getGeneration())
                         .build()
                 )
             )
@@ -253,14 +251,13 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
-        val memberSoptActivitys = memberHistories.stream()
-            .map(soptMemberOperationTeam -> memberSoptActivityRepository.save(
+        memberHistories.forEach(soptMemberHistory -> memberSoptActivityRepository.save(
                 memberSoptActivityRepository.save(
                     MemberSoptActivity.builder()
                     .memberId(member.getId())
-                    .team(isInOperationTeam(memberHistory.getPart()) ? "운영진" : "")
-                    .part(soptMemberOperationTeam.getPart())
-                    .generation(soptMemberOperationTeam.getGeneration())
+                    .team(isInOperationTeam(soptMemberHistory.getPart()) ? "운영진" : "")
+                    .part(soptMemberHistory.getPart())
+                    .generation(soptMemberHistory.getGeneration())
                     .build()
                 )
             )
