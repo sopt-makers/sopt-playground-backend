@@ -240,8 +240,7 @@ public class AuthService {
         }
     }
 
-    @Transactional
-    public Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
+    private Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
         val memberHistory = memberHistories.get(0);
         val member = memberRepository.save(
                 Member.builder()
