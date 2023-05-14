@@ -256,7 +256,7 @@ public class AuthService {
         val memberActivities = memberHistories.stream().map(soptMemberHistory ->
                MemberSoptActivity.builder()
                        .memberId(member.getId())
-                       .team(isInOperationTeam(soptMemberHistory.getPart()) ? "운영진" : null)
+                       .team(isInManagementTeam(soptMemberHistory.getPart()) ? "운영진" : null)
                        .part(soptMemberHistory.getPart())
                        .generation(soptMemberHistory.getGeneration())
                        .build()).toList();
@@ -298,7 +298,7 @@ public class AuthService {
         return authConfig.getMagicRegisterToken();
     }
 
-    private boolean isInOperationTeam(String part) {
+    private boolean isInManagementTeam(String part) {
         return (part.contains("장") || part.equals("총무"));
     }
 
