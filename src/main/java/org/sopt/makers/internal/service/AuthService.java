@@ -252,13 +252,15 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
-        val memberActivities = memberHistories.stream().map(soptMemberHistory ->
-               MemberSoptActivity.builder()
-                       .memberId(member.getId())
-                       .team(isInSoptOrganizerTeam(soptMemberHistory.getPart()) ? soptMemberHistory.getPart() : null)
-                       .part(soptMemberHistory.getPart())
-                       .generation(soptMemberHistory.getGeneration())
-                       .build()).toList();
+        val memberActivities = memberHistories.stream().map(soptMemberHistory -> {
+            val team = isInSoptOrganizerTeam(soptMemberHistory.getPart()) ? soptMemberHistory.getPart() : null;
+            return MemberSoptActivity.builder()
+                    .memberId(member.getId())
+                    .team(team)
+                    .part(soptMemberHistory.getPart())
+                    .generation(soptMemberHistory.getGeneration())
+                    .build();
+        }).toList();
         memberSoptActivityRepository.saveAll(memberActivities);
         memberHistory.makeMemberJoin();
         return member;
