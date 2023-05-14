@@ -240,6 +240,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
         val memberHistory = memberHistories.get(0);
         val member = memberRepository.save(
@@ -252,15 +253,13 @@ public class AuthService {
                         .generation(memberHistory.getGeneration())
                         .build()
         );
-        val memberActivities = new ArrayList<MemberSoptActivity>();
-        memberHistories.forEach(soptMemberHistory -> memberActivities.add(
-                MemberSoptActivity.builder()
-                        .memberId(member.getId())
-                        .team(isInOperationTeam(soptMemberHistory.getPart()) ? "운영진" : "")
-                        .part(soptMemberHistory.getPart())
-                        .generation(soptMemberHistory.getGeneration())
-                        .build()
-        ));
+        val memberActivities = memberHistories.stream().map(soptMemberHistory ->
+               MemberSoptActivity.builder()
+                       .memberId(member.getId())
+                       .team(isInOperationTeam(soptMemberHistory.getPart()) ? "운영진" : null)
+                       .part(soptMemberHistory.getPart())
+                       .generation(soptMemberHistory.getGeneration())
+                       .build()).toList();
         memberSoptActivityRepository.saveAll(memberActivities);
         memberHistory.makeMemberJoin();
         return member;
