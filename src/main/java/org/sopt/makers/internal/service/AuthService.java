@@ -256,7 +256,7 @@ public class AuthService {
         val memberActivities = memberHistories.stream().map(soptMemberHistory ->
                MemberSoptActivity.builder()
                        .memberId(member.getId())
-                       .team(isInSoptOrganizerTeam(soptMemberHistory.getPart()) ? "운영진" : null)
+                       .team(isInSoptOrganizerTeam(soptMemberHistory.getPart()) ? soptMemberHistory.getPart() : null)
                        .part(soptMemberHistory.getPart())
                        .generation(soptMemberHistory.getGeneration())
                        .build()).toList();
