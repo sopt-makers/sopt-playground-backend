@@ -10,6 +10,7 @@ import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class AuthService {
+    private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final AuthConfig authConfig;
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
@@ -129,17 +131,7 @@ public class AuthService {
 
         val memberHistory = memberHistories.get(0);
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
-        val member = memberRepository.save(
-                Member.builder()
-                        .authUserId(fbUserInfo.userId())
-                        .idpType("facebook")
-                        .name(memberHistory.getName())
-                        .email(memberHistory.getEmail())
-                        .phone(memberHistory.getPhone())
-                        .generation(memberHistory.getGeneration())
-                        .build()
-        );
-        memberHistory.makeMemberJoin();
+        val member = insertMemberAndActivityData("facebook", fbUserInfo.userId(), memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -174,20 +166,9 @@ public class AuthService {
         val memberHistory = memberHistories.get(0);
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = memberRepository.save(
-                Member.builder()
-                        .authUserId(googleUserInfo)
-                        .idpType("google")
-                        .name(memberHistory.getName())
-                        .email(memberHistory.getEmail())
-                        .phone(memberHistory.getPhone())
-                        .generation(memberHistory.getGeneration())
-                        .build()
-        );
-        memberHistory.makeMemberJoin();
+        val member = insertMemberAndActivityData("google", googleUserInfo, memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
-
     }
 
     @Transactional
@@ -218,20 +199,9 @@ public class AuthService {
         val memberHistory = memberHistories.get(0);
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = memberRepository.save(
-                Member.builder()
-                        .authUserId(appleUserInfo)
-                        .idpType("apple")
-                        .name(memberHistory.getName())
-                        .email(memberHistory.getEmail())
-                        .phone(memberHistory.getPhone())
-                        .generation(memberHistory.getGeneration())
-                        .build()
-        );
-        memberHistory.makeMemberJoin();
+        val member = insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
-
     }
 
     @Transactional
@@ -270,6 +240,32 @@ public class AuthService {
         }
     }
 
+    private Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
+        val memberHistory = memberHistories.get(0);
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(userInfoId)
+                        .idpType(idpType)
+                        .name(memberHistory.getName())
+                        .email(memberHistory.getEmail())
+                        .phone(memberHistory.getPhone())
+                        .generation(memberHistory.getGeneration())
+                        .build()
+        );
+        val memberActivities = memberHistories.stream().map(soptMemberHistory -> {
+            val team = isInSoptOrganizerTeam(soptMemberHistory.getPart()) ? soptMemberHistory.getPart() : null;
+            return MemberSoptActivity.builder()
+                    .memberId(member.getId())
+                    .team(team)
+                    .part(soptMemberHistory.getPart())
+                    .generation(soptMemberHistory.getGeneration())
+                    .build();
+        }).toList();
+        memberSoptActivityRepository.saveAll(memberActivities);
+        memberHistory.makeMemberJoin();
+        return member;
+    }
+
     public String sendSixNumberSmsCode (String phone) {
         val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
         if (memberHistories.isEmpty()) return "emptySoptUser";
@@ -303,6 +299,9 @@ public class AuthService {
         return authConfig.getMagicRegisterToken();
     }
 
+    private boolean isInSoptOrganizerTeam(String part) {
+        return (part.contains("장") || part.equals("총무"));
+    }
 
     private void clearMapByRandomAccess () {
         log.info("[Before clear Map] Map size : " + memberAndSmsTokenMap.size());
