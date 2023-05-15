@@ -300,6 +300,7 @@ public class AuthService {
     }
 
     private boolean isInSoptOrganizerTeam(String part) {
+        if (part == null) return false;
         return (part.contains("장") || part.equals("총무"));
     }
 
