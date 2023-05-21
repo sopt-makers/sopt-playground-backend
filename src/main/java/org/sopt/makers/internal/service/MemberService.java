@@ -113,22 +113,22 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public int getMemberProfilesCount(Integer filter, String name, Integer generation,
-           Double sojuCapactiy, String mbti, String team) {
+           Double sojuCapacity, String mbti, String team) {
         val part = getMemberPart(filter);
-        return memberProfileQueryRepository.countAllMemberProfile(part, name, generation, sojuCapactiy, mbti, team);
+        return memberProfileQueryRepository.countAllMemberProfile(part, name, generation, sojuCapacity, mbti, team);
     }
 
     @Transactional(readOnly = true)
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
-                                          Double sojuCapactiy, Integer orderBy, String mbti, String team) {
+                                          Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
             return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
-                    sojuCapactiy, orderBy, mbti, team);
+                    sojuCapacity, orderBy, mbti, team);
         }
         else {
             return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation,
-                    sojuCapactiy, orderBy, mbti, team);
+                    sojuCapacity, orderBy, mbti, team);
         }
     }
 
