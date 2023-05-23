@@ -191,16 +191,16 @@ public class MemberController {
             @RequestParam(required = false, name = "cursor") Integer cursor,
             @RequestParam(required = false, name = "name") String name,
             @RequestParam(required = false, name = "generation") Integer generation,
-            @RequestParam(required = false, name = "sojuCapactiy") Double sojuCapactiy,
+            @RequestParam(required = false, name = "sojuCapacity") Double sojuCapacity,
             @RequestParam(required = false, name = "orderBy") Integer orderBy,
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = memberService.getMemberProfiles(filter, checkLimitForPagination(limit), cursor, name, generation, sojuCapactiy, orderBy, mbti, team);
+        val members = memberService.getMemberProfiles(filter, checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
         val hasNextMember = (limit != null && memberList.size() > limit);
         if (hasNextMember) memberList.remove(members.size() - 1);
-        val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapactiy, mbti, team);
+        val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
