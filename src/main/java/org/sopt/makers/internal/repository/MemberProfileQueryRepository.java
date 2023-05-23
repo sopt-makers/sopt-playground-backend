@@ -38,7 +38,7 @@ public class MemberProfileQueryRepository {
 
     private BooleanExpression checkActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
-        return QMember.member.id.eq(
+        return QMember.member.id.in(
                 queryFactory.select(QMember.member.id)
                         .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
                         .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation))
