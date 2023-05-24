@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
@@ -107,23 +108,27 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<Member> getAllMakersMemberProfiles() {
-        val makersMembers = List.of(
-                1L, 44L, 23L, 31L, 8L, 30L, 40L, 46L, 26L, 60L, 39L, 6L, 9L, 7L, 2L, 3L, 29L,
-                5L, 38L, 37L, 13L, 28L, 36L, 58L, 173L, 32L, 43L, 188L, 59L, 34L, 21L, 33L, 22L, 35L, 45L,
-                186L, 227L, 264L, 4L, 51L, 187L, 128L, 64L, 99L, 10L, 66L, 260L, 72L, 265L, 78L, 251L,
-                115L, 258L, 112L, 205L, 238L, 259L, 281L, 285L, 286L, 283L, 282L
-        );
-        return memberRepository.findAllByHasProfileTrueAndIdIn(makersMembers);
+        return memberRepository.findAllByHasProfileTrueAndIdIn(MakersMemberId.getMakersMember());
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
+    public int getMemberProfilesCount(Integer filter, String name, Integer generation,
+           Double sojuCapacity, String mbti, String team) {
+        val part = getMemberPart(filter);
+        return memberProfileQueryRepository.countAllMemberProfile(part, name, generation, sojuCapacity, mbti, team);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
+                                          Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation);
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
+                    sojuCapacity, orderBy, mbti, team);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation);
+            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation,
+                    sojuCapacity, orderBy, mbti, team);
         }
     }
 
@@ -141,7 +146,6 @@ public class MemberService {
     }
 
     private String checkActivityTeamConditions (String team) {
-
         Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
         val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
