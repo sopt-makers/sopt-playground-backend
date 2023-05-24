@@ -31,11 +31,6 @@ public class MemberProfileQueryRepository {
         return QMemberSoptActivity.memberSoptActivity.part.eq(part);
     }
 
-    private BooleanExpression checkIdGtThanCursor(Integer cursor) {
-        if(cursor == null) return null;
-        return QMember.member.id.gt(cursor);
-    }
-
     private BooleanExpression checkActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
         return QMember.member.id.in(
@@ -115,23 +110,28 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
     }
 
-    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name,
-                                                    Integer generation, Double sojuCapacity, Integer orderBy, String mbti, String team) {
+    public List<Member> findAllLimitedMemberProfile(
+            String part, Integer limit, Integer cursor, String name,
+            Integer generation, Double sojuCapacity, Integer orderBy, String mbti, String team
+    ) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
+                .where(
+                        checkMemberHasProfile(),
                         checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
                         checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
-                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
+                        checkActivityContainsTeam(team), checkMemberMbti(mbti)
+                ).offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
@@ -149,17 +149,18 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation,
+    public List<Member> findAllMemberProfile(String part, String name, Integer generation,
                                              Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
+                .where(
+                        checkMemberHasProfile(),
                         checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
                         checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
-                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
-                .groupBy(member.id)
+                        checkActivityContainsTeam(team), checkMemberMbti(mbti)
+                ).groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
