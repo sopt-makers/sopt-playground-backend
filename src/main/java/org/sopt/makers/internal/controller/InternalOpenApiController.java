@@ -11,6 +11,7 @@ import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.dto.SopticleVo;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -201,5 +202,13 @@ public class InternalOpenApiController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new InternalAuthResponse(null, "wrongApiKey"));
         }
+    }
+
+    @Operation(summary = "솝티클 조회 API")
+    @GetMapping("/sopticles")
+    public ResponseEntity<List<SopticleVo>> getMyInformation (
+    ) {
+        val sopticleVos = internalApiService.getSopticles();
+        return ResponseEntity.status(HttpStatus.OK).body(sopticleVos);
     }
 }
