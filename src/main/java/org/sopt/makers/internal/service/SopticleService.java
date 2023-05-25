@@ -10,6 +10,7 @@ import org.sopt.makers.internal.repository.SopticleWriterRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Service
@@ -22,6 +23,7 @@ public class SopticleService {
         val sopticle = sopticleRepository.save(Sopticle.builder()
                 .link(request.link())
                 .userId(userId)
+                .registeredAt(LocalDateTime.now())
                 .build());
         val sopticleWriters = request.writerIds().stream().map(id ->
                 SopticleWriter.builder()
