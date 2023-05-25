@@ -37,7 +37,7 @@ public class SecurityConfig {
                     .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/webjars/swagger-ui/**", "/swagger-ui/**", "/makers/**").permitAll()
                 .and()
                     .authorizeHttpRequests()
-                        .antMatchers("/internal/api/v1/projects/**", "/internal/api/v1/members/**", "/internal/api/v1/profile",
+                        .antMatchers("/internal/api/v1/projects/**", "/internal/api/v1/members/**", "/internal/api/v1/sopticles/**", "/internal/api/v1/profile",
                                 "/api/v1/presigned-url", "/api/v1/users/**", "/api/v1/projects/**").hasAuthority("Member")
                 .and()
                     .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
