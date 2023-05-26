@@ -6,6 +6,8 @@ import org.sopt.makers.internal.domain.InternalTokenManager;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.dto.SopticleDao;
+import org.sopt.makers.internal.dto.SopticleVo;
 import org.sopt.makers.internal.dto.internal.InternalAuthVo;
 import org.sopt.makers.internal.dto.member.ActivityVo;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
@@ -20,6 +22,9 @@ import org.sopt.makers.internal.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.desktop.SystemSleepEvent;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +41,8 @@ public class InternalApiService {
     private final MemberMapper memberMapper;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final InternalTokenManager internalTokenManager;
+
+    private final SopticleQueryRepository sopticleQueryRepository;
 
     @Transactional(readOnly = true)
     public List<ProjectMemberVo> fetchById (Long id) {
@@ -155,5 +162,27 @@ public class InternalApiService {
         val userId = Long.parseLong(internalTokenManager.getUserIdFromAuthToken(previousAccessToken));
         val accessToken = internalTokenManager.createAuthToken(userId ,30, serviceName);
         return new InternalAuthVo(accessToken, null);
+    }
+
+    public List<SopticleVo> getSopticles () {
+        val joinedSopticleList = sopticleQueryRepository.findAllSopticle();
+        val sopticleWriterMap = joinedSopticleList.stream().collect(
+                Collectors.groupingBy(SopticleDao::id, HashMap::new,
+                        Collectors.mapping(SopticleDao::memberId, Collectors.toSet()))
+        );
+        val linkMap = joinedSopticleList.stream()
+                .collect(Collectors.toMap(SopticleDao::id, SopticleDao::link, (p1, p2) -> p1));
+        val writerMap = joinedSopticleList.stream().map(s -> new SopticleVo.SopticleUserVo(
+                s.memberId(), s.name(), s.part(), s.generation()
+        )).collect(Collectors.groupingBy(SopticleVo.SopticleUserVo::id));
+
+        return sopticleWriterMap.keySet().stream().map(sopticleId -> {
+            val link = linkMap.get(sopticleId);
+            val writerIdSet = sopticleWriterMap.get(sopticleId);
+            val writers = writerIdSet.stream().map(id -> writerMap.get(id).stream().max(
+                        Comparator.comparing(SopticleVo.SopticleUserVo::generation)).get()
+            ).toList();
+            return new SopticleVo(sopticleId, link, writers);
+        }).toList();
     }
 }

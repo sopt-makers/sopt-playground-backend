@@ -127,7 +127,7 @@ public class MemberService {
                     sojuCapacity, orderBy, mbti, team);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation,
+            return memberProfileQueryRepository.findAllMemberProfile(part, name, generation,
                     sojuCapacity, orderBy, mbti, team);
         }
     }

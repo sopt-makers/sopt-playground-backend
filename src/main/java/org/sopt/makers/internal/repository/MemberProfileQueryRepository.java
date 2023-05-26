@@ -31,9 +31,14 @@ public class MemberProfileQueryRepository {
         return QMemberSoptActivity.memberSoptActivity.part.eq(part);
     }
 
-    private BooleanExpression checkIdGtThanCursor(Integer cursor) {
-        if(cursor == null) return null;
-        return QMember.member.id.gt(cursor);
+    private BooleanExpression checkActivityContainsGenerationAndTeam(Integer generation, String team) {
+        if(generation == null) return null;
+        return QMember.member.id.in(
+                queryFactory.select(QMember.member.id)
+                        .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+                        .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
+                                .and(checkActivityContainsTeam(team)))
+        );
     }
 
     private BooleanExpression checkActivityContainsGeneration(Integer generation) {
@@ -115,27 +120,29 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
     }
 
-    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name,
-                                                    Integer generation, Double sojuCapacity, Integer orderBy, String mbti, String team) {
+    public List<Member> findAllLimitedMemberProfile(
+            String part, Integer limit, Integer cursor, String name,
+            Integer generation, Double sojuCapacity, Integer orderBy, String mbti, String team
+    ) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
-                        checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
-                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
+                .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
+                        checkActivityContainsPart(part), checkMemberMbti(mbti),
+                        checkActivityContainsGenerationAndTeam(generation, team)
+                ).offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
-                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
-                .fetch();
+                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy))).fetch();
     }
 
     public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation) {
@@ -143,23 +150,22 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkIdGtThanCursor(cursor), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
     }
 
-    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation,
+    public List<Member> findAllMemberProfile(String part, String name, Integer generation,
                                              Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkIdGtThanCursor(cursor),
-                        checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
-                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
-                .groupBy(member.id)
+                .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
+                        checkActivityContainsPart(part), checkMemberMbti(mbti),
+                        checkActivityContainsGenerationAndTeam(generation, team)
+                ).groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
@@ -184,8 +190,8 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(),
                         checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkActivityContainsGeneration(generation), checkActivityContainsPart(part),
-                        checkActivityContainsTeam(team), checkMemberMbti(mbti))
+                        checkActivityContainsPart(part),checkMemberMbti(mbti),
+                        checkActivityContainsGenerationAndTeam(generation, team))
                 .groupBy(member.id)
                 .fetch()
                 .size();
