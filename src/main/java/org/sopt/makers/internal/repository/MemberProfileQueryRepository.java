@@ -41,7 +41,7 @@ public class MemberProfileQueryRepository {
         );
     }
 
-    private BooleanExpression checkActivityContainsGeneration(Integer generation) {
+    private BooleanExpression checkUserActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
         return QMember.member.id.in(
                 queryFactory.select(QMember.member.id)
@@ -120,7 +120,7 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
                 .offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
@@ -150,7 +150,7 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
@@ -176,7 +176,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.select(member.id)
                 .from(member)
                 .innerJoin(member.activities, activities).on(activities.memberId.eq(member.id))
-                .where(checkMemberHasProfile(), checkActivityContainsGeneration(generation))
+                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation))
                 .groupBy(member.id)
                 .fetch()
                 .size();
