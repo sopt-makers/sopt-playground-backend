@@ -26,7 +26,7 @@ public class SopticleService {
     public Sopticle createSopticle (SopticleSaveRequest request, Long userId) {
         val writers = Set.copyOf(request.writerIds());
         val isValidNumberOfWriters = memberRepository.countByIdIn(writers) == writers.size();
-        if (!isValidNumberOfWriters) throw new ClientBadRequestException("Wrong # of writers");
+        if (!isValidNumberOfWriters) throw new ClientBadRequestException("Wrong writers");
         val sopticle = sopticleRepository.save(Sopticle.builder()
                 .link(request.link())
                 .userId(userId)
