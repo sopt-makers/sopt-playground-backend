@@ -31,22 +31,65 @@ public class MemberProfileQueryRepository {
         return QMemberSoptActivity.memberSoptActivity.part.eq(part);
     }
 
+    private BooleanExpression checkUserContainsPart(String part) {
+        if(part == null) return null;
+        return QMember.member.id.in(queryFactory.select(QMember.member.id)
+                .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+                .where(checkActivityContainsPart(part)));
+    }
+
     private BooleanExpression checkActivityContainsGenerationAndTeam(Integer generation, String team) {
-        if(generation == null) return null;
+        if(generation == null && team == null) return null;
         return QMember.member.id.in(
                 queryFactory.select(QMember.member.id)
                         .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
                         .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
-                                .and(checkActivityContainsTeam(team)))
+                                        .and(checkActivityContainsTeam(team)))
         );
     }
 
-    private BooleanExpression checkActivityContainsGeneration(Integer generation) {
+    private BooleanExpression checkUserActivityContainsGeneration(Integer generation) {
         if(generation == null) return null;
         return QMember.member.id.in(
                 queryFactory.select(QMember.member.id)
                         .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
                         .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation))
+        );
+    }
+
+    private BooleanExpression checkActivityContainsGenerationAndPart(Integer generation, String part) {
+        if(generation == null && part == null) return null;
+        return QMember.member.id.in(
+                queryFactory.select(QMember.member.id)
+                        .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+                        .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation)
+                                .and(checkActivityContainsPart(part)))
+        );
+    }
+
+    private BooleanExpression checkActivityContainsPartAndTeam(String part, String team) {
+        if(part == null && team == null) return null;
+        else if(part == null) return checkActivityContainsTeam(team);
+        else if(team == null) return checkActivityContainsPart(part);
+        else {
+            return QMember.member.id.in(
+                    queryFactory.select(QMember.member.id)
+                            .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+                            .where(checkActivityContainsTeam(team).and(checkUserContainsPart(part)))
+            );
+        }
+    }
+
+    private BooleanExpression checkActivityContainsGenerationAndTeamAndPart(Integer generation, String team, String part) {
+        if(generation == null && team == null && part == null) return null;
+        else if(generation == null) return checkActivityContainsPartAndTeam(part,team);
+        else if(part == null) return checkActivityContainsGenerationAndTeam(generation,team);
+        else if(team == null) return checkActivityContainsGenerationAndPart(generation,part);
+        return QMember.member.id.in(
+                queryFactory.select(QMember.member.id)
+                        .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+                        .where(checkActivityContainsGenerationAndTeam(generation,team)
+                                .and(checkActivityContainsGenerationAndPart(generation,part)))
         );
     }
 
@@ -120,7 +163,7 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
                 .offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
@@ -137,8 +180,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkActivityContainsPart(part), checkMemberMbti(mbti),
-                        checkActivityContainsGenerationAndTeam(generation, team)
+                        checkMemberMbti(mbti), checkActivityContainsGenerationAndTeamAndPart(generation, team, part)
                 ).offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
@@ -150,7 +192,7 @@ public class MemberProfileQueryRepository {
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkActivityContainsGeneration(generation), checkMemberContainsName(name))
+                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
                 .groupBy(member.id)
                 .orderBy(member.id.asc())
                 .fetch();
@@ -164,7 +206,7 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
                         checkActivityContainsPart(part), checkMemberMbti(mbti),
-                        checkActivityContainsGenerationAndTeam(generation, team)
+                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part)
                 ).groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
@@ -176,7 +218,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.select(member.id)
                 .from(member)
                 .innerJoin(member.activities, activities).on(activities.memberId.eq(member.id))
-                .where(checkMemberHasProfile(), checkActivityContainsGeneration(generation))
+                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation))
                 .groupBy(member.id)
                 .fetch()
                 .size();
@@ -191,7 +233,7 @@ public class MemberProfileQueryRepository {
                 .where(checkMemberHasProfile(),
                         checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
                         checkActivityContainsPart(part),checkMemberMbti(mbti),
-                        checkActivityContainsGenerationAndTeam(generation, team))
+                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
                 .groupBy(member.id)
                 .fetch()
                 .size();
