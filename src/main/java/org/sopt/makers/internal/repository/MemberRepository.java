@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByName(String name);
@@ -16,4 +17,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findAllByHasProfileTrue();
 
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
+    Long countByIdIn(Set<Long> memberIds);
 }
