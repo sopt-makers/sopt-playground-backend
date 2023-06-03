@@ -166,18 +166,15 @@ public class MemberService {
                                 .build()).collect(Collectors.toList());
         memberLinkEntities.forEach(link -> link.setMemberId(memberId));
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
-        
-        val memberActivityEntities = request.activities().stream().map(activity ->
-                        MemberSoptActivity.builder()
-                                .memberId(memberId)
-                                .part(activity.part())
-                                .generation(activity.generation())
-                                .team(checkActivityTeamConditions(activity.team()))
-                                .build()).collect(Collectors.toList());
-        memberActivityEntities.forEach(a -> a.setMemberId(memberId));
-        val nnActivities = memberActivityEntities.stream().filter(l -> l.getMemberId() != null).count();
+
+        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId);
+        memberActivities.forEach(activity -> {
+            val findSameGenerationInActivity = request.activities().stream().filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
+            findSameGenerationInActivity.ifPresent(activitySaveRequest -> activity.setTeam(checkActivityTeamConditions(activitySaveRequest.team())));
+        });
+
+        val nnActivities = memberActivities.stream().filter(l -> l.getMemberId() != null).count();
         if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
-        val memberActivities = memberSoptActivityRepository.saveAll(memberActivityEntities);
 
         val memberCareerEntities = request.careers().stream().map(career -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
@@ -271,16 +268,12 @@ public class MemberService {
                                 .build()).collect(Collectors.toList())
         );
 
-        val memberActivities = memberSoptActivityRepository.saveAll(
-                request.activities().stream().map(activity ->
-                        MemberSoptActivity.builder()
-                                .id(activity.id())
-                                .memberId(memberId)
-                                .part(activity.part())
-                                .generation(activity.generation())
-                                .team(checkActivityTeamConditions(activity.team()))
-                                .build()).collect(Collectors.toList())
-        );
+        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId);
+        memberActivities.forEach(activity -> {
+            val findSameGenerationInActivity = request.activities().stream()
+                    .filter(activityUpdateRequest -> Objects.equals(activityUpdateRequest.generation(), activity.getGeneration())).findFirst();
+            findSameGenerationInActivity.ifPresent(activitySaveRequest -> activity.setTeam(checkActivityTeamConditions(activitySaveRequest.team())));
+        });
 
         val memberCareers = request.careers().stream().map(career -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
