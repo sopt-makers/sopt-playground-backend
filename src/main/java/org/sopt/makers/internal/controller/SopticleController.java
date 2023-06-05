@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.SopticleSaveRequest;
+import org.sopt.makers.internal.dto.sopticle.SopticleSaveRequest;
 import org.sopt.makers.internal.service.SopticleService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
