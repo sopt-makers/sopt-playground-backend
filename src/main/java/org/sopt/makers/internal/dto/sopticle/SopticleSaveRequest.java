@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto;
+package org.sopt.makers.internal.dto.sopticle;
 
 import java.util.List;
 
