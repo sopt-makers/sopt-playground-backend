@@ -98,4 +98,7 @@ public class AuthConfig {
 
     @Value("${internal.app.secret}")
     private String appApiSecretKey;
+
+    @Value("${internal.official.sopticle-key}")
+    private String officialSopticleApiSecretKey;
 }
