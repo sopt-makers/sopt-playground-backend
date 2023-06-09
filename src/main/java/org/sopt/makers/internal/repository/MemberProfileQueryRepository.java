@@ -177,10 +177,18 @@ public class MemberProfileQueryRepository {
     ) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
-        return queryFactory.selectFrom(member)
+        return queryFactory
+                .selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkMemberMbti(mbti), checkActivityContainsGenerationAndTeamAndPart(generation, team, part)
+                .where(
+                        member.id.in(
+                                queryFactory
+                                        .select(activities.memberId)
+                                        .from(activities)
+                                        .where(checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
+                        ),
+                        checkMemberHasProfile(), checkMemberContainsName(name),
+                        checkMemberSojuCapacity(sojuCapacity), checkMemberMbti(mbti)
                 ).offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
