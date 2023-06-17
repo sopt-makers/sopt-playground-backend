@@ -6,6 +6,8 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.member.*;
+import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateResponse;
+import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
 
 import java.util.List;
 
@@ -15,7 +17,8 @@ public interface MemberMapper {
     InternalMemberResponse toInternalResponse(Member member);
     MemberProfileResponse toProfileResponse (Member member);
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
-
+    WordChainGameGenerateResponse.UserResponse toUserResponse (Member member);
+    WordChainGameRoomResponse.WordResponse.UserResponse toAllGameRoomResponse (Member member);
     MakersMemberProfileResponse toMakersMemberProfileResponse (Member member);
 
     @Mapping(target = "projects", source = "projects")
