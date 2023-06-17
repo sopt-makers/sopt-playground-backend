@@ -167,11 +167,23 @@ public class MemberService {
         memberLinkEntities.forEach(link -> link.setMemberId(memberId));
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
 
-        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId);
-        memberActivities.forEach(activity -> {
-            val findSameGenerationInActivity = request.activities().stream().filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
-            findSameGenerationInActivity.ifPresent(activitySaveRequest -> activity.setTeam(checkActivityTeamConditions(activitySaveRequest.team())));
-        });
+        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
+            val findSameGenerationInActivity = request.activities().stream()
+                    .filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
+            if(findSameGenerationInActivity.isPresent()) {
+                val team = findSameGenerationInActivity.map(MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team).orElse(null);
+                return MemberSoptActivity.builder()
+                        .memberId(activity.getMemberId())
+                        .part(activity.getPart())
+                        .generation(activity.getGeneration())
+                        .team(checkActivityTeamConditions(team)).build();
+            }
+            return MemberSoptActivity.builder()
+                    .memberId(activity.getMemberId())
+                    .part(activity.getPart())
+                    .generation(activity.getGeneration())
+                    .team(checkActivityTeamConditions(activity.getTeam())).build();
+        }).collect(Collectors.toList());
 
         val nnActivities = memberActivities.stream().filter(l -> l.getMemberId() != null).count();
         if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
