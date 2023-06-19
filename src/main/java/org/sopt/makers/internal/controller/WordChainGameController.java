@@ -11,8 +11,8 @@ import org.sopt.makers.internal.dto.wordChainGame.WordChainGameAllResponse;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateResponse;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
-import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.mapper.MemberMapper;
+import org.sopt.makers.internal.mapper.WordChainGameMappper;
 import org.sopt.makers.internal.service.MemberService;
 import org.sopt.makers.internal.service.WordChainGameService;
 import org.springframework.http.HttpStatus;
@@ -40,8 +40,7 @@ public class WordChainGameController {
     ) {
         val member = memberService.getMemberById(memberDetails.getId());
         val responseMember = memberMapper.toUserResponse(member);
-        if(request.word().length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
-        wordChainGameService.createWord(member, request);
+        wordChainGameService.saveWord(member, request);
         val response = new WordChainGameGenerateResponse(request.roomId(), request.word(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
