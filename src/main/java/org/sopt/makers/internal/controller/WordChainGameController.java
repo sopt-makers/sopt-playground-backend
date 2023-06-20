@@ -11,8 +11,8 @@ import org.sopt.makers.internal.dto.wordChainGame.WordChainGameAllResponse;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateResponse;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
+import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.mapper.WordChainGameMappper;
 import org.sopt.makers.internal.service.MemberService;
 import org.sopt.makers.internal.service.WordChainGameService;
 import org.springframework.http.HttpStatus;
@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,7 +41,8 @@ public class WordChainGameController {
     ) {
         val member = memberService.getMemberById(memberDetails.getId());
         val responseMember = memberMapper.toUserResponse(member);
-        wordChainGameService.saveWord(member, request);
+        if(request.word().length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
+        wordChainGameService.createWord(member, request);
         val response = new WordChainGameGenerateResponse(request.roomId(), request.word(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -53,12 +55,15 @@ public class WordChainGameController {
     ) {
         val rooms = wordChainGameService.getAllRoom(checkLimitForPagination(limit), cursor);
         val roomList = rooms.stream().map(room -> {
+            val isFirstGame = Objects.isNull(room.getCreatedUserId());
+            val startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
+            val responseStartUser = memberMapper.toAllGameRoomResponse(startUser);
             val wordList = room.getWordList().stream().map(word -> {
                 val member = memberService.getMemberById(word.getMemberId());
                 val responseMember = memberMapper.toAllGameRoomResponse(member);
                 return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
             }).collect(Collectors.toList());
-            return new WordChainGameRoomResponse(room.getId(), wordList);
+            return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), responseStartUser, wordList);
         }).collect(Collectors.toList());
         val hasNextMember = (limit != null && rooms.size() > limit);
         if (hasNextMember) rooms.remove(rooms.size() - 1);
@@ -73,7 +78,8 @@ public class WordChainGameController {
     ) {
         val member = memberService.getMemberById(memberDetails.getId());
         val newRoom = wordChainGameService.createWordGameRoom(member);
-        val responseMember = memberMapper.toUserResponse(member);
+        val isFirstNewGame = newRoom.getCreatedUserId() == null;
+        val responseMember = (isFirstNewGame) ? null : memberMapper.toUserResponse(member);
         val response = new WordChainGameGenerateResponse(newRoom.getId(), newRoom.getStartWord(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

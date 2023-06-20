@@ -3,7 +3,9 @@ package org.sopt.makers.internal.dto.wordChainGame;
 import java.util.List;
 
 public record WordChainGameRoomResponse(
-        Long id,
+        Long roomId,
+        String startWord,
+        WordResponse.UserResponse startUser,
         List<WordResponse> words
 ) {
 

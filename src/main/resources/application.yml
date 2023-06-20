@@ -88,3 +88,5 @@ internal:
     sopticle-key: test
   app:
     secret: test
+dictionary:
+  key: test
