@@ -60,14 +60,16 @@ public class WordChainGameService {
 
     @Transactional
     public WordChainGameRoom createWordGameRoom(Member member) {
+        val isNotFirstGameCreated = wordChainGameRepository.count() >= 1;
+        val createdUserId = isNotFirstGameCreated ? member.getId() : null;
         return wordChainGameRepository.save(WordChainGameRoom.builder()
-                        .createdAt(LocalDateTime.now())
-                        .startWord(getRandomStartWord())
-                        .createdUserId(member.getId())
+                .createdAt(LocalDateTime.now())
+                .startWord(getRandomStartWord())
+                .createdUserId(createdUserId)
                 .build());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<WordChainGameRoom> getAllRoom(Integer limit, Integer cursor) {
         if(limit != null) {
             return wordChainGameQueryRepository.findAllLimitedGameRoom(limit, cursor);
