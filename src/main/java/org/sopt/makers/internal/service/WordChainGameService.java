@@ -45,7 +45,7 @@ public class WordChainGameService {
         if(room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
         val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() > 1);
         if(hasDuplicateWord) throw new WordChainGameHasWrongInputException("이미 누군가 사용한 단어예요.");
-        val recentWordList = wordRepository.findFirstByRoomIdOrderByCreatedAt(request.roomId());
+        val recentWordList = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(request.roomId());
         if(Objects.isNull(recentWordList)) {
             if(checkIsNotChainingWord(room.get().getStartWord(), request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
         } else {
@@ -86,7 +86,7 @@ public class WordChainGameService {
     private boolean checkWordExistInDictionary(String search){
         StringBuffer result = new StringBuffer();
         try {
-            String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + dictionaryKey + "&req_type=json&q=" + search;
+            String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + dictionaryKey + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
             URL url = new URL(apiUrl);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
@@ -108,7 +108,7 @@ public class WordChainGameService {
         }
         JSONObject head = (JSONObject) object.get("channel");
         JSONArray jsonArray = (JSONArray) head.get("item");
-        return jsonArray.size() > 0;
+        return !Objects.isNull(jsonArray);
     }
 
     private String getRandomStartWord() {
