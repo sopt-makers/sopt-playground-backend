@@ -54,7 +54,8 @@ public class WordChainGameController {
     ) {
         val rooms = wordChainGameService.getAllRoom(checkLimitForPagination(limit), cursor);
         val roomList = rooms.stream().map(room -> {
-            val startUser = memberService.getMemberById(room.getCreatedUserId());
+            val isFirstGame = Objects.isNull(room.getCreatedUserId());
+            val startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
             val responseStartUser = memberMapper.toAllGameRoomResponse(startUser);
             val wordList = room.getWordList().stream().map(word -> {
                 val member = memberService.getMemberById(word.getMemberId());
