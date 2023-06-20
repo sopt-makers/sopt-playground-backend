@@ -40,7 +40,8 @@ public class WordChainGameController {
     ) {
         val member = memberService.getMemberById(memberDetails.getId());
         val responseMember = memberMapper.toUserResponse(member);
-        wordChainGameService.saveWord(member, request);
+        if(request.word().length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
+        wordChainGameService.createWord(member, request);
         val response = new WordChainGameGenerateResponse(request.roomId(), request.word(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
