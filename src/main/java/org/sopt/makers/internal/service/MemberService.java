@@ -168,10 +168,10 @@ public class MemberService {
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
 
         val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
-            val findSameGenerationInActivity = request.activities().stream()
+            val sameGenerationInActivity = request.activities().stream()
                     .filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
-            if(findSameGenerationInActivity.isPresent()) {
-                val team = findSameGenerationInActivity.map(MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team).orElse(null);
+            if(sameGenerationInActivity.isPresent()) {
+                val team = sameGenerationInActivity.map(MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team).orElse(null);
                 return MemberSoptActivity.builder()
                         .memberId(activity.getMemberId())
                         .part(activity.getPart())
@@ -281,10 +281,10 @@ public class MemberService {
         );
 
         val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
-            val findSameGenerationInActivity = request.activities().stream()
+            val sameGenerationInActivity = request.activities().stream()
                             .filter(activityUpdateRequest -> Objects.equals(activityUpdateRequest.generation(), activity.getGeneration())).findFirst();
-            if(findSameGenerationInActivity.isPresent()) {
-                val team = findSameGenerationInActivity.map(MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::team).orElse(null);
+            if(sameGenerationInActivity.isPresent()) {
+                val team = sameGenerationInActivity.map(MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::team).orElse(null);
                 return MemberSoptActivity.builder()
                         .memberId(activity.getMemberId())
                         .part(activity.getPart())
