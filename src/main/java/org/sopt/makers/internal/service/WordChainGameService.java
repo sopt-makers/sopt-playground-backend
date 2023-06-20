@@ -108,7 +108,7 @@ public class WordChainGameService {
         }
         JSONObject head = (JSONObject) object.get("channel");
         JSONArray jsonArray = (JSONArray) head.get("item");
-        return jsonArray.size() > 0;
+        return !Objects.isNull(jsonArray);
     }
 
     private String getRandomStartWord() {
