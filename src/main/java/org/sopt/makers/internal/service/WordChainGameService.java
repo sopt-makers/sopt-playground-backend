@@ -16,7 +16,8 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class WordChainGameService {
-
+    @Value("${dictionary.key}")
+    private String dictionaryKey;
     private final WordRepository wordRepository;
     private final WordChainGameRepository wordChainGameRepository;
     private final WordChainGameQueryRepository wordChainGameQueryRepository;
