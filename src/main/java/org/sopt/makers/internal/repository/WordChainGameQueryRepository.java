@@ -59,21 +59,18 @@ public class WordChainGameQueryRepository {
                 .innerJoin(member).on(winner.userId.eq(member.id))
                 .offset(cursor)
                 .limit(limit)
-                .orderBy(winner.roomId.desc())
-                .groupBy(winner.roomId)
+                .orderBy(winner.id.desc())
                 .fetch();
     }
 
     public List<WinnerDao> findAllWinner() {
         val member = QMember.member;
         val winner = QWordChainGameWinner.wordChainGameWinner;
-
         return queryFactory.select(new QWinnerDao(
                         winner.id, winner.roomId, member.id, member.name, member.profileImage
                 )).from(winner)
                 .innerJoin(member).on(winner.userId.eq(member.id))
-                .orderBy(winner.roomId.desc())
-                .groupBy(winner.roomId)
+                .orderBy(winner.id.desc())
                 .fetch();
     }
 }
