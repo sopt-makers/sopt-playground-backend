@@ -46,6 +46,7 @@ public class WordChainGameService {
     @Transactional
     public Word createWord(Member member, WordChainGameGenerateRequest request) {
         val word = request.word();
+        if(word.contains("[^ㄱ-ㅎㅏ-ㅣ가-힣]")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
         val room = wordChainGameRepository.findById(request.roomId());
         if(room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
         val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() > 1);

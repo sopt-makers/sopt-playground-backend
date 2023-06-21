@@ -20,9 +20,7 @@ public class WordChainGameQueryRepository {
             Integer limit, Integer cursor
     ) {
         val room = QWordChainGameRoom.wordChainGameRoom;
-        val wordList = QWord.word1;
         return queryFactory.selectFrom(room)
-                .innerJoin(room.wordList, wordList)
                 .offset(cursor)
                 .limit(limit)
                 .orderBy(room.id.desc())
@@ -32,9 +30,7 @@ public class WordChainGameQueryRepository {
 
     public List<WordChainGameRoom> findAllGameRoom() {
         val room = QWordChainGameRoom.wordChainGameRoom;
-        val wordList = QWord.word1;
         return queryFactory.selectFrom(room)
-                .innerJoin(room.wordList, wordList)
                 .groupBy(room.id)
                 .orderBy(room.id.desc())
                 .fetch();
