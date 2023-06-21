@@ -69,8 +69,6 @@ public class WordChainGameService {
         val createdUserId = isNotFirstGameCreated ? member.getId() : null;
         if (isNotFirstGameCreated) {
             val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
-            val noInputWordInRoom = lastRoom.getWordList().isEmpty();
-            if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("첫 단어부터 포기할 수 없어요.");
             val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
             val winnerId = lastWord.getMemberId();
             val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
@@ -109,7 +107,7 @@ public class WordChainGameService {
 
     private List<WinnerVo> getWinnerVo(List<WinnerDao> winnerList) {
         return winnerList.stream().map(winner -> {
-            val user = new WinnerVo.UserResponse(winner.id(), winner.name(), winner.profileImage());
+            val user = new WinnerVo.UserResponse(winner.memberId(), winner.name(), winner.profileImage());
             return new WinnerVo(winner.roomId(), user);
         }).collect(Collectors.toList());
     }
