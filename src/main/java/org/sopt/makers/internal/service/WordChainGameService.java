@@ -11,12 +11,15 @@ import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.Word;
 import org.sopt.makers.internal.domain.WordChainGameRoom;
+import org.sopt.makers.internal.domain.WordChainGameWinner;
+import org.sopt.makers.internal.dto.wordChainGame.WinnerDao;
+import org.sopt.makers.internal.dto.wordChainGame.WinnerVo;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.repository.WordChainGameRepository;
+import org.sopt.makers.internal.repository.WordChainGameWinnerRepository;
 import org.sopt.makers.internal.repository.WordRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -35,6 +39,7 @@ import java.util.Random;
 public class WordChainGameService {
     private final AuthConfig authConfig;
     private final WordRepository wordRepository;
+    private final WordChainGameWinnerRepository wordChainGameWinnerRepository;
     private final WordChainGameRepository wordChainGameRepository;
     private final WordChainGameQueryRepository wordChainGameQueryRepository;
 
@@ -77,6 +82,23 @@ public class WordChainGameService {
         else {
             return wordChainGameQueryRepository.findAllGameRoom();
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<WinnerVo> getAllWinner(Integer limit, Integer cursor) {
+        if(limit != null) {
+            return getWinnerVo(wordChainGameQueryRepository.findAllLimitedWinner(limit, cursor));
+        }
+        else {
+            return getWinnerVo(wordChainGameQueryRepository.findAllWinner());
+        }
+    }
+
+    private List<WinnerVo> getWinnerVo(List<WinnerDao> winnerList) {
+        return winnerList.stream().map(winner -> {
+            val user = new WinnerVo.UserResponse(winner.id(), winner.name(), winner.profileImage());
+            return new WinnerVo(winner.roomId(), user);
+        }).collect(Collectors.toList());
     }
 
     private boolean checkIsNotChainingWord(String lastWord, String nextWord) {
