@@ -22,9 +22,6 @@ public class WordChainGameRoom {
     @Column(name = "start_word")
     String startWord;
 
-    @Column(name = "winner_user_id")
-    private Long winnerUserId;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

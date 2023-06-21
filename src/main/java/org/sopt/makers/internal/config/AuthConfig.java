@@ -101,4 +101,7 @@ public class AuthConfig {
 
     @Value("${internal.official.sopticle-key}")
     private String officialSopticleApiSecretKey;
+
+    @Value("${dictionary.key}")
+    private String dictionaryKey;
 }

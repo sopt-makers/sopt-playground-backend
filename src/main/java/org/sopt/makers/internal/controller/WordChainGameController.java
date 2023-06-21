@@ -7,10 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameAllResponse;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateRequest;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateResponse;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
+import org.sopt.makers.internal.dto.wordChainGame.*;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
@@ -72,7 +69,7 @@ public class WordChainGameController {
     }
 
     @Operation(summary = "새 게임 생성")
-    @GetMapping("/newGame")
+    @PostMapping("/newGame")
     public ResponseEntity<WordChainGameGenerateResponse> createGameRoom(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
@@ -81,6 +78,19 @@ public class WordChainGameController {
         val isFirstNewGame = newRoom.getCreatedUserId() == null;
         val responseMember = (isFirstNewGame) ? null : memberMapper.toUserResponse(member);
         val response = new WordChainGameGenerateResponse(newRoom.getId(), newRoom.getStartWord(), responseMember);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "명예의 전당 목록")
+    @GetMapping("/winners")
+    public ResponseEntity<WordChainGameWinnerAllResponse> getGameWinners(
+        @RequestParam(required = false, name = "limit") Integer limit,
+        @RequestParam(required = false, name = "cursor") Integer cursor
+    ) {
+        val winners = wordChainGameService.getAllWinner(checkLimitForPagination(limit), cursor);
+        val hasNextMember = (limit != null && winners.size() > limit);
+        if (hasNextMember) winners.remove(winners.size() - 1);
+        val response = new WordChainGameWinnerAllResponse(winners,hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

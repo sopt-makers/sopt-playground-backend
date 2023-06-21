@@ -3,7 +3,6 @@ package org.sopt.makers.internal.domain;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -11,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table
-public class WordChainGameScore {
+public class WordChainGameWinner {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,4 +21,7 @@ public class WordChainGameScore {
 
     @Column
     private Integer score;
+
+    @Column
+    private Long roomId;
 }

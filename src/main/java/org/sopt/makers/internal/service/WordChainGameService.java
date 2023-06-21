@@ -7,15 +7,19 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.Word;
 import org.sopt.makers.internal.domain.WordChainGameRoom;
+import org.sopt.makers.internal.domain.WordChainGameWinner;
+import org.sopt.makers.internal.dto.wordChainGame.WinnerDao;
+import org.sopt.makers.internal.dto.wordChainGame.WinnerVo;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.repository.WordChainGameRepository;
+import org.sopt.makers.internal.repository.WordChainGameWinnerRepository;
 import org.sopt.makers.internal.repository.WordRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +31,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class WordChainGameService {
-    @Value("${dictionary.key}")
-    private String dictionaryKey;
+    private final AuthConfig authConfig;
     private final WordRepository wordRepository;
+    private final WordChainGameWinnerRepository wordChainGameWinnerRepository;
     private final WordChainGameRepository wordChainGameRepository;
     private final WordChainGameQueryRepository wordChainGameQueryRepository;
 
@@ -62,6 +67,19 @@ public class WordChainGameService {
     public WordChainGameRoom createWordGameRoom(Member member) {
         val isNotFirstGameCreated = wordChainGameRepository.count() >= 1;
         val createdUserId = isNotFirstGameCreated ? member.getId() : null;
+        if (isNotFirstGameCreated) {
+            val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
+            val noInputWordInRoom = lastRoom.getWordList().isEmpty();
+            if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("첫 단어부터 포기할 수 없어요.");
+            val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
+            val winnerId = lastWord.getMemberId();
+            val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
+            val userScore = Objects.isNull(score) ? 0 : score.getScore();
+            wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
+                    .roomId(lastWord.getRoomId())
+                    .score(userScore + 1)
+                    .userId(winnerId).build());
+        }
         return wordChainGameRepository.save(WordChainGameRoom.builder()
                 .createdAt(LocalDateTime.now())
                 .startWord(getRandomStartWord())
@@ -79,6 +97,23 @@ public class WordChainGameService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<WinnerVo> getAllWinner(Integer limit, Integer cursor) {
+        if(limit != null) {
+            return getWinnerVo(wordChainGameQueryRepository.findAllLimitedWinner(limit, cursor));
+        }
+        else {
+            return getWinnerVo(wordChainGameQueryRepository.findAllWinner());
+        }
+    }
+
+    private List<WinnerVo> getWinnerVo(List<WinnerDao> winnerList) {
+        return winnerList.stream().map(winner -> {
+            val user = new WinnerVo.UserResponse(winner.id(), winner.name(), winner.profileImage());
+            return new WinnerVo(winner.roomId(), user);
+        }).collect(Collectors.toList());
+    }
+
     private boolean checkIsNotChainingWord(String lastWord, String nextWord) {
         return nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1);
     }
@@ -86,7 +121,7 @@ public class WordChainGameService {
     private boolean checkWordExistInDictionary(String search){
         StringBuffer result = new StringBuffer();
         try {
-            String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + dictionaryKey + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
+            String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + authConfig.getDictionaryKey() + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
             URL url = new URL(apiUrl);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");

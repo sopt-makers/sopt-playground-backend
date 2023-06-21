@@ -3,9 +3,9 @@ package org.sopt.makers.internal.repository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.QWord;
-import org.sopt.makers.internal.domain.QWordChainGameRoom;
-import org.sopt.makers.internal.domain.WordChainGameRoom;
+import org.sopt.makers.internal.domain.*;
+import org.sopt.makers.internal.dto.wordChainGame.QWinnerDao;
+import org.sopt.makers.internal.dto.wordChainGame.WinnerDao;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -37,6 +37,43 @@ public class WordChainGameQueryRepository {
                 .innerJoin(room.wordList, wordList)
                 .groupBy(room.id)
                 .orderBy(room.id.desc())
+                .fetch();
+    }
+
+    public List<WordChainGameRoom> findGameRoomOrderByCreatedDesc() {
+        val room = QWordChainGameRoom.wordChainGameRoom;
+        return queryFactory.selectFrom(room)
+                .orderBy(room.createdAt.desc())
+                .fetch();
+    }
+
+    public List<WinnerDao> findAllLimitedWinner(
+            Integer limit, Integer cursor
+    ) {
+        val member = QMember.member;
+        val winner = QWordChainGameWinner.wordChainGameWinner;
+
+        return queryFactory.select(new QWinnerDao(
+                        winner.id, winner.roomId, member.id, member.name, member.profileImage
+                )).from(winner)
+                .innerJoin(member).on(winner.userId.eq(member.id))
+                .offset(cursor)
+                .limit(limit)
+                .orderBy(winner.roomId.desc())
+                .groupBy(winner.roomId)
+                .fetch();
+    }
+
+    public List<WinnerDao> findAllWinner() {
+        val member = QMember.member;
+        val winner = QWordChainGameWinner.wordChainGameWinner;
+
+        return queryFactory.select(new QWinnerDao(
+                        winner.id, winner.roomId, member.id, member.name, member.profileImage
+                )).from(winner)
+                .innerJoin(member).on(winner.userId.eq(member.id))
+                .orderBy(winner.roomId.desc())
+                .groupBy(winner.roomId)
                 .fetch();
     }
 }
