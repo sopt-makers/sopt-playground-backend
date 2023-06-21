@@ -7,6 +7,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.Word;
 import org.sopt.makers.internal.domain.WordChainGameRoom;
@@ -32,8 +33,7 @@ import java.util.Random;
 @RequiredArgsConstructor
 @Service
 public class WordChainGameService {
-    @Value("${dictionary.key}")
-    private String dictionaryKey;
+    private final AuthConfig authConfig;
     private final WordRepository wordRepository;
     private final WordChainGameRepository wordChainGameRepository;
     private final WordChainGameQueryRepository wordChainGameQueryRepository;
@@ -86,7 +86,7 @@ public class WordChainGameService {
     private boolean checkWordExistInDictionary(String search){
         StringBuffer result = new StringBuffer();
         try {
-            String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + dictionaryKey + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
+            String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + authConfig.getDictionaryKey() + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
             URL url = new URL(apiUrl);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
