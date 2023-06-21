@@ -69,14 +69,17 @@ public class WordChainGameService {
         val createdUserId = isNotFirstGameCreated ? member.getId() : null;
         if (isNotFirstGameCreated) {
             val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
-            val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
-            val winnerId = lastWord.getMemberId();
-            val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
-            val userScore = Objects.isNull(score) ? 0 : score.getScore();
-            wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
-                    .roomId(lastWord.getRoomId())
-                    .score(userScore + 1)
-                    .userId(winnerId).build());
+            val noInputWordInRoom = lastRoom.getWordList().isEmpty();
+            if(!noInputWordInRoom) {
+                val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
+                val winnerId = lastWord.getMemberId();
+                val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
+                val userScore = Objects.isNull(score) ? 0 : score.getScore();
+                wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
+                        .roomId(lastWord.getRoomId())
+                        .score(userScore + 1)
+                        .userId(winnerId).build());
+            }
         }
         return wordChainGameRepository.save(WordChainGameRoom.builder()
                 .createdAt(LocalDateTime.now())
