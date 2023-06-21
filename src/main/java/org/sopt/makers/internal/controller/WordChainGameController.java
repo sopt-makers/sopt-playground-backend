@@ -84,6 +84,19 @@ public class WordChainGameController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "명예의 전당 목록")
+    @GetMapping("/winners")
+    public ResponseEntity<WordChainGameWinnerAllResponse> getGameWinners(
+        @RequestParam(required = false, name = "limit") Integer limit,
+        @RequestParam(required = false, name = "cursor") Integer cursor
+    ) {
+        val winners = wordChainGameService.getAllWinner(checkLimitForPagination(limit), cursor);
+        val hasNextMember = (limit != null && winners.size() > limit);
+        if (hasNextMember) winners.remove(winners.size() - 1);
+        val response = new WordChainGameWinnerAllResponse(winners,hasNextMember);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     private Integer checkLimitForPagination(Integer limit) {
         val isLimitEmpty = (limit == null);
         return isLimitEmpty ? null : limit + 1;
