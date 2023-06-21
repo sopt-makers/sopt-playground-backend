@@ -69,7 +69,7 @@ public class WordChainGameController {
     }
 
     @Operation(summary = "새 게임 생성")
-    @GetMapping("/newGame")
+    @PostMapping("/newGame")
     public ResponseEntity<WordChainGameGenerateResponse> createGameRoom(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
