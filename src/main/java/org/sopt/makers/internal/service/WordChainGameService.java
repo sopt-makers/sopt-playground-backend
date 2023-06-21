@@ -67,7 +67,7 @@ public class WordChainGameService {
     public WordChainGameRoom createWordGameRoom(Member member) {
         val isNotFirstGameCreated = wordChainGameRepository.count() >= 1;
         val createdUserId = isNotFirstGameCreated ? member.getId() : null;
-기        if (isNotFirstGameCreated) {
+        if (isNotFirstGameCreated) {
             val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
             val noInputWordInRoom = lastRoom.getWordList().isEmpty();
             if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("첫 단어부터 포기할 수 없어요.");
