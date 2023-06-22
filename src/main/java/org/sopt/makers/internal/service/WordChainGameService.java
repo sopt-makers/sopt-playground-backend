@@ -46,10 +46,10 @@ public class WordChainGameService {
     @Transactional
     public Word createWord(Member member, WordChainGameGenerateRequest request) {
         val word = request.word();
-        if(word.contains("[^ㄱ-ㅎㅏ-ㅣ가-힣]")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
+        if(!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
         val room = wordChainGameRepository.findById(request.roomId());
         if(room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
-        val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() > 1);
+        val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() >= 1);
         if(hasDuplicateWord) throw new WordChainGameHasWrongInputException("이미 누군가 사용한 단어예요.");
         val recentWordList = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(request.roomId());
         if(Objects.isNull(recentWordList)) {
@@ -93,8 +93,7 @@ public class WordChainGameService {
     public List<WordChainGameRoom> getAllRoom(Integer limit, Integer cursor) {
         if(limit != null) {
             return wordChainGameQueryRepository.findAllLimitedGameRoom(limit, cursor);
-        }
-        else {
+        } else {
             return wordChainGameQueryRepository.findAllGameRoom();
         }
     }
@@ -103,8 +102,7 @@ public class WordChainGameService {
     public List<WinnerVo> getAllWinner(Integer limit, Integer cursor) {
         if(limit != null) {
             return getWinnerVo(wordChainGameQueryRepository.findAllLimitedWinner(limit, cursor));
-        }
-        else {
+        } else {
             return getWinnerVo(wordChainGameQueryRepository.findAllWinner());
         }
     }
