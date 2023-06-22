@@ -197,7 +197,12 @@ public class WordChainGameService {
         }
         JSONObject head = (JSONObject) object.get("channel");
         JSONArray jsonArray = (JSONArray) head.get("item");
-        return !Objects.isNull(jsonArray);
+        if(Objects.isNull(jsonArray)) return false;
+        JSONObject index = (JSONObject) jsonArray.get(0);
+        JSONArray sense = (JSONArray) index.get("sense");
+        JSONObject senseObject = (JSONObject) sense.get(0);
+        String pos = senseObject.get("pos").toString();
+        return pos.equals("명사");
     }
 
     private String getRandomStartWord() {
