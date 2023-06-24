@@ -9,6 +9,7 @@ import org.sopt.makers.internal.dto.sopticle.SopticleDao;
 import org.sopt.makers.internal.dto.sopticle.SopticleSaveRequest;
 import org.sopt.makers.internal.dto.sopticle.SopticleVo;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.DuplicateSopticleWriterException;
 import org.sopt.makers.internal.external.OfficialHomeClient;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.SopticleQueryRepository;
@@ -38,7 +39,7 @@ public class SopticleService {
     public Sopticle createSopticle (SopticleSaveRequest request, Long userId) {
         val writers = Set.copyOf(request.writerIds());
         val isValidNumberOfWriters = memberRepository.countByIdIn(writers) == writers.size();
-        if (!isValidNumberOfWriters) throw new ClientBadRequestException("Wrong writers");
+        if (!isValidNumberOfWriters) throw new DuplicateSopticleWriterException("DupWriters");
         val sopticle = sopticleRepository.save(Sopticle.builder()
                 .link(request.link())
                 .userId(userId)
