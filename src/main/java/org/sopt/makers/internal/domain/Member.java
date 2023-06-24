@@ -117,9 +117,21 @@ public class Member {
     @Column(name = "has_profile")
     private Boolean hasProfile = false;
 
+    @Builder.Default
+    @Column(name = "openToSoulmate")
+    private Boolean openToSoulmate = false;
+
     public void updateMemberAuth (String authUserId, String idpType) {
         this.authUserId = authUserId;
         this.idpType = idpType;
+    }
+
+    public void agreeToUseSoulmate () {
+        this.openToSoulmate = true;
+    }
+
+    public void disagreeToUseSoulmate () {
+        this.openToSoulmate = false;
     }
 
     public void saveMemberProfile(
