@@ -46,10 +46,10 @@ public class WordChainGameService {
     @Transactional
     public Word createWord(Member member, WordChainGameGenerateRequest request) {
         val word = request.word();
-        if(word.contains("[^ㄱ-ㅎㅏ-ㅣ가-힣]")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
+        if(!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
         val room = wordChainGameRepository.findById(request.roomId());
         if(room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
-        val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() > 1);
+        val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() >= 1);
         if(hasDuplicateWord) throw new WordChainGameHasWrongInputException("이미 누군가 사용한 단어예요.");
         val recentWordList = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(request.roomId());
         if(Objects.isNull(recentWordList)) {
@@ -93,8 +93,7 @@ public class WordChainGameService {
     public List<WordChainGameRoom> getAllRoom(Integer limit, Integer cursor) {
         if(limit != null) {
             return wordChainGameQueryRepository.findAllLimitedGameRoom(limit, cursor);
-        }
-        else {
+        } else {
             return wordChainGameQueryRepository.findAllGameRoom();
         }
     }
@@ -103,8 +102,7 @@ public class WordChainGameService {
     public List<WinnerVo> getAllWinner(Integer limit, Integer cursor) {
         if(limit != null) {
             return getWinnerVo(wordChainGameQueryRepository.findAllLimitedWinner(limit, cursor));
-        }
-        else {
+        } else {
             return getWinnerVo(wordChainGameQueryRepository.findAllWinner());
         }
     }
@@ -117,10 +115,64 @@ public class WordChainGameService {
     }
 
     private boolean checkIsNotChainingWord(String lastWord, String nextWord) {
+        if (checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))) return false;
         return nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1);
     }
 
-    private boolean checkWordExistInDictionary(String search){
+    private boolean checkInitialSoundIsDooemBubchik(char lastChar, char firstChar) {
+
+        final String neeun_to_eung = "ㅕㅛㅠㅣ";
+        final String leeuel_to_eung = "ㅑㅕㅖㅛㅠㅣ";
+        final String leeuel_to_neeun = "ㅏㅐㅗㅚㅜㅡ";
+
+        int preWord = lastChar - 0xAC00;
+        int initialCh = ((preWord) / (21 * 28));
+        if(!Objects.equals(initialChs[initialCh], "ㄹ") && !Objects.equals(initialChs[initialCh], "ㄴ")) return false;
+        int medialCh = ((preWord % (28 * 21)) / 28);
+        int finalCh = ((preWord % 28));
+
+        int nextWord = firstChar - 0xAC00;
+        int initialNextCh = ((nextWord) / (21 * 28));
+        int medialNextCh = ((nextWord % (28 * 21)) / 28);
+        int finalNextCh = ((nextWord % 28));
+
+        if (Objects.equals(initialChs[initialCh], "ㄴ")) {
+            val canBeDooem = neeun_to_eung.contains(medialChs[medialCh]);
+            if (canBeDooem) {
+                val nextWordStartsWithEungOrLeeul = Objects.equals(initialChs[initialNextCh], "ㅇ") || Objects.equals(initialChs[initialNextCh], "ㄴ");
+                if (nextWordStartsWithEungOrLeeul) {
+                    if(Objects.equals(finalChs[finalCh], finalChs[finalNextCh]) && Objects.equals(medialChs[medialCh],medialChs[medialNextCh])) return true;
+                }
+            }
+        }
+        if (Objects.equals(initialChs[initialCh], "ㄹ")) {
+            val canBeDooem = leeuel_to_eung.contains(medialChs[medialCh]);
+            if (canBeDooem) {
+                val nextWordStartsWithEungOrLeeul = Objects.equals(initialChs[initialNextCh], "ㅇ") || Objects.equals(initialChs[initialNextCh], "ㄹ");
+                if (nextWordStartsWithEungOrLeeul) {
+                    if(Objects.equals(finalChs[finalCh], finalChs[finalNextCh]) && Objects.equals(medialChs[medialCh],medialChs[medialNextCh])) return true;
+                }
+            }
+        }
+        if (Objects.equals(initialChs[initialCh], "ㄹ")) {
+            val canBeDooem = leeuel_to_neeun.contains(medialChs[medialCh]);
+            if (canBeDooem) {
+                val nextWordStartsWithNeeunOrLeeul = Objects.equals(initialChs[initialNextCh], "ㅇ") || Objects.equals(initialChs[initialNextCh], "ㄴ");
+                if (nextWordStartsWithNeeunOrLeeul) {
+                    if(Objects.equals(finalChs[finalCh], finalChs[finalNextCh]) && Objects.equals(medialChs[medialCh],medialChs[medialNextCh])) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private final String[] initialChs = {"ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"};
+
+    private final String[] medialChs = {"ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"};
+
+    private final String[] finalChs = {" ", "ㄱ", "ㄲ", "ㄳ", "ㄴ", "ㄵ", "ㄶ", "ㄷ", "ㄹ", "ㄺ", "ㄻ", "ㄼ", "ㄽ", "ㄾ", "ㄿ", "ㅀ", "ㅁ", "ㅂ", "ㅄ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"};
+
+    private boolean checkWordExistInDictionary(String search) {
         StringBuffer result = new StringBuffer();
         try {
             String apiUrl = "http://opendict.korean.go.kr/api/search?key=" + authConfig.getDictionaryKey() + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
@@ -145,7 +197,12 @@ public class WordChainGameService {
         }
         JSONObject head = (JSONObject) object.get("channel");
         JSONArray jsonArray = (JSONArray) head.get("item");
-        return !Objects.isNull(jsonArray);
+        if(Objects.isNull(jsonArray)) return false;
+        JSONObject index = (JSONObject) jsonArray.get(0);
+        JSONArray sense = (JSONArray) index.get("sense");
+        JSONObject senseObject = (JSONObject) sense.get(0);
+        String pos = senseObject.get("pos").toString();
+        return pos.equals("명사");
     }
 
     private String getRandomStartWord() {
