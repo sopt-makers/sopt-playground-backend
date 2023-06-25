@@ -96,8 +96,8 @@ public class GlobalExceptionHandler {
                 .body(new RegisterTokenBySmsResponse(false, ex.getMessage(), null, null));
     }
 
-    @ExceptionHandler(DuplicateSopticleWriterException.class)
-    public ResponseEntity<SopticleResponse> duplicateSopticleWriterException (DuplicateSopticleWriterException ex) {
+    @ExceptionHandler(SopticleException.class)
+    public ResponseEntity<SopticleResponse> duplicateSopticleWriterException (SopticleException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

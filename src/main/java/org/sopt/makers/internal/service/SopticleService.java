@@ -1,15 +1,18 @@
 package org.sopt.makers.internal.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.Sopticle;
 import org.sopt.makers.internal.domain.SopticleWriter;
 import org.sopt.makers.internal.dto.sopticle.SopticleDao;
+import org.sopt.makers.internal.dto.sopticle.SopticleOfficialResponse;
 import org.sopt.makers.internal.dto.sopticle.SopticleSaveRequest;
 import org.sopt.makers.internal.dto.sopticle.SopticleVo;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.DuplicateSopticleWriterException;
+import org.sopt.makers.internal.exception.SopticleException;
 import org.sopt.makers.internal.external.OfficialHomeClient;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.SopticleQueryRepository;
@@ -18,6 +21,8 @@ import org.sopt.makers.internal.repository.SopticleWriterRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -25,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class SopticleService {
@@ -35,11 +41,13 @@ public class SopticleService {
     private final SopticleQueryRepository sopticleQueryRepository;
     private final OfficialHomeClient officialHomeClient;
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     @Transactional
     public Sopticle createSopticle (SopticleSaveRequest request, Long userId) {
         val writers = Set.copyOf(request.writerIds());
         val isValidNumberOfWriters = memberRepository.countByIdIn(writers) == writers.size();
-        if (!isValidNumberOfWriters) throw new DuplicateSopticleWriterException("DupWriters");
+        if (!isValidNumberOfWriters) throw new SopticleException("DupWriters");
         val sopticle = sopticleRepository.save(Sopticle.builder()
                 .link(request.link())
                 .userId(userId)
@@ -53,7 +61,17 @@ public class SopticleService {
         sopticleWriterRepository.saveAll(sopticleWriters);
         val joinedSopticleList = sopticleQueryRepository.findById(sopticle.getId());
         val sopticleOfficialRequestBody = getSopticleVo(joinedSopticleList);
-        officialHomeClient.createSopticle(authConfig.getOfficialSopticleApiSecretKey(), sopticleOfficialRequestBody.get(0));
+        val response = officialHomeClient.createSopticle(authConfig.getOfficialSopticleApiSecretKey(), sopticleOfficialRequestBody.get(0));
+        if (response.status() == 400) {
+            try {
+                val responseBody = mapper.readValue(response.body().asReader(StandardCharsets.UTF_8), SopticleOfficialResponse.class);
+                log.error("[SopticleException] : " + responseBody.toString());
+                throw new SopticleException(responseBody.message());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                throw new SopticleException(response.reason());
+            }
+        }
         return sopticle;
     }
 
