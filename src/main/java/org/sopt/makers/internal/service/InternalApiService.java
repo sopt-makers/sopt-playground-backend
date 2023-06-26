@@ -120,10 +120,16 @@ public class InternalApiService {
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation);
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(
+                    part, limit, cursor, name, generation,
+                    null, null, null, null
+            );
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, cursor, name, generation);
+            return memberProfileQueryRepository.findAllMemberProfile(
+                    part, name, generation,
+                    null, null, null, null
+            );
         }
     }
 
