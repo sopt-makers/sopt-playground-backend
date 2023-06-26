@@ -3,6 +3,7 @@ package org.sopt.makers.internal.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.dto.CommonExceptionResponse;
 import org.sopt.makers.internal.dto.auth.RegisterTokenBySmsResponse;
+import org.sopt.makers.internal.dto.sopticle.SopticleResponse;
 import org.sopt.makers.internal.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,6 +94,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new RegisterTokenBySmsResponse(false, ex.getMessage(), null, null));
+    }
+
+    @ExceptionHandler(SopticleException.class)
+    public ResponseEntity<SopticleResponse> duplicateSopticleWriterException (SopticleException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new SopticleResponse(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(RuntimeException.class)

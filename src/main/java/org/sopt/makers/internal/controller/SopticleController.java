@@ -6,7 +6,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.SopticleSaveRequest;
+import org.sopt.makers.internal.dto.sopticle.SopticleResponse;
+import org.sopt.makers.internal.dto.sopticle.SopticleSaveRequest;
 import org.sopt.makers.internal.service.SopticleService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,11 +28,11 @@ public class SopticleController {
     private final SopticleService sopticleService;
     @Operation(summary = "Sopticle 생성 API")
     @PostMapping("")
-    public ResponseEntity<Map<String, Boolean>> createProject (
+    public ResponseEntity<SopticleResponse> createProject (
             @RequestBody SopticleSaveRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         sopticleService.createSopticle(request, memberDetails.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SopticleResponse(true, null, null));
     }
 }

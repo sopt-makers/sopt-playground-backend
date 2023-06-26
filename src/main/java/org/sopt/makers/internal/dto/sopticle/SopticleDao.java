@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto;
+package org.sopt.makers.internal.dto.sopticle;
 
 import com.querydsl.core.annotations.QueryProjection;
 
@@ -7,6 +7,7 @@ public record SopticleDao (
         String link,
         Long memberId,
         String name,
+        String profileImage,
         String part,
         Integer generation
 ){

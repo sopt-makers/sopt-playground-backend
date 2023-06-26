@@ -79,5 +79,10 @@ coffeechat:
 slack:
   url: test
 internal:
+  official:
+    url: test
+    sopticle-key: test
   app:
     secret: test
+dictionary:
+  key: test
