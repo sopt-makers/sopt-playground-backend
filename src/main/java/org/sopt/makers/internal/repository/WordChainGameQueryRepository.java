@@ -17,7 +17,7 @@ public class WordChainGameQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public List<WordChainGameRoom> findAllLimitedGameRoom(
-            Integer limit, Integer cursor
+            Integer limit, Long cursor
     ) {
         val room = QWordChainGameRoom.wordChainGameRoom;
         return queryFactory.selectFrom(room)

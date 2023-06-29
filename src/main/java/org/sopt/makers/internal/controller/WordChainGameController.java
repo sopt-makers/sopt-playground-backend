@@ -44,11 +44,11 @@ public class WordChainGameController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "게임 전체 조회")
+    @Operation(summary = "게임 전체 조회", description = "cursor : 처음에는 null 또는 0, 이후 방번호 증 마지막 room의 id")
     @GetMapping("/gameRoom")
     public ResponseEntity<WordChainGameAllResponse> getPostMapping(
             @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Integer cursor
+            @RequestParam(required = false, name = "cursor") Long cursor
     ) {
         val rooms = wordChainGameService.getAllRoom(checkLimitForPagination(limit), cursor);
         val roomList = rooms.stream().map(room -> {

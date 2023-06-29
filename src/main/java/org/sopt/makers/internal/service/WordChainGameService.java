@@ -90,7 +90,7 @@ public class WordChainGameService {
     }
 
     @Transactional(readOnly = true)
-    public List<WordChainGameRoom> getAllRoom(Integer limit, Integer cursor) {
+    public List<WordChainGameRoom> getAllRoom(Integer limit, Long cursor) {
         if(limit != null) {
             return wordChainGameQueryRepository.findAllLimitedGameRoom(limit, cursor);
         } else {
