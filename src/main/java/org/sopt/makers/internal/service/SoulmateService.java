@@ -11,6 +11,7 @@ import org.sopt.makers.internal.domain.soulmate.SoulmateState;
 import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.dto.soulmate.MissionUpdateRequest;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.SoulmateException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.SoulmateMissionHistoryRepository;
 import org.sopt.makers.internal.repository.SoulmateRepository;
@@ -177,13 +178,17 @@ public class SoulmateService {
     }
 
     private void sendSMSAboutMatching (String phone) {
+        if (phone == null || phone.isEmpty()) {
+            log.error("유저의 전화 번호가 이상합니다.");
+            return;
+        }
         val message = "[SOPT Makers] Soulmate 매칭이 성사되었어요!";
         log.info(message);
         smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
     }
 
     private void validateAgreeToSoulmate (Member member) {
-        if (!member.getOpenToSoulmate()) throw new IllegalArgumentException("NotAgreeToSoulmate");
+        if (!member.getOpenToSoulmate()) throw new SoulmateException("NotAgreeToSoulmate");
     }
 
     private LocalDateTime getNow () {
