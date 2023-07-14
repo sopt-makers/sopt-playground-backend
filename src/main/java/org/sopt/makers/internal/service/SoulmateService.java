@@ -1,11 +1,14 @@
 package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.SmsSender;
 import org.sopt.makers.internal.domain.soulmate.Soulmate;
 import org.sopt.makers.internal.domain.soulmate.SoulmateMissionHistory;
 import org.sopt.makers.internal.domain.soulmate.SoulmateState;
+import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.dto.soulmate.MissionUpdateRequest;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
@@ -22,7 +25,9 @@ import java.util.Random;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class SoulmateService {
+    private final SmsSender smsSender;
     private final MemberRepository memberRepository;
 
     private final SoulmateRepository soulmateRepository;
@@ -103,14 +108,6 @@ public class SoulmateService {
         return soulmate;
     }
 
-    private void validateAgreeToSoulmate (Member member) {
-        if (!member.getOpenToSoulmate()) throw new IllegalArgumentException("NotAgreeToSoulmate");
-    }
-
-    private LocalDateTime getNow () {
-        return LocalDateTime.now(KST);
-    }
-
     @Transactional
     public SoulmateState readyToMatching (Long userId) {
         val member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
@@ -144,6 +141,11 @@ public class SoulmateService {
                 mateOne.matched(mateTwo.getMateId());
                 mateTwo.changeState(SoulmateState.MissionOpen, getNow());
                 mateTwo.matched(mateOne.getMateId());
+
+                val userOne = this.memberRepository.findById(mateOne.getMateId()).orElseThrow(() -> new NotFoundDBEntityException("Member"));;
+                val userTwo = this.memberRepository.findById(mateOne.getOpponentId()).orElseThrow(() -> new NotFoundDBEntityException("Member"));;
+                sendSMSAboutMatching(userOne.getPhone());
+                sendSMSAboutMatching(userTwo.getPhone());
             }
         }
     }
@@ -172,5 +174,19 @@ public class SoulmateService {
             soulmate.changeState(SoulmateState.Disconnected, getNow());
             opponentSoulmate.changeState(SoulmateState.Disconnected, getNow());
         }
+    }
+
+    private void sendSMSAboutMatching (String phone) {
+        val message = "[SOPT Makers] Soulmate 매칭이 성사되었어요!";
+        log.info(message);
+        smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
+    }
+
+    private void validateAgreeToSoulmate (Member member) {
+        if (!member.getOpenToSoulmate()) throw new IllegalArgumentException("NotAgreeToSoulmate");
+    }
+
+    private LocalDateTime getNow () {
+        return LocalDateTime.now(KST);
     }
 }
