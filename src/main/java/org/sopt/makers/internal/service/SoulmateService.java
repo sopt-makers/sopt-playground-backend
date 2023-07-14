@@ -63,6 +63,17 @@ public class SoulmateService {
         return this.soulmateRepository.findAllByMateIdOrderByStartAtDesc(userId);
     }
 
+    @Transactional(readOnly = true)
+    public String getSoulmateHint (Long opponentUserId, Integer missionSequence) {
+        val opponentUser = memberRepository.findById(opponentUserId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        return switch (missionSequence) {
+            case 1 -> opponentUser.getIntroduction();
+            case 2 -> opponentUser.getActivities().get(0).getPart();
+            case 3 -> opponentUser.getAddress();
+            default -> opponentUser.getMbti();
+        };
+    }
+
     @Transactional
     public Soulmate missionResponded (MissionUpdateRequest request) {
         val soulmate = soulmateRepository.findById(request.soulmateId()).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
