@@ -56,6 +56,8 @@ public class WordChainGameService {
             if(checkIsNotChainingWord(room.get().getStartWord(), request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
         } else {
             val lastWord = recentWordList.getWord();
+            val isLastWordWriterIsMakingNextWord = recentWordList.getMemberId().equals(member.getId());
+            if(isLastWordWriterIsMakingNextWord) throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
             if(checkIsNotChainingWord(lastWord, request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
         }
         val isWordInDictionary = checkWordExistInDictionary(word);
@@ -73,6 +75,8 @@ public class WordChainGameService {
             val noInputWordInRoom = lastRoom.getWordList().isEmpty();
             if(!noInputWordInRoom) {
                 val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
+                val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(member.getId());
+                if(isLastWordWriterIsMakingNewGame) throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
                 val winnerId = lastWord.getMemberId();
                 val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
                 val userScore = Objects.isNull(score) ? 0 : score.getScore();
