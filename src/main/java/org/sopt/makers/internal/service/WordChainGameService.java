@@ -56,6 +56,8 @@ public class WordChainGameService {
             if(checkIsNotChainingWord(room.get().getStartWord(), request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
         } else {
             val lastWord = recentWordList.getWord();
+            val isLastWordWriterIsMakingNextWord = recentWordList.getMemberId().equals(member.getId());
+            if(isLastWordWriterIsMakingNextWord) throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
             if(checkIsNotChainingWord(lastWord, request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
         }
         val isWordInDictionary = checkWordExistInDictionary(word);
