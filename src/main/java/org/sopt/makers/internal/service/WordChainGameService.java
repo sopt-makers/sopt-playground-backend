@@ -75,6 +75,8 @@ public class WordChainGameService {
             val noInputWordInRoom = lastRoom.getWordList().isEmpty();
             if(!noInputWordInRoom) {
                 val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
+                val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(member.getId());
+                if(isLastWordWriterIsMakingNewGame) throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
                 val winnerId = lastWord.getMemberId();
                 val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
                 val userScore = Objects.isNull(score) ? 0 : score.getScore();
