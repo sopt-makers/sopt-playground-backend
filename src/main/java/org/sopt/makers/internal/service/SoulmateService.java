@@ -10,6 +10,7 @@ import org.sopt.makers.internal.domain.soulmate.SoulmateMissionHistory;
 import org.sopt.makers.internal.domain.soulmate.SoulmateState;
 import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.dto.soulmate.MissionUpdateRequest;
+import org.sopt.makers.internal.dto.soulmate.SoulmateMatchingVo;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.exception.SoulmateException;
 import org.sopt.makers.internal.repository.MemberRepository;
@@ -37,8 +38,8 @@ public class SoulmateService {
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Transactional
-    public SoulmateState checkState (Long userId, Long soulmateId) {
-        val soulmate = soulmateRepository.findByMateIdAndId(userId, soulmateId).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
+    public Soulmate checkState (Long userId, Long soulmateId) {
+        val soulmate = soulmateRepository.findByMateIdAndId(userId, soulmateId).orElseThrow(() -> new SoulmateException("NotMySoulmate"));
         if (!SoulmateState.MatchingReady.equals(soulmate.getState())) {
             val opponentSoulmate = soulmateRepository.findByMateIdAndStateIsNotOrMateIdAndStateIsNot(
                     soulmate.getOpponentId(), SoulmateState.OpenProfile,
@@ -51,12 +52,12 @@ public class SoulmateService {
                 opponentSoulmate.changeState(SoulmateState.Disconnected, getNow());
             }
         }
-        return soulmate.getState();
+        return soulmate;
     }
 
     @Transactional(readOnly = true)
     public List<SoulmateMissionHistory> getMissionHistories (Long userId, Long soulmateId) {
-        val soulmate = soulmateRepository.findByMateIdAndId(userId, soulmateId).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
+        val soulmate = soulmateRepository.findByMateIdAndId(userId, soulmateId).orElseThrow(() -> new SoulmateException("NotMySoulmate"));
         val opponentSoulmate = soulmateRepository.findByMateIdAndStateIsNotOrMateIdAndStateIsNot(
                 soulmate.getOpponentId(), SoulmateState.OpenProfile,
                 soulmate.getOpponentId(), SoulmateState.Disconnected
@@ -73,7 +74,7 @@ public class SoulmateService {
     public String getSoulmateHint (Long opponentUserId, Integer missionSequence) {
         val opponentUser = memberRepository.findById(opponentUserId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
         return switch (missionSequence) {
-            case 1 -> opponentUser.getIntroduction();
+            case 1 -> opponentUser.getMbti();
             case 2 -> opponentUser.getActivities().get(0).getPart();
             case 3 -> opponentUser.getAddress();
             default -> opponentUser.getMbti();
@@ -81,12 +82,12 @@ public class SoulmateService {
     }
 
     @Transactional
-    public Soulmate missionResponded (MissionUpdateRequest request) {
+    public Soulmate missionResponded (MissionUpdateRequest request, Long senderId) {
         val soulmate = soulmateRepository.findById(request.soulmateId()).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
         val mission = SoulmateMissionHistory.builder()
                 .soulmateId(request.soulmateId())
-                .senderId(request.senderId())
-                .missionSequence(request.missionSequence())
+                .senderId(senderId)
+                .missionSequence(soulmate.getMissionSequence())
                 .message(request.message())
                 .sentAt(LocalDateTime.now(KST))
                 .build();
@@ -97,7 +98,7 @@ public class SoulmateService {
         if (SoulmateState.SelfCompleted.equals(opponentSoulmate.getState())) {
             if (soulmate.getMissionSequence() == 3) {
                 soulmate.changeState(SoulmateState.OpenProfile, getNow());
-                soulmate.changeState(SoulmateState.OpenProfile, getNow());
+                opponentSoulmate.changeState(SoulmateState.OpenProfile, getNow());
             } else {
                 soulmate.bothMissionCompleted(SoulmateState.MissionOpen, getNow());
                 opponentSoulmate.bothMissionCompleted(SoulmateState.MissionOpen, getNow());
@@ -110,15 +111,15 @@ public class SoulmateService {
     }
 
     @Transactional
-    public SoulmateState readyToMatching (Long userId) {
+    public SoulmateMatchingVo readyToMatching (Long userId) {
         val member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
         validateAgreeToSoulmate(member);
-        soulmateRepository.save(Soulmate.builder()
+        val soulmate = soulmateRepository.save(Soulmate.builder()
                         .mateId(member.getId())
                         .state(SoulmateState.MatchingReady)
                         .stateModifiedAt(LocalDateTime.now(KST))
                         .startAt(LocalDateTime.now(KST)).build());
-        return SoulmateState.MatchingReady;
+        return new SoulmateMatchingVo(SoulmateState.MatchingReady, soulmate.getId());
     }
 
     @Transactional
@@ -152,8 +153,38 @@ public class SoulmateService {
     }
 
     @Transactional
+    public void tryTestMatching () {
+        val rand = new Random();
+        val soulmateList = this.soulmateRepository.findAllByStateOrderByStateModifiedAtDesc(SoulmateState.MatchingReady);
+        if (!soulmateList.isEmpty()) {
+            while (soulmateList.size() >= 2) {
+                val mateOneId = rand.nextInt(soulmateList.size());
+                val mateOne = soulmateList.get(mateOneId);
+                soulmateList.remove(mateOneId);
+                val mateTwoId = rand.nextInt(soulmateList.size());
+                val mateTwo = soulmateList.get(mateTwoId);
+                soulmateList.remove(mateTwoId);
+
+                mateOne.changeState(SoulmateState.MissionOpen, getNow());
+                mateOne.matched(mateTwo.getMateId());
+                mateTwo.changeState(SoulmateState.MissionOpen, getNow());
+                mateTwo.matched(mateOne.getMateId());
+
+                val userOne = this.memberRepository.findById(mateOne.getMateId()).orElseThrow(() -> new NotFoundDBEntityException("Member"));;
+                val userTwo = this.memberRepository.findById(mateOne.getOpponentId()).orElseThrow(() -> new NotFoundDBEntityException("Member"));;
+                sendSMSAboutMatching(userOne.getPhone());
+                sendSMSAboutMatching(userTwo.getPhone());
+            }
+        }
+    }
+
+    @Transactional
     public void agreeToSoulmate (Long userId) {
         val member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        if (!member.getHasProfile()) throw new SoulmateException("EmptyProfile");
+        if (member.getMbti() == null || member.getAddress() == null || member.getAddress().isEmpty()) {
+            throw new SoulmateException("EmptyMissionInfo");
+        }
         member.agreeToUseSoulmate();
     }
 
@@ -161,20 +192,24 @@ public class SoulmateService {
     public void disagreeToSoulmate (Long userId) {
         val member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
         member.disagreeToUseSoulmate();
-        val soulmate = soulmateRepository.findByMateIdAndStateIsNotOrMateIdAndStateIsNot(
+        val optionalSoulmate = soulmateRepository.findByMateIdAndStateIsNotOrMateIdAndStateIsNot(
                 userId, SoulmateState.OpenProfile,
                 userId, SoulmateState.Disconnected
-        ).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
-        if (SoulmateState.MatchingReady.equals(soulmate.getState())) {
-            soulmate.changeState(SoulmateState.Disconnected, getNow());
-        } else {
-            val opponentSoulmate = soulmateRepository.findByMateIdAndStateIsNotOrMateIdAndStateIsNot(
-                    soulmate.getOpponentId(), SoulmateState.OpenProfile,
-                    soulmate.getOpponentId(), SoulmateState.Disconnected
-            ).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
-            soulmate.changeState(SoulmateState.Disconnected, getNow());
-            opponentSoulmate.changeState(SoulmateState.Disconnected, getNow());
+        );
+        if (optionalSoulmate.isPresent()) {
+            val soulmate = optionalSoulmate.get();
+            if (SoulmateState.MatchingReady.equals(soulmate.getState())) {
+                soulmate.changeState(SoulmateState.Disconnected, getNow());
+            } else {
+                val opponentSoulmate = soulmateRepository.findByMateIdAndStateIsNotOrMateIdAndStateIsNot(
+                        soulmate.getOpponentId(), SoulmateState.OpenProfile,
+                        soulmate.getOpponentId(), SoulmateState.Disconnected
+                ).orElseThrow(() -> new NotFoundDBEntityException("Soulmate"));
+                soulmate.changeState(SoulmateState.Disconnected, getNow());
+                opponentSoulmate.changeState(SoulmateState.Disconnected, getNow());
+            }
         }
+
     }
 
     private void sendSMSAboutMatching (String phone) {

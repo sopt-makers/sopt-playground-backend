@@ -10,9 +10,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.soulmate.Soulmate;
 import org.sopt.makers.internal.domain.soulmate.SoulmateMissionHistory;
 import org.sopt.makers.internal.domain.soulmate.SoulmateState;
-import org.sopt.makers.internal.dto.soulmate.MissionResponse;
-import org.sopt.makers.internal.dto.soulmate.MissionUpdateRequest;
-import org.sopt.makers.internal.dto.soulmate.SoulmateResponse;
+import org.sopt.makers.internal.dto.soulmate.*;
 import org.sopt.makers.internal.service.SoulmateService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,13 +29,26 @@ public class SoulmateController {
 
     @Operation(summary = "Soulmate 매칭 요창하기", description = "Matching Ready 상태로 바꾸기")
     @PostMapping("/start/matching")
-    public ResponseEntity<SoulmateResponse> requestSoulmateMatching (
+    public ResponseEntity<SoulmateMatchingResponse> requestSoulmateMatching (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        soulmateService.readyToMatching(memberDetails.getId());
+        val soulmateMatchingInfo = soulmateService.readyToMatching(memberDetails.getId());
         soulmateService.tryMatching();
-        return ResponseEntity.status(HttpStatus.OK).body(new SoulmateResponse(true, null, null));
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new SoulmateMatchingResponse(soulmateMatchingInfo.state(), soulmateMatchingInfo.soulmateId())
+        );
     }
+
+    @Operation(summary = "Soulmate 테스트 매칭 요창하기", description = "Matching Ready 상태로 바꾸기")
+    @PostMapping("/start/test/matching")
+    public ResponseEntity<SoulmateMatchingResponse> requestTestSoulmateMatching (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val soulmateMatchingInfo = soulmateService.readyToMatching(memberDetails.getId());
+        soulmateService.tryTestMatching();
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new SoulmateMatchingResponse(soulmateMatchingInfo.state(), soulmateMatchingInfo.soulmateId())
+        );    }
 
     @Operation(summary = "Soulmate 미션하기")
     @PostMapping("/{id}/mission")
@@ -45,8 +56,8 @@ public class SoulmateController {
             @RequestBody MissionUpdateRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        val soulmate = soulmateService.missionResponded(request);
-        val missionSequence = SoulmateState.OpenProfile.equals(soulmate.getState()) ? soulmate.getMissionSequence() - 1 : soulmate.getMissionSequence();
+        val soulmate = soulmateService.missionResponded(request, memberDetails.getId());
+        val missionSequence = soulmate.getMissionSequence();
         val hint = soulmateService.getSoulmateHint(soulmate.getOpponentId(), missionSequence);
         return ResponseEntity.status(HttpStatus.OK).body(new MissionResponse(soulmate.getState(), hint));
     }
@@ -70,14 +81,18 @@ public class SoulmateController {
         return ResponseEntity.status(HttpStatus.OK).body(missionHistories);
     }
 
-    @Operation(summary = "Soulmate 동의 해제")
+    @Operation(summary = "Soulmate 상태 체크", description = "Disconnected check를 여기서 함")
     @GetMapping("/{id}/state")
-    public ResponseEntity<SoulmateState> checkState (
+    public ResponseEntity<SoulmateStateResponse> checkState (
             @PathVariable(value = "id") Long soulmateId,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        val state = soulmateService.checkState(memberDetails.getId(), soulmateId);
-        return ResponseEntity.status(HttpStatus.OK).body(state);
+        val soulmate = soulmateService.checkState(memberDetails.getId(), soulmateId);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new SoulmateStateResponse(
+                        soulmate.getId(), soulmate.getOpponentId(), soulmate.getStateModifiedAt(), soulmate.getState(), soulmate.getMissionSequence()
+                )
+        );
     }
 
     @Operation(summary = "Soulmate 동의")
