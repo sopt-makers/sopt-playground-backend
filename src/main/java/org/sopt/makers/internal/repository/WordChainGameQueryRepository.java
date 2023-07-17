@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.repository;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -17,11 +18,11 @@ public class WordChainGameQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public List<WordChainGameRoom> findAllLimitedGameRoom(
-            Integer limit, Integer cursor
+            Integer limit, Long cursor
     ) {
         val room = QWordChainGameRoom.wordChainGameRoom;
         return queryFactory.selectFrom(room)
-                .offset(cursor)
+                .where(ltGameRoomId(cursor))
                 .limit(limit)
                 .orderBy(room.id.desc())
                 .groupBy(room.id)
@@ -68,5 +69,11 @@ public class WordChainGameQueryRepository {
                 .innerJoin(member).on(winner.userId.eq(member.id))
                 .orderBy(winner.id.desc())
                 .fetch();
+    }
+
+    private BooleanExpression ltGameRoomId(Long gameRoomId) {
+        val room = QWordChainGameRoom.wordChainGameRoom;
+        if(gameRoomId == null || gameRoomId == 0) return null;
+        return room.id.lt(gameRoomId);
     }
 }

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.dto.CommonExceptionResponse;
 import org.sopt.makers.internal.dto.auth.RegisterTokenBySmsResponse;
 import org.sopt.makers.internal.dto.sopticle.SopticleResponse;
+import org.sopt.makers.internal.dto.soulmate.SoulmateResponse;
 import org.sopt.makers.internal.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -102,6 +103,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new SopticleResponse(false, ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(SoulmateException.class)
+    public ResponseEntity<SoulmateResponse> SoulmateException (SoulmateException ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new SoulmateResponse(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(RuntimeException.class)
