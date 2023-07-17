@@ -68,23 +68,22 @@ public class WordChainGameService {
 
     @Transactional
     public WordChainGameRoom createWordGameRoom(Member member) {
-        val isNotFirstGameCreated = wordChainGameRepository.count() >= 1;
-        val createdUserId = isNotFirstGameCreated ? member.getId() : null;
-        if (isNotFirstGameCreated) {
+        val isGameCreatedBefore = wordChainGameRepository.count() >= 1;
+        val createdUserId = isGameCreatedBefore ? member.getId() : null;
+        if (isGameCreatedBefore) {
             val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
             val noInputWordInRoom = lastRoom.getWordList().isEmpty();
-            if(!noInputWordInRoom) {
-                val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
-                val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(member.getId());
-                if(isLastWordWriterIsMakingNewGame) throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
-                val winnerId = lastWord.getMemberId();
-                val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
-                val userScore = Objects.isNull(score) ? 0 : score.getScore();
-                wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
-                        .roomId(lastWord.getRoomId())
-                        .score(userScore + 1)
-                        .userId(winnerId).build());
-            }
+            if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("이전 게임에 아무도 답을 하지 않은 경우에는 새로운 방을 만들 수 없어요.");
+            val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
+            val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(member.getId());
+            if(isLastWordWriterIsMakingNewGame) throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
+            val winnerId = lastWord.getMemberId();
+            val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
+            val userScore = Objects.isNull(score) ? 0 : score.getScore();
+            wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
+                    .roomId(lastWord.getRoomId())
+                    .score(userScore + 1)
+                    .userId(winnerId).build());
         }
         return wordChainGameRepository.save(WordChainGameRoom.builder()
                 .createdAt(LocalDateTime.now())
