@@ -78,6 +78,7 @@ public class Project {
             String category,
             LocalDate startAt,
             LocalDate endAt,
+            String[] serviceType,
             Boolean isAvailable,
             String summary,
             String detail,
@@ -90,6 +91,7 @@ public class Project {
         this.category = category == null ? this.category : category;
         this.startAt = startAt == null ? this.startAt : startAt;
         this.endAt = endAt == null ? this.endAt : endAt;
+        this.serviceType = serviceType == null ? this.serviceType : serviceType;
         this.isAvailable = isAvailable == null ? this.isAvailable : isAvailable;
         this.summary = summary == null ? this.summary : summary;
         this.detail = detail == null ? this.detail : detail;

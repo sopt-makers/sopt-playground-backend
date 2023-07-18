@@ -15,6 +15,7 @@ public record ProjectUpdateRequest(
         @Schema(required = true)
         LocalDate startAt,
         LocalDate endAt,
+        String[] serviceType,
         Boolean isAvailable,
         @Schema(required = true)
         String summary,
