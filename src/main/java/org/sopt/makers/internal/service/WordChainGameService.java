@@ -45,25 +45,14 @@ public class WordChainGameService {
 
     @Transactional
     public Word createWord(Member member, WordChainGameGenerateRequest request) {
-        val word = request.word();
-        if(!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
-        val room = wordChainGameRepository.findById(request.roomId());
-        if(room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
-        val hasDuplicateWord = (wordRepository.findByWordAndRoomId(word, request.roomId()).size() >= 1);
-        if(hasDuplicateWord) throw new WordChainGameHasWrongInputException("이미 누군가 사용한 단어예요.");
-        val recentWordList = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(request.roomId());
-        if(Objects.isNull(recentWordList)) {
-            if(checkIsNotChainingWord(room.get().getStartWord(), request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
-        } else {
-            val lastWord = recentWordList.getWord();
-            val isLastWordWriterIsMakingNextWord = recentWordList.getMemberId().equals(member.getId());
-            if(isLastWordWriterIsMakingNextWord) throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
-            if(checkIsNotChainingWord(lastWord, request.word())) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
-        }
-        val isWordInDictionary = checkWordExistInDictionary(word);
-        if(!isWordInDictionary) throw new WordChainGameHasWrongInputException("표준국어대사전에 존재하지 않는 단어예요.");
+        checkWordIsOneLetter(request.word());
+        checkRoomIsValid(request.roomId());
+        checkIsChainingWord(request.roomId(), request.word());
+        checkIsInDictionary(request.word());
+        checkIsLastWordWriterIsMakingNextWord(request.roomId(), member.getId());
+        checkDuplicateWord(request.roomId(), request.word());
         return wordRepository.save(Word.builder().roomId(request.roomId()).memberId(member.getId())
-                .word(word).createdAt(LocalDateTime.now()).build());
+                .word(request.word()).createdAt(LocalDateTime.now()).build());
     }
 
     @Transactional
@@ -90,6 +79,41 @@ public class WordChainGameService {
                 .startWord(getRandomStartWord())
                 .createdUserId(createdUserId)
                 .build());
+    }
+
+    @Transactional(readOnly = true)
+    public void checkLastWordWriterIsMakingNewGame(Long lastRoomId, Long memberId) {
+        val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoomId);
+        val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(memberId);
+        if(isLastWordWriterIsMakingNewGame) throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
+    }
+
+    @Transactional(readOnly = true)
+    public void checkDuplicateWord(Long roomId, String word) {
+        boolean hasDuplicateWord = (wordRepository.existsByWordAndRoomId(word, roomId));
+        if (hasDuplicateWord) {
+            throw new WordChainGameHasWrongInputException("이미 누군가 사용한 단어예요.");
+        }
+    }
+
+    @Transactional
+    public void insertGameWinner(Long lastRoomId) {
+        val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoomId);
+        val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(lastWord.getMemberId());
+        val userScore = Objects.isNull(score) ? 0 : score.getScore();
+        wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
+                .roomId(lastRoomId)
+                .score(userScore + 1)
+                .userId(lastWord.getMemberId()).build());
+    }
+
+    @Transactional(readOnly = true)
+    public void checkIsLastWordWriterIsMakingNextWord(Long roomId, Long memberId) {
+        val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
+        boolean isLastWordWriterIsMakingNextWord = recentWord.getMemberId().equals(memberId);
+        if (isLastWordWriterIsMakingNextWord) {
+            throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
+        }
     }
 
     @Transactional(readOnly = true)
