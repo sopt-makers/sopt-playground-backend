@@ -57,7 +57,7 @@ public class WordChainGameService {
 
     @Transactional
     public WordChainGameRoom createWordGameRoom(Member member) {
-        val isGameCreatedBefore = wordChainGameRepository.count() >= 1;
+        val isGameCreatedBefore = wordChainGameRepository.existsByIdIsNotNull();
         val createdUserId = isGameCreatedBefore ? member.getId() : null;
         if (isGameCreatedBefore) {
             val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
@@ -163,9 +163,11 @@ public class WordChainGameService {
         }).collect(Collectors.toList());
     }
 
-    private boolean checkIsNotChainingWord(String lastWord, String nextWord) {
-        if (checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))) return false;
-        return nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1);
+    private void checkIsNotChainingWord(String lastWord, String nextWord) {
+        if (!checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))
+            || nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1)) {
+            throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
+        }
     }
 
     private boolean checkInitialSoundIsDooemBubchik(char lastChar, char firstChar) {
