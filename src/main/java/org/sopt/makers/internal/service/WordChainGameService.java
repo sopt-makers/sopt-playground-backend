@@ -101,9 +101,9 @@ public class WordChainGameService {
     @Transactional(readOnly = true)
     public void checkIsLastWordWriterIsMakingNextWord(Long roomId, Long memberId) {
         val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
-        boolean isLastWordWriterIsMakingNextWord = recentWord.getMemberId().equals(memberId);
-        if (isLastWordWriterIsMakingNextWord) {
-            throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
+        if(!Objects.isNull(recentWord)) {
+            boolean isLastWordWriterIsMakingNextWord = recentWord.getMemberId().equals(memberId);
+            if (isLastWordWriterIsMakingNextWord) throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
         }
     }
 
