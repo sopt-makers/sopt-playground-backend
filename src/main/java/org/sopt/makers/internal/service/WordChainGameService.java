@@ -61,18 +61,9 @@ public class WordChainGameService {
         val createdUserId = isGameCreatedBefore ? member.getId() : null;
         if (isGameCreatedBefore) {
             val lastRoom = wordChainGameQueryRepository.findGameRoomOrderByCreatedDesc().get(0);
-            val noInputWordInRoom = lastRoom.getWordList().isEmpty();
-            if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("이전 게임에 아무도 답을 하지 않은 경우에는 새로운 방을 만들 수 없어요.");
-            val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoom.getId());
-            val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(member.getId());
-            if(isLastWordWriterIsMakingNewGame) throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
-            val winnerId = lastWord.getMemberId();
-            val score = wordChainGameWinnerRepository.findFirstByUserIdOrderByIdDesc(winnerId);
-            val userScore = Objects.isNull(score) ? 0 : score.getScore();
-            wordChainGameWinnerRepository.save(WordChainGameWinner.builder()
-                    .roomId(lastWord.getRoomId())
-                    .score(userScore + 1)
-                    .userId(winnerId).build());
+            checkInputWordIsNone(lastRoom);
+            checkLastWordWriterIsMakingNewGame(lastRoom.getId(), member.getId());
+            insertGameWinner(lastRoom.getId());
         }
         return wordChainGameRepository.save(WordChainGameRoom.builder()
                 .createdAt(LocalDateTime.now())
@@ -117,6 +108,17 @@ public class WordChainGameService {
     }
 
     @Transactional(readOnly = true)
+    public void checkIsChainingWord(Long roomId, String word) {
+        val room = wordChainGameRepository.findById(roomId);
+        val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
+        if (Objects.isNull(recentWord) && room.isPresent()) {
+            checkIsNotChainingWord(room.get().getStartWord(), word);
+        } else {
+            checkIsNotChainingWord(recentWord.getWord(), word);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<WordChainGameRoom> getAllRoom(Integer limit, Long cursor) {
         if(limit != null) {
             return wordChainGameQueryRepository.findAllLimitedGameRoom(limit, cursor);
@@ -132,6 +134,26 @@ public class WordChainGameService {
         } else {
             return getWinnerVo(wordChainGameQueryRepository.findAllWinner());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public void checkRoomIsValid(Long roomId) {
+        val room = wordChainGameRepository.findById(roomId);
+        if(room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
+    }
+
+    private void checkInputWordIsNone(WordChainGameRoom lastRoom) {
+        val noInputWordInRoom = lastRoom.getWordList().isEmpty();
+        if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("이전 게임에 아무도 답을 하지 않은 경우에는 새로운 방을 만들 수 없어요.");
+    }
+
+    private void checkWordIsOneLetter(String word) {
+        if(!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
+    }
+
+    private void checkIsInDictionary(String word) {
+        val isWordInDictionary = checkWordExistInDictionary(word);
+        if(!isWordInDictionary) throw new WordChainGameHasWrongInputException("표준국어대사전에 존재하지 않는 단어예요.");
     }
 
     private List<WinnerVo> getWinnerVo(List<WinnerDao> winnerList) {
