@@ -101,9 +101,9 @@ public class WordChainGameService {
     @Transactional(readOnly = true)
     public void checkIsLastWordWriterIsMakingNextWord(Long roomId, Long memberId) {
         val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
-        boolean isLastWordWriterIsMakingNextWord = recentWord.getMemberId().equals(memberId);
-        if (isLastWordWriterIsMakingNextWord) {
-            throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
+        if(!Objects.isNull(recentWord)) {
+            boolean isLastWordWriterIsMakingNextWord = recentWord.getMemberId().equals(memberId);
+            if (isLastWordWriterIsMakingNextWord) throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
         }
     }
 
@@ -112,9 +112,9 @@ public class WordChainGameService {
         val room = wordChainGameRepository.findById(roomId);
         val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
         if (Objects.isNull(recentWord) && room.isPresent()) {
-            checkIsNotChainingWord(room.get().getStartWord(), word);
+            checkIsChainingWord(room.get().getStartWord(), word);
         } else {
-            checkIsNotChainingWord(recentWord.getWord(), word);
+            checkIsChainingWord(recentWord.getWord(), word);
         }
     }
 
@@ -163,11 +163,13 @@ public class WordChainGameService {
         }).collect(Collectors.toList());
     }
 
-    private void checkIsNotChainingWord(String lastWord, String nextWord) {
-        if (!checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))
-            || nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1)) {
-            throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
-        }
+    private void checkIsChainingWord(String lastWord, String nextWord) {
+        if(checkIsNotChainingWord(lastWord, nextWord)) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
+    }
+
+    private boolean checkIsNotChainingWord(String lastWord, String nextWord) {
+        if (checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))) return false;
+        return nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1);
     }
 
     private boolean checkInitialSoundIsDooemBubchik(char lastChar, char firstChar) {
