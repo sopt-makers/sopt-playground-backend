@@ -112,9 +112,9 @@ public class WordChainGameService {
         val room = wordChainGameRepository.findById(roomId);
         val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
         if (Objects.isNull(recentWord) && room.isPresent()) {
-            checkIsNotChainingWord(room.get().getStartWord(), word);
+            checkIsChainingWord(room.get().getStartWord(), word);
         } else {
-            checkIsNotChainingWord(recentWord.getWord(), word);
+            checkIsChainingWord(recentWord.getWord(), word);
         }
     }
 
