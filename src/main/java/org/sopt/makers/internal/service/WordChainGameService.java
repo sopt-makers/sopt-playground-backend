@@ -163,11 +163,13 @@ public class WordChainGameService {
         }).collect(Collectors.toList());
     }
 
-    private void checkIsNotChainingWord(String lastWord, String nextWord) {
-        if (!checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))
-            || nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1)) {
-            throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
-        }
+    private void checkIsChainingWord(String lastWord, String nextWord) {
+        if(checkIsNotChainingWord(lastWord, nextWord)) throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
+    }
+
+    private boolean checkIsNotChainingWord(String lastWord, String nextWord) {
+        if (checkInitialSoundIsDooemBubchik(lastWord.charAt(lastWord.length() - 1), nextWord.charAt(0))) return false;
+        return nextWord.charAt(0) != lastWord.charAt(lastWord.length() - 1);
     }
 
     private boolean checkInitialSoundIsDooemBubchik(char lastChar, char firstChar) {
