@@ -31,4 +31,8 @@ public class MemberSoptActivity {
     public void setMemberId (Long memberId) {
         this.memberId = memberId;
     }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
 }
