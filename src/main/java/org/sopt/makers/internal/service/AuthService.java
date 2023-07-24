@@ -250,7 +250,6 @@ public class AuthService {
                         .email(memberHistory.getEmail())
                         .phone(memberHistory.getPhone())
                         .generation(memberHistory.getGeneration())
-                        .hasProfile(true)
                         .build()
         );
         val memberActivities = memberHistories.stream().map(soptMemberHistory -> {
