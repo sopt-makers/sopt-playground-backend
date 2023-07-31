@@ -327,7 +327,7 @@ public class MemberService {
                          .isHardPeachLover(request.userFavor().isHardPeachLover())
                                  .build();
         member.saveMemberProfile(
-                request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
+                member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
