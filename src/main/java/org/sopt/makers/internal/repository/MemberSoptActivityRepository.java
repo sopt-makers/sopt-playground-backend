@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface MemberSoptActivityRepository extends JpaRepository<MemberSoptActivity, Long> {
     Optional<MemberSoptActivity> findByIdAndMemberId(Long id, Long memberId);
-
+    List<MemberSoptActivity> findAllByMemberId(Long memberId);
     List<MemberSoptActivity> findAllByMemberIdIn(List<Long> memberIds);
 }
