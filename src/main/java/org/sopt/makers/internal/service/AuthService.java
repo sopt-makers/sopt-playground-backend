@@ -78,17 +78,17 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByFbAndMagicRegisterToken(String registerToken, String code) {
-        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
-        val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
-        if (!isMagic) throw new WrongTokenException("tokenInvalid");
-        if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
+    public String registerByMagicRegisterToken(String type, String registerToken, String code) {
+        val socialType = SocialType.from(type);
+        val socialLoginService = socialLogins.get(socialType);
+        val userId = socialLoginService.getUserSocialInfo("register", code);
 
-        val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
+        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+
         val member = memberRepository.findByName("Tester")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(fbUserInfo.userId(), "facebook");
-
+        member.updateMemberAuth(userId, type);
         return tokenManager.createAuthToken(member.getId());
     }
 
