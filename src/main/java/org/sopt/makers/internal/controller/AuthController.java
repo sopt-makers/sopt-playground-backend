@@ -33,63 +33,24 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Facebook auth API", description = "페이스북으로 로그인")
-    @PostMapping("/idp/facebook/auth")
-    public ResponseEntity<AccessTokenResponse> authByFacebook (@RequestBody AuthRequest request) {
-        val accessToken = authService.authByFb(request.code());
+    @Operation(summary = "auth API", description = "로그인")
+    @PostMapping("/idp/{socialType}/auth")
+    public ResponseEntity<AccessTokenResponse> authBySocialType (@PathVariable("socialType") String socialType, @RequestBody AuthRequest request) {
+        val accessToken = authService.auth(socialType, request.code());
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Facebook register API")
-    @PostMapping("/idp/facebook/register")
-    public ResponseEntity<AccessTokenResponse> registerByFacebook (@RequestBody RegisterRequest request) {
+    @Operation(summary = "소셜로그인 API")
+    @PostMapping("/idp/{socialType}/register")
+    public ResponseEntity<AccessTokenResponse> registerBySocialType (@PathVariable("socialType") String socialType, @RequestBody RegisterRequest request) {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByFbAndMagicRegisterToken(request.registerToken(), request.code());
+            accessToken = authService.registerByMagicRegisterToken(socialType, request.registerToken(), request.code());
         } else {
-            accessToken = authService.registerByFb(request.registerToken(), request.code());
+            accessToken = authService.register(socialType, request.registerToken(), request.code());
         }
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
-
-    @Operation(summary = "Google auth API", description = "구글로 로그인")
-    @PostMapping("/idp/google/auth")
-    public ResponseEntity<AccessTokenResponse> authByGoogle (@RequestBody AuthRequest request) {
-        val accessToken = authService.authByGoogle(request.code());
-        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
-    }
-
-    @Operation(summary = "Google register API")
-    @PostMapping("/idp/google/register")
-    public ResponseEntity<AccessTokenResponse> registerByGoogle (@RequestBody RegisterRequest request) {
-        String accessToken;
-        if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code());
-        } else {
-            accessToken = authService.registerByGoogle(request.registerToken(), request.code());
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
-    }
-
-    @Operation(summary = "Apple auth API", description = "애플로 로그인")
-    @PostMapping("/idp/apple/auth")
-    public ResponseEntity<AccessTokenResponse> authByApple (@RequestBody AuthRequest request) {
-        val accessToken = authService.authByApple(request.code());
-        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
-    }
-
-    @Operation(summary = "Apple register API")
-    @PostMapping("/idp/apple/register")
-    public ResponseEntity<AccessTokenResponse> registerByApple (@RequestBody RegisterRequest request) {
-        String accessToken;
-        if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code());
-        } else {
-            accessToken = authService.registerByApple(request.registerToken(), request.code());
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
-    }
-
 
     @Operation(summary = "register 토큰으로 자기 자신 확인 API")
     @PostMapping("/registration/info")
