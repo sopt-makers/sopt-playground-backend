@@ -12,9 +12,14 @@ import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
+import org.sopt.makers.internal.service.auth.AppleLoginService;
+import org.sopt.makers.internal.service.auth.FacebookLoginService;
+import org.sopt.makers.internal.service.auth.GoogleLoginService;
+import org.sopt.makers.internal.service.auth.SocialLoginService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
 import javax.persistence.EntityNotFoundException;
 import java.io.UnsupportedEncodingException;
@@ -27,23 +32,23 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class AuthService {
-    private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final AuthConfig authConfig;
     private final InternalTokenManager tokenManager;
-    private final FacebookTokenManager fbTokenManager;
-    private final GoogleTokenManager googleTokenManager;
 
-    private final AppleTokenManager appleTokenManager;
+    private final Map<SocialType, SocialLoginService> socialLogins = new EnumMap<>(SocialType.class);
+    private final FacebookLoginService facebookLoginService;
+    private final GoogleLoginService googleLoginService;
+    private final AppleLoginService appleLoginService;
 
     private final MemberRepository memberRepository;
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
-    private final EmailSender emailSender;
+    private final MemberSoptActivityRepository memberSoptActivityRepository;
 
+    private final EmailSender emailSender;
     private final SmsSender smsSender;
+    private final Map<String, String> memberAndSmsTokenMap = new HashMap<>();
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
-
-    private final Map<String, String> memberAndSmsTokenMap = new HashMap<>();
 
     public String createCode(String accessToken) {
         val userId = Long.parseLong(tokenManager.getUserIdFromAuthToken(accessToken));
@@ -337,5 +342,12 @@ public class AuthService {
         val random = new Random();
         int number = random.nextInt(999999);
         return String.format("%06d", number);
+    }
+
+    @PostConstruct
+    private void init() {
+        socialLogins.put(SocialType.facebook, facebookLoginService);
+        socialLogins.put(SocialType.apple, appleLoginService);
+        socialLogins.put(SocialType.google, googleLoginService);
     }
 }
