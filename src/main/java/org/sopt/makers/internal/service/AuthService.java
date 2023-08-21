@@ -61,19 +61,31 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code) {
-        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
-        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
-        if (!isMagic) throw new WrongTokenException("tokenInvalid");
-        if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
-        val googleAccessToken = googleAccessTokenResponse.idToken();
+    public String auth (String type, String code) {
+        val socialType = SocialType.from(type);
+        val socialLoginService = socialLogins.get(socialType);
+        val userId = socialLoginService.getUserSocialInfo("auth", code);
+        val member = memberRepository.findByAuthUserId(userId)
+                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다.[" + socialType + "] : " + userId));
+        return tokenManager.createAuthToken(member.getId());
+    }
 
-        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
-        if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = memberRepository.findByName("Tester")
-                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(googleUserInfo, "google");
+    @Transactional
+    public String register (String type, String registerToken, String code) {
+        val socialType = SocialType.from(type);
+        val socialLoginService = socialLogins.get(socialType);
+        val userId = socialLoginService.getUserSocialInfo("register", code);
 
+        val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
+        if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
+
+        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
+        if (memberHistories.isEmpty())
+            throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
+        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined))
+            throw new AuthFailureException("이미 가입된 사용자입니다.");
+
+        val member = insertMemberAndActivityData(type, userId, memberHistories);
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -89,123 +101,6 @@ public class AuthService {
         val member = memberRepository.findByName("Tester")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(userId, type);
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-    @Transactional
-    public String registerByAppleAndMagicRegisterToken(String registerToken, String code) {
-        val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
-        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
-        if (!isMagic) throw new WrongTokenException("tokenInvalid");
-        if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
-
-        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
-        if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = memberRepository.findByName("Tester")
-                .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(appleUserInfo, "apple");
-
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-
-    @Transactional
-    public String authByFb (String code) {
-        val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");
-        if (fbAccessToken == null) {
-            throw new AuthFailureException("Facebook 인증에 실패했습니다.");
-        }
-        val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
-        log.info("Facebook user id : " + fbUserInfo.userId() + " / name : " + fbUserInfo.userName());
-        val member = memberRepository.findByAuthUserId(fbUserInfo.userId())
-                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다.[Facebook] : " + fbUserInfo.userId()));
-
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-    @Transactional
-    public String registerByFb (String registerToken, String code) {
-        val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
-        val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
-        if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
-        if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
-
-        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
-        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
-
-        val memberHistory = memberHistories.get(0);
-        val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
-        val member = insertMemberAndActivityData("facebook", fbUserInfo.userId(), memberHistories);
-
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-    @Transactional
-    public String authByGoogle (String code) {
-        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "auth");
-        if (googleAccessTokenResponse == null) {
-            throw new AuthFailureException("Google 인증에 실패했습니다.");
-        }
-        val googleAccessToken = googleAccessTokenResponse.idToken();
-        val googleUserInfoResponse = googleTokenManager.getUserInfo(googleAccessToken);
-        log.info("Google user id : " + googleUserInfoResponse);
-        val member = memberRepository.findByAuthUserId(googleUserInfoResponse)
-                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Google] : " + googleUserInfoResponse));
-
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-    @Transactional
-    public String registerByGoogle(String registerToken, String code) {
-        val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
-        val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
-        if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
-        if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
-        val googleAccessToken = googleAccessTokenResponse.idToken();
-
-        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
-        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
-
-        val memberHistory = memberHistories.get(0);
-        val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
-        if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = insertMemberAndActivityData("google", googleUserInfo, memberHistories);
-
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-    @Transactional
-    public String authByApple (String code) {
-        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
-        if (appleAccessTokenResponse == null) {
-            throw new AuthFailureException("Apple 인증에 실패했습니다.");
-        }
-        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
-        log.info("Apple user id : " + appleUserInfo);
-        val member = memberRepository.findByAuthUserId(appleUserInfo)
-                .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
-
-        return tokenManager.createAuthToken(member.getId());
-    }
-
-    @Transactional
-    public String registerByApple (String registerToken, String code) {
-        val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
-        val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
-        if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
-        if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
-
-        val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
-        if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
-
-        val memberHistory = memberHistories.get(0);
-        val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
-        if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
-
         return tokenManager.createAuthToken(member.getId());
     }
 
