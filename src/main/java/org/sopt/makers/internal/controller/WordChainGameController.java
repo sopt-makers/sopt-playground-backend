@@ -59,7 +59,7 @@ public class WordChainGameController {
                 val member = memberService.getMemberById(word.getMemberId());
                 val responseMember = memberMapper.toAllGameRoomResponse(member);
                 return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
-            }).collect(Collectors.toList());
+            }).sorted().collect(Collectors.toList());
             return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), responseStartUser, wordList);
         }).collect(Collectors.toList());
         val hasNextMember = (limit != null && rooms.size() > limit);
