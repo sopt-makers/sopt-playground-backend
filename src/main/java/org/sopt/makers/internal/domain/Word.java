@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "word")
-public class Word {
+public class Word implements Comparable<Word>{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,4 +28,9 @@ public class Word {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Override
+    public int compareTo(Word o) {
+        return this.id.compareTo(o.id);
+    }
 }
