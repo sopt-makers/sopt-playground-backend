@@ -44,7 +44,7 @@ public class ImageController {
             @RequestParam(required = false) String type
     ) {
         val bucketPathName = type == null || type.equals("project") ? projectImageBucketPath : profileImageBucketPath;
-        val keyName = "/" + activeProfile + bucketPathName + "%s-%s".formatted(UUID.randomUUID().toString(), filename);
+        val keyName = "/" + activeProfile + bucketPathName + UUID.randomUUID() + "-" + filename;
         val bucketName = imageBucketName;
         val splittedFileName = filename.split("\\.");
         var extension = splittedFileName[splittedFileName.length-1].toLowerCase();
