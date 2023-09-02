@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "word")
-public class Word {
+public class Word{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

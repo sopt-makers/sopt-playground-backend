@@ -55,7 +55,7 @@ public class WordChainGameController {
             val isFirstGame = Objects.isNull(room.getCreatedUserId());
             val startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
             val responseStartUser = memberMapper.toAllGameRoomResponse(startUser);
-            val wordList = room.getWordList().stream().map(word -> {
+            val wordList = room.getWordList().stream().sorted(((o1, o2) -> o1.getId().compareTo(o2.getId()))).map(word -> {
                 val member = memberService.getMemberById(word.getMemberId());
                 val responseMember = memberMapper.toAllGameRoomResponse(member);
                 return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
