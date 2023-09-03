@@ -154,7 +154,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByGoogle(String registerToken, String code) {
+    public String registerByGoogle(String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
@@ -163,7 +164,8 @@ public class AuthService {
 
         val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
+        if (state.equals("register") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined))
+            throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
@@ -188,7 +190,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByApple (String registerToken, String code) {
+    public String registerByApple (String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
@@ -196,7 +199,7 @@ public class AuthService {
 
         val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
+        if (state.equals("register") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
