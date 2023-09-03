@@ -56,7 +56,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code) {
+    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
         if (!isMagic) throw new WrongTokenException("tokenInvalid");
@@ -88,7 +89,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByAppleAndMagicRegisterToken(String registerToken, String code) {
+    public String registerByAppleAndMagicRegisterToken(String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
         if (!isMagic) throw new WrongTokenException("tokenInvalid");
