@@ -170,8 +170,10 @@ public class AuthService {
         val memberHistory = memberHistories.get(0);
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = insertMemberAndActivityData("google", googleUserInfo, memberHistories);
 
+        val member = state.equals("change")
+                ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo)
+                : insertMemberAndActivityData("google", googleUserInfo, memberHistories);
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -204,7 +206,10 @@ public class AuthService {
         val memberHistory = memberHistories.get(0);
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
+
+        val member = state.equals("change")
+                ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo)
+                : insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -243,6 +248,13 @@ public class AuthService {
             exception.printStackTrace();
             return "cannotSendEmail";
         }
+    }
+
+    private Member changeMemberSocialData(String phone, String idpType, String userInfoId) {
+        val member = memberRepository.findByPhone(phone)
+                .orElseThrow(() -> new EntityNotFoundException("해당 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(userInfoId, idpType);
+        return member;
     }
 
     private Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
