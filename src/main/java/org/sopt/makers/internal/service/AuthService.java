@@ -269,10 +269,10 @@ public class AuthService {
         return member;
     }
 
-    public String sendSixNumberSmsCode (String phone) {
+    public String sendSixNumberSmsCode (String phone, String state) {
         val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
         if (memberHistories.isEmpty()) return "emptySoptUser";
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) return "alreadyTaken";
+        if (state.equals("registration") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) return "alreadyTaken";
 
         val exp = LocalDateTime.now(KST).plusMinutes(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         val smsToken = phone + "@" + exp;
