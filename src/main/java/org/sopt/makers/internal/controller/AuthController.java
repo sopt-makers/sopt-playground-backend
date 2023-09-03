@@ -120,7 +120,6 @@ public class AuthController {
     @Operation(summary = "Get 6 numbers code, state = {registration/change}")
     @PostMapping("/{state}/sms/code")
     public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@PathVariable String state, @RequestBody RegistrationPhoneRequest request) {
-        System.out.println(request.phone());
         if(!state.equals("registration") && !state.equals("change")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new SmsCodeResponse(false, "wrongPath", "잘못된 요청입니다.", false, null));
