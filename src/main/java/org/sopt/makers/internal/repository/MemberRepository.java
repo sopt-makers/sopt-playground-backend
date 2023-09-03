@@ -9,6 +9,7 @@ import java.util.Set;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByName(String name);
+    Optional<Member> findByPhone(String phone);
     List<Member> findAllByNameContaining(String name);
     Optional<Member> findByAuthUserId(String authId);
 
