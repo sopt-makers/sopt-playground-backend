@@ -59,14 +59,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Google register API")
-    @PostMapping("/idp/google/register")
-    public ResponseEntity<AccessTokenResponse> registerByGoogle (@RequestBody RegisterRequest request) {
+    @Operation(summary = "Google register API, state = {register/change}")
+    @PostMapping("/idp/google/{state}")
+    public ResponseEntity<AccessTokenResponse> registerByGoogle (@PathVariable String state, @RequestBody RegisterRequest request) {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code());
+            accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code(), state);
         } else {
-            accessToken = authService.registerByGoogle(request.registerToken(), request.code());
+            accessToken = authService.registerByGoogle(request.registerToken(), request.code(), state);
         }
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
@@ -78,14 +78,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Apple register API")
-    @PostMapping("/idp/apple/register")
-    public ResponseEntity<AccessTokenResponse> registerByApple (@RequestBody RegisterRequest request) {
+    @Operation(summary = "Apple register API, state = {register/change}")
+    @PostMapping("/idp/apple/{state}")
+    public ResponseEntity<AccessTokenResponse> registerByApple (@PathVariable String state, @RequestBody RegisterRequest request) {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code());
+            accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code(), state);
         } else {
-            accessToken = authService.registerByApple(request.registerToken(), request.code());
+            accessToken = authService.registerByApple(request.registerToken(), request.code(), state);
         }
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
