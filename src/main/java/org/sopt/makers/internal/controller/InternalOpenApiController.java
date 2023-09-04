@@ -78,6 +78,21 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "자신의 토큰으로 활동한 활동정보 조회")
+    @GetMapping("/members/activity/me")
+    public ResponseEntity<InternalMemberActivityResponse> getMyActivityInformation (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val member = internalApiService.getMemberById(memberDetails.getId());
+        val memberActivity = internalApiService.getMemberActivities(memberDetails.getId());
+        val activityResponses = memberActivity.stream().map(activity ->
+                new InternalMemberActivityResponse.MemberSoptActivityResponse(
+                        activity.getId(), activity.getGeneration(), activity.getPart(), activity.getTeam())
+        ).collect(Collectors.toList());
+        val response = memberMapper.toInternalMemberActivityResponse(member, activityResponses);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/members/profile/me")
     public ResponseEntity<InternalMemberProfileSpecificResponse> getMyProfile (
@@ -99,28 +114,6 @@ public class InternalOpenApiController {
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    private void sortProfileCareer (InternalMemberProfileSpecificResponse response) {
-        response.careers().sort((a, b) -> {
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-            val start = YearMonth.parse(a.startDate(), formatter);
-            val end = YearMonth.parse(b.startDate(), formatter);
-            return end.compareTo(start);
-        });
-        InternalMemberProfileSpecificResponse.MemberCareerResponse currentCareer = null;
-        int index = 0;
-        for (val career: response.careers()) {
-            if (career.isCurrent()) {
-                currentCareer = career;
-                break;
-            }
-            index += 1;
-        }
-        if (currentCareer != null) {
-            response.careers().add(0, currentCareer);
-            response.careers().remove(index+1);
-        }
     }
 
     @Operation(
@@ -183,7 +176,6 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-
     @Operation(summary = "Auth token", description = "토큰 교환을 위한 엔드포인트")
     @PostMapping("/idp/auth/token")
     public ResponseEntity<InternalAuthResponse> exchangeAuthToken (
@@ -199,6 +191,28 @@ public class InternalOpenApiController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new InternalAuthResponse(null, "wrongApiKey"));
+        }
+    }
+
+    private void sortProfileCareer (InternalMemberProfileSpecificResponse response) {
+        response.careers().sort((a, b) -> {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            val start = YearMonth.parse(a.startDate(), formatter);
+            val end = YearMonth.parse(b.startDate(), formatter);
+            return end.compareTo(start);
+        });
+        InternalMemberProfileSpecificResponse.MemberCareerResponse currentCareer = null;
+        int index = 0;
+        for (val career: response.careers()) {
+            if (career.isCurrent()) {
+                currentCareer = career;
+                break;
+            }
+            index += 1;
+        }
+        if (currentCareer != null) {
+            response.careers().add(0, currentCareer);
+            response.careers().remove(index+1);
         }
     }
 }
