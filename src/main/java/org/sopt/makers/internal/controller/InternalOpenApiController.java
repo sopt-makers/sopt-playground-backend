@@ -101,28 +101,6 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    private void sortProfileCareer (InternalMemberProfileSpecificResponse response) {
-        response.careers().sort((a, b) -> {
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-            val start = YearMonth.parse(a.startDate(), formatter);
-            val end = YearMonth.parse(b.startDate(), formatter);
-            return end.compareTo(start);
-        });
-        InternalMemberProfileSpecificResponse.MemberCareerResponse currentCareer = null;
-        int index = 0;
-        for (val career: response.careers()) {
-            if (career.isCurrent()) {
-                currentCareer = career;
-                break;
-            }
-            index += 1;
-        }
-        if (currentCareer != null) {
-            response.careers().add(0, currentCareer);
-            response.careers().remove(index+1);
-        }
-    }
-
     @Operation(
             summary = "멤버 프로필 전체 조회 API",
             description =
@@ -199,6 +177,28 @@ public class InternalOpenApiController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new InternalAuthResponse(null, "wrongApiKey"));
+        }
+    }
+
+    private void sortProfileCareer (InternalMemberProfileSpecificResponse response) {
+        response.careers().sort((a, b) -> {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            val start = YearMonth.parse(a.startDate(), formatter);
+            val end = YearMonth.parse(b.startDate(), formatter);
+            return end.compareTo(start);
+        });
+        InternalMemberProfileSpecificResponse.MemberCareerResponse currentCareer = null;
+        int index = 0;
+        for (val career: response.careers()) {
+            if (career.isCurrent()) {
+                currentCareer = career;
+                break;
+            }
+            index += 1;
+        }
+        if (currentCareer != null) {
+            response.careers().add(0, currentCareer);
+            response.careers().remove(index+1);
         }
     }
 }
