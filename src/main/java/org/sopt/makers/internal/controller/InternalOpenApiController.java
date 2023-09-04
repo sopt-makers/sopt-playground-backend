@@ -78,9 +78,9 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "자신의 트큰으로 활동한 활동정보 조회")
+    @Operation(summary = "자신의 토큰으로 활동한 활동정보 조회")
     @GetMapping("/members/activity/me")
-    public ResponseEntity<InternalMemberActivityResponse> getMyPartInformation (
+    public ResponseEntity<InternalMemberActivityResponse> getMyActivityInformation (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val member = internalApiService.getMemberById(memberDetails.getId());
