@@ -139,11 +139,11 @@ public class AuthController {
         return switch (state) {
             case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null, false, null));
             case "emptySoptUser" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, status, "인증할 수 없는 유저입니다. 문의해주세요.", false, null));
+                    .body(new SmsCodeResponse(false, state, "인증할 수 없는 유저입니다. 문의해주세요.", false, null));
             case "shouldRetry" -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new SmsCodeResponse(false, status, "재시도 해주세요.", false, null));
+                    .body(new SmsCodeResponse(false, state, "재시도 해주세요.", false, null));
             case "alreadyTaken" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, status, "이미 가입한 유저입니다.", false, null));
+                    .body(new SmsCodeResponse(false, state, "이미 가입한 유저입니다.", false, null));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new SmsCodeResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다.", false, null));
         };
