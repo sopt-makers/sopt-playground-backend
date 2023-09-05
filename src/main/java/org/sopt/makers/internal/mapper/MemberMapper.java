@@ -49,6 +49,12 @@ public interface MemberMapper {
             List<InternalMemberProfileSpecificResponse.MemberActivityResponse> activities
     );
 
+    @Mapping(target = "activities", source = "activities")
+    InternalMemberActivityResponse toInternalMemberActivityResponse (
+            Member member,
+            List<InternalMemberActivityResponse.MemberSoptActivityResponse> activities
+    );
+
     ActivityVo toActivityInfoVo (MemberSoptActivity activity, boolean isProject);
 
     @Mapping(source = "project.name", target = "team")

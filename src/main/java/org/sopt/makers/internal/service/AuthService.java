@@ -56,7 +56,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code) {
+    public String registerByGoogleAndMagicRegisterToken(String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
         if (!isMagic) throw new WrongTokenException("tokenInvalid");
@@ -88,7 +89,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByAppleAndMagicRegisterToken(String registerToken, String code) {
+    public String registerByAppleAndMagicRegisterToken(String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
         if (!isMagic) throw new WrongTokenException("tokenInvalid");
@@ -152,7 +154,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByGoogle(String registerToken, String code) {
+    public String registerByGoogle(String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
@@ -161,13 +164,16 @@ public class AuthService {
 
         val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
+        if (state.equals("register") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined))
+            throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = insertMemberAndActivityData("google", googleUserInfo, memberHistories);
 
+        val member = state.equals("change")
+                ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo)
+                : insertMemberAndActivityData("google", googleUserInfo, memberHistories);
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -186,7 +192,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerByApple (String registerToken, String code) {
+    public String registerByApple (String registerToken, String code, String state) {
+        if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
@@ -194,12 +201,15 @@ public class AuthService {
 
         val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
+        if (state.equals("register") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
         val memberHistory = memberHistories.get(0);
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
+
+        val member = state.equals("change")
+                ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo)
+                : insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -240,6 +250,13 @@ public class AuthService {
         }
     }
 
+    private Member changeMemberSocialData(String phone, String idpType, String userInfoId) {
+        val member = memberRepository.findByPhone(phone)
+                .orElseThrow(() -> new EntityNotFoundException("해당 유저를 찾을 수 없습니다."));
+        member.updateMemberAuth(userInfoId, idpType);
+        return member;
+    }
+
     private Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
         val memberHistory = memberHistories.get(0);
         val member = memberRepository.save(
@@ -267,10 +284,10 @@ public class AuthService {
         return member;
     }
 
-    public String sendSixNumberSmsCode (String phone) {
+    public String sendSixNumberSmsCode (String phone, String state) {
         val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
         if (memberHistories.isEmpty()) return "emptySoptUser";
-        if (memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) return "alreadyTaken";
+        if (state.equals("registration") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) return "alreadyTaken";
 
         val exp = LocalDateTime.now(KST).plusMinutes(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         val smsToken = phone + "@" + exp;

@@ -59,14 +59,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Google register API")
-    @PostMapping("/idp/google/register")
-    public ResponseEntity<AccessTokenResponse> registerByGoogle (@RequestBody RegisterRequest request) {
+    @Operation(summary = "Google register API, status = {register/change}")
+    @PostMapping("/idp/google/{status}")
+    public ResponseEntity<AccessTokenResponse> registerByGoogle (@PathVariable String status, @RequestBody RegisterRequest request) {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code());
+            accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code(), status);
         } else {
-            accessToken = authService.registerByGoogle(request.registerToken(), request.code());
+            accessToken = authService.registerByGoogle(request.registerToken(), request.code(), status);
         }
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
@@ -78,14 +78,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Apple register API")
-    @PostMapping("/idp/apple/register")
-    public ResponseEntity<AccessTokenResponse> registerByApple (@RequestBody RegisterRequest request) {
+    @Operation(summary = "Apple register API, status = {register/change}")
+    @PostMapping("/idp/apple/{status}")
+    public ResponseEntity<AccessTokenResponse> registerByApple (@PathVariable String status, @RequestBody RegisterRequest request) {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
-            accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code());
+            accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code(), status);
         } else {
-            accessToken = authService.registerByApple(request.registerToken(), request.code());
+            accessToken = authService.registerByApple(request.registerToken(), request.code(), status);
         }
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
@@ -117,9 +117,14 @@ public class AuthController {
         };
     }
 
-    @Operation(summary = "Get 6 numbers code")
-    @PostMapping("/registration/sms/code")
-    public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@RequestBody RegistrationPhoneRequest request) {
+    @Operation(summary = "Get 6 numbers code, status = {registration/change}")
+    @PostMapping("/{status}/sms/code")
+    public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@PathVariable String status, @RequestBody RegistrationPhoneRequest request) {
+        if(!status.equals("registration") && !status.equals("change")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new SmsCodeResponse(false, "wrongPath", "잘못된 요청입니다.", false, null));
+        }
+
         if (request.phone().equals(authConfig.getMagicNumber())) {
             val registerToken = authService.getRegisterTokenByMagicNumber();
             return ResponseEntity.status(HttpStatus.OK)
@@ -130,23 +135,27 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new SmsCodeResponse(false, "wrongPhoneNumber", "잘못된 핸드폰 번호입니다.", false, null));
         }
-        val status = authService.sendSixNumberSmsCode(request.phone());
-        return switch (status) {
+        val state = authService.sendSixNumberSmsCode(request.phone(), status);
+        return switch (state) {
             case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null, false, null));
             case "emptySoptUser" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, status, "인증할 수 없는 유저입니다. 문의해주세요.", false, null));
+                    .body(new SmsCodeResponse(false, state, "인증할 수 없는 유저입니다. 문의해주세요.", false, null));
             case "shouldRetry" -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new SmsCodeResponse(false, status, "재시도 해주세요.", false, null));
+                    .body(new SmsCodeResponse(false, state, "재시도 해주세요.", false, null));
             case "alreadyTaken" -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, status, "이미 가입한 유저입니다.", false, null));
+                    .body(new SmsCodeResponse(false, state, "이미 가입한 유저입니다.", false, null));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new SmsCodeResponse(false, "unknownError", "알 수 없는 이유로 이메일 발송에 실패했습니다.", false, null));
         };
     }
 
-    @Operation(summary = "Get registerToken by 6 number Code")
-    @PostMapping("/registration/sms/token")
-    public ResponseEntity<RegisterTokenBySmsResponse> getRegistrationToken (@RequestBody RegistrationTokenBySmsRequest request) {
+    @Operation(summary = "Get registerToken by 6 number Code, status = {registration/change}")
+    @PostMapping("/{status}/sms/token")
+    public ResponseEntity<RegisterTokenBySmsResponse> getRegistrationToken (@PathVariable String status, @RequestBody RegistrationTokenBySmsRequest request) {
+        if(!status.equals("registration") && !status.equals("change")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new RegisterTokenBySmsResponse(false, "wrongPath", "잘못된 요청입니다.", null));
+        }
         if (request.sixNumberCode().length() != 6) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new RegisterTokenBySmsResponse(false, "wrongCode", "잘못된 코드입니다.", null));

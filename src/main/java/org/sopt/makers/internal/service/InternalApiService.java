@@ -90,6 +90,11 @@ public class InternalApiService {
         return memberProfileQueryRepository.findMemberProfileProjectsByMemberId(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<MemberSoptActivity> getMemberActivities (Long id) {
+        return soptActivityRepository.findAllByMemberId(id);
+    }
+
     public Map<String, List<ActivityVo>> getMemberProfileActivity (
             List<MemberSoptActivity> memberActivities,
             List<MemberProfileProjectDao> memberProfileProjects
