@@ -143,6 +143,11 @@ public class InternalApiService {
         return memberProfileQueryRepository.countMembersByGeneration(generation);
     }
 
+    @Transactional(readOnly = true)
+    public List<Long> getMembersIdByGeneration (Integer generation) {
+        return memberProfileQueryRepository.findAllMemberIdsByGeneration(generation);
+    }
+
     public String getPartName(Integer partFilter) {
         return getMemberPart(partFilter);
     }
