@@ -212,6 +212,17 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
+    public List<Long> findAllMemberIdsByGeneration(Integer generation) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        return queryFactory.select(member.id)
+                .from(member)
+                .innerJoin(member.activities, activities)
+                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation)
+                ).groupBy(member.id)
+                .fetch();
+    }
+
     public int countMembersByGeneration(Integer generation) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;

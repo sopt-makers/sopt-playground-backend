@@ -194,6 +194,16 @@ public class InternalOpenApiController {
         }
     }
 
+    @Operation(summary = "최근 활동기수 멤버id 리스트 조회 API")
+    @GetMapping("/members/latest")
+    public ResponseEntity<InternalLatestMemberResponse> getUserProfiles (
+            @RequestParam(name = "generation") Integer generation
+    ) {
+        val memberIds = internalApiService.getMembersIdByGeneration(generation);
+        val response = new InternalLatestMemberResponse(memberIds);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     private void sortProfileCareer (InternalMemberProfileSpecificResponse response) {
         response.careers().sort((a, b) -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
