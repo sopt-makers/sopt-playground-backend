@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.domain;
 
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -12,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@DynamicInsert
 @Table(name = "users")
 public class Member {
 
@@ -116,6 +119,10 @@ public class Member {
     @Builder.Default
     @Column(name = "has_profile")
     private Boolean hasProfile = false;
+
+    @Column(name = "edit_activities_able", nullable = false)
+    @ColumnDefault("true")
+    private Boolean editActivitiesAble;
 
     @Builder.Default
     @Column(name = "openToSoulmate")
