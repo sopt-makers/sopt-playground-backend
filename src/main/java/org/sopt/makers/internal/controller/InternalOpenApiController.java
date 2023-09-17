@@ -74,7 +74,8 @@ public class InternalOpenApiController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val member = internalApiService.getMemberById(memberDetails.getId());
-        val response = memberMapper.toInternalResponse(member);
+        val latestGeneration = internalApiService.getMemberLatestActivityGeneration(memberDetails.getId());
+        val response = memberMapper.toInternalResponse(member, latestGeneration);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
