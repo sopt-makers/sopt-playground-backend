@@ -14,7 +14,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
     MemberResponse toResponse(Member member);
-    InternalMemberResponse toInternalResponse(Member member);
+    InternalMemberResponse toInternalResponse(Member member, Integer latestGeneration);
     MemberProfileResponse toProfileResponse (Member member);
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
     WordChainGameGenerateResponse.UserResponse toUserResponse (Member member);
