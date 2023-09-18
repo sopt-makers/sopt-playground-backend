@@ -110,8 +110,9 @@ public class Member {
     @Column(name = "open_to_side_project")
     private Boolean openToSideProject;
 
+    @Builder.Default
     @Column(name = "allow_official")
-    private Boolean allowOfficial;
+    private Boolean allowOfficial = false;
 
     @Builder.Default
     @Column(name = "has_profile")
