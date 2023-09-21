@@ -90,3 +90,6 @@ internal:
     secret: test
 dictionary:
   key: test
+
+management-service:
+  secret: test

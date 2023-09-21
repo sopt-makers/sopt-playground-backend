@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -7,11 +8,14 @@ import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
+import org.sopt.makers.internal.exception.FeignClientException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
+import org.sopt.makers.internal.external.MakersManagementServiceClient;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,7 @@ public class AuthService {
     private final InternalTokenManager tokenManager;
     private final FacebookTokenManager fbTokenManager;
     private final GoogleTokenManager googleTokenManager;
+    private final MakersManagementServiceClient makersManagementServiceClient;
 
     private final AppleTokenManager appleTokenManager;
 
@@ -40,6 +45,9 @@ public class AuthService {
     private final EmailSender emailSender;
 
     private final SmsSender smsSender;
+
+    @Value("${management-service.secret}")
+    private String managementServiceSecret;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -70,6 +78,7 @@ public class AuthService {
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(googleUserInfo, "google");
 
+        requestManagementServiceUserCreation(member, SoptMemberHistory.builder().part("서버").build(), "ob");
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -281,6 +290,9 @@ public class AuthService {
         }).toList();
         memberSoptActivityRepository.saveAll(memberActivities);
         memberHistory.makeMemberJoin();
+        val obyb = memberActivities.size() > 1 ? "OB" : "YB";
+
+        requestManagementServiceUserCreation(member, memberHistory, obyb);
         return member;
     }
 
@@ -354,5 +366,46 @@ public class AuthService {
         val random = new Random();
         int number = random.nextInt(999999);
         return String.format("%06d", number);
+    }
+
+    private void requestManagementServiceUserCreation(Member member, SoptMemberHistory memberHistory, String obyb) {
+        try {
+            makersManagementServiceClient.registerManagementServiceUser(
+                    managementServiceSecret,
+                    "playground",
+                    new HashMap<>() {{
+                        put("generation", member.getGeneration());
+                        put("name", member.getName());
+                        put("obyb", obyb.toUpperCase());
+                        put("part", getPartEnum(memberHistory.getPart()));
+                        put("phone", member.getPhone());
+                        put("playgroundId", member.getId());
+                        put("university", member.getUniversity());
+                    }}
+            );
+
+            log.info("운영 서버 유저 등록 성공");
+        } catch (FeignException error) {
+            throw new FeignClientException(error.getMessage());
+        }
+    }
+
+    private String getPartEnum(String part) {
+        switch (part) {
+            case "기획":
+                return "PLAN";
+            case "디자인":
+                return "DESIGN";
+            case "안드로이드":
+                return "ANDRIOD";
+            case "iOS":
+                return "iOS";
+            case "웹":
+                return "WEB";
+            case "서버":
+                return "SERVER";
+        }
+
+        return "FAIL";
     }
 }
