@@ -98,7 +98,7 @@ public class AuthService {
 
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = memberRepository.findByName("Tester")
+        val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(appleUserInfo, "apple");
 
