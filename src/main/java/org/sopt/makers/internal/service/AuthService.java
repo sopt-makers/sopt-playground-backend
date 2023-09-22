@@ -66,7 +66,7 @@ public class AuthService {
 
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = memberRepository.findByName("Tester")
+        val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(googleUserInfo, "google");
 
@@ -81,7 +81,7 @@ public class AuthService {
         if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
 
         val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
-        val member = memberRepository.findByName("Tester")
+        val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(fbUserInfo.userId(), "facebook");
 
@@ -98,7 +98,7 @@ public class AuthService {
 
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-        val member = memberRepository.findByName("Tester")
+        val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(appleUserInfo, "apple");
 
