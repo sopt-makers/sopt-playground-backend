@@ -9,7 +9,7 @@ public record InternalMemberResponse(
         @Schema(required = true)
         String name,
         @Schema(required = true)
-        Integer generation,
+        Integer latestGeneration,
         String profileImage,
 
         @Schema(required = true)

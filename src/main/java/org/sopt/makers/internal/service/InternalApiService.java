@@ -95,6 +95,12 @@ public class InternalApiService {
         return soptActivityRepository.findAllByMemberId(id);
     }
 
+    @Transactional(readOnly = true)
+    public Integer getMemberLatestActivityGeneration (Long id) {
+        return soptActivityRepository.findAllByMemberId(id).stream().map(MemberSoptActivity::getGeneration)
+                .max(Integer::compare).orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member Activity를 찾을 수 없습니다."));
+    }
+
     public Map<String, List<ActivityVo>> getMemberProfileActivity (
             List<MemberSoptActivity> memberActivities,
             List<MemberProfileProjectDao> memberProfileProjects
