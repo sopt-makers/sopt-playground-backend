@@ -66,7 +66,7 @@ public class AuthService {
 
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-        val member = memberRepository.findByName("Tester")
+        val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
         member.updateMemberAuth(googleUserInfo, "google");
 
