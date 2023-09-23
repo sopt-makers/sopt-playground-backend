@@ -218,7 +218,7 @@ public class MemberService {
                 .build();
 
         member.saveMemberProfile(
-                request.name(), request.profileImage(), request.birthday(), request.phone().replaceAll("[^0-9]", ""), request.email(),
+                request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
@@ -319,7 +319,7 @@ public class MemberService {
                          .isHardPeachLover(request.userFavor().isHardPeachLover())
                                  .build();
         member.saveMemberProfile(
-                member.getName(), request.profileImage(), request.birthday(), request.phone().replaceAll("[^0-9]", ""), request.email(),
+                member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
