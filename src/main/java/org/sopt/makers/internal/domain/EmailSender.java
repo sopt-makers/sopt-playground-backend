@@ -56,7 +56,7 @@ public class EmailSender {
         val profilePictureUrl = profilePicUrl == null ? authConfig.getProfileDefaultUrl() : profilePicUrl;
         val profileUrl = authConfig.getProfileUrl() + senderId;
         val originHtml = """
-                <!DOCTYPE htmlPUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE htmlPUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="ko">
 
   <head>
