@@ -280,23 +280,15 @@ public class MemberService {
                                 .build()).collect(Collectors.toList())
         );
 
-        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
-            val sameGenerationInActivity = request.activities().stream()
-                            .filter(activityUpdateRequest -> Objects.equals(activityUpdateRequest.generation(), activity.getGeneration())).findFirst();
-            if(sameGenerationInActivity.isPresent()) {
-                val team = sameGenerationInActivity.map(MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::team).orElse(null);
-                return MemberSoptActivity.builder()
-                        .memberId(activity.getMemberId())
-                        .part(activity.getPart())
-                        .generation(activity.getGeneration())
-                        .team(checkActivityTeamConditions(team)).build();
-            }
-            return MemberSoptActivity.builder()
-                            .memberId(activity.getMemberId())
-                            .part(activity.getPart())
-                            .generation(activity.getGeneration())
-                            .team(checkActivityTeamConditions(activity.getTeam())).build();
-        }).collect(Collectors.toList());
+        val memberActivities = memberSoptActivityRepository.saveAll(
+                request.activities().stream().map(activity ->
+                        MemberSoptActivity.builder()
+                                .memberId(memberId)
+                                .part(activity.part())
+                                .generation(activity.generation())
+                                .team(checkActivityTeamConditions(activity.team()))
+                                .build()).collect(Collectors.toList())
+        );
 
         val memberCareers = request.careers().stream().map(career -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
