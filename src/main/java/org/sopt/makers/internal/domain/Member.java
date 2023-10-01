@@ -121,7 +121,8 @@ public class Member {
     @Column(name = "has_profile")
     private Boolean hasProfile = true;
 
-    @Column(name = "edit_activities_able", nullable = false)
+    @Builder.Default
+    @Column(name = "edit_activities_able")
     @ColumnDefault("true")
     private Boolean editActivitiesAble;
 
