@@ -124,7 +124,7 @@ public class Member {
     @Builder.Default
     @Column(name = "edit_activities_able")
     @ColumnDefault("true")
-    private Boolean editActivitiesAble;
+    private Boolean editActivitiesAble = true;
 
     @Builder.Default
     @Column(name = "openToSoulmate")
