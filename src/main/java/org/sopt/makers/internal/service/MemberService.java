@@ -269,6 +269,11 @@ public class MemberService {
     @Transactional
     public Member updateMemberProfile (Long id, MemberProfileUpdateRequest request) {
         val member = getMemberById(id);
+
+        if (!member.getEditActivitiesAble()) {
+            throw new ClientBadRequestException("이미 프로필을 수정한 적이 있는 유저입니다.");
+        }
+
         val memberId = member.getId();
         val memberLinks = memberLinkRepository.saveAll(
                 request.links().stream().map(link ->
@@ -326,6 +331,7 @@ public class MemberService {
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
+        member.editActivityChangeToFalse();
         return member;
     }
 
