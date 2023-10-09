@@ -223,6 +223,29 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
+    public List<Long> findAllInactivityMemberIdsByGenerationAndPart(Integer generation, Part part) {
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        if (part != null) {
+            return queryFactory.select(member.id)
+                    .from(member)
+                    .innerJoin(member.activities, activities)
+                    .where(activities.generation.ne(generation))
+                    .where(activities.part.eq(part.getValue()))
+                    .groupBy(member.id)
+                    .orderBy(member.id.asc())
+                    .fetch();
+        } else {
+            return queryFactory.select(member.id)
+                    .from(member)
+                    .innerJoin(member.activities, activities)
+                    .where(activities.generation.ne(generation))
+                    .groupBy(member.id)
+                    .orderBy(member.id.asc())
+                    .fetch();
+        }
+    }
+
     public int countMembersByGeneration(Integer generation) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;

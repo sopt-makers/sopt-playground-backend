@@ -2,10 +2,7 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.InternalTokenManager;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.MemberSoptActivity;
-import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.internal.InternalAuthVo;
 import org.sopt.makers.internal.dto.member.ActivityVo;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
@@ -152,6 +149,11 @@ public class InternalApiService {
     @Transactional(readOnly = true)
     public List<Long> getMembersIdByGeneration (Integer generation) {
         return memberProfileQueryRepository.findAllMemberIdsByGeneration(generation);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> getInactivityMemberIdListByGenerationAndPart(Integer generation, Part part) {
+        return memberProfileQueryRepository.findAllInactivityMemberIdsByGenerationAndPart(generation, part);
     }
 
     public String getPartName(Integer partFilter) {

@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.domain;
 
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -12,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@DynamicInsert
 @Table(name = "users")
 public class Member {
 
@@ -119,6 +122,11 @@ public class Member {
     private Boolean hasProfile = true;
 
     @Builder.Default
+    @Column(name = "edit_activities_able")
+    @ColumnDefault("true")
+    private Boolean editActivitiesAble = true;
+
+    @Builder.Default
     @Column(name = "openToSoulmate")
     private Boolean openToSoulmate = false;
 
@@ -180,5 +188,9 @@ public class Member {
         this.links.clear(); this.links.addAll(links);
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
+    }
+
+    public void editActivityChangeToFalse() {
+        this.editActivitiesAble = false;
     }
 }
