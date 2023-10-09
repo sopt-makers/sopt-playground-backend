@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.domain.Part;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
@@ -202,6 +203,17 @@ public class InternalOpenApiController {
     ) {
         val memberIds = internalApiService.getMembersIdByGeneration(generation);
         val response = new InternalLatestMemberResponse(memberIds);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "명예 회원 멤버 id 리스트 조회 API")
+    @GetMapping("/members/inactivity")
+    public ResponseEntity<InternalInactivityMemberResponse> getInactivityMemberIdList(
+            @RequestParam(name = "generation") Integer generation,
+            @RequestParam(name = "part", required = false)Part part
+            ) {
+        val memberIds = internalApiService.getInactivityMemberIdListByGenerationAndPart(generation, part);
+        val response = new InternalInactivityMemberResponse(memberIds);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
