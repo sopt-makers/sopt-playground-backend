@@ -91,7 +91,7 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code(), status);
-버        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterMagicNumber())) {
+        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterMagicNumber())) {
             accessToken = authService.registerBySocialAndDevMagicRegisterToken(request.registerToken(), request.code(), "apple");
         } else {
             accessToken = authService.registerByApple(request.registerToken(), request.code(), status);
