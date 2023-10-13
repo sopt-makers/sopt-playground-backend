@@ -49,8 +49,8 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByFbAndMagicRegisterToken(request.registerToken(), request.code());
-        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterMagicNumber())) {
-            accessToken = authService.registerBySocialAndDevMagicRegisterToken(request.registerToken(), request.code(), "facebook");
+        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
+            accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "facebook");
         } else {
             accessToken = authService.registerByFb(request.registerToken(), request.code());
         }
@@ -70,8 +70,8 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code(), status);
-        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterMagicNumber())) {
-            accessToken = authService.registerBySocialAndDevMagicRegisterToken(request.registerToken(), request.code(), "google");
+        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
+            accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "google");
         } else {
             accessToken = authService.registerByGoogle(request.registerToken(), request.code(), status);
         }
@@ -91,8 +91,8 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code(), status);
-        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterMagicNumber())) {
-            accessToken = authService.registerBySocialAndDevMagicRegisterToken(request.registerToken(), request.code(), "apple");
+        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
+            accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "apple");
         } else {
             accessToken = authService.registerByApple(request.registerToken(), request.code(), status);
         }
