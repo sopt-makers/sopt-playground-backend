@@ -149,8 +149,8 @@ public class InternalTokenManager {
         return authConfig.getMagicRegisterToken().equals(token);
     }
 
-    public boolean verifyDevMagicRegisterToken (String token) {
-        return authConfig.getDevRegisterMagicNumber().equals(token);
+    public boolean verifyDevMagicRegisterQaToken(String token) {
+        return authConfig.getDevRegisterQaToken().equals(token);
     }
 
     private Claims getClaimsFromToken (String token) throws SignatureException {
