@@ -72,6 +72,9 @@ public class AuthConfig {
     @Value("${oauth.apple.register-token}")
     private String magicRegisterToken;
 
+    @Value("${oauth.dev-register-magic-number}")
+    private String devRegisterMagicNumber;
+
     @Value("${oauth.apple.key.url}")
     private String applePublicKeysUrl;
 
