@@ -149,6 +149,10 @@ public class InternalTokenManager {
         return authConfig.getMagicRegisterToken().equals(token);
     }
 
+    public boolean verifyDevMagicRegisterToken (String token) {
+        return authConfig.getDevRegisterMagicNumber().equals(token);
+    }
+
     private Claims getClaimsFromToken (String token) throws SignatureException {
         return Jwts.parserBuilder()
                 .setSigningKey(DatatypeConverter.parseBase64Binary(authConfig.getJwtSecretKey()))

@@ -189,8 +189,4 @@ public class Member {
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
     }
-
-    public void editActivityChangeToFalse() {
-        this.editActivitiesAble = false;
-    }
 }
