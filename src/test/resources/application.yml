@@ -43,6 +43,7 @@ naver-cloud-sms:
 oauth:
   registerPage: testUrl
   dev-register-magic-number: test
+  dev-register-qa-token: test
   fb:
     redirect:
       auth: testUrl

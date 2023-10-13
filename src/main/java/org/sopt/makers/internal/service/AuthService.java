@@ -74,8 +74,8 @@ public class AuthService {
     }
 
     @Transactional
-    public String registerBySocialAndDevMagicRegisterToken(String registerToken, String code, String socialType) {
-        val isMagic = tokenManager.verifyDevMagicRegisterToken(registerToken);
+    public String registerByDevQaMagicRegisterToken(String registerToken, String code, String socialType) {
+        val isMagic = tokenManager.verifyDevMagicRegisterQaToken(registerToken);
         if (!isMagic) throw new WrongTokenException("tokenInvalid");
 
         String authUserId = null;
@@ -355,6 +355,10 @@ public class AuthService {
 
     public String getRegisterTokenByMagicNumber () {
         return authConfig.getMagicRegisterToken();
+    }
+
+    public String getRegisterQaToken() {
+        return authConfig.getDevRegisterQaToken();
     }
 
     private boolean isInSoptOrganizerTeam(String part) {
