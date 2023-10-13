@@ -138,6 +138,10 @@ public class AuthController {
             val registerToken = authService.getRegisterTokenByMagicNumber();
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new SmsCodeResponse(true, null, null, true, registerToken));
+        } else if (request.phone().equals(authConfig.getDevRegisterMagicNumber())) {
+            val registerToken = authService.getRegisterQaToken();
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new SmsCodeResponse(true, null, null, true, registerToken));
         }
 
         if (!request.phone().startsWith("010")) {
