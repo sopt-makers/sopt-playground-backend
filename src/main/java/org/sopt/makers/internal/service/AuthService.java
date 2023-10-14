@@ -107,6 +107,7 @@ public class AuthService {
                 Member.builder()
                         .authUserId(authUserId)
                         .idpType(socialType)
+                        .name("DEV TESTER")
                         .hasProfile(true)
                         .build()
         );
