@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1")
 public class AuthController {
 
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
     private final AuthService authService;
     private final AuthConfig authConfig;
 
@@ -49,7 +47,7 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByFbAndMagicRegisterToken(request.registerToken(), request.code());
-        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
+        } else if (authConfig.getActiveProfile().equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
             accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "facebook");
         } else {
             accessToken = authService.registerByFb(request.registerToken(), request.code());
@@ -70,7 +68,7 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code(), status);
-        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
+        } else if (authConfig.getActiveProfile().equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
             accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "google");
         } else {
             accessToken = authService.registerByGoogle(request.registerToken(), request.code(), status);
@@ -91,7 +89,7 @@ public class AuthController {
         String accessToken;
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code(), status);
-        } else if (activeProfile.equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
+        } else if (authConfig.getActiveProfile().equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
             accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "apple");
         } else {
             accessToken = authService.registerByApple(request.registerToken(), request.code(), status);
@@ -104,6 +102,7 @@ public class AuthController {
     @PostMapping("/registration/info")
     public ResponseEntity<RegisterTokenInfoResponse> checkRegisterToken (@RequestBody RegisterTokenInfoRequest request) {
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) return ResponseEntity.status(200).body(new RegisterTokenInfoResponse("Tester", 32));
+        else if (request.registerToken().equals(authConfig.getDevRegisterQaToken())) return ResponseEntity.status(200).body(new RegisterTokenInfoResponse("Tester", 32));
         val memberHistory = authService.findMemberByRegisterToken(request.registerToken())
                 .orElseThrow(() -> new ForbiddenClientException("SOPT Member History를 찾을 수 없습니다."));
         return ResponseEntity.status(200).body(new RegisterTokenInfoResponse(memberHistory.getName(), memberHistory.getGeneration()));
@@ -138,7 +137,7 @@ public class AuthController {
             val registerToken = authService.getRegisterTokenByMagicNumber();
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new SmsCodeResponse(true, null, null, true, registerToken));
-        } else if (request.phone().equals(authConfig.getDevRegisterMagicNumber())) {
+        } else if (authConfig.getActiveProfile().equals("dev") && request.phone().equals(authConfig.getDevRegisterMagicNumber())) {
             val registerToken = authService.getRegisterQaToken();
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new SmsCodeResponse(true, null, null, true, registerToken));

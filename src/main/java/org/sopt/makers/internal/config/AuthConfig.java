@@ -9,6 +9,9 @@ import java.util.List;
 @Getter
 @Configuration
 public class AuthConfig {
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
     @Value("${jwt.secret}")
     private String jwtSecretKey;
 
