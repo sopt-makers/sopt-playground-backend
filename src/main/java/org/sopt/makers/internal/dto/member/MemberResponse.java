@@ -4,14 +4,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public record MemberResponse(
         @Schema(required = true)
-    Long id,
+        Long id,
 
         @Schema(required = true)
-    String name,
+        String name,
         @Schema(required = true)
-    Integer generation,
-    String profileImage,
+        Integer generation,
+        String profileImage,
 
         @Schema(required = true)
-        Boolean hasProfile
-) {}
+        Boolean hasProfile,
+
+        @Schema(required = true)
+        Boolean editActivitiesAble
+) {
+}
