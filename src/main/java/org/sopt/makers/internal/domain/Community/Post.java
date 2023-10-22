@@ -43,11 +43,15 @@ public class Post {
     @Column(name = "is_blind_writer")
     private Boolean isBlindWriter;
 
+    @Column(name = "is_reported")
+    private Boolean isReported;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
 
 //    @Builder.Default
 //    @OneToMany(
