@@ -37,14 +37,17 @@ public class Post {
     @Column(name = "images", columnDefinition = "text[]")
     private String[] images;
 
+    @Builder.Default
     @Column(name = "is_question")
-    private Boolean isQuestion;
+    private Boolean isQuestion = false;
 
+    @Builder.Default
     @Column(name = "is_blind_writer")
-    private Boolean isBlindWriter;
+    private Boolean isBlindWriter = false;
 
+    @Builder.Default
     @Column(name = "is_reported")
-    private Boolean isReported;
+    private Boolean isReported = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
