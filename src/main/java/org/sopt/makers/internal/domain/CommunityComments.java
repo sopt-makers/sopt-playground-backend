@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.domain;
 
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
@@ -10,6 +12,7 @@ import javax.persistence.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@DynamicInsert
 public class CommunityComments extends AuditingTimeEntity {
 
     @Id
@@ -30,4 +33,8 @@ public class CommunityComments extends AuditingTimeEntity {
 
     @Column(nullable = false)
     private Boolean isBlindWriter;
+
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private Boolean isReported;
 }
