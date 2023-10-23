@@ -130,6 +130,10 @@ public class Member {
     @Column(name = "openToSoulmate")
     private Boolean openToSoulmate = false;
 
+    public void editActivityChangeToFalse() {
+        this.editActivitiesAble = false;
+    }
+
     public void updateMemberAuth (String authUserId, String idpType) {
         this.authUserId = authUserId;
         this.idpType = idpType;
