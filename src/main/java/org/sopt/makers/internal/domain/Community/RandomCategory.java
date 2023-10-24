@@ -16,6 +16,6 @@ public class RandomCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "post_id")
+    @Column
     private Long postId;
 }

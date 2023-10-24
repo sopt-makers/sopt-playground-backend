@@ -16,10 +16,10 @@ public class PartCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "post_id")
+    @Column
     private Long postId;
 
-    @Column(name = "sub_category")
+    @Column
     @Enumerated(EnumType.STRING)
     private Part subCategory;
 }

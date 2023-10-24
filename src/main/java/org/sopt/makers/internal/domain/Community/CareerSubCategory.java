@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 
-public enum Career {
+public enum CareerSubCategory {
     POSTSCRIPT("후기"),
     TIPS("꿀팁"),
     ;

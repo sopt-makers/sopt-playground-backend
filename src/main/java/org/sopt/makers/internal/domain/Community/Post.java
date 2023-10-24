@@ -38,21 +38,21 @@ public class Post {
     private String[] images;
 
     @Builder.Default
-    @Column(name = "is_question")
+    @Column
     private Boolean isQuestion = false;
 
     @Builder.Default
-    @Column(name = "is_blind_writer")
+    @Column
     private Boolean isBlindWriter = false;
 
     @Builder.Default
-    @Column(name = "is_reported")
+    @Column
     private Boolean isReported = false;
 
-    @Column(name = "created_at")
+    @Column
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column
     private LocalDateTime updatedAt;
 
 
