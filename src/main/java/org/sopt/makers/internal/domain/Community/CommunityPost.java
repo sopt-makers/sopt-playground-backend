@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table
-public class Post {
+public class CommunityPost {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
