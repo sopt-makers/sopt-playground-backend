@@ -20,5 +20,5 @@ public class SoptActivityCategory {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private SoptActivity subCategory;
+    private SoptActivity soptActivitySubCategory;
 }

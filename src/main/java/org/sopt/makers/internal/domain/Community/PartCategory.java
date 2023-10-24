@@ -21,5 +21,5 @@ public class PartCategory {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Part subCategory;
+    private Part partSubCategory;
 }

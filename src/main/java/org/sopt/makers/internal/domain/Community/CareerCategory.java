@@ -20,5 +20,5 @@ public class CareerCategory {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private CareerSubCategory subCategory;
+    private CareerSubCategory careerSubCategory;
 }

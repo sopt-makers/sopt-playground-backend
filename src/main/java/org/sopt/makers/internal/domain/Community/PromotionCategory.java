@@ -21,5 +21,5 @@ public class PromotionCategory {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Promotion subCategory;
+    private Promotion promotionSubCategory;
 }
