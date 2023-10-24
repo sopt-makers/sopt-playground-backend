@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.domain;
+package org.sopt.makers.internal.domain.Community;
 
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
