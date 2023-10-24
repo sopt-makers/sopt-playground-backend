@@ -20,7 +20,7 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "writer_id")
+    @Column
     private String writerId;
 
     @Column
@@ -60,6 +60,6 @@ public class Post {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    @JoinColumn(name = "post_id")
+    @JoinColumn(name = "postId")
     private List<CommunityComments> comments = new ArrayList<>();
 }
