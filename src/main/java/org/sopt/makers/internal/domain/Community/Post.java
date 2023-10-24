@@ -2,12 +2,11 @@ package org.sopt.makers.internal.domain.Community;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
-//import org.sopt.makers.internal.domain.CategoryComment;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-//import java.util.List;
+import java.util.List;
 
 @Entity
 @Getter
@@ -56,11 +55,11 @@ public class Post {
     private LocalDateTime updatedAt;
 
 
-//    @Builder.Default
-//    @OneToMany(
-//            cascade = CascadeType.ALL,
-//            orphanRemoval = true
-//    )
-//    @JoinColumn(name = "comment_id")
-//    private List<CategoryComment> comments = new ArrayList<>();
+    @Builder.Default
+    @OneToMany(
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JoinColumn(name = "post_id")
+    private List<CommunityComments> comments = new ArrayList<>();
 }
