@@ -21,9 +21,8 @@ public class CommunityCommentService {
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
         // TODO: 게시글 생성 기능이 추가되면 해당 게시글이 존재하는지 확인하는 로직 추가 예정
 
-        if (request.isChildComment()) {
-            val comment = communityCommentsRepository.findById(request.parentCommentId())
-                    .orElseThrow(() -> new NotFoundDBEntityException("CommunityComments"));
+        if (request.isChildComment() && !communityCommentsRepository.existsById(request.parentCommentId())) {
+            throw new NotFoundDBEntityException("CommunityComment");
         }
 
         communityCommentsRepository.save(CommunityComment.builder()
