@@ -13,7 +13,7 @@ import javax.persistence.*;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @DynamicInsert
-public class CommunityComments extends AuditingTimeEntity {
+public class CommunityComment extends AuditingTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,13 +28,11 @@ public class CommunityComments extends AuditingTimeEntity {
     @Column(nullable = false)
     private Long writerId;
 
-    @Column(nullable = false)
     private Long parentCommentId;
 
     @Column(nullable = false)
     private Boolean isBlindWriter;
 
-    @Column(nullable = false)
     @ColumnDefault("false")
     private Boolean isReported;
 }
