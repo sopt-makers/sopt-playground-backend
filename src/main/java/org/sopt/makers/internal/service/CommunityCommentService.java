@@ -28,7 +28,7 @@ public class CommunityCommentService {
         communityCommentsRepository.save(CommunityComment.builder()
                         .content(request.content())
                         .postId(postId)
-                        .writerId(writerId)
+                        .writerId(member.getId())
                         .parentCommentId(request.parentCommentId())
                         .isBlindWriter(request.isBlindWriter())
                 .build());
