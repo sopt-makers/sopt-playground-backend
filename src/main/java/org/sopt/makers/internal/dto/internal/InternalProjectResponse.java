@@ -22,6 +22,13 @@ public record InternalProjectResponse(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
+
+        @Schema(required = true)
+        Boolean isAvailable,
+
+        @Schema(required = true)
+        Boolean isFounding,
+
         List<ProjectLinkResponse> links
 ) {
     public record ProjectLinkResponse(
