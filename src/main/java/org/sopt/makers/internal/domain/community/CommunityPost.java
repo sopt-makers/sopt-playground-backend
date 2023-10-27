@@ -2,7 +2,7 @@ package org.sopt.makers.internal.domain.community;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
-import org.sopt.makers.internal.domain.CommunityComments;
+import org.sopt.makers.internal.domain.CommunityComment;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -62,5 +62,5 @@ public class CommunityPost {
             orphanRemoval = true
     )
     @JoinColumn(name = "postId")
-    private List<CommunityComments> comments = new ArrayList<>();
+    private List<CommunityComment> comments = new ArrayList<>();
 }
