@@ -117,6 +117,8 @@ public class ProjectResponseMapper {
                 project.getDetail(),
                 project.getLogoImage(),
                 project.getThumbnailImage(),
+                project.getIsAvailable(),
+                project.getIsFounding(),
                 linkResponses
         );
     }
