@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.community.CommentListResponse;
-import org.sopt.makers.internal.dto.community.CommentSaveRequest;
+import org.sopt.makers.internal.dto.community.*;
+import org.sopt.makers.internal.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.service.CommunityCategoryService;
 import org.sopt.makers.internal.service.CommunityCommentService;
+import org.sopt.makers.internal.service.CommuntiyPostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +28,50 @@ import java.util.Map;
 @SecurityRequirement(name = "Authorization")
 @Tag(name = "Community 관련 API", description = "Community 관련 API List")
 public class CommunityController {
+
+    private final CommuntiyPostService communtiyPostService;
+    private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
+    private final CommunityResponseMapper communityResponseMapper;
+
+    @Operation(summary = "커뮤니티 전체 카테고리 조회")
+    @GetMapping("/category")
+    public ResponseEntity<List<CategoryDto>> getCategoryList() {
+        val response = communityCategoryService.getAllCategory();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 글 상세 조회")
+    @GetMapping("/posts/{postId}")
+    public ResponseEntity<CategoryPostMemberDao> getCategoryList(@PathVariable("postId") Long postId) {
+        val response = communtiyPostService.getPostById(postId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+            summary = "커뮤니티 글 전체 조회",
+            description =
+                    """
+                    categoryId: 카테고리 전체조회시 id값, 전체일 경우 null\n
+                    cursor: 처음 조회시 null, 이외에 마지막 글 id
+                    """
+    )
+    @GetMapping("/posts")
+    public ResponseEntity<PostAllResponse> getAllPosts (
+            @RequestParam(required = false, name = "categoryId") Long categoryId,
+            @RequestParam(required = false, name = "limit") Integer limit,
+            @RequestParam(required = false, name = "cursor") Long cursor
+    ) {
+        val posts = communtiyPostService.getAllPosts(categoryId, limit, cursor);
+        val hasNextPosts = (limit != null && posts.size() > limit);
+        if (hasNextPosts) posts.remove(posts.size() - 1);
+        val postResponse = posts.stream().map(post -> {
+            val comments = communityCommentService.getCommentLists(post.id());
+            return communityResponseMapper.toPostResponse(post, comments);
+        }).collect(Collectors.toList());
+        val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
     @Operation(summary = "커뮤니티 댓글 생성 API")
     @PostMapping("/{postId}/comment")
@@ -36,7 +82,6 @@ public class CommunityController {
     ) {
         val writerId = memberDetails.getId();
         communityCommentService.createComment(writerId, postId, request);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
     }
 
@@ -54,7 +99,6 @@ public class CommunityController {
     ) {
         val writerId = memberDetails.getId();
         communityCommentService.deleteComment(commentId, writerId);
-
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 }
