@@ -3,11 +3,13 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.CommunityComment;
+import org.sopt.makers.internal.dto.community.CommentDao;
 import org.sopt.makers.internal.dto.community.CommentListResponse;
 import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.CommunityCommentRepository;
+import org.sopt.makers.internal.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,8 @@ import java.util.Objects;
 public class CommunityCommentService {
     private final MemberRepository memberRepository;
     private final CommunityCommentRepository communityCommentsRepository;
+    private final CommunityQueryRepository communityQueryRepository;
+
     @Transactional
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
         val member = memberRepository.findById(writerId)
@@ -37,6 +41,11 @@ public class CommunityCommentService {
                         .parentCommentId(request.parentCommentId())
                         .isBlindWriter(request.isBlindWriter())
                 .build());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentDao> getCommentLists(Long postId) {
+        return communityQueryRepository.findCommentByPostId(postId);
     }
 
     @Transactional(readOnly = true)
