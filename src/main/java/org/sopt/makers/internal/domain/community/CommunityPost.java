@@ -22,7 +22,10 @@ public class CommunityPost {
     private Long id;
 
     @Column
-    private String writerId;
+    private Long writerId;
+
+    @Column
+    private Long categoryId;
 
     @Column
     private String title;
