@@ -78,8 +78,8 @@ public class CommunityCommentQueryRepository {
         val member = QMember.member;
 
         return queryFactory.select(new QCategoryPostMemberDao(posts.id, category.id, member.id, member.name,
-                        member.profileImage, member.activities, member.careers, posts.title, posts.content, posts.comments.size(), posts.hits,
-                        posts.isQuestion, posts.isBlindWriter, posts.images, posts.createdAt, posts.updatedAt, posts.comments))
+                        member.profileImage, member.activities, member.careers, posts.title, posts.content, posts.hits,
+                        posts.isQuestion, posts.isBlindWriter, posts.images, posts.createdAt, posts.updatedAt))
                 .from(posts)
                 .innerJoin(posts.comments, comments)
                 .innerJoin(posts).on(member.id.eq(posts.writerId));
