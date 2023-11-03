@@ -16,14 +16,10 @@ public class CategoryQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public List<Category> getCategoryList() {
-        val parent = QCategory.category;
-        val child = QCategory.category;
-        return queryFactory.selectFrom(parent)
-                .distinct()
-                .leftJoin(parent.children, child)
-                .fetchJoin()
-                .where(parent.parent.isNull())
-                .orderBy(parent.id.asc().nullsFirst(), child.id.asc())
+        val category = QCategory.category;
+        return queryFactory.selectFrom(category)
+                .leftJoin(category.parent)
+                .orderBy(category.parent.id.asc().nullsFirst(), category.id.asc())
                 .fetch();
     }
 }
