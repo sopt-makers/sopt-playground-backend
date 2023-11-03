@@ -18,7 +18,6 @@ import java.util.List;
 public class CommunityCategoryService {
 
     private final CategoryQueryRepository categoryQueryRepository;
-    private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
     public List<CategoryDto> getAllCategory() {
