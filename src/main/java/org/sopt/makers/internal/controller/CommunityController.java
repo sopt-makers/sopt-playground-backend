@@ -108,8 +108,10 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 댓글 조회 API")
     @GetMapping("/{postId}/comment")
-    public ResponseEntity<List<CommentListResponse>> getComments(@PathVariable("postId") Long postId) {
-        return ResponseEntity.status(HttpStatus.OK).body(communityCommentService.getCommentList(postId));
+    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable("postId") Long postId) {
+        val comments = communityCommentService.getPostCommentList(postId);
+        val response = comments.stream().map(communityResponseMapper::toCommentResponse).toList();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "커뮤니티 댓글 삭제 API")
