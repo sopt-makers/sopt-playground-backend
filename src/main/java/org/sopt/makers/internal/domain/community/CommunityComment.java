@@ -37,8 +37,4 @@ public class CommunityComment extends AuditingTimeEntity {
 
     @ColumnDefault("false")
     private Boolean isReported;
-
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "post_id")
-    private CommunityPost post;
 }

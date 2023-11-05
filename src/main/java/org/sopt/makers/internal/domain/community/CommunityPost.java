@@ -18,7 +18,7 @@ public class CommunityPost {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id")
+    @Column
     private Long id;
 
     @Column
