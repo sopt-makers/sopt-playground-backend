@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.repository.community;
 
 import org.sopt.makers.internal.domain.community.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
