@@ -73,6 +73,26 @@ public class CommunityController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "커뮤니티 글 생성")
+    @PostMapping("/posts")
+    public ResponseEntity<Map<String, Boolean>> createPost(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestBody @Valid PostSaveRequest request
+    ) {
+        communtiyPostService.createPost(memberDetails.getId(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
+    }
+
+    @Operation(summary = "커뮤니티 글 삭제")
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<Map<String, Boolean>> deletePost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        communtiyPostService.deletePost(postId, memberDetails.getId());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+    }
+
     @Operation(summary = "커뮤니티 댓글 생성 API")
     @PostMapping("/{postId}/comment")
     public ResponseEntity<Map<String, Boolean>> createComment(
