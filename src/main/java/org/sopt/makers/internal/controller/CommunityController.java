@@ -43,7 +43,7 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<CategoryPostMemberDao> getCategoryList(@PathVariable("postId") Long postId) {
+    public ResponseEntity<CommunityPostMemberVo> getCategoryList(@PathVariable("postId") Long postId) {
         val response = communtiyPostService.getPostById(postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -66,7 +66,7 @@ public class CommunityController {
         val hasNextPosts = (limit != null && posts.size() > limit);
         if (hasNextPosts) posts.remove(posts.size() - 1);
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getCommentLists(post.id());
+            val comments = communityCommentService.getPostCommentList(post.posts().getId());
             return communityResponseMapper.toPostResponse(post, comments);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
