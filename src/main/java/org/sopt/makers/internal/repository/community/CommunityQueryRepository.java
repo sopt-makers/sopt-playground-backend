@@ -64,10 +64,10 @@ public class CommunityQueryRepository {
                 .groupBy(member.id, posts.id);
     }
 
-    private BooleanExpression ltPostId(Long postId) {
+    private BooleanExpression ltPostId(Long cursor) {
         val posts = QCommunityPost.communityPost;
-        if(postId == null || postId == 0) return null;
-        return posts.id.lt(postId);
+        if(cursor == null || cursor == 0) return null;
+        return posts.id.lt(cursor);
     }
 
     public List<CommentDao> findCommentByPostId(Long postId) {
