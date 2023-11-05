@@ -76,12 +76,12 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 생성")
     @PostMapping("/posts")
-    public ResponseEntity<Map<String, Boolean>> createPost(
+    public ResponseEntity<CommunityPost> createPost(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @RequestBody @Valid PostSaveRequest request
+            @RequestBody PostSaveRequest request
     ) {
-        communtiyPostService.createPost(memberDetails.getId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
+        val response = communtiyPostService.createPost(2L, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "커뮤니티 글 삭제")

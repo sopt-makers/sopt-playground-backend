@@ -55,11 +55,10 @@ public class CommuntiyPostService {
     }
 
     @Transactional
-    public void createPost(Long writerId, PostSaveRequest request) {
+    public CommunityPost createPost(Long writerId, PostSaveRequest request) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-
-        communityPostRepository.save(CommunityPost.builder()
+        return communityPostRepository.save(CommunityPost.builder()
                 .writerId(member.getId())
                 .categoryId(request.categoryId())
                 .title(request.title())
