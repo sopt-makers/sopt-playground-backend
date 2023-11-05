@@ -9,7 +9,7 @@ import java.util.List;
 public record PostResponse(
         @Schema(required = true)
         Long id,
-        CommunityMemberResponse member,
+        MemberVo member,
         Long writerId,
         String title,
         String content,

@@ -7,10 +7,10 @@ import javax.validation.constraints.NotNull;
 
 public record PostSaveRequest(
     @Schema(required = true)
-    Integer categoryId,
+    Long categoryId,
+    String title,
     @Schema(required = true)
     String content,
-    String title,
     Boolean isQuestion,
     Boolean isBlindWriter,
     String[] images
