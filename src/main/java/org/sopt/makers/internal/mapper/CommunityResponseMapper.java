@@ -24,17 +24,18 @@ public class CommunityResponseMapper {
     }
 
     public MemberVo toMemberResponse(Member member) {
-        val career = member.getCareers().stream().filter(MemberCareer::getIsCurrent).toList();
+        val career = member.getCareers().stream().anyMatch(MemberCareer::getIsCurrent) ?
+                null : member.getCareers().stream().filter(MemberCareer::getIsCurrent).toList().get(0);
         member.getActivities().sort((act1, act2) -> (act2.getGeneration() - act1.getGeneration()));
         return new MemberVo(member.getId(),member.getName(), member.getProfileImage(),
-                member.getActivities().get(0), career.isEmpty() ? null : member.getCareers().get(0));
+                member.getActivities().get(0), career);
     }
 
     public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos) {
         val post = dao.posts();
         val member = dao.member();
         val comments = commentDaos.stream().map(this::toCommentResponse).collect(Collectors.toList());
-        return new PostResponse(post.getId(),member, post.getWriterId(), post.getTitle(), post.getContent(),
-                post.getHits(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
+        return new PostResponse(post.getId(),member, post.getWriterId(), post.getTitle(), post.getContent(), post.getHits(),
+                post.getComments().size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
     }
 }
