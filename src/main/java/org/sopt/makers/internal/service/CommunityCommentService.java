@@ -8,8 +8,8 @@ import org.sopt.makers.internal.dto.community.CommentListResponse;
 import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.repository.CommunityCommentRepository;
-import org.sopt.makers.internal.repository.CommunityQueryRepository;
+import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
+import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +44,7 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentDao> getCommentLists(Long postId) {
+    public List<CommentDao> getPostCommentList(Long postId) {
         return communityQueryRepository.findCommentByPostId(postId);
     }
 
@@ -68,7 +68,6 @@ public class CommunityCommentService {
         if (!Objects.equals(member.getId(), comment.getWriterId())) {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
-
         communityCommentsRepository.delete(comment);
     }
 }
