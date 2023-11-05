@@ -1,23 +1,12 @@
 package org.sopt.makers.internal.dto.community;
 
 import com.querydsl.core.annotations.QueryProjection;
-import org.sopt.makers.internal.domain.MemberCareer;
-import org.sopt.makers.internal.domain.MemberSoptActivity;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import org.sopt.makers.internal.domain.CommunityComment;
+import org.sopt.makers.internal.domain.Member;
 
 public record CommentDao(
-        Long id,
-        Long userId,
-        String userName,
-        String profileImage,
-        List<MemberSoptActivity> activities,
-        List<MemberCareer> careers,
-        String content,
-        Boolean isBlindWriter,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        Member member,
+        CommunityComment comment
 ) {
     @QueryProjection
     public CommentDao {}
