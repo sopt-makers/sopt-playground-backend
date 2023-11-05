@@ -71,6 +71,7 @@ public class CommunityQueryRepository {
     }
 
     public List<CommentDao> findCommentByPostId(Long postId) {
+        //TODO: 계층형 댓글 조회로 변경
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
@@ -78,11 +79,11 @@ public class CommunityQueryRepository {
 
         return queryFactory.select(new QCommentDao(member, comment))
                 .from(comment)
-                .innerJoin(member).on(comment.writerId.eq(member.id))
+                .innerJoin(member).on(member.id.eq(comment.writerId))
                 .innerJoin(member.activities, activities)
                 .innerJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
-                .groupBy(comment.id)
+                .groupBy(comment.id, member.id)
                 .fetch();
     }
 }
