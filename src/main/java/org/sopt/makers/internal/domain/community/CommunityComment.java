@@ -7,6 +7,8 @@ import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
 
+import static javax.persistence.FetchType.LAZY;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,4 +37,8 @@ public class CommunityComment extends AuditingTimeEntity {
 
     @ColumnDefault("false")
     private Boolean isReported;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "post_id")
+    private CommunityPost post;
 }
