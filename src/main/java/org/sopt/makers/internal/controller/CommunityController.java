@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.service.CommunityCategoryService;
@@ -43,7 +44,7 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<CategoryPostMemberDao> getCategoryList(@PathVariable("postId") Long postId) {
+    public ResponseEntity<CommunityPostMemberVo> getCategoryList(@PathVariable("postId") Long postId) {
         val response = communtiyPostService.getPostById(postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -66,11 +67,31 @@ public class CommunityController {
         val hasNextPosts = (limit != null && posts.size() > limit);
         if (hasNextPosts) posts.remove(posts.size() - 1);
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getCommentLists(post.id());
+            val comments = communityCommentService.getPostCommentList(post.posts().getId());
             return communityResponseMapper.toPostResponse(post, comments);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 글 생성")
+    @PostMapping("/posts")
+    public ResponseEntity<CommunityPost> createPost(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestBody PostSaveRequest request
+    ) {
+        val response = communtiyPostService.createPost(2L, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 글 삭제")
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<Map<String, Boolean>> deletePost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        communtiyPostService.deletePost(postId, memberDetails.getId());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 생성 API")
@@ -87,8 +108,10 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 댓글 조회 API")
     @GetMapping("/{postId}/comment")
-    public ResponseEntity<List<CommentListResponse>> getComments(@PathVariable("postId") Long postId) {
-        return ResponseEntity.status(HttpStatus.OK).body(communityCommentService.getCommentList(postId));
+    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable("postId") Long postId) {
+        val comments = communityCommentService.getPostCommentList(postId);
+        val response = comments.stream().map(communityResponseMapper::toCommentResponse).toList();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "커뮤니티 댓글 삭제 API")

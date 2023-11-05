@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.repository.community;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -26,7 +26,6 @@ public class CommunityQueryRepository {
         return getPostQuery()
                 .where(ltPostId(cursor))
                 .limit(limit)
-                .groupBy(posts.id)
                 .orderBy(posts.createdAt.desc())
                 .fetch();
     }
@@ -42,7 +41,6 @@ public class CommunityQueryRepository {
                 .innerJoin(category.parent).on(category.parent.id.eq(categoryId))
                 .where(ltPostId(cursor))
                 .limit(limit)
-                .groupBy(posts.id)
                 .orderBy(posts.createdAt.desc())
                 .fetch();
     }
@@ -54,39 +52,38 @@ public class CommunityQueryRepository {
 
     private JPAQuery<CategoryPostMemberDao> getPostQuery() {
         val posts = QCommunityPost.communityPost;
-        val category = QCategory.category;
         val member = QMember.member;
-        val career = QMemberCareer.memberCareer;
+        val careers = QMemberCareer.memberCareer;
         val activities = QMemberSoptActivity.memberSoptActivity;
 
-        return queryFactory.select(new QCategoryPostMemberDao(posts.id, category.id, member.id, member.name, member.profileImage,
-                        member.activities, member.careers, posts.title, posts.content, posts.hits,
-                        posts.isQuestion, posts.isBlindWriter, posts.images, posts.createdAt, posts.updatedAt))
+        return queryFactory.select(new QCategoryPostMemberDao(member, posts))
                 .from(posts)
-                .innerJoin(posts).on(member.id.eq(posts.writerId))
-                .innerJoin(member.careers, career)
-                .innerJoin(member.activities, activities);
+                .innerJoin(member).on(member.id.eq(posts.writerId))
+                .innerJoin(member.activities, activities)
+                .innerJoin(member.careers, careers)
+                .groupBy(member.id, posts.id);
     }
 
-    private BooleanExpression ltPostId(Long postId) {
+    private BooleanExpression ltPostId(Long cursor) {
         val posts = QCommunityPost.communityPost;
-        if(postId == null || postId == 0) return null;
-        return posts.id.lt(postId);
+        if(cursor == null || cursor == 0) return null;
+        return posts.id.lt(cursor);
     }
 
     public List<CommentDao> findCommentByPostId(Long postId) {
+        //TODO: 계층형 댓글 조회로 변경
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         val careers = QMemberCareer.memberCareer;
 
-        return queryFactory.select(new QCommentDao(comment.id, member.id, member.name, member.profileImage,
-                        member.activities, member.careers, comment.content, comment.isBlindWriter, comment.createdAt, comment.updatedAt))
+        return queryFactory.select(new QCommentDao(member, comment))
                 .from(comment)
-                .innerJoin(member).on(comment.writerId.eq(member.id))
+                .innerJoin(member).on(member.id.eq(comment.writerId))
                 .innerJoin(member.activities, activities)
                 .innerJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
+                .groupBy(comment.id, member.id)
                 .fetch();
     }
 }

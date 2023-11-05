@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.repository.community;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;

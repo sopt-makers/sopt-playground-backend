@@ -1,20 +1,17 @@
 package org.sopt.makers.internal.dto.community;
 
-import org.sopt.makers.internal.domain.MemberCareer;
-import org.sopt.makers.internal.domain.MemberSoptActivity;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record CommentResponse(
+        @Schema(required = true)
         Long id,
-        Long userId,
-        String userName,
-        String profileImage,
-        List<MemberSoptActivity> activities,
-        List<MemberCareer> careers,
+        MemberVo member,
+        Long postId,
+        Long parentCommentId,
         String content,
         Boolean isBlindWriter,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        Boolean isReported,
+        LocalDateTime createdAt
 ){}
