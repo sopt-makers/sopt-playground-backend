@@ -2,7 +2,7 @@ package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.CommunityComment;
+import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
 import org.sopt.makers.internal.dto.community.CommentListResponse;
 import org.sopt.makers.internal.dto.community.CommentSaveRequest;
