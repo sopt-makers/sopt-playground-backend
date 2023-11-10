@@ -89,4 +89,13 @@ public class CommunityQueryRepository {
                 .where(comment.postId.eq(postId))
                 .fetch();
     }
+
+    public void updateHitsByPostId(Long postId) {
+        val post = QCommunityPost.communityPost;
+
+        queryFactory.update(post)
+                .set(post.hits, post.hits.add(1))
+                .where(post.id.eq(postId))
+                .execute();
+    }
 }

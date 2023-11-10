@@ -14,6 +14,7 @@ import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,6 +24,7 @@ public class CommunityCommentService {
     private final MemberRepository memberRepository;
     private final CommunityCommentRepository communityCommentsRepository;
     private final CommunityQueryRepository communityQueryRepository;
+    private final InternalApiService internalApiService;
 
     @Transactional
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
@@ -55,6 +57,9 @@ public class CommunityCommentService {
                         .content(comment.getContent())
                         .parentCommentId(comment.getParentCommentId())
                         .isBlindWriter(comment.getIsBlindWriter())
+                        .generation(internalApiService.getMemberLatestActivityGeneration(comment.getWriterId()))
+                        .part(internalApiService.getMemberLatestActivityPart(comment.getWriterId()))
+                        .createdAt(comment.getCreatedAt())
                         .build()).toList();
     }
 

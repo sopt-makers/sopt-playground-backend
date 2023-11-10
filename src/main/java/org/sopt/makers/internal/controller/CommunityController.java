@@ -17,9 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -71,6 +74,17 @@ public class CommunityController {
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 글 조회수 증가")
+    @PostMapping("/posts/{postId}/hit")
+    public ResponseEntity<Map<String, Boolean>> upPostHit(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val memberId = memberDetails.getId();
+
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 생성 API")
