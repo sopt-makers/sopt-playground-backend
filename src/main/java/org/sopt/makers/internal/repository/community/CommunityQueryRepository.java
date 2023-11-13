@@ -43,14 +43,21 @@ public class CommunityQueryRepository {
     public List<CategoryPostMemberDao> findAllParentCategoryPostByCursor(
             Long categoryId, Integer limit, Long cursor
     ) {
+        val member = QMember.member;
+        val careers = QMemberCareer.memberCareer;
+        val activities = QMemberSoptActivity.memberSoptActivity;
         val posts = QCommunityPost.communityPost;
         val category = QCategory.category;
 
-        return getPostQuery()
-                .innerJoin(category).on(category.id.eq(posts.categoryId))
-                .innerJoin(category.parent).on(category.parent.id.eq(categoryId))
-                .where(ltPostId(cursor))
+        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+                .from(posts)
+                .innerJoin(posts.member, member)
+                .innerJoin(member.activities, activities)
+                .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
+                .innerJoin(category).on(posts.categoryId.eq(category.id))
+                .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
                 .limit(limit)
+                .distinct()
                 .orderBy(posts.createdAt.desc())
                 .fetch();
     }
