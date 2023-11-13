@@ -63,22 +63,19 @@ public class CommunityQueryRepository {
     }
 
     public CategoryPostMemberDao getPostById(Long postId) {
-        val posts = QCommunityPost.communityPost;
-        return getPostQuery().where(posts.id.eq(postId)).fetchOne();
-    }
-
-    private JPAQuery<CategoryPostMemberDao> getPostQuery() {
-        val posts = QCommunityPost.communityPost;
-        val member = QMember.member;
         val careers = QMemberCareer.memberCareer;
         val activities = QMemberSoptActivity.memberSoptActivity;
+        val posts = QCommunityPost.communityPost;
+        val category = QCategory.category;
+        val member = QMember.member;
 
-        return queryFactory.select(new QCategoryPostMemberDao(member, posts))
+        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
                 .from(posts)
-                .innerJoin(member).on(member.id.eq(posts.writerId))
-                .innerJoin(member.activities, activities)
-                .innerJoin(member.careers, careers)
-                .groupBy(member.id, posts.id);
+                .innerJoin(posts.member, member)
+                .leftJoin(member.activities, activities)
+                .leftJoin(member.careers, careers)
+                .innerJoin(category).on(posts.categoryId.eq(category.id))
+                .where(posts.id.eq(postId)).distinct().fetchOne();
     }
 
     private BooleanExpression ltPostId(Long cursor) {
