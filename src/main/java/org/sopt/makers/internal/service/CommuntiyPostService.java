@@ -58,8 +58,10 @@ public class CommuntiyPostService {
     public CommunityPost createPost(Long writerId, PostSaveRequest request) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        val category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new NotFoundDBEntityException("Category"));
         return communityPostRepository.save(CommunityPost.builder()
-                .writerId(member.getId())
+                .member(member)
                 .categoryId(request.categoryId())
                 .title(request.title())
                 .content(request.content())
@@ -78,7 +80,7 @@ public class CommuntiyPostService {
         val post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Community Post"));
 
-        if (!Objects.equals(member.getId(), post.getWriterId())) {
+        if (!Objects.equals(member.getId(), post.getMember().getId())) {
             throw new ClientBadRequestException("삭제 권한이 없는 유저입니다.");
         }
 

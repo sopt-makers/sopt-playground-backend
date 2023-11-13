@@ -2,6 +2,7 @@ package org.sopt.makers.internal.domain.community;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
+import org.sopt.makers.internal.domain.Member;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -21,8 +22,9 @@ public class CommunityPost {
     @Column
     private Long id;
 
-    @Column
-    private Long writerId;
+    @ManyToOne
+    @JoinColumn(name = "writer_id")
+    private Member member;
 
     @Column
     private Long categoryId;

@@ -10,6 +10,8 @@ public record PostResponse(
         Long id,
         MemberVo member,
         Long writerId,
+        Long categoryId,
+        String categoryName,
         String title,
         String content,
         Integer hits,
