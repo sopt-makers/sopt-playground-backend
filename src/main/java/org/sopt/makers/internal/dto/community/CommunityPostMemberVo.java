@@ -5,7 +5,8 @@ import org.sopt.makers.internal.domain.community.CommunityPost;
 
 public record CommunityPostMemberVo(
         MemberVo member,
-        CommunityPost posts
+        CommunityPost posts,
+        CategoryVo category
 ) {
     @QueryProjection
     public CommunityPostMemberVo {}
