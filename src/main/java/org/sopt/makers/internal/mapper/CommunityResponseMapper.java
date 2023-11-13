@@ -3,6 +3,7 @@ package org.sopt.makers.internal.mapper;
 import lombok.val;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
+import org.sopt.makers.internal.domain.community.Category;
 import org.sopt.makers.internal.dto.community.*;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,8 @@ public class CommunityResponseMapper {
 
     public CommunityPostMemberVo toPostVO(CategoryPostMemberDao dao) {
         val member = toMemberResponse(dao.member());
-        return new CommunityPostMemberVo(member, dao.posts());
+        val category = toCategoryResponse(dao.category());
+        return new CommunityPostMemberVo(member, dao.posts(),category);
     }
 
     public MemberVo toMemberResponse(Member member) {
@@ -32,11 +34,17 @@ public class CommunityResponseMapper {
                 member.getActivities().get(0), career);
     }
 
+    public CategoryVo toCategoryResponse(Category category) {
+        if(category == null) return null;
+        return new CategoryVo(category.getId(), category.getName());
+    }
+
     public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos) {
         val post = dao.posts();
+        val category = dao.category();
         val member = dao.member();
         val comments = commentDaos.stream().map(this::toCommentResponse).collect(Collectors.toList());
-        return new PostResponse(post.getId(),member, post.getWriterId(), post.getTitle(), post.getContent(), post.getHits(),
+        return new PostResponse(post.getId(),member, post.getMember().getId(), post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
                 post.getComments().size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
     }
 }
