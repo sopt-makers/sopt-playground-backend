@@ -22,9 +22,20 @@ public class CommunityQueryRepository {
 
     public List<CategoryPostMemberDao> findAllPostByCursor(Integer limit, Long cursor) {
         val posts = QCommunityPost.communityPost;
-        return getPostQuery()
+        val careers = QMemberCareer.memberCareer;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        val category = QCategory.category;
+        val member = QMember.member;
+
+        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+                .from(posts)
+                .innerJoin(posts.member, member)
+                .leftJoin(member.activities, activities)
+                .leftJoin(member.careers, careers)
+                .innerJoin(category).on(posts.categoryId.eq(category.id))
                 .where(ltPostId(cursor))
                 .limit(limit)
+                .distinct()
                 .orderBy(posts.createdAt.desc())
                 .fetch();
     }
