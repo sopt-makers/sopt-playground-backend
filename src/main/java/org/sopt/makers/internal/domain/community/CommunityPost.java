@@ -2,7 +2,6 @@ package org.sopt.makers.internal.domain.community;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
-import org.sopt.makers.internal.domain.CommunityComment;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -19,6 +18,7 @@ public class CommunityPost {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
     private Long id;
 
     @Column
@@ -30,11 +30,12 @@ public class CommunityPost {
     @Column
     private String title;
 
-    @Column
+    @Column(length = 10000)
     private String content;
 
+    @Builder.Default
     @Column
-    private Integer hits;
+    private Integer hits = 0;
 
     @Type(type = "string-array")
     @Column(name = "images", columnDefinition = "text[]")
@@ -52,8 +53,9 @@ public class CommunityPost {
     @Column
     private Boolean isReported = false;
 
+    @Builder.Default
     @Column
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column
     private LocalDateTime updatedAt;

@@ -1,6 +1,6 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.repository.community;
 
-import org.sopt.makers.internal.domain.CommunityComment;
+import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

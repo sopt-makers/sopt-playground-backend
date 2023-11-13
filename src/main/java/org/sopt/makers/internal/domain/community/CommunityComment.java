@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.domain;
+package org.sopt.makers.internal.domain.community;
 
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -6,6 +6,8 @@ import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
+
+import static javax.persistence.FetchType.LAZY;
 
 @Entity
 @Getter

@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.domain.community.Category;
 import org.sopt.makers.internal.dto.community.CategoryDto;
-//import org.sopt.makers.internal.repository.CategoryQueryRepository;
-import org.sopt.makers.internal.repository.CategoryQueryRepository;
-import org.sopt.makers.internal.repository.CategoryRepository;
+import org.sopt.makers.internal.repository.community.CategoryQueryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
