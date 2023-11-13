@@ -24,7 +24,8 @@ public class CommunityResponseMapper {
     }
 
     public MemberVo toMemberResponse(Member member) {
-        val career = member.getCareers().stream().anyMatch(MemberCareer::getIsCurrent) ?
+        if(member == null) return null;
+        val career = (member.getCareers() == null || member.getCareers().stream().noneMatch(MemberCareer::getIsCurrent)) ?
                 null : member.getCareers().stream().filter(MemberCareer::getIsCurrent).toList().get(0);
         member.getActivities().sort((act1, act2) -> (act2.getGeneration() - act1.getGeneration()));
         return new MemberVo(member.getId(),member.getName(), member.getProfileImage(),
