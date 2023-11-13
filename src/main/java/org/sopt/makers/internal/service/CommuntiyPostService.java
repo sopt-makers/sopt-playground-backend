@@ -3,13 +3,14 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.dto.community.CommunityPostMemberVo;
 import org.sopt.makers.internal.dto.community.PostSaveRequest;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.community.CategoryRepository;
 import org.sopt.makers.internal.repository.community.CommunityPostRepository;
 import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
@@ -29,6 +30,7 @@ public class CommuntiyPostService {
 
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
+    private final PostRepository postRepository;
     private final CommunityPostRepository communityPostRepository;
     private final CommunityQueryRepository communityQueryRepository;
     private final CommunityResponseMapper communityResponseMapper;
@@ -85,5 +87,18 @@ public class CommuntiyPostService {
         }
 
         communityPostRepository.delete(post);
+    }
+
+    @Transactional
+    public void increaseHit(Long postId, Long memberId) {
+        val member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+
+        val post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Post"));
+
+        // 5분 동안 메모리에 저장
+
+        communityQueryRepository.updateHitsByPostId(postId);
     }
 }

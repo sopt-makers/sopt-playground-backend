@@ -100,4 +100,13 @@ public class CommunityQueryRepository {
                 .groupBy(comment.id, member.id)
                 .fetch();
     }
+
+    public void updateHitsByPostId(Long postId) {
+        val post = QCommunityPost.communityPost;
+
+        queryFactory.update(post)
+                .set(post.hits, post.hits.add(1))
+                .where(post.id.eq(postId))
+                .execute();
+    }
 }
