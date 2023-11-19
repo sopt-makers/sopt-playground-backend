@@ -98,7 +98,7 @@ public class CommunityQueryRepository {
                 .leftJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
                 .distinct()
-                .orderBy(comment.createdAt.desc())
+                .orderBy(comment.createdAt.asc())
                 .fetch();
     }
 
