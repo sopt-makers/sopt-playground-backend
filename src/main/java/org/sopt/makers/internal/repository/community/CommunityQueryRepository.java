@@ -95,7 +95,7 @@ public class CommunityQueryRepository {
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
                 .innerJoin(member.activities, activities)
-                .innerJoin(member.careers, careers)
+                .leftJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
                 .distinct()
                 .orderBy(comment.createdAt.desc())
