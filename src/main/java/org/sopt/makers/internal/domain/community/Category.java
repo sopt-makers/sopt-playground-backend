@@ -27,7 +27,7 @@ public class Category {
     private String content;
 
     @Column
-    private boolean hasAll;
+    private Boolean hasAll = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent")
