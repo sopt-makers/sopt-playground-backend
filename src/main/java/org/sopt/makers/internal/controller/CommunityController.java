@@ -44,10 +44,8 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<PostResponse> getCategoryList(@PathVariable("postId") Long postId) {
-        val post = communtiyPostService.getPostById(postId);
-        val comments = communityCommentService.getPostCommentList(post.posts().getId());
-        val response = communityResponseMapper.toPostResponse(post, comments);
+    public ResponseEntity<CommunityPostMemberVo> getCategoryList(@PathVariable("postId") Long postId) {
+        val response = communtiyPostService.getPostById(postId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
