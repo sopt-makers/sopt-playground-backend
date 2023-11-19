@@ -18,12 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -99,6 +96,16 @@ public class CommunityController {
     ) {
         val response = communtiyPostService.createPost(memberDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 글 신고 API")
+    @PostMapping("/posts/{postId}/report")
+    public ResponseEntity<Map<String, Boolean>> reportPost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        communtiyPostService.reportPost(memberDetails.getId(), postId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
     }
 
     @Operation(summary = "커뮤니티 글 삭제")
