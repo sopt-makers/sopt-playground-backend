@@ -3,6 +3,7 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.domain.community.ReportPost;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
@@ -14,6 +15,7 @@ import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.community.CategoryRepository;
 import org.sopt.makers.internal.repository.community.CommunityPostRepository;
 import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
+import org.sopt.makers.internal.repository.community.ReportPostRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ public class CommuntiyPostService {
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
+    private final ReportPostRepository reportPostRepository;
     private final CommunityPostRepository communityPostRepository;
     private final CommunityQueryRepository communityQueryRepository;
     private final CommunityResponseMapper communityResponseMapper;
@@ -103,5 +106,17 @@ public class CommuntiyPostService {
         // 5분 동안 메모리에 저장
 
         communityQueryRepository.updateHitsByPostId(postId);
+    }
+
+    public void reportPost(Long memberId, Long postId) {
+        val member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
+        val post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
+        reportPostRepository.save(ReportPost.builder()
+                .reporterId(memberId)
+                .postId(postId)
+                .createdAt(LocalDateTime.now(KST))
+                .build());
     }
 }
