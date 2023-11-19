@@ -45,6 +45,6 @@ public class CommunityResponseMapper {
         val member = dao.member();
         val comments = commentDaos.stream().map(this::toCommentResponse).collect(Collectors.toList());
         return new PostResponse(post.getId(),member, post.getMember().getId(), post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
-                post.getComments().size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
+                comments.size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
     }
 }
