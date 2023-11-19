@@ -59,9 +59,9 @@ public class CommuntiyPostService {
     @Transactional
     public CommunityPost createPost(Long writerId, PostSaveRequest request) {
         val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new NotFoundDBEntityException("Category"));
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
         return communityPostRepository.save(CommunityPost.builder()
                 .member(member)
                 .categoryId(request.categoryId())
@@ -78,9 +78,9 @@ public class CommuntiyPostService {
     @Transactional
     public void deletePost(Long writerId, Long postId) {
         val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val post = communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Community Post"));
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
 
         if (!Objects.equals(member.getId(), post.getMember().getId())) {
             throw new ClientBadRequestException("삭제 권한이 없는 유저입니다.");
@@ -92,10 +92,10 @@ public class CommuntiyPostService {
     @Transactional
     public void increaseHit(Long postId, Long memberId) {
         val member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
 
         val post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Post"));
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
 
         // 5분 동안 메모리에 저장
 
