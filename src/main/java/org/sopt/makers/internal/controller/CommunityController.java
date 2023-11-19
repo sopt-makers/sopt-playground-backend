@@ -95,7 +95,7 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody PostSaveRequest request
     ) {
-        val response = communtiyPostService.createPost(2L, request);
+        val response = communtiyPostService.createPost(memberDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
