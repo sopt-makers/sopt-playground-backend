@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +35,8 @@ public class CommuntiyPostService {
     private final CommunityPostRepository communityPostRepository;
     private final CommunityQueryRepository communityQueryRepository;
     private final CommunityResponseMapper communityResponseMapper;
+
+    private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Integer limit, Long cursor) {
@@ -70,7 +73,7 @@ public class CommuntiyPostService {
                 .hits(0)
                 .images(request.images())
                 .isQuestion(request.isQuestion())
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(KST))
                 .comments(new ArrayList<>())
                 .build());
     }
