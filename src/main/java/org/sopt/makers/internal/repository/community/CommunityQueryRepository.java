@@ -97,7 +97,8 @@ public class CommunityQueryRepository {
                 .innerJoin(member.activities, activities)
                 .innerJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
-                .groupBy(comment.id, member.id)
+                .distinct()
+                .orderBy(comment.createdAt.desc())
                 .fetch();
     }
 
