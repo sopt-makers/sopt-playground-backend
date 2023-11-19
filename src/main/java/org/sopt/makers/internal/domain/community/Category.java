@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.domain.community;
 
 import lombok.AccessLevel;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
@@ -24,6 +25,9 @@ public class Category {
 
     @Column
     private String content;
+
+    @Column
+    private boolean hasAll;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent")
