@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Component
 public class CommunityResponseMapper {
     public CommentResponse toCommentResponse(CommentDao dao) {
-        val member = toMemberResponse(dao.member());
+        val member = dao.comment().getIsBlindWriter() ? null : toMemberResponse(dao.member());
         val comment = dao.comment();
         return new CommentResponse(comment.getId(), member, comment.getPostId(), comment.getParentCommentId(),
                 comment.getContent(), comment.getIsBlindWriter(), comment.getIsReported(), comment.getCreatedAt());
