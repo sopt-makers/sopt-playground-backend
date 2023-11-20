@@ -20,7 +20,7 @@ public class CommunityResponseMapper {
     }
 
     public CommunityPostMemberVo toPostVO(CategoryPostMemberDao dao) {
-        val member = toMemberResponse(dao.member());
+        val member = dao.posts().getIsBlindWriter() ? null : toMemberResponse(dao.member());
         val category = toCategoryResponse(dao.category());
         return new CommunityPostMemberVo(member, dao.posts(),category);
     }
