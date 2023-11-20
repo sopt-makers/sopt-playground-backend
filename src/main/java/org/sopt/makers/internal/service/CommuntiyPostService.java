@@ -82,7 +82,7 @@ public class CommuntiyPostService {
     }
 
     @Transactional
-    public void deletePost(Long writerId, Long postId) {
+    public void deletePost(Long postId, Long writerId) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val post = communityPostRepository.findById(postId)
