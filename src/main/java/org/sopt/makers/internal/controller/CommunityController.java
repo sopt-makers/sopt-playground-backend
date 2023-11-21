@@ -59,6 +59,7 @@ public class CommunityController {
     )
     @GetMapping("/posts")
     public ResponseEntity<PostAllResponse> getAllPosts (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestParam(required = false, name = "categoryId") Long categoryId,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
@@ -131,7 +132,10 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 댓글 조회 API")
     @GetMapping("/{postId}/comment")
-    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable("postId") Long postId) {
+    public ResponseEntity<List<CommentResponse>> getComments(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @PathVariable("postId") Long postId
+    ) {
         val comments = communityCommentService.getPostCommentList(postId);
         val response = comments.stream().map(communityResponseMapper::toCommentResponse).toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
