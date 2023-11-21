@@ -45,9 +45,10 @@ public class CommunityResponseMapper {
         val post = dao.posts();
         val category = dao.category();
         val member = dao.posts().getIsBlindWriter() ? null : dao.member();
+        val writerId = dao.posts().getIsBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
         val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId)).collect(Collectors.toList());
-        return new PostResponse(post.getId(), member, isMine, post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
+        return new PostResponse(post.getId(), member, writerId, isMine, post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
                 comments.size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
     }
 }

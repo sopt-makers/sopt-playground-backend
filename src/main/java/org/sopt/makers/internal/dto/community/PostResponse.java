@@ -9,6 +9,7 @@ public record PostResponse(
         @Schema(required = true)
         Long id,
         MemberVo member,
+        Long writerId,
         Boolean isMine,
         Long categoryId,
         String categoryName,
