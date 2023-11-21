@@ -69,7 +69,7 @@ public class CommunityController {
         if (hasNextPosts) posts.remove(posts.size() - 1);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.posts().getId());
-            return communityResponseMapper.toPostResponse(post, comments);
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId());
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -137,7 +137,8 @@ public class CommunityController {
             @PathVariable("postId") Long postId
     ) {
         val comments = communityCommentService.getPostCommentList(postId);
-        val response = comments.stream().map(communityResponseMapper::toCommentResponse).toList();
+        val response = comments.stream().
+                map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId())).toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
