@@ -76,6 +76,7 @@ public class CommuntiyPostService {
                 .hits(0)
                 .images(request.images())
                 .isQuestion(request.isQuestion())
+                .isBlindWriter(request.isBlindWriter())
                 .createdAt(LocalDateTime.now(KST))
                 .comments(new ArrayList<>())
                 .build());
@@ -104,7 +105,6 @@ public class CommuntiyPostService {
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
 
         // 5분 동안 메모리에 저장
-
         communityQueryRepository.updateHitsByPostId(postId);
     }
 
