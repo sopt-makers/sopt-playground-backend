@@ -22,6 +22,7 @@ import java.util.Objects;
 @Service
 public class CommunityCommentService {
     private final MemberRepository memberRepository;
+    private final CommunityPostRepository communityPostRepository;
     private final CommunityCommentRepository communityCommentsRepository;
     private final CommunityQueryRepository communityQueryRepository;
     private final InternalApiService internalApiService;
@@ -47,6 +48,8 @@ public class CommunityCommentService {
 
     @Transactional(readOnly = true)
     public List<CommentDao> getPostCommentList(Long postId) {
+        val post = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
         return communityQueryRepository.findCommentByPostId(postId);
     }
 
