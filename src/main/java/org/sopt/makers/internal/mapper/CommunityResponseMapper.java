@@ -27,6 +27,11 @@ public class CommunityResponseMapper {
         return new CommunityPostMemberVo(member, dao.posts(),category);
     }
 
+    public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId) {
+        val isMine = Objects.equals(post.member().id(), memberId);
+        return new PostDetailResponse(post, isMine);
+    }
+
     public MemberVo toMemberResponse(Member member) {
         if(member == null) return null;
         val career = (member.getCareers() == null || member.getCareers().stream().noneMatch(MemberCareer::getIsCurrent)) ?
