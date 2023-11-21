@@ -83,7 +83,7 @@ public class CommunityController {
         val memberId = memberDetails.getId();
         communtiyPostService.increaseHit(postId, memberId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("조회수 증가 성공", true));
     }
 
     @Operation(summary = "커뮤니티 글 생성")
@@ -103,7 +103,7 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         communtiyPostService.reportPost(memberDetails.getId(), postId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 글 신고 성공", true));
     }
 
     @Operation(summary = "커뮤니티 글 삭제")
@@ -114,7 +114,7 @@ public class CommunityController {
     ) {
         communtiyPostService.deletePost(postId, memberDetails.getId());
 
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 글 삭제 성공", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 생성 API")
@@ -126,7 +126,7 @@ public class CommunityController {
     ) {
         val writerId = memberDetails.getId();
         communityCommentService.createComment(writerId, postId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("댓글 생성 성공", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 조회 API")
@@ -145,6 +145,6 @@ public class CommunityController {
     ) {
         val writerId = memberDetails.getId();
         communityCommentService.deleteComment(commentId, writerId);
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("댓글 삭제 성공", true));
     }
 }
