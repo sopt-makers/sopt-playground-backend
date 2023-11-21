@@ -8,6 +8,7 @@ import org.sopt.makers.internal.dto.community.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -39,13 +40,13 @@ public class CommunityResponseMapper {
         return new CategoryVo(category.getId(), category.getName());
     }
 
-    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos) {
+    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId) {
         val post = dao.posts();
         val category = dao.category();
         val member = dao.posts().getIsBlindWriter() ? null : dao.member();
-        val writerId = dao.posts().getIsBlindWriter() ? null : dao.member().id();
-        val comments = commentDaos.stream().map(this::toCommentResponse).collect(Collectors.toList());
-        return new PostResponse(post.getId(), member, writerId, post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
+        val isMine = Objects.equals(dao.member().id(), memberId);
+        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId)).collect(Collectors.toList());
+        return new PostResponse(post.getId(), member, isMine, post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
                 comments.size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
     }
 }
