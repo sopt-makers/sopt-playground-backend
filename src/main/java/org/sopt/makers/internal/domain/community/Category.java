@@ -1,11 +1,8 @@
 package org.sopt.makers.internal.domain.community;
 
 import lombok.AccessLevel;
-import lombok.Cleanup;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -27,7 +24,13 @@ public class Category {
     private String content;
 
     @Column
-    private Boolean hasAll = false;
+    private Boolean hasAll;
+
+    @Column
+    private Boolean hasAnonymous;
+
+    @Column
+    private Boolean hasQuestion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent")

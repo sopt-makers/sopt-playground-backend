@@ -19,12 +19,15 @@ public class CategoryDto {
     private String name;
     private String content;
     private Boolean hasAll;
+    private Boolean hasAnonymous;
+    private Boolean hasQuestion;
     private List<CategoryDto> children;
 
     public static List<CategoryDto> toDtoList(List<Category> categories) {
         CategoryHelper helper = CategoryHelper.newInstance(
                 categories,
-                c -> new CategoryDto(c.getId(), c.getName(), c.getContent(), c.getHasAll(), new ArrayList<>()),
+                c -> new CategoryDto(c.getId(), c.getName(), c.getContent(), c.getHasAll(),
+                        c.getHasAnonymous(), c.getHasQuestion(), new ArrayList<>()),
                 Category::getParent,
                 Category::getId,
                 CategoryDto::getChildren);
