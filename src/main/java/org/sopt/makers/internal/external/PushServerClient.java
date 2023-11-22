@@ -16,7 +16,7 @@ public interface PushServerClient {
     PushNotificationResponse sendPushNotification(
             @RequestHeader("x-api-key") String pushNotificationApiKey,
             @RequestHeader("action") String action,
-            @RequestHeader("transactionId") UUID transactionId,
+            @RequestHeader("transactionId") String transactionId,
             @RequestHeader("service") String service,
             @RequestBody PushNotificationRequest request
     );

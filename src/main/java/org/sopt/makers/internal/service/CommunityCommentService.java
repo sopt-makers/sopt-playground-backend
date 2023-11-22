@@ -56,6 +56,9 @@ public class CommunityCommentService {
                         .isBlindWriter(request.isBlindWriter())
                 .build());
 
+        // 본인 게시글의 본인 댓글에는 알림이 가지 않음
+        if (post.getMember().getId().equals(writerId)) return;
+
         String pushNotificationTitle = "\"" + post.getTitle() + "\"" + " 글에 댓글이 달렸어요.";
 
         PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()

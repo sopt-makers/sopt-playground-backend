@@ -28,7 +28,7 @@ public class PushNotificationService {
         PushNotificationResponse response = pushServerClient.sendPushNotification(
                 pushNotificationApiKey,
                 action,
-                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
                 service,
                 request
         );
