@@ -7,12 +7,13 @@ import org.sopt.makers.internal.domain.community.ReportComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
 import org.sopt.makers.internal.dto.community.CommentListResponse;
 import org.sopt.makers.internal.dto.community.CommentSaveRequest;
+import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
 import org.sopt.makers.internal.repository.community.CommunityPostRepository;
 import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
+import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.community.ReportCommentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class CommunityCommentService {
     private final ReportCommentRepository reportCommentRepository;
     private final CommunityQueryRepository communityQueryRepository;
     private final InternalApiService internalApiService;
+    private final PushNotificationService pushNotificationService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -38,7 +40,9 @@ public class CommunityCommentService {
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        // TODO: 게시글 생성 기능이 추가되면 해당 게시글이 존재하는지 확인하는 로직 추가 예정
+
+        val post = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Community Post"));
 
         if (request.isChildComment() && !communityCommentsRepository.existsById(request.parentCommentId())) {
             throw new NotFoundDBEntityException("CommunityComment");
@@ -51,6 +55,21 @@ public class CommunityCommentService {
                         .parentCommentId(request.parentCommentId())
                         .isBlindWriter(request.isBlindWriter())
                 .build());
+
+        // 본인 게시글의 본인 댓글에는 알림이 가지 않음
+        if (post.getMember().getId().equals(writerId)) return;
+
+        String pushNotificationTitle = "\"" + post.getTitle() + "\"" + " 글에 댓글이 달렸어요.";
+
+        PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
+                .title(pushNotificationTitle)
+                .content("")
+                .category("NEWS")
+                .webLink(request.webLink())
+                .userIds(new String[]{post.getMember().getId().toString()})
+                .build();
+
+        pushNotificationService.sendPushNotification(pushNotificationRequest);
     }
 
     @Transactional(readOnly = true)

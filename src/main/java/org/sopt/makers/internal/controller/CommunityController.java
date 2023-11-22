@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Community 관련 API", description = "Community 관련 API List")
 public class CommunityController {
 
-    private final CommuntiyPostService communtiyPostService;
+    private final CommuntiyPostService communityPostService;
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
@@ -48,7 +48,7 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @PathVariable("postId") Long postId
     ) {
-        val post = communtiyPostService.getPostById(postId);
+        val post = communityPostService.getPostById(postId);
         val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -68,7 +68,7 @@ public class CommunityController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val posts = communtiyPostService.getAllPosts(categoryId, limit, cursor);
+        val posts = communityPostService.getAllPosts(categoryId, limit, cursor);
         val hasNextPosts = (limit != null && posts.size() > limit);
         if (hasNextPosts) posts.remove(posts.size() - 1);
         val postResponse = posts.stream().map(post -> {
@@ -86,7 +86,7 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val memberId = memberDetails.getId();
-        communtiyPostService.increaseHit(postId, memberId);
+        communityPostService.increaseHit(postId, memberId);
 
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("조회수 증가 성공", true));
     }
@@ -97,7 +97,7 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody PostSaveRequest request
     ) {
-        val response = communtiyPostService.createPost(memberDetails.getId(), request);
+        val response = communityPostService.createPost(memberDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -107,7 +107,7 @@ public class CommunityController {
             @PathVariable("postId") Long postId,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        communtiyPostService.reportPost(memberDetails.getId(), postId);
+        communityPostService.reportPost(memberDetails.getId(), postId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 글 신고 성공", true));
     }
 
@@ -117,7 +117,7 @@ public class CommunityController {
             @PathVariable("postId") Long postId,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        communtiyPostService.deletePost(postId, memberDetails.getId());
+        communityPostService.deletePost(postId, memberDetails.getId());
 
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 글 삭제 성공", true));
     }
