@@ -22,14 +22,15 @@ public class CommunityResponseMapper {
     }
 
     public CommunityPostMemberVo toPostVO(CategoryPostMemberDao dao) {
-        val member = dao.posts().getIsBlindWriter() ? null : toMemberResponse(dao.member());
+        val member = toMemberResponse(dao.member());
         val category = toCategoryResponse(dao.category());
         return new CommunityPostMemberVo(member, dao.posts(),category);
     }
 
     public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId) {
+        val member = post.posts().getIsBlindWriter() ? null : post.member();
         val isMine = Objects.equals(post.member().id(), memberId);
-        return new PostDetailResponse(post.member(), post.posts(), post.category(), isMine);
+        return new PostDetailResponse(member, post.posts(), post.category(), isMine);
     }
 
     public MemberVo toMemberResponse(Member member) {
