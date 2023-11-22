@@ -27,7 +27,7 @@ public class Category {
     private Boolean hasAll;
 
     @Column
-    private Boolean hasAnonymous;
+    private Boolean hasBlind;
 
     @Column
     private Boolean hasQuestion;

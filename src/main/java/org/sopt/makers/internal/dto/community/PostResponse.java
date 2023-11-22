@@ -10,6 +10,7 @@ public record PostResponse(
         Long id,
         MemberVo member,
         Long writerId,
+        Boolean isMine,
         Long categoryId,
         String categoryName,
         String title,

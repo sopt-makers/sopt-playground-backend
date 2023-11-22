@@ -8,13 +8,13 @@ import org.sopt.makers.internal.dto.community.CommentListResponse;
 import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
-import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
+import org.sopt.makers.internal.repository.community.CommunityPostRepository;
+import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,6 +22,7 @@ import java.util.Objects;
 @Service
 public class CommunityCommentService {
     private final MemberRepository memberRepository;
+    private final CommunityPostRepository communityPostRepository;
     private final CommunityCommentRepository communityCommentsRepository;
     private final CommunityQueryRepository communityQueryRepository;
     private final InternalApiService internalApiService;
@@ -47,6 +48,8 @@ public class CommunityCommentService {
 
     @Transactional(readOnly = true)
     public List<CommentDao> getPostCommentList(Long postId) {
+        val post = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
         return communityQueryRepository.findCommentByPostId(postId);
     }
 
