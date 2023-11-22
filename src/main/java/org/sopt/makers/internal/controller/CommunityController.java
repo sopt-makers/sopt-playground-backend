@@ -156,4 +156,14 @@ public class CommunityController {
         communityCommentService.deleteComment(commentId, writerId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("댓글 삭제 성공", true));
     }
+
+    @Operation(summary = "커뮤니티 댓글 신고 API")
+    @PostMapping("/comment/{commentId}/report")
+    public ResponseEntity<Map<String, Boolean>> reportComment(
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        communityCommentService.reportComment(memberDetails.getId(), commentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
+    }
 }
