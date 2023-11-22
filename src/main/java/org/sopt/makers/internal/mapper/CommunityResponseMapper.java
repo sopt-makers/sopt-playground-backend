@@ -28,8 +28,9 @@ public class CommunityResponseMapper {
     }
 
     public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId) {
+        val member = post.posts().getIsBlindWriter() ? null : post.member();
         val isMine = Objects.equals(post.member().id(), memberId);
-        return new PostDetailResponse(post.member(), post.posts(), post.category(), isMine);
+        return new PostDetailResponse(member, post.posts(), post.category(), isMine);
     }
 
     public MemberVo toMemberResponse(Member member) {
