@@ -29,7 +29,7 @@ public class CommunityResponseMapper {
 
     public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId) {
         val isMine = Objects.equals(post.member().id(), memberId);
-        return new PostDetailResponse(post, isMine);
+        return new PostDetailResponse(post.member(), post.posts(), post.category(), isMine);
     }
 
     public MemberVo toMemberResponse(Member member) {
