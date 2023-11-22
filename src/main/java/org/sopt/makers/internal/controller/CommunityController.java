@@ -92,7 +92,7 @@ public class CommunityController {
             communityPostService.increaseHit(postId, memberId);
             return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false));
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", false));
         }
     }
 
