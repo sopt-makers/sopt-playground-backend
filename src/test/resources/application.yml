@@ -88,3 +88,9 @@ internal:
     secret: test
 dictionary:
   key: test
+
+push-notification:
+  server-url: test
+  action: test
+  x-api-key: test
+  service: test
