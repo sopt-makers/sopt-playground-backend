@@ -78,12 +78,6 @@ public class CommunityQueryRepository {
                 .where(posts.id.eq(postId)).distinct().fetchOne();
     }
 
-    private BooleanExpression ltPostId(Long cursor) {
-        val posts = QCommunityPost.communityPost;
-        if(cursor == null || cursor == 0) return null;
-        return posts.id.lt(cursor);
-    }
-
     public List<CommentDao> findCommentByPostId(Long postId) {
         //TODO: 계층형 댓글 조회로 변경
         val comment = QCommunityComment.communityComment;
@@ -95,9 +89,10 @@ public class CommunityQueryRepository {
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
                 .innerJoin(member.activities, activities)
-                .innerJoin(member.careers, careers)
+                .leftJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
-                .groupBy(comment.id, member.id)
+                .distinct()
+                .orderBy(comment.createdAt.asc())
                 .fetch();
     }
 
@@ -108,5 +103,11 @@ public class CommunityQueryRepository {
                 .set(post.hits, post.hits.add(1))
                 .where(post.id.eq(postId))
                 .execute();
+    }
+
+    private BooleanExpression ltPostId(Long cursor) {
+        val posts = QCommunityPost.communityPost;
+        if(cursor == null || cursor == 0) return null;
+        return posts.id.lt(cursor);
     }
 }

@@ -8,21 +8,28 @@ import org.sopt.makers.internal.dto.community.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
 public class CommunityResponseMapper {
-    public CommentResponse toCommentResponse(CommentDao dao) {
-        val member = toMemberResponse(dao.member());
+    public CommentResponse toCommentResponse(CommentDao dao, Long memberId) {
+        val member = dao.comment().getIsBlindWriter() ? null : toMemberResponse(dao.member());
         val comment = dao.comment();
-        return new CommentResponse(comment.getId(), member, comment.getPostId(), comment.getParentCommentId(),
+        val isMine = Objects.equals(dao.member().getId(), memberId);
+        return new CommentResponse(comment.getId(), member, isMine, comment.getPostId(), comment.getParentCommentId(),
                 comment.getContent(), comment.getIsBlindWriter(), comment.getIsReported(), comment.getCreatedAt());
     }
 
     public CommunityPostMemberVo toPostVO(CategoryPostMemberDao dao) {
-        val member = toMemberResponse(dao.member());
+        val member = dao.posts().getIsBlindWriter() ? null : toMemberResponse(dao.member());
         val category = toCategoryResponse(dao.category());
         return new CommunityPostMemberVo(member, dao.posts(),category);
+    }
+
+    public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId) {
+        val isMine = Objects.equals(post.member().id(), memberId);
+        return new PostDetailResponse(post.member(), post.posts(), post.category(), isMine);
     }
 
     public MemberVo toMemberResponse(Member member) {
@@ -39,12 +46,14 @@ public class CommunityResponseMapper {
         return new CategoryVo(category.getId(), category.getName());
     }
 
-    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos) {
+    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId) {
         val post = dao.posts();
         val category = dao.category();
-        val member = dao.member();
-        val comments = commentDaos.stream().map(this::toCommentResponse).collect(Collectors.toList());
-        return new PostResponse(post.getId(),member, post.getMember().getId(), post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
-                post.getComments().size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
+        val member = dao.posts().getIsBlindWriter() ? null : dao.member();
+        val writerId = dao.posts().getIsBlindWriter() ? null : dao.member().id();
+        val isMine = Objects.equals(dao.member().id(), memberId);
+        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId)).collect(Collectors.toList());
+        return new PostResponse(post.getId(), member, writerId, isMine, post.getCategoryId(), category.name(), post.getTitle(), post.getContent(), post.getHits(),
+                comments.size(), post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getCreatedAt(), comments);
     }
 }

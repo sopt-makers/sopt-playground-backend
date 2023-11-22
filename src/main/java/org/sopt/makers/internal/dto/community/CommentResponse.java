@@ -8,6 +8,7 @@ public record CommentResponse(
         @Schema(required = true)
         Long id,
         MemberVo member,
+        Boolean isMine,
         Long postId,
         Long parentCommentId,
         String content,
