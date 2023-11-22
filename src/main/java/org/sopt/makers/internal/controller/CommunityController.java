@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.controller;
 
+import io.github.bucket4j.Bucket;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,6 +35,7 @@ public class CommunityController {
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
+    private final Bucket bucket;
 
     @Operation(summary = "커뮤니티 전체 카테고리 조회")
     @GetMapping("/category")
@@ -85,10 +87,13 @@ public class CommunityController {
             @PathVariable("postId") Long postId,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        val memberId = memberDetails.getId();
-        communityPostService.increaseHit(postId, memberId);
-
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("조회수 증가 성공", true));
+        if (bucket.tryConsume(1)) {
+            val memberId = memberDetails.getId();
+            communityPostService.increaseHit(postId, memberId);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false));
+        }
     }
 
     @Operation(summary = "커뮤니티 글 생성")

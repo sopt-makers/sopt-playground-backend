@@ -104,7 +104,6 @@ public class CommuntiyPostService {
         val post = postRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
 
-        // 5분 동안 메모리에 저장
         communityQueryRepository.updateHitsByPostId(postId);
     }
 
