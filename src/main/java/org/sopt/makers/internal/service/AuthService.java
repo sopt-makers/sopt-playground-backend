@@ -74,6 +74,47 @@ public class AuthService {
     }
 
     @Transactional
+    public String registerByDevQaMagicRegisterToken(String registerToken, String code, String socialType) {
+        val isMagic = tokenManager.verifyDevMagicRegisterQaToken(registerToken);
+        if (!isMagic) throw new WrongTokenException("tokenInvalid");
+
+        String authUserId = null;
+        if(Objects.equals(socialType, "facebook")) {
+            val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
+            if (fbAccessToken == null) throw new AuthFailureException("facebook 인증에 실패했습니다.");
+            val fbUserInfo = fbTokenManager.getUserInfo(fbAccessToken);
+            authUserId = fbUserInfo.userId();
+        }
+        else if(Objects.equals(socialType, "google")) {
+            val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
+            if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+            val googleAccessToken = googleAccessTokenResponse.idToken();
+
+            val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
+            if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
+            authUserId = googleUserInfo;
+        }
+        else if(Objects.equals(socialType, "apple")) {
+            val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+            if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
+
+            val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
+            if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
+            authUserId = appleUserInfo;
+        }
+        if(authUserId == null) throw new AuthFailureException("잘못된 소셜로그인입니다.");
+        val member = memberRepository.save(
+                Member.builder()
+                        .authUserId(authUserId)
+                        .idpType(socialType)
+                        .name("DEV TESTER")
+                        .hasProfile(true)
+                        .build()
+        );
+        return tokenManager.createAuthToken(member.getId());
+    }
+
+    @Transactional
     public String registerByFbAndMagicRegisterToken(String registerToken, String code) {
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "register");
@@ -315,6 +356,10 @@ public class AuthService {
 
     public String getRegisterTokenByMagicNumber () {
         return authConfig.getMagicRegisterToken();
+    }
+
+    public String getRegisterQaToken() {
+        return authConfig.getDevRegisterQaToken();
     }
 
     private boolean isInSoptOrganizerTeam(String part) {

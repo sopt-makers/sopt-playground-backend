@@ -17,6 +17,7 @@ import org.sopt.makers.internal.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -96,6 +97,14 @@ public class InternalApiService {
     public Integer getMemberLatestActivityGeneration (Long id) {
         return soptActivityRepository.findAllByMemberId(id).stream().map(MemberSoptActivity::getGeneration)
                 .max(Integer::compare).orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member Activity를 찾을 수 없습니다."));
+    }
+
+    @Transactional(readOnly = true)
+    public String getMemberLatestActivityPart (Long id) {
+        return soptActivityRepository.findAllByMemberId(id).stream()
+                .max(Comparator.comparingInt(MemberSoptActivity::getGeneration))
+                .map(MemberSoptActivity::getPart)
+                .orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member Activity를 찾을 수 없습니다."));
     }
 
     public Map<String, List<ActivityVo>> getMemberProfileActivity (

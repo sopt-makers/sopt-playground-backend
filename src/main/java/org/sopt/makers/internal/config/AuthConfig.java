@@ -9,6 +9,9 @@ import java.util.List;
 @Getter
 @Configuration
 public class AuthConfig {
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
     @Value("${jwt.secret}")
     private String jwtSecretKey;
 
@@ -71,6 +74,12 @@ public class AuthConfig {
 
     @Value("${oauth.apple.register-token}")
     private String magicRegisterToken;
+
+    @Value("${oauth.dev-register-qa-token}")
+    private String devRegisterQaToken;
+
+    @Value("${oauth.dev-register-magic-number}")
+    private String devRegisterMagicNumber;
 
     @Value("${oauth.apple.key.url}")
     private String applePublicKeysUrl;
