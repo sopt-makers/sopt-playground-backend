@@ -72,7 +72,7 @@ public class CommunityController {
         val hasNextPosts = (limit != null && posts.size() > limit);
         if (hasNextPosts) posts.remove(posts.size() - 1);
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getPostCommentList(post.posts().getId());
+            val comments = communityCommentService.getPostCommentList(post.post().id());
             return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId());
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
