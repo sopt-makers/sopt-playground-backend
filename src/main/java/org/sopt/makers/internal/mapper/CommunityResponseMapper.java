@@ -47,6 +47,11 @@ public class CommunityResponseMapper {
         return new CategoryVo(category.getId(), category.getName());
     }
 
+    public CommunityPostVo toPostVo(CommunityPost post) {
+        return new CommunityPostVo(post.getId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getHits(),
+                post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt());
+    }
+
     public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId) {
         val post = dao.posts();
         val category = dao.category();
