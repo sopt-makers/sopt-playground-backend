@@ -46,12 +46,12 @@ public class CommuntiyPostService {
         if(limit == null || limit >= 50) limit = 50;
         if(categoryId == null) {
             val posts = communityQueryRepository.findAllPostByCursor(limit, cursor);
-            return posts.stream().map(communityResponseMapper::toPostVO).collect(Collectors.toList());
+            return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {
             categoryRepository.findById(categoryId).orElseThrow(
                     () -> new ClientBadRequestException("존재하지 않는 categoryId입니다."));
             val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor);
-            return posts.stream().map(communityResponseMapper::toPostVO).collect(Collectors.toList());
+            return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         }
     }
 
@@ -59,7 +59,7 @@ public class CommuntiyPostService {
     public CommunityPostMemberVo getPostById(Long postId) {
         val postDao = communityQueryRepository.getPostById(postId);
         if(Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
-        return communityResponseMapper.toPostVO(postDao);
+        return communityResponseMapper.toCommunityVo(postDao);
     }
 
     @Transactional
