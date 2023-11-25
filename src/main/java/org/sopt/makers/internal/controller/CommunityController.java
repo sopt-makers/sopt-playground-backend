@@ -93,7 +93,7 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 생성")
     @PostMapping("/posts")
-    public ResponseEntity<CommunityPost> createPost(
+    public ResponseEntity<PostSaveResponse> createPost(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody PostSaveRequest request
     ) {

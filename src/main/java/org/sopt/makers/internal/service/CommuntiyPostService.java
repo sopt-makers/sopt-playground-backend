@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.community.ReportPost;
+import org.sopt.makers.internal.dto.community.PostSaveResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
@@ -63,12 +64,12 @@ public class CommuntiyPostService {
     }
 
     @Transactional
-    public CommunityPost createPost(Long writerId, PostSaveRequest request) {
+    public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
-        return communityPostRepository.save(CommunityPost.builder()
+        val post = communityPostRepository.save(CommunityPost.builder()
                 .member(member)
                 .categoryId(request.categoryId())
                 .title(request.title())
@@ -80,6 +81,7 @@ public class CommuntiyPostService {
                 .createdAt(LocalDateTime.now(KST))
                 .comments(new ArrayList<>())
                 .build());
+        return communityResponseMapper.toPostSaveResponse(post);
     }
 
     @Transactional
