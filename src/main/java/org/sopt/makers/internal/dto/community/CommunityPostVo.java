@@ -8,6 +8,7 @@ public record CommunityPostVo(
         String title,
         String content,
         Integer hits,
+        Integer commentCount,
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
