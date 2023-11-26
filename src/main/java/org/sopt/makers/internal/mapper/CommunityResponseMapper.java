@@ -56,7 +56,7 @@ public class CommunityResponseMapper {
     }
 
     public CommunityPostVo toPostVo(CommunityPost post) {
-        return new CommunityPostVo(post.getId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getHits(), post.getComments().size(),
+        return new CommunityPostVo(post.getId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getHits(),
                 post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt());
     }
 
