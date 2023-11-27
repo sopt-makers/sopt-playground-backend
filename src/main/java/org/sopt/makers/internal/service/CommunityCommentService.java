@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
@@ -25,6 +26,7 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class CommunityCommentService {
     private final MemberRepository memberRepository;
     private final CommunityPostRepository communityPostRepository;
@@ -59,17 +61,21 @@ public class CommunityCommentService {
         // 본인 게시글의 본인 댓글에는 알림이 가지 않음
         if (post.getMember().getId().equals(writerId)) return;
 
-        String pushNotificationTitle = "\"" + post.getTitle() + "\"" + " 글에 댓글이 달렸어요.";
+        try {
+            String pushNotificationContent = "\"" + post.getTitle() + "\"" + " 글에 댓글이 달렸어요.";
 
-        PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
-                .title(pushNotificationTitle)
-                .content("")
-                .category("NEWS")
-                .webLink(request.webLink())
-                .userIds(new String[]{post.getMember().getId().toString()})
-                .build();
+            PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
+                    .title("")
+                    .content(pushNotificationContent)
+                    .category("NEWS")
+                    .webLink(request.webLink())
+                    .userIds(new String[]{post.getMember().getId().toString()})
+                    .build();
 
-        pushNotificationService.sendPushNotification(pushNotificationRequest);
+            pushNotificationService.sendPushNotification(pushNotificationRequest);
+        } catch (Exception error) {
+            log.error(error.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)
