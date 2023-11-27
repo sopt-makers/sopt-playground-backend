@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.community.ReportPost;
+import org.sopt.makers.internal.dto.community.PostSaveResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
@@ -46,12 +47,12 @@ public class CommuntiyPostService {
         if(limit == null || limit >= 50) limit = 50;
         if(categoryId == null) {
             val posts = communityQueryRepository.findAllPostByCursor(limit, cursor);
-            return posts.stream().map(communityResponseMapper::toPostVO).collect(Collectors.toList());
+            return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {
             categoryRepository.findById(categoryId).orElseThrow(
                     () -> new ClientBadRequestException("존재하지 않는 categoryId입니다."));
             val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor);
-            return posts.stream().map(communityResponseMapper::toPostVO).collect(Collectors.toList());
+            return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         }
     }
 
@@ -59,16 +60,16 @@ public class CommuntiyPostService {
     public CommunityPostMemberVo getPostById(Long postId) {
         val postDao = communityQueryRepository.getPostById(postId);
         if(Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
-        return communityResponseMapper.toPostVO(postDao);
+        return communityResponseMapper.toCommunityVo(postDao);
     }
 
     @Transactional
-    public CommunityPost createPost(Long writerId, PostSaveRequest request) {
+    public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
-        return communityPostRepository.save(CommunityPost.builder()
+        val post = communityPostRepository.save(CommunityPost.builder()
                 .member(member)
                 .categoryId(request.categoryId())
                 .title(request.title())
@@ -80,6 +81,7 @@ public class CommuntiyPostService {
                 .createdAt(LocalDateTime.now(KST))
                 .comments(new ArrayList<>())
                 .build());
+        return communityResponseMapper.toPostSaveResponse(post);
     }
 
     @Transactional
