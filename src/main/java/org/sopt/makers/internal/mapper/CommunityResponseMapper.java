@@ -52,7 +52,9 @@ public class CommunityResponseMapper {
 
     public CategoryVo toCategoryResponse(Category category) {
         if(category == null) return null;
-        return new CategoryVo(category.getId(), category.getName());
+        val parentCategoryName = category.getParent() == null ? null : category.getParent().getName();
+        val parentId = category.getParent() == null ? null : category.getParent().getId();
+        return new CategoryVo(category.getId(), category.getName(), parentId, parentCategoryName);
     }
 
     public CommunityPostVo toPostVo(CommunityPost post) {
