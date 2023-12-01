@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.controller;
 
+import io.github.bucket4j.Bucket;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -7,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.service.CommunityCategoryService;
@@ -34,6 +34,7 @@ public class CommunityController {
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
+    private final Bucket bucket;
 
     @Operation(summary = "커뮤니티 전체 카테고리 조회")
     @GetMapping("/category")
@@ -57,12 +58,12 @@ public class CommunityController {
             summary = "커뮤니티 글 전체 조회",
             description =
                     """
-                    categoryId: 카테고리 전체조회시 id값, 전체일 경우 null\n
-                    cursor: 처음 조회시 null, 이외에 마지막 글 id
-                    """
+                            categoryId: 카테고리 전체조회시 id값, 전체일 경우 null\n
+                            cursor: 처음 조회시 null, 이외에 마지막 글 id
+                            """
     )
     @GetMapping("/posts")
-    public ResponseEntity<PostAllResponse> getAllPosts (
+    public ResponseEntity<PostAllResponse> getAllPosts(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestParam(required = false, name = "categoryId") Long categoryId,
             @RequestParam(required = false, name = "limit") Integer limit,
@@ -80,15 +81,15 @@ public class CommunityController {
     }
 
     @Operation(summary = "커뮤니티 글 조회수 증가")
-    @PostMapping("/posts/{postId}/hit")
+    @PostMapping("/posts/hit")
     public ResponseEntity<Map<String, Boolean>> upPostHit(
-            @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @RequestBody CommunityHitRequest request
     ) {
-        val memberId = memberDetails.getId();
-        communityPostService.increaseHit(postId, memberId);
+        if (bucket.tryConsume(1)) {
+            communityPostService.increaseHit(request.postIdList());
+        }
 
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("조회수 증가 성공", true));
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
     @Operation(summary = "커뮤니티 글 생성")

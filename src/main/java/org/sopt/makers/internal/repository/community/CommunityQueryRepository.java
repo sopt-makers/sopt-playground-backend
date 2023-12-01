@@ -96,12 +96,12 @@ public class CommunityQueryRepository {
                 .fetch();
     }
 
-    public void updateHitsByPostId(Long postId) {
+    public void updateHitsByPostId(List<Long> postIdList) {
         val post = QCommunityPost.communityPost;
 
         queryFactory.update(post)
                 .set(post.hits, post.hits.add(1))
-                .where(post.id.eq(postId))
+                .where(post.id.in(postIdList))
                 .execute();
     }
 

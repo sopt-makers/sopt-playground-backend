@@ -99,15 +99,13 @@ public class CommuntiyPostService {
     }
 
     @Transactional
-    public void increaseHit(Long postId, Long memberId) {
-        val member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
+    public void increaseHit(List<Long> postIdLists) {
+        for (Long id : postIdLists) {
+            val post = postRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
+        }
 
-        val post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
-
-        // 5분 동안 메모리에 저장
-        communityQueryRepository.updateHitsByPostId(postId);
+        communityQueryRepository.updateHitsByPostId(postIdLists);
     }
 
     public void reportPost(Long memberId, Long postId) {
