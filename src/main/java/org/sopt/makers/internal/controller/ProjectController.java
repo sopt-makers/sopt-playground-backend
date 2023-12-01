@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
-@SecurityRequirement(name = "Authorization")
+//@SecurityRequirement(name = "Authorization")
 @Tag(name = "Project 관련 API", description = "Project와 관련 API들")
 public class ProjectController {
     private final ProjectService projectService;
@@ -45,11 +46,11 @@ public class ProjectController {
     public ResponseEntity<List<ProjectResponse>> getProjects () {
         val projectMap = projectService.fetchAll().stream()
                 .collect(Collectors.toMap(Project::getId, Function.identity()));
-        val projectLinkMap = projectService.fetchAllLinks().stream()
-                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
+//        val projectLinkMap = projectService.fetchAllLinks().stream()
+//                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
         val responses = projectIds.stream()
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), new ArrayList<>()))
                 .collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
