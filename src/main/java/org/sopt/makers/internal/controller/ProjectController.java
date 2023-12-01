@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
-//@SecurityRequirement(name = "Authorization")
+@SecurityRequirement(name = "Authorization")
 @Tag(name = "Project 관련 API", description = "Project와 관련 API들")
 public class ProjectController {
     private final ProjectService projectService;
