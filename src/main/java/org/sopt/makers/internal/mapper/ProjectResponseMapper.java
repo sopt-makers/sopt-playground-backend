@@ -40,8 +40,8 @@ public class ProjectResponseMapper {
                 project.getGeneration(),
                 project.getCategory(),
                 project.getServiceType(),
-                project.getSummary(),
-                project.getDetail(),
+                truncateString(project.getSummary()),
+                truncateString(project.getDetail()),
                 project.getLogoImage(),
                 project.getThumbnailImage(),
                 linkResponses
@@ -138,4 +138,10 @@ public class ProjectResponseMapper {
         return new InternalProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
     }
 
+    private String truncateString(String str) {
+        if (str != null && str.length() > 20) {
+            return str.substring(0, 20) + "...";
+        }
+        return str;
+    }
 }
