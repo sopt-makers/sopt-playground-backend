@@ -6,8 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
-
-import static javax.persistence.FetchType.LAZY;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -15,7 +14,7 @@ import static javax.persistence.FetchType.LAZY;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @DynamicInsert
-public class CommunityComment extends AuditingTimeEntity {
+public class DeletedCommunityComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,4 +36,8 @@ public class CommunityComment extends AuditingTimeEntity {
 
     @ColumnDefault("false")
     private Boolean isReported;
+
+    @Builder.Default
+    @Column
+    private LocalDateTime deletedAt = LocalDateTime.now();
 }
