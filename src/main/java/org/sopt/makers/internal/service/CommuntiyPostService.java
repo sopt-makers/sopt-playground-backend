@@ -96,6 +96,10 @@ public class CommuntiyPostService {
             throw new ClientBadRequestException("삭제 권한이 없는 유저입니다.");
         }
 
+        val deletedPost = communityMapper.toDeleteCommunityPost(post);
+        deletedCommunityPostRepository.save(deletedPost);
+        post.getComments().stream().map(communityMapper::toDeleteCommunityComment)
+                .forEach(deletedCommunityCommentRepository::save);
         communityPostRepository.delete(post);
     }
 
