@@ -108,6 +108,9 @@ public class CommunityCommentService {
         if (!Objects.equals(member.getId(), comment.getWriterId())) {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
+
+        val deleteComment = communityMapper.toDeleteCommunityComment(comment);
+        deletedCommunityCommentRepository.save(deleteComment);
         communityCommentsRepository.delete(comment);
     }
 
