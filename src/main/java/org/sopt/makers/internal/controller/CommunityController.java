@@ -167,4 +167,9 @@ public class CommunityController {
         communityCommentService.reportComment(memberDetails.getId(), commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
     }
+
+    private Integer checkLimitForPagination(Integer limit) {
+        val isLimitEmpty = (limit == null);
+        return isLimitEmpty ? null : limit + 1;
+    }
 }
