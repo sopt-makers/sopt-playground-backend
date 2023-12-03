@@ -69,7 +69,7 @@ public class CommunityController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val posts = communityPostService.getAllPosts(categoryId, limit, cursor);
+        val posts = communityPostService.getAllPosts(categoryId, checkLimitForPagination(limit), cursor);
         val hasNextPosts = (limit != null && posts.size() > limit);
         if (hasNextPosts) posts.remove(posts.size() - 1);
         val postResponse = posts.stream().map(post -> {
