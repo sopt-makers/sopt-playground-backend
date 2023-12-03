@@ -3,20 +3,18 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.domain.community.ReportPost;
+import org.sopt.makers.internal.dto.community.CommunityPostMemberVo;
+import org.sopt.makers.internal.dto.community.PostSaveRequest;
 import org.sopt.makers.internal.dto.community.PostSaveResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.mapper.CommunityMapper;
+import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.PostRepository;
-import org.sopt.makers.internal.domain.community.CommunityPost;
-import org.sopt.makers.internal.dto.community.CommunityPostMemberVo;
-import org.sopt.makers.internal.dto.community.PostSaveRequest;
-import org.sopt.makers.internal.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.repository.community.CategoryRepository;
-import org.sopt.makers.internal.repository.community.CommunityPostRepository;
-import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
-import org.sopt.makers.internal.repository.community.ReportPostRepository;
+import org.sopt.makers.internal.repository.community.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +35,9 @@ public class CommuntiyPostService {
     private final PostRepository postRepository;
     private final ReportPostRepository reportPostRepository;
     private final CommunityPostRepository communityPostRepository;
+    private final DeletedCommunityPostRepository deletedCommunityPostRepository;
+    private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
+    private final CommunityMapper communityMapper;
     private final CommunityQueryRepository communityQueryRepository;
     private final CommunityResponseMapper communityResponseMapper;
 
