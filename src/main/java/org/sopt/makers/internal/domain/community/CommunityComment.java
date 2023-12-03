@@ -24,7 +24,7 @@ public class CommunityComment extends AuditingTimeEntity {
     @Column(nullable = false)
     private String content;
 
-    @Column(nullable = false)
+    @Column
     private Long postId;
 
     @Column(nullable = false)
