@@ -66,6 +66,10 @@ public record MemberProfileSpecificResponse(
             List<ActivityVo> cardinalActivities
     ){}
 
+    public record MemberCardinalInfoResponse (
+            String cardinalInfo
+    ){}
+
     public record SoptMemberActivityResponse (
             Integer generation,
             String part,
