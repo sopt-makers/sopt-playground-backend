@@ -8,15 +8,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
-import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.domain.Part;
-import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.internal.*;
+import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.service.InternalApiService;
+import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class InternalOpenApiController {
 
     private final InternalApiService internalApiService;
+    private final MemberService memberService;
     private final ProjectResponseMapper projectMapper;
     private final MemberMapper memberMapper;
 
@@ -204,6 +206,28 @@ public class InternalOpenApiController {
         val memberIds = internalApiService.getMembersIdByGeneration(generation);
         val response = new InternalLatestMemberResponse(memberIds);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 ID별 프로필 조회 API")
+    @GetMapping("/members/profile")
+    public ResponseEntity<List<InternalProfileListResponse>> getUserProfileList (
+            @RequestBody InternalProfileListRequest request
+    ) {
+        List<InternalProfileListResponse> responseArray = new ArrayList<>();
+        val members = memberService.getMemberProfileListById(request.memberIds());
+        for (Member member : members) {
+            val activities = memberService.getMemberProfileList(member.getActivities());
+            val activityResponses = activities.keySet().stream().map(MemberProfileSpecificResponse.MemberCardinalInfoResponse::new
+            ).toList();
+            responseArray.add(InternalProfileListResponse.builder()
+                    .memberId(member.getId())
+                    .profileImage(member.getProfileImage())
+                    .name(member.getName())
+                    .activities(activityResponses)
+                    .build()
+            );
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(responseArray);
     }
 
     @Operation(summary = "명예 회원 멤버 id 리스트 조회 API")
