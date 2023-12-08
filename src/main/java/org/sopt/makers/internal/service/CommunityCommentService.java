@@ -3,6 +3,7 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
@@ -62,7 +63,13 @@ public class CommunityCommentService {
         if (post.getMember().getId().equals(writerId)) return;
 
         try {
-            String pushNotificationContent = "\"" + post.getTitle() + "\"" + " 글에 댓글이 달렸어요.";
+            String title = post.getTitle();
+            String content = post.getContent();
+
+            if (StringUtils.isBlank(title)) {
+                title = StringUtils.abbreviate(content, 20) + "...";
+            }
+            String pushNotificationContent = "\"" + title + "\"" + " 글에 댓글이 달렸어요.";
 
             PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
                     .title("")

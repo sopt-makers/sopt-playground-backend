@@ -2,6 +2,10 @@ package org.sopt.makers.internal.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,21 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
+    public List<Member> getMemberProfileListById(String idList) {
+        List<Member> members = new ArrayList<>();
+
+        for (Long id : Arrays.stream(URLDecoder.decode(idList, StandardCharsets.UTF_8).split(",")).mapToLong(Long::parseLong).toArray()) {
+            Member member = memberRepository.findById(id).orElse(null);
+
+            if (member != null && member.getHasProfile()) {
+                members.add(member);
+            }
+        }
+
+        return members;
+    }
+
+    @Transactional(readOnly = true)
     public List<MemberProfileProjectDao> getMemberProfileProjects (Long id) {
         return memberProfileQueryRepository.findMemberProfileProjectsByMemberId(id);
     }
@@ -84,6 +100,24 @@ public class MemberService {
                 });
         val genActivityMap = Stream.concat(activities, projects)
                 .collect(Collectors.groupingBy(ActivityVo::generation));
+        return genActivityMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
+                        Map.Entry::getValue
+                ));
+    }
+
+    public Map<String, List<ActivityVo>> getMemberProfileList (
+            List<MemberSoptActivity> memberActivities
+    ) {
+        val cardinalInfoMap = memberActivities.stream()
+                .collect(Collectors.toMap(
+                        MemberSoptActivity::getGeneration,
+                        MemberSoptActivity::getPart,
+                        (p1, p2) -> p1)
+                );
+        val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+        val genActivityMap = activities.collect(Collectors.groupingBy(ActivityVo::generation));
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
