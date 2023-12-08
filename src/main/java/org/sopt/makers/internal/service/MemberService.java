@@ -3,7 +3,9 @@ package org.sopt.makers.internal.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,10 +62,10 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfileListById(List<Long> idList) {
+    public List<Member> getMemberProfileListById(String idList) {
         List<Member> members = new ArrayList<>();
 
-        for (Long id : idList) {
+        for (Long id : Arrays.stream(URLDecoder.decode(idList, StandardCharsets.UTF_8).split(",")).mapToLong(Long::parseLong).toArray()) {
             Member member = memberRepository.findById(id).orElse(null);
 
             if (member != null && member.getHasProfile()) {

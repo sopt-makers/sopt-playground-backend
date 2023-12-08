@@ -211,10 +211,10 @@ public class InternalOpenApiController {
     @Operation(summary = "멤버 ID별 프로필 조회 API")
     @GetMapping("/members/profile")
     public ResponseEntity<List<InternalProfileListResponse>> getUserProfileList (
-            @RequestBody InternalProfileListRequest request
+            @RequestParam String memberIds
     ) {
         List<InternalProfileListResponse> responseArray = new ArrayList<>();
-        val members = memberService.getMemberProfileListById(request.memberIds());
+        val members = memberService.getMemberProfileListById(memberIds);
         for (Member member : members) {
             val activities = memberService.getMemberProfileList(member.getActivities());
             val activityResponses = activities.keySet().stream().map(MemberProfileSpecificResponse.MemberCardinalInfoResponse::new
