@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.domain.community.ReportPost;
-import org.sopt.makers.internal.dto.community.CommunityPostMemberVo;
-import org.sopt.makers.internal.dto.community.PostSaveRequest;
-import org.sopt.makers.internal.dto.community.PostSaveResponse;
+import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.mapper.CommunityMapper;
@@ -83,6 +81,35 @@ public class CommuntiyPostService {
                 .comments(new ArrayList<>())
                 .build());
         return communityResponseMapper.toPostSaveResponse(post);
+    }
+
+    @Transactional
+    public PostUpdateResponse updatePost(Long writerId, PostUpdateRequest request) {
+        val member = memberRepository.findById(writerId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
+        val post = postRepository.findById(request.postId()).orElseThrow(
+                () -> new NotFoundDBEntityException("Is not a exist postId"));
+        val category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
+
+        if (!Objects.equals(member.getId(), post.getMember().getId())) {
+            throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
+        }
+
+        communityPostRepository.save(CommunityPost.builder()
+                .id(request.postId())
+                .member(member)
+                .categoryId(request.categoryId())
+                .title(request.title())
+                .content(request.content())
+                .hits(post.getHits())
+                .images(request.images())
+                .isQuestion(request.isQuestion())
+                .isBlindWriter(request.isBlindWriter())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(LocalDateTime.now(KST))
+                .build());
+        return communityResponseMapper.toPostUpdateResponse(post);
     }
 
     @Transactional

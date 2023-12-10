@@ -28,6 +28,11 @@ public class CommunityResponseMapper {
         val post = toPostVo(dao.posts());
         return new CommunityPostMemberVo(member, post, category);
     }
+    public PostUpdateResponse toPostUpdateResponse(CommunityPost post) {
+        return new PostUpdateResponse(post.getId(), post.getCategoryId(), post.getTitle(),
+                post.getContent(), post.getHits(), post.getImages(), post.getIsQuestion(),
+                post.getIsBlindWriter(), post.getCreatedAt(), post.getUpdatedAt());
+    }
 
     public PostSaveResponse toPostSaveResponse(CommunityPost post) {
         return new PostSaveResponse(post.getId(), post.getCategoryId(), post.getTitle(),
