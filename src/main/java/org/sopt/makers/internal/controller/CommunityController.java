@@ -102,6 +102,17 @@ public class CommunityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "커뮤니티 글 수정")
+    @PutMapping("/posts")
+    public ResponseEntity<PostUpdateResponse> updatePost(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestBody PostUpdateRequest request
+    ) {
+        val response = communityPostService.updatePost(1L, request);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+
     @Operation(summary = "커뮤니티 글 신고 API")
     @PostMapping("/posts/{postId}/report")
     public ResponseEntity<Map<String, Boolean>> reportPost(

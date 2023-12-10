@@ -12,11 +12,9 @@ import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
-import org.sopt.makers.internal.repository.community.CommunityPostRepository;
-import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
+import org.sopt.makers.internal.mapper.CommunityMapper;
+import org.sopt.makers.internal.repository.community.*;
 import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.repository.community.ReportCommentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +27,8 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class CommunityCommentService {
+    private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
+    private final CommunityMapper communityMapper;
     private final MemberRepository memberRepository;
     private final CommunityPostRepository communityPostRepository;
     private final CommunityCommentRepository communityCommentsRepository;
@@ -115,6 +115,9 @@ public class CommunityCommentService {
         if (!Objects.equals(member.getId(), comment.getWriterId())) {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
+
+        val deleteComment = communityMapper.toDeleteCommunityComment(comment);
+        deletedCommunityCommentRepository.save(deleteComment);
         communityCommentsRepository.delete(comment);
     }
 
