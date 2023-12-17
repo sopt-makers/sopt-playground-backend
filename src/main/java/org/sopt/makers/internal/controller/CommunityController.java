@@ -108,7 +108,7 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody PostUpdateRequest request
     ) {
-        val response = communityPostService.updatePost(1L, request);
+        val response = communityPostService.updatePost(memberDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
