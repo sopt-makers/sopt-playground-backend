@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class CommuntiyPostService {
+    private final CommunityCommentRepository communityCommentRepository;
 
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
@@ -106,6 +107,7 @@ public class CommuntiyPostService {
                 .images(request.images())
                 .isQuestion(request.isQuestion())
                 .isBlindWriter(request.isBlindWriter())
+                .comments(communityCommentRepository.findAllByPostId(request.postId()))
                 .createdAt(post.getCreatedAt())
                 .updatedAt(LocalDateTime.now(KST))
                 .build());
