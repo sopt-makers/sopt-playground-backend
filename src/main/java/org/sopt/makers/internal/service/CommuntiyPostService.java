@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class CommuntiyPostService {
+    private final CommunityCommentRepository communityCommentRepository;
 
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
