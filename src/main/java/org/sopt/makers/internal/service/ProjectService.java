@@ -134,8 +134,8 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> fetchAll () {
-        return projectRepository.findAll();
+    public List<Project> getProjectByName (String name) {
+        return projectRepository.findAllByNameContaining(name);
     }
 
     @Transactional(readOnly = true)
