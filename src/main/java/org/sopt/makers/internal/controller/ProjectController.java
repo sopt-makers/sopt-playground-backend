@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -54,7 +55,7 @@ public class ProjectController {
         val projectLinkMap = projectService.fetchAllLinks().stream()
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
-        val projectList = projectIds.stream()
+        val projectList = projectIds.stream().sorted(Collections.reverseOrder())
                 .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
         val hasNextMember = (limit != null && projectList.size() > limit);
