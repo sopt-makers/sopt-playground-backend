@@ -167,4 +167,12 @@ public class ProjectService {
         val project = projectQueryRepository.findLinksById(id);
         return project;
     }
+
+    @Transactional(readOnly = true)
+    public List<Project> fetchAll (Integer limit, Long cursor) {
+        if(limit != null) {
+            return projectQueryRepository.findAllLimitedProjects(limit, cursor);
+        }
+        return projectRepository.findAll();
+    }
 }
