@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -41,17 +40,26 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "Project 전체 조회 API")
+    @Operation(
+            summary = "Project 전체 조회 API",
+            description = "cursor : 처음에는 null 또는 0, 이후 마지막으로 조회된 project id"
+    )
     @GetMapping("")
-    public ResponseEntity<List<ProjectResponse>> getProjects () {
-        val projectMap = projectService.fetchAll().stream()
-                .collect(Collectors.toMap(Project::getId, Function.identity()));
-//        val projectLinkMap = projectService.fetchAllLinks().stream()
-//                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
+    public ResponseEntity<ProjectAllResponse> getProjects (
+            @RequestParam(required = false, name = "limit") Integer limit,
+            @RequestParam(required = false, name = "cursor") Long cursor
+    ) {
+        val projectMap = projectService.fetchAll(checkLimitForPagination(limit), cursor)
+                .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
+        val projectLinkMap = projectService.fetchAllLinks().stream()
+                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
-        val responses = projectIds.stream()
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), new ArrayList<>()))
+        val projectList = projectIds.stream()
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
+        val hasNextMember = (limit != null && projectList.size() > limit);
+        if (hasNextMember) projectList.remove(projectList.size() - 1);
+        val responses = new ProjectAllResponse(projectList,hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
@@ -85,5 +93,10 @@ public class ProjectController {
         val writerId = memberDetails.getId();
         projectService.deleteProject(writerId, projectId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+    }
+
+    private Integer checkLimitForPagination(Integer limit) {
+        val isLimitEmpty = (limit == null);
+        return isLimitEmpty ? null : limit + 1;
     }
 }
