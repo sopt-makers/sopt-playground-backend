@@ -55,8 +55,8 @@ public class ProjectController {
         val projectLinkMap = projectService.fetchAllLinks().stream()
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
-        val responses = projectIds.stream()
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), new ArrayList<>()))
+        val projectList = projectIds.stream()
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
         val hasNextMember = (limit != null && projectList.size() > limit);
         if (hasNextMember) projectList.remove(projectList.size() - 1);
