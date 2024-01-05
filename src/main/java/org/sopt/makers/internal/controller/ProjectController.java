@@ -40,7 +40,6 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "Project 전체 조회 API")
     @Operation(
             summary = "Project 전체 조회 API",
             description = "cursor : 처음에는 null 또는 0, 이후 마지막으로 조회된 project id"
