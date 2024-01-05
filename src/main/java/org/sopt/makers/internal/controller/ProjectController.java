@@ -95,4 +95,9 @@ public class ProjectController {
         projectService.deleteProject(writerId, projectId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
+
+    private Integer checkLimitForPagination(Integer limit) {
+        val isLimitEmpty = (limit == null);
+        return isLimitEmpty ? null : limit + 1;
+    }
 }
