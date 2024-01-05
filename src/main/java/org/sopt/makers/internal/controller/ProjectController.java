@@ -96,6 +96,20 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
+    @Operation(summary = "Project 이름으로 조회 API")
+    @GetMapping("/search")
+    public ResponseEntity<List<ProjectResponse>> getProjectsByName (@RequestParam String name) {
+        val projectMap = projectService.getProjectByName(name)
+                .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
+        val projectLinkMap = projectService.fetchAllLinks().stream()
+                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
+        val projectIds = projectMap.keySet();
+        val responses = projectIds.stream()
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
+                .collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
+    }
+
     private Integer checkLimitForPagination(Integer limit) {
         val isLimitEmpty = (limit == null);
         return isLimitEmpty ? null : limit + 1;
