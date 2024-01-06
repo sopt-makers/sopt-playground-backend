@@ -50,7 +50,8 @@ public class ProjectController {
     @GetMapping("")
     public ResponseEntity<ProjectAllResponse> getProjects (
             @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Long cursor
+            @RequestParam(required = false, name = "cursor") Long cursor,
+            @RequestParam(required = false, name = "name") String name
     ) {
         val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name)
                 .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
