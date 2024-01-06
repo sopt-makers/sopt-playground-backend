@@ -95,9 +95,4 @@ public class WordChainGameController {
         val response = new WordChainGameWinnerAllResponse(winners,hasNextMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-
-    private Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null);
-        return isLimitEmpty ? null : limit + 1;
-    }
 }
