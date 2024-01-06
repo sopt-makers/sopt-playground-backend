@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.wordChainGame.*;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
@@ -29,6 +30,7 @@ public class WordChainGameController {
     private final MemberService memberService;
     private final WordChainGameService wordChainGameService;
     private final MemberMapper memberMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "단어보내기 API")
     @PostMapping("/wordGame")
@@ -50,7 +52,7 @@ public class WordChainGameController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val rooms = wordChainGameService.getAllRoom(checkLimitForPagination(limit), cursor);
+        val rooms = wordChainGameService.getAllRoom(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val roomList = rooms.stream().map(room -> {
             val isFirstGame = Objects.isNull(room.getCreatedUserId());
             val startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
@@ -62,9 +64,8 @@ public class WordChainGameController {
             }).collect(Collectors.toList());
             return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), responseStartUser, wordList);
         }).collect(Collectors.toList());
-        val hasNextMember = (limit != null && rooms.size() > limit);
-        if (hasNextMember) rooms.remove(rooms.size() - 1);
-        val response = new WordChainGameAllResponse(roomList,hasNextMember);
+        val hasNextGame = infiniteScrollUtil.checkHasNextElement(limit,roomList);
+        val response = new WordChainGameAllResponse(roomList,hasNextGame);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -87,15 +88,9 @@ public class WordChainGameController {
         @RequestParam(required = false, name = "limit") Integer limit,
         @RequestParam(required = false, name = "cursor") Integer cursor
     ) {
-        val winners = wordChainGameService.getAllWinner(checkLimitForPagination(limit), cursor);
-        val hasNextMember = (limit != null && winners.size() > limit);
-        if (hasNextMember) winners.remove(winners.size() - 1);
-        val response = new WordChainGameWinnerAllResponse(winners,hasNextMember);
+        val winners = wordChainGameService.getAllWinner(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        val hasNextWinner = infiniteScrollUtil.checkHasNextElement(limit, winners);
+        val response = new WordChainGameWinnerAllResponse(winners,hasNextWinner);
         return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    private Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null);
-        return isLimitEmpty ? null : limit + 1;
     }
 }

@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
@@ -34,6 +35,7 @@ public class CommunityController {
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
     private final Bucket bucket;
 
     @Operation(summary = "커뮤니티 전체 카테고리 조회")
@@ -69,9 +71,8 @@ public class CommunityController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val posts = communityPostService.getAllPosts(categoryId, checkLimitForPagination(limit), cursor);
-        val hasNextPosts = (limit != null && posts.size() > limit);
-        if (hasNextPosts) posts.remove(posts.size() - 1);
+        val posts = communityPostService.getAllPosts(categoryId, infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id());
             return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId());
@@ -177,10 +178,5 @@ public class CommunityController {
     ) {
         communityCommentService.reportComment(memberDetails.getId(), commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
-    }
-
-    private Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null);
-        return isLimitEmpty ? null : limit + 1;
     }
 }

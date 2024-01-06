@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.*;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 public class ProjectController {
     private final ProjectService projectService;
     private final ProjectResponseMapper projectMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")
@@ -48,9 +50,10 @@ public class ProjectController {
     @GetMapping("")
     public ResponseEntity<ProjectAllResponse> getProjects (
             @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Long cursor
+            @RequestParam(required = false, name = "cursor") Long cursor,
+            @RequestParam(required = false, name = "name") String name
     ) {
-        val projectMap = projectService.fetchAll(checkLimitForPagination(limit), cursor)
+        val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name)
                 .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
         val projectLinkMap = projectService.fetchAllLinks().stream()
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
@@ -58,8 +61,7 @@ public class ProjectController {
         val projectList = projectIds.stream().sorted(Collections.reverseOrder())
                 .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
-        val hasNextProject = (limit != null && projectList.size() > limit);
-        if (hasNextProject) projectList.remove(projectList.size() - 1);
+        val hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
         val responses = new ProjectAllResponse(projectList, hasNextProject);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
@@ -94,24 +96,5 @@ public class ProjectController {
         val writerId = memberDetails.getId();
         projectService.deleteProject(writerId, projectId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
-    }
-
-    @Operation(summary = "Project 이름으로 조회 API")
-    @GetMapping("/search")
-    public ResponseEntity<List<ProjectResponse>> getProjectsByName (@RequestParam String name) {
-        val projectMap = projectService.getProjectByName(name)
-                .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
-        val projectLinkMap = projectService.fetchAllLinks().stream()
-                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
-        val projectIds = projectMap.keySet();
-        val responses = projectIds.stream()
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
-                .collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
-    }
-
-    private Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null);
-        return isLimitEmpty ? null : limit + 1;
     }
 }
