@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
@@ -34,6 +35,7 @@ public class CommunityController {
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
     private final Bucket bucket;
 
     @Operation(summary = "커뮤니티 전체 카테고리 조회")

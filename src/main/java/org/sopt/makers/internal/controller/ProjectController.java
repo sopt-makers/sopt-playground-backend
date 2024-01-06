@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.*;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 public class ProjectController {
     private final ProjectService projectService;
     private final ProjectResponseMapper projectMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")

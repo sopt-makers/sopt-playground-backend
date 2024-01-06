@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.wordChainGame.*;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
@@ -29,6 +30,7 @@ public class WordChainGameController {
     private final MemberService memberService;
     private final WordChainGameService wordChainGameService;
     private final MemberMapper memberMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "단어보내기 API")
     @PostMapping("/wordGame")
