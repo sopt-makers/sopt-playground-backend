@@ -52,7 +52,7 @@ public class ProjectController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val projectMap = projectService.fetchAll(checkLimitForPagination(limit), cursor)
+        val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name)
                 .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
         val projectLinkMap = projectService.fetchAllLinks().stream()
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
@@ -60,8 +60,7 @@ public class ProjectController {
         val projectList = projectIds.stream().sorted(Collections.reverseOrder())
                 .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
-        val hasNextProject = (limit != null && projectList.size() > limit);
-        if (hasNextProject) projectList.remove(projectList.size() - 1);
+        val hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
         val responses = new ProjectAllResponse(projectList, hasNextProject);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
