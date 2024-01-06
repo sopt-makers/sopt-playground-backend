@@ -76,6 +76,19 @@ public class ProjectQueryRepository {
                 .fetch();
     }
 
+    public List<Project> findAllLimitedProjectsContainsName(
+            Integer limit, Long cursor, String name
+    ) {
+        val project = QProject.project;
+
+        return queryFactory.selectFrom(project)
+                .where(ltProjectId(cursor), project.name.contains(name))
+                .limit(limit)
+                .orderBy(project.id.desc())
+                .groupBy(project.id)
+                .fetch();
+    }
+
     private BooleanExpression ltProjectId(Long projectId) {
         val project = QProject.project;
         if(projectId == null || projectId == 0) return null;
