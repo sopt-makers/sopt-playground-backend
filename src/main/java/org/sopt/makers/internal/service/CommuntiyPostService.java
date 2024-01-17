@@ -1,18 +1,22 @@
 package org.sopt.makers.internal.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.domain.community.ReportPost;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.repository.community.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +31,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class CommuntiyPostService {
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
     private final CommunityCommentRepository communityCommentRepository;
-
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
@@ -39,6 +44,9 @@ public class CommuntiyPostService {
     private final CommunityMapper communityMapper;
     private final CommunityQueryRepository communityQueryRepository;
     private final CommunityResponseMapper communityResponseMapper;
+    private final SlackMessageUtil slackMessageUtil;
+    private final SlackClient slackClient;
+
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 

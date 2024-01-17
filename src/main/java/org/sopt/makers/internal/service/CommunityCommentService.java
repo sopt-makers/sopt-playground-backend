@@ -1,9 +1,11 @@
 package org.sopt.makers.internal.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
@@ -12,9 +14,11 @@ import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.repository.community.*;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,9 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class CommunityCommentService {
+
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final CommunityMapper communityMapper;
     private final MemberRepository memberRepository;
@@ -36,6 +43,8 @@ public class CommunityCommentService {
     private final CommunityQueryRepository communityQueryRepository;
     private final InternalApiService internalApiService;
     private final PushNotificationService pushNotificationService;
+    private final SlackMessageUtil slackMessageUtil;
+    private final SlackClient slackClient;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
