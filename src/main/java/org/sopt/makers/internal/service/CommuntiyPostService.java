@@ -155,10 +155,40 @@ public class CommuntiyPostService {
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val post = postRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
+
+        try {
+            if (Objects.equals(activeProfile, "prod")) {
+                val slackRequest = createSlackRequest(post.getId(), member.getName());
+                slackClient.postReportMessage(slackRequest.toString());
+            }
+        } catch (RuntimeException ex) {
+            log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
+        }
+
         reportPostRepository.save(ReportPost.builder()
                 .reporterId(memberId)
                 .postId(postId)
                 .createdAt(LocalDateTime.now(KST))
                 .build());
     }
+
+    private JsonNode createSlackRequest(Long id, String name) {
+        val rootNode = slackMessageUtil.getObjectNode();
+        rootNode.put("text", "🚨글 신고 발생!🚨");
+
+        val blocks = slackMessageUtil.getArrayNode();
+        val textField = slackMessageUtil.createTextField("글 신고가 들어왔어요!");
+        val contentNode = slackMessageUtil.createSection();
+
+        val fields = slackMessageUtil.getArrayNode();
+        fields.add(slackMessageUtil.createTextFieldNode("*신고자:*\n" + name));
+        fields.add(slackMessageUtil.createTextFieldNode("*글 링크:*\n<https://playground.sopt.org/feed/" + id + "|글>"));
+        contentNode.set("fields", fields);
+
+        blocks.add(textField);
+        blocks.add(contentNode);
+        rootNode.set("blocks", blocks);
+        return rootNode;
+    }
+
 }
