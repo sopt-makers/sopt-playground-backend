@@ -51,9 +51,12 @@ public class ProjectController {
     public ResponseEntity<ProjectAllResponse> getProjects (
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor,
-            @RequestParam(required = false, name = "name") String name
+            @RequestParam(required = false, name = "name") String name,
+            @RequestParam(required = false, name = "category") String category,
+            @RequestParam(required = false, name = "isAvailable") Boolean isAvailable,
+            @RequestParam(required = false, name = "isFounding") Boolean isFounding
     ) {
-        val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name)
+        val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, category, isAvailable, isFounding)
                 .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
         val projectLinkMap = projectService.fetchAllLinks().stream()
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));

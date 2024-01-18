@@ -63,13 +63,51 @@ public class ProjectQueryRepository {
         return getProjectLinkQuery().fetch();
     }
 
-    public List<Project> findAllLimitedProjects(
-            Integer limit, Long cursor
+    public List<Project> findAllNameProjects(
+            String name, String category, Boolean isAvailable, Boolean isFounding
     ) {
         val project = QProject.project;
 
+        BooleanExpression filter = project.isNotNull();
+        if (category != null) {
+            filter = filter.and(project.category.eq(category));
+        }
+
+        if (isAvailable != null) {
+            filter = filter.and(project.isAvailable.eq(isAvailable));
+        }
+
+        if (isFounding != null) {
+            filter = filter.and(project.isFounding.eq(isFounding));
+        }
+
         return queryFactory.selectFrom(project)
-                .where(ltProjectId(cursor))
+                .where(project.name.contains(name), filter)
+                .orderBy(project.id.desc())
+                .groupBy(project.id)
+                .fetch();
+    }
+
+    public List<Project> findAllLimitedProjects(
+            Integer limit, Long cursor, String category, Boolean isAvailable, Boolean isFounding
+    ) {
+        val project = QProject.project;
+
+        BooleanExpression filter = project.isNotNull();
+        if (category != null) {
+            filter = filter.and(project.category.eq(category));
+        }
+
+        if (isAvailable != null) {
+            filter = filter.and(project.isAvailable.eq(isAvailable));
+        }
+
+        if (isFounding != null) {
+            filter = filter.and(project.isFounding.eq(isFounding));
+        }
+
+        return queryFactory.selectFrom(project)
+                .where(ltProjectId(cursor), filter)
                 .limit(limit)
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
@@ -77,12 +115,25 @@ public class ProjectQueryRepository {
     }
 
     public List<Project> findAllLimitedProjectsContainsName(
-            Integer limit, Long cursor, String name
+            Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding
     ) {
         val project = QProject.project;
 
+        BooleanExpression filter = project.isNotNull();
+        if (category != null) {
+            filter = filter.and(project.category.eq(category));
+        }
+
+        if (isAvailable != null) {
+            filter = filter.and(project.isAvailable.eq(isAvailable));
+        }
+
+        if (isFounding != null) {
+            filter = filter.and(project.isFounding.eq(isFounding));
+        }
+
         return queryFactory.selectFrom(project)
-                .where(ltProjectId(cursor), project.name.contains(name))
+                .where(ltProjectId(cursor), project.name.contains(name), filter)
                 .limit(limit)
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
