@@ -169,12 +169,12 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> fetchAll (Integer limit, Long cursor, String name) {
-        if(limit != null && name != null) return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name);
+    public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding) {
+        if(limit != null && name != null) return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
         else if(limit != null) {
-            return projectQueryRepository.findAllLimitedProjects(limit, cursor);
+            return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding);
         } else if(name != null) {
-            return projectRepository.findAllByNameContaining(name);
+            return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding);
         }
         return projectRepository.findAll();
     }
