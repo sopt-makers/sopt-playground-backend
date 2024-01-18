@@ -178,4 +178,9 @@ public class ProjectService {
         }
         return projectRepository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public Long getAllCount() {
+        return projectRepository.count();
+    }
 }

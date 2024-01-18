@@ -4,5 +4,6 @@ import java.util.List;
 
 public record ProjectAllResponse(
         List<ProjectResponse> projectList,
-        Boolean hasNext
+        Boolean hasNext,
+        Long totalCount
 ){}
