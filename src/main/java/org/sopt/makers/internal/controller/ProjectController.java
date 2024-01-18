@@ -62,7 +62,7 @@ public class ProjectController {
                 .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
         val hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
-        val responses = new ProjectAllResponse(projectList, hasNextProject);
+        val responses = new ProjectAllResponse(projectList, hasNextProject, projectService.getAllCount());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
