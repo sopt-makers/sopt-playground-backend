@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.MakersMemberId;
+import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
@@ -46,7 +47,8 @@ public class MemberService {
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
-    private final ObjectMapper jsonMapper = new ObjectMapper();
+
+    private final SlackMessageUtil slackMessageUtil;
 
     @Transactional(readOnly = true)
     public Member getMemberById (Long id) {
@@ -262,7 +264,7 @@ public class MemberService {
         try {
             if (Objects.equals(activeProfile, "prod")) {
                 val slackRequest = createSlackRequest(member.getId(), request.name(), request.idealType());
-                slackClient.postMessage(slackRequest.toString());
+                slackClient.postNewProfileMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
             log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
@@ -271,33 +273,23 @@ public class MemberService {
     }
 
     private JsonNode createSlackRequest(Long id, String name, String idealType) {
-        val rootNode = jsonMapper.createObjectNode();
+        val rootNode = slackMessageUtil.getObjectNode();
         rootNode.put("text", "새로운 유저가 프로필을 만들었어요!");
-        val blocks = jsonMapper.createArrayNode();
 
-        val textField = jsonMapper.createObjectNode();
-        textField.put("type", "section");
-        textField.set("text", createTextFieldNode("새로운 유저가 프로필을 만들었어요!"));
+        val blocks = slackMessageUtil.getArrayNode();
+        val textField = slackMessageUtil.createTextField("새로운 유저가 프로필을 만들었어요!");
+        val contentNode = slackMessageUtil.createSection();
 
-        val contentNode = jsonMapper.createObjectNode();
-        contentNode.put("type", "section");
-        val fields = jsonMapper.createArrayNode();
-        fields.add(createTextFieldNode("*이름:*\n" + name));
-        fields.add(createTextFieldNode("*프로필링크:*\n<https://playground.sopt.org/members/" + id + "|멤버프로필>"));
-        fields.add(createTextFieldNode("*이상형:*\n" + idealType));
+        val fields = slackMessageUtil.getArrayNode();
+        fields.add(slackMessageUtil.createTextFieldNode("*이름:*\n" + name));
+        fields.add(slackMessageUtil.createTextFieldNode("*프로필링크:*\n<https://playground.sopt.org/members/" + id + "|멤버프로필>"));
+        fields.add(slackMessageUtil.createTextFieldNode("*이상형:*\n" + idealType));
         contentNode.set("fields", fields);
 
         blocks.add(textField);
         blocks.add(contentNode);
         rootNode.set("blocks", blocks);
         return rootNode;
-    }
-
-    private JsonNode createTextFieldNode (String text) {
-        val textField = jsonMapper.createObjectNode();
-        textField.put("type", "mrkdwn");
-        textField.put("text", text);
-        return textField;
     }
 
     @Transactional

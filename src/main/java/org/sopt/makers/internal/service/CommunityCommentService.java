@@ -1,9 +1,11 @@
 package org.sopt.makers.internal.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
@@ -12,9 +14,11 @@ import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.repository.community.*;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,9 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class CommunityCommentService {
+
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final CommunityMapper communityMapper;
     private final MemberRepository memberRepository;
@@ -36,6 +43,8 @@ public class CommunityCommentService {
     private final CommunityQueryRepository communityQueryRepository;
     private final InternalApiService internalApiService;
     private final PushNotificationService pushNotificationService;
+    private final SlackMessageUtil slackMessageUtil;
+    private final SlackClient slackClient;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -126,10 +135,40 @@ public class CommunityCommentService {
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
         val comment = communityCommentsRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist comment id"));
+
+        try {
+            if (Objects.equals(activeProfile, "prod")) {
+                val slackRequest = createSlackRequest(comment.getPostId(), member.getName(), comment.getContent());
+                slackClient.postReportMessage(slackRequest.toString());
+            }
+        } catch (RuntimeException ex) {
+            log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
+        }
+
         reportCommentRepository.save(ReportComment.builder()
                 .reporterId(memberId)
                 .commentId(commentId)
                 .createdAt(LocalDateTime.now(KST))
                 .build());
+    }
+
+    private JsonNode createSlackRequest(Long id, String name, String comment) {
+        val rootNode = slackMessageUtil.getObjectNode();
+        rootNode.put("text", "🚨댓글 신고 발생!🚨");
+
+        val blocks = slackMessageUtil.getArrayNode();
+        val textField = slackMessageUtil.createTextField("댓글 신고가 들어왔어요!");
+        val contentNode = slackMessageUtil.createSection();
+
+        val fields = slackMessageUtil.getArrayNode();
+        fields.add(slackMessageUtil.createTextFieldNode("*신고자:*\n" + name));
+        fields.add(slackMessageUtil.createTextFieldNode("*댓글 내용:*\n" + comment));
+        fields.add(slackMessageUtil.createTextFieldNode("*링크:*\n<https://playground.sopt.org/feed/" + id + "|글>"));
+        contentNode.set("fields", fields);
+
+        blocks.add(textField);
+        blocks.add(contentNode);
+        rootNode.set("blocks", blocks);
+        return rootNode;
     }
 }
