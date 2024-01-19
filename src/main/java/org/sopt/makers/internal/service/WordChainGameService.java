@@ -121,6 +121,7 @@ public class WordChainGameService {
     @Transactional(readOnly = true)
     public List<WordChainGameRoom> getAllRoom(Integer limit, Long cursor) {
         if(limit != null) {
+            if (limit == 0) limit = 1;
             return wordChainGameQueryRepository.findAllLimitedGameRoom(limit, cursor);
         } else {
             return wordChainGameQueryRepository.findAllGameRoom();

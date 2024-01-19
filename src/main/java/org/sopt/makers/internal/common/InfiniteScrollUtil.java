@@ -8,12 +8,12 @@ import java.util.List;
 @Component
 public class InfiniteScrollUtil {
     public Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null);
+        val isLimitEmpty = (limit == null || limit == 0);
         return isLimitEmpty ? null : limit + 1;
     }
 
     public <T extends Record> Boolean checkHasNextElement(Integer limit, List<T> elementList) {
-        val hasNextElement = (limit != null && elementList.size() > limit);
+        val hasNextElement = ((limit != null && limit != 0) && elementList.size() > limit);
         if (hasNextElement) elementList.remove(elementList.size() - 1);
         return hasNextElement;
     }
