@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
@@ -34,7 +35,7 @@ public class MemberController {
     private final MemberService memberService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
-
+    private final InfiniteScrollUtil infiniteScrollUtil;
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -196,10 +197,9 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = memberService.getMemberProfiles(filter, checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
+        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
         val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
-        val hasNextMember = (limit != null && memberList.size() > limit);
-        if (hasNextMember) memberList.remove(members.size() - 1);
+        val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -266,10 +266,5 @@ public class MemberController {
             team = null;
         }
         return team;
-    }
-
-    private Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null);
-        return isLimitEmpty ? null : limit + 1;
     }
 }

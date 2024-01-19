@@ -134,8 +134,8 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> fetchAll () {
-        return projectRepository.findAll();
+    public List<Project> getProjectByName (String name) {
+        return projectRepository.findAllByNameContaining(name);
     }
 
     @Transactional(readOnly = true)
@@ -166,5 +166,21 @@ public class ProjectService {
     public List<ProjectLinkDao> fetchLinksById (Long id) {
         val project = projectQueryRepository.findLinksById(id);
         return project;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding) {
+        if(limit != null && name != null) return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
+        else if(limit != null) {
+            return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding);
+        } else if(name != null) {
+            return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding);
+        }
+        return projectRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Long getAllCount() {
+        return projectRepository.count();
     }
 }

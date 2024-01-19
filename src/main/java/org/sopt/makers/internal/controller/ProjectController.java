@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.domain.Project;
 import org.sopt.makers.internal.dto.project.*;
@@ -17,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 public class ProjectController {
     private final ProjectService projectService;
     private final ProjectResponseMapper projectMapper;
+    private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")
@@ -41,17 +43,29 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "Project 전체 조회 API")
+    @Operation(
+            summary = "Project 전체 조회 API",
+            description = "cursor : 처음에는 null 또는 0, 이후 마지막으로 조회된 project id"
+    )
     @GetMapping("")
-    public ResponseEntity<List<ProjectResponse>> getProjects () {
-        val projectMap = projectService.fetchAll().stream()
-                .collect(Collectors.toMap(Project::getId, Function.identity()));
-//        val projectLinkMap = projectService.fetchAllLinks().stream()
-//                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
+    public ResponseEntity<ProjectAllResponse> getProjects (
+            @RequestParam(required = false, name = "limit") Integer limit,
+            @RequestParam(required = false, name = "cursor") Long cursor,
+            @RequestParam(required = false, name = "name") String name,
+            @RequestParam(required = false, name = "category") String category,
+            @RequestParam(required = false, name = "isAvailable") Boolean isAvailable,
+            @RequestParam(required = false, name = "isFounding") Boolean isFounding
+    ) {
+        val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, category, isAvailable, isFounding)
+                .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
+        val projectLinkMap = projectService.fetchAllLinks().stream()
+                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
-        val responses = projectIds.stream()
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), new ArrayList<>()))
+        val projectList = projectIds.stream().sorted(Collections.reverseOrder())
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
+        val hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
+        val responses = new ProjectAllResponse(projectList, hasNextProject, projectService.getAllCount());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
