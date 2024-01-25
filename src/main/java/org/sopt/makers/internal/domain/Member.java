@@ -130,6 +130,16 @@ public class Member {
     @Column(name = "openToSoulmate")
     private Boolean openToSoulmate = false;
 
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    private Boolean isEmailBlind = true;
+
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    private Boolean isPhoneBlind = true;
+
     public void editActivityChangeToFalse() {
         this.editActivitiesAble = false;
     }
@@ -145,6 +155,14 @@ public class Member {
 
     public void disagreeToUseSoulmate () {
         this.openToSoulmate = false;
+    }
+
+    public void changeBlind(String section, Boolean isBlind) {
+        if (section.equals("email")) {
+            this.isEmailBlind = isBlind;
+        }
+
+        this.isPhoneBlind = isBlind;
     }
 
     public void saveMemberProfile(
