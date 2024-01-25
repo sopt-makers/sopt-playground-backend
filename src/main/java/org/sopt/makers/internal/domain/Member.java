@@ -162,7 +162,9 @@ public class Member {
             this.isEmailBlind = isBlind;
         }
 
-        this.isPhoneBlind = isBlind;
+        if (section.equals("phone")) {
+            this.isPhoneBlind = isBlind;
+        }
     }
 
     public void saveMemberProfile(
