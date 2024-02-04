@@ -15,6 +15,8 @@ public record ProjectResponse(
         String category,
         @Schema(required = true)
         String[] serviceType,
+        Boolean isAvailable,
+        Boolean isFounding,
         @Schema(required = true)
         String summary,
         @Schema(required = true)

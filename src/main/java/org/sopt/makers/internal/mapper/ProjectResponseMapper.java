@@ -40,6 +40,8 @@ public class ProjectResponseMapper {
                 project.getGeneration(),
                 project.getCategory(),
                 project.getServiceType(),
+                project.getIsAvailable(),
+                project.getIsFounding(),
                 truncateString(project.getSummary()),
                 truncateString(project.getDetail()),
                 project.getLogoImage(),
