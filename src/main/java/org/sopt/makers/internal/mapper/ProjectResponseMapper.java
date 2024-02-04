@@ -17,10 +17,16 @@ import java.util.stream.Collectors;
 @Component
 public class ProjectResponseMapper {
 
-    public ProjectDetailResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
+    public ProjectDetailResponse.ProjectMemberResponse toProjectDetailMemberResponse(ProjectMemberVo project) {
         return new ProjectDetailResponse.ProjectMemberResponse(
                 project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
                 project.memberName(), project.memberGenerations(), project.memberProfileImage(), project.memberHasProfile()
+        );
+    }
+
+    public ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
+        return new ProjectResponse.ProjectMemberResponse(
+                project.memberId(), project.memberName(), project.memberProfileImage()
         );
     }
 
@@ -31,8 +37,9 @@ public class ProjectResponseMapper {
     public ProjectDetailResponse.ProjectLinkResponse toProjectDetailLinkResponse (ProjectLinkDao project) {
         return new ProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
     }
-    public ProjectResponse toProjectResponse (Project project, List<ProjectLinkDao> projectLinks) {
+    public ProjectResponse toProjectResponse (Project project, List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
         val linkResponses = projectLinks.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
+        val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
 
         return new ProjectResponse(
                 project.getId(),
@@ -46,13 +53,14 @@ public class ProjectResponseMapper {
                 truncateString(project.getDetail()),
                 project.getLogoImage(),
                 project.getThumbnailImage(),
+                memberResponses,
                 linkResponses
         );
     }
 
     public ProjectDetailResponse toProjectDetailResponse (List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
         val projectInfo = projectMembers.get(0);
-        val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
+        val memberResponses = projectMembers.stream().map(this::toProjectDetailMemberResponse).collect(Collectors.toList());
         val linkResponses = projectLinks.stream().map(this::toProjectDetailLinkResponse).collect(Collectors.toList());
 
         return new ProjectDetailResponse(

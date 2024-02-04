@@ -62,7 +62,7 @@ public class ProjectController {
                 .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
         val projectIds = projectMap.keySet();
         val projectList = projectIds.stream().sorted(Collections.reverseOrder())
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
+                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectService.fetchById(id), projectLinkMap.getOrDefault(id, List.of())))
                 .collect(Collectors.toList());
         val hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
         val totalProjectsCount = projectService.getProjectsCount(name, category, isAvailable, isFounding);

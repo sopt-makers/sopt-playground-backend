@@ -25,8 +25,14 @@ public record ProjectResponse(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
-        List<ProjectResponse.ProjectLinkResponse> links
+        List<ProjectMemberResponse> members,
+        List<ProjectLinkResponse> links
 ) {
+    public record ProjectMemberResponse(
+            Long memberId,
+            String memberName,
+            String memberProfileImage
+    ){}
     public record ProjectLinkResponse(
             Long linkId,
             String linkTitle,
