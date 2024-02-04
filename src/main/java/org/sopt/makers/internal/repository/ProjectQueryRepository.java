@@ -128,9 +128,14 @@ public class ProjectQueryRepository {
                 .fetch();
     }
 
-    private BooleanExpression ltProjectId(Long projectId) {
+    public int countAllProjects(String name, String category, Boolean isAvailable, Boolean isFounding) {
         val project = QProject.project;
-        if(projectId == null || projectId == 0) return null;
-        return project.id.lt(projectId);
+        return queryFactory.select(project.id)
+                .from(project)
+                .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
+                .groupBy(project.id)
+                .fetch()
+                .size();
     }
 }
