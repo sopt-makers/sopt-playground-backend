@@ -5,5 +5,5 @@ import java.util.List;
 public record ProjectAllResponse(
         List<ProjectResponse> projectList,
         Boolean hasNext,
-        Long totalCount
+        Integer totalCount
 ){}
