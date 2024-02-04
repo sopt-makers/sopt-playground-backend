@@ -62,7 +62,7 @@ public class ProjectQueryRepository {
 
     private BooleanExpression checkProjectIsFounding(Boolean isFounding) {
         val checkIsFoundingIsEmpty = Objects.isNull(isFounding);
-        return checkIsFoundingIsEmpty ? null : QProject.project.isAvailable.eq(isFounding);
+        return checkIsFoundingIsEmpty ? null : QProject.project.isFounding.eq(isFounding);
     }
 
     private BooleanExpression checkProjectIsAvailable(Boolean isAvailable) {
