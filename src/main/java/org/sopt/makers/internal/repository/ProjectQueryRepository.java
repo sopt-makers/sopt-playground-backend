@@ -65,9 +65,9 @@ public class ProjectQueryRepository {
         return checkIsFoundingIsEmpty ? null : QProject.project.isAvailable.eq(isFounding);
     }
 
-    private BooleanExpression checkProjectIsAvailable(Boolean available) {
-        val isAvailable = Objects.isNull(available);
-        return isAvailable ? null : QProject.project.isAvailable.eq(isAvailable);
+    private BooleanExpression checkProjectIsAvailable(Boolean isAvailable) {
+        val checkIsAvailableIsEmpty = Objects.isNull(isAvailable);
+        return checkIsAvailableIsEmpty ? null : QProject.project.isAvailable.eq(isAvailable);
     }
 
     private BooleanExpression ltProjectId(Long projectId) {
