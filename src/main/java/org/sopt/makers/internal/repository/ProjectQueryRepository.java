@@ -13,6 +13,7 @@ import org.sopt.makers.internal.dto.project.QProjectMemberDao;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -49,6 +50,32 @@ public class ProjectQueryRepository {
                 .innerJoin(projectLink).on(projectLink.projectId.eq(project.id));
     }
 
+    private BooleanExpression checkProjectContainsName(String name) {
+        val checkNameIsEmpty = Objects.isNull(name);
+        return checkNameIsEmpty ? null : QProject.project.name.eq(name);
+    }
+
+    private BooleanExpression checkProjectCategory(String category) {
+        val checkCategoryIsEmpty = Objects.isNull(category);
+        return checkCategoryIsEmpty ? null : QProject.project.category.eq(category);
+    }
+
+    private BooleanExpression checkProjectIsFounding(Boolean isFounding) {
+        val checkIsFoundingIsEmpty = Objects.isNull(isFounding);
+        return checkIsFoundingIsEmpty ? null : QProject.project.isAvailable.eq(isFounding);
+    }
+
+    private BooleanExpression checkProjectIsAvailable(Boolean available) {
+        val isAvailable = Objects.isNull(available);
+        return isAvailable ? null : QProject.project.isAvailable.eq(isAvailable);
+    }
+
+    private BooleanExpression ltProjectId(Long projectId) {
+        val project = QProject.project;
+        if(projectId == null || projectId == 0) return null;
+        return project.id.lt(projectId);
+    }
+
     public List<ProjectMemberDao> findById(Long id) {
         val project = QProject.project;
         return getProjectQuery().where(project.id.eq(id)).fetch();
@@ -68,19 +95,6 @@ public class ProjectQueryRepository {
     ) {
         val project = QProject.project;
 
-        BooleanExpression filter = project.isNotNull();
-        if (category != null) {
-            filter = filter.and(project.category.eq(category));
-        }
-
-        if (isAvailable != null) {
-            filter = filter.and(project.isAvailable.eq(isAvailable));
-        }
-
-        if (isFounding != null) {
-            filter = filter.and(project.isFounding.eq(isFounding));
-        }
-
         return queryFactory.selectFrom(project)
                 .where(project.name.contains(name), filter)
                 .orderBy(project.id.desc())
@@ -92,19 +106,6 @@ public class ProjectQueryRepository {
             Integer limit, Long cursor, String category, Boolean isAvailable, Boolean isFounding
     ) {
         val project = QProject.project;
-
-        BooleanExpression filter = project.isNotNull();
-        if (category != null) {
-            filter = filter.and(project.category.eq(category));
-        }
-
-        if (isAvailable != null) {
-            filter = filter.and(project.isAvailable.eq(isAvailable));
-        }
-
-        if (isFounding != null) {
-            filter = filter.and(project.isFounding.eq(isFounding));
-        }
 
         return queryFactory.selectFrom(project)
                 .where(ltProjectId(cursor), filter)
@@ -118,19 +119,6 @@ public class ProjectQueryRepository {
             Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding
     ) {
         val project = QProject.project;
-
-        BooleanExpression filter = project.isNotNull();
-        if (category != null) {
-            filter = filter.and(project.category.eq(category));
-        }
-
-        if (isAvailable != null) {
-            filter = filter.and(project.isAvailable.eq(isAvailable));
-        }
-
-        if (isFounding != null) {
-            filter = filter.and(project.isFounding.eq(isFounding));
-        }
 
         return queryFactory.selectFrom(project)
                 .where(ltProjectId(cursor), project.name.contains(name), filter)
