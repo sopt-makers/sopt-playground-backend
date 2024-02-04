@@ -96,7 +96,8 @@ public class ProjectQueryRepository {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
-                .where(project.name.contains(name), filter)
+                .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
                 .fetch();
@@ -108,7 +109,8 @@ public class ProjectQueryRepository {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
-                .where(ltProjectId(cursor), filter)
+                .where(ltProjectId(cursor), checkProjectIsFounding(isFounding),
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
                 .limit(limit)
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
@@ -121,7 +123,8 @@ public class ProjectQueryRepository {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
-                .where(ltProjectId(cursor), project.name.contains(name), filter)
+                .where(ltProjectId(cursor), checkProjectContainsName(name), checkProjectIsFounding(isFounding),
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
                 .limit(limit)
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
