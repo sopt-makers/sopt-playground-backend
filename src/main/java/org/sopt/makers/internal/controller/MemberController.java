@@ -12,6 +12,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
@@ -38,6 +39,7 @@ public class MemberController {
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
+    private final MakersCrewDevClient makersCrewDevClient;
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -226,6 +228,17 @@ public class MemberController {
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 크루 조회 API")
+    @GetMapping("/crew")
+    public ResponseEntity<MemberCrewResponse> getUserCrew(
+            @RequestParam(required = false, name = "page") Integer page,
+            @RequestParam(required = false, name = "take") Integer take,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val response = makersCrewDevClient.getUserAllCrew(page, take, memberDetails.getId());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
