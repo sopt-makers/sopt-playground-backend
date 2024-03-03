@@ -379,4 +379,20 @@ public class MemberService {
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
     }
+
+    @Transactional
+    public void updateEmailBlind(Boolean blind, Long memberId) {
+        val member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+
+        member.changeBlind("email", blind);
+    }
+
+    @Transactional
+    public void updatePhoneBlind(Boolean blind, Long memberId) {
+        val member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+
+        member.changeBlind("phone", blind);
+    }
 }
