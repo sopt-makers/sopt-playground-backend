@@ -1,15 +1,26 @@
 package org.sopt.makers.internal.mapper;
 
+import java.util.List;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
-import org.sopt.makers.internal.dto.internal.*;
-import org.sopt.makers.internal.dto.member.*;
+import org.sopt.makers.internal.dto.internal.InternalMemberActivityResponse;
+import org.sopt.makers.internal.dto.internal.InternalMemberProfileResponse;
+import org.sopt.makers.internal.dto.internal.InternalMemberProfileSpecificResponse;
+import org.sopt.makers.internal.dto.internal.InternalMemberResponse;
+import org.sopt.makers.internal.dto.internal.InternalOfficialMemberResponse;
+import org.sopt.makers.internal.dto.member.ActivityVo;
+import org.sopt.makers.internal.dto.member.MakersMemberProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
+import org.sopt.makers.internal.dto.member.MemberProfileProjectVo;
+import org.sopt.makers.internal.dto.member.MemberProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.dto.member.MemberProjectVo;
+import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateResponse;
 import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
-
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
@@ -27,10 +38,21 @@ public interface MemberMapper {
     @Mapping(target = "activities", source = "activities")
     MemberProfileSpecificResponse toProfileSpecificResponse (
             Member member,
+            String phone,
+            String email,
             boolean isMine,
             List<MemberProfileProjectDao> projects,
             List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
             List<MemberProfileProjectVo> soptActivities
+    );
+
+    @Mapping(target = "activities", source = "activities")
+    MemberProfileSpecificResponse toProfileSpecificResponse (
+        Member member,
+        boolean isMine,
+        List<MemberProfileProjectDao> projects,
+        List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
+        List<MemberProfileProjectVo> soptActivities
     );
 
     @Mapping(target = "activities", source = "activities")
