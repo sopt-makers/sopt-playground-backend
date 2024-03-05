@@ -160,12 +160,13 @@ public class MemberController {
         val activityResponses = activityMap.entrySet().stream().map(entry ->
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
-        val phone = checkPhoneNullCondition(member.getIsPhoneBlind(), member.getPhone());
-        val email = checkEmailNullCondition(member.getIsEmailBlind(), member.getEmail());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(
-                member, phone, email, isMine, memberProfileProjects, activityResponses, soptActivityResponse
-        );
+        val response = MemberProfileSpecificResponse.checkIsBlindPhoneAndEmail(
+            memberMapper.toProfileSpecificResponse(
+                member, true, memberProfileProjects, activityResponses, soptActivityResponse
+            ),
+            checkPhoneNullCondition(member.getIsPhoneBlind(), member.getPhone()),
+            checkEmailNullCondition(member.getIsEmailBlind(), member.getEmail()));
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

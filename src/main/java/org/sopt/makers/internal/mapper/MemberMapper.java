@@ -37,17 +37,6 @@ public interface MemberMapper {
 
     @Mapping(target = "activities", source = "activities")
     MemberProfileSpecificResponse toProfileSpecificResponse (
-            Member member,
-            String phone,
-            String email,
-            boolean isMine,
-            List<MemberProfileProjectDao> projects,
-            List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
-            List<MemberProfileProjectVo> soptActivities
-    );
-
-    @Mapping(target = "activities", source = "activities")
-    MemberProfileSpecificResponse toProfileSpecificResponse (
         Member member,
         boolean isMine,
         List<MemberProfileProjectDao> projects,
