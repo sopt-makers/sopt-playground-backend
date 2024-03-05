@@ -63,4 +63,32 @@ public record MemberProfileResponse(
             String endDate,
             Boolean isCurrent
     ){}
+
+    public static MemberProfileResponse checkIsBlindPhoneAndEmail(MemberProfileResponse response, String phone, String email) {
+        return new MemberProfileResponse(
+            response.id(),
+            response.name(),
+            response.profileImage(),
+            response.birthday(),
+            phone,
+            email,
+            response.address(),
+            response.university(),
+            response.major(),
+            response.introduction(),
+            response.skill(),
+            response.mbti(),
+            response.mbtiDescription(),
+            response.sojuCapacity(),
+            response.interest(),
+            response.userFavor(),
+            response.idealType(),
+            response.selfIntroduction(),
+            response.activities(),
+            response.links(),
+            response.careers(),
+            response.allowOfficial()
+        );
+    }
+
 }

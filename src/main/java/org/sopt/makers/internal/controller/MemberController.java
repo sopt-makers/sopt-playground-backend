@@ -226,7 +226,11 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
-        val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
+        val memberList = members.stream().map(member -> {
+                return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
+                    checkPhoneNullCondition(member.getIsPhoneBlind(), member.getPhone()),
+                    checkEmailNullCondition(member.getIsEmailBlind(), member.getEmail()));
+            }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
