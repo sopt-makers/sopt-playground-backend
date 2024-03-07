@@ -165,8 +165,8 @@ public class MemberController {
             memberMapper.toProfileSpecificResponse(
                 member, true, memberProfileProjects, activityResponses, soptActivityResponse
             ),
-            checkPhoneNullCondition(member.getIsPhoneBlind(), member.getPhone()),
-            checkEmailNullCondition(member.getIsEmailBlind(), member.getEmail()));
+            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
+            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -229,8 +229,8 @@ public class MemberController {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
         val memberList = members.stream().map(member -> {
                 return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
-                    checkPhoneNullCondition(member.getIsPhoneBlind(), member.getPhone()),
-                    checkEmailNullCondition(member.getIsEmailBlind(), member.getEmail()));
+                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
+                    memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
             }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
@@ -310,13 +310,5 @@ public class MemberController {
             team = null;
         }
         return team;
-    }
-
-    private String checkPhoneNullCondition (Boolean isPhoneBlind, String phone) {
-        return isPhoneBlind ? null : phone;
-    }
-
-    private String checkEmailNullCondition (Boolean isEmailBlind, String email) {
-        return isEmailBlind ? null : email;
     }
 }

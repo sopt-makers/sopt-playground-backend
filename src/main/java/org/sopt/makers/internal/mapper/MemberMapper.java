@@ -75,4 +75,12 @@ public interface MemberMapper {
 
     @Mapping(source = "generation", target = "generation")
     InternalOfficialMemberResponse toOfficialResponse(Member member, String part, Integer generation);
+
+    default String mapPhoneIfBlind(Boolean isPhoneBlind, String phone) {
+        return isPhoneBlind ? null : phone;
+    }
+
+    default String mapEmailIfBlind(Boolean isEmailBlind, String email) {
+        return isEmailBlind ? null : email;
+    }
 }
