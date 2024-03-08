@@ -161,9 +161,12 @@ public class MemberController {
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
-        );
+        val response = MemberProfileSpecificResponse.checkIsBlindPhoneAndEmail(
+            memberMapper.toProfileSpecificResponse(
+                member, true, memberProfileProjects, activityResponses, soptActivityResponse
+            ),
+            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
+            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -224,7 +227,11 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
-        val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
+        val memberList = members.stream().map(member -> {
+                return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
+                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
+                    memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
+            }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
