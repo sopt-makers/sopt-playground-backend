@@ -296,8 +296,12 @@ public class MemberService {
     public Member updateMemberProfile (Long id, MemberProfileUpdateRequest request) {
         val member = getMemberById(id);
 
-        if (!member.getEditActivitiesAble()) {
-            throw new ClientBadRequestException("이미 프로필을 수정한 적이 있는 유저입니다.");
+        if (!member.getEditActivitiesAble() && member.getActivities().size() == request.activities().size()) {
+            for (int i=0; i<request.activities().size(); i++) {
+                if (!request.activities().get(i).equalsInfo(member.getActivities().get(i))) {
+                    throw new ClientBadRequestException("이미 프로필을 수정한 적이 있는 유저입니다.");
+                }
+            }
         }
 
         val memberId = member.getId();
