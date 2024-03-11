@@ -239,13 +239,13 @@ public class MemberController {
     }
 
     @Operation(summary = "멤버 크루 조회 API")
-    @GetMapping("/crew")
+    @GetMapping("/crew/{id}")
     public ResponseEntity<MemberCrewResponse> getUserCrew(
+            @PathVariable Long id,
             @RequestParam(required = false, name = "page") Integer page,
-            @RequestParam(required = false, name = "take") Integer take,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @RequestParam(required = false, name = "take") Integer take
     ) {
-        val response = makersCrewDevClient.getUserAllCrew(page, take, memberDetails.getId());
+        val response = makersCrewDevClient.getUserAllCrew(page, take, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
