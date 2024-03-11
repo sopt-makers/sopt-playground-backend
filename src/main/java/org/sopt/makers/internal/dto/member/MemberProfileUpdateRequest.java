@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.sopt.makers.internal.domain.MemberSoptActivity;
+
 public record MemberProfileUpdateRequest (
         @Schema(required = true)
         String name,
@@ -50,7 +52,12 @@ public record MemberProfileUpdateRequest (
             Integer generation,
             String part,
             String team
-    ){}
+    ){
+        private boolean equalsInfo (MemberSoptActivity activity) {
+            return generation.equals(activity.getGeneration()) && part.equals(activity.getPart()) &&
+                (team == null || team.equals(activity.getTeam()));
+        }
+    }
 
     public record MemberCareerUpdateRequest(
             String companyName,
@@ -62,4 +69,17 @@ public record MemberProfileUpdateRequest (
             String endDate,
             Boolean isCurrent
     ){}
+
+    public boolean compareProfileActivities (List<MemberSoptActivityUpdateRequest> requests, List<MemberSoptActivity> activities) {
+        if (requests.size() != activities.size()) {
+            return false;
+        }
+        for (int i=0; i<requests.size(); i++) {
+            if (!requests.get(i).equalsInfo(activities.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
