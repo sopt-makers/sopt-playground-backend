@@ -359,7 +359,6 @@ public class MemberService {
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers
         );
-        member.editActivityChangeToFalse();
         return member;
     }
 
