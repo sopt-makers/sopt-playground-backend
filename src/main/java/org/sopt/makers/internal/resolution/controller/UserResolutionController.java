@@ -1,13 +1,13 @@
 package org.sopt.makers.internal.resolution.controller;
 
+import java.util.Map;
+
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
-import org.sopt.makers.internal.resolution.dto.response.ResolutionSaveResponse;
 import org.sopt.makers.internal.resolution.service.UserResolutionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,11 +30,11 @@ public class UserResolutionController {
 
 	@Operation(summary = "다짐 메시지 생성")
 	@PostMapping
-	public ResponseEntity<ResolutionSaveResponse> createResolution(
+	public ResponseEntity<Map<String, Boolean>> createResolution(
 		@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
 		@RequestBody ResolutionSaveRequest request
 	) {
-		val response = userResolutionService.createResolution(memberDetails.getId(), request);
-		return ResponseEntity.status(HttpStatus.OK).body(response);
+		userResolutionService.createResolution(memberDetails.getId(), request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("다짐 메시지 생성 성공", true));
 	}
 }
