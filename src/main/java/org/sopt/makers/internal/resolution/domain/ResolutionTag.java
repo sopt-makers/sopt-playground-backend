@@ -33,11 +33,10 @@ public enum ResolutionTag {
 			.collect(Collectors.joining(","));
 	}
 
-	public static ResolutionTag validate(String value) {
-		ResolutionTag tag = TAG_MAP.get(value);
-		if (tag == null) {
+	public static String validate(String value) {
+		if (TAG_MAP.get(value) == null) {
 			throw new ClientBadRequestException("Unknown Tag Name");
 		}
-		return tag;
+		return value;
 	}
 }
