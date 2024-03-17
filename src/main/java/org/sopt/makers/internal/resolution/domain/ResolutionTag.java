@@ -29,11 +29,11 @@ public enum ResolutionTag {
 
 	public static String getTagIds(List<String> tagNames) {
 		return tagNames.stream()
-			.map(tag -> String.valueOf(TAG_MAP.get(tag).index))
+			.map(tag -> String.valueOf(TAG_MAP.get(validate(tag)).index))
 			.collect(Collectors.joining(","));
 	}
 
-	public static ResolutionTag of(String value) {
+	public static ResolutionTag validate(String value) {
 		ResolutionTag tag = TAG_MAP.get(value);
 		if (tag == null) {
 			throw new ClientBadRequestException("Unknown Tag Name");

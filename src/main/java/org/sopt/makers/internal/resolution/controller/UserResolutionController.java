@@ -35,7 +35,7 @@ public class UserResolutionController {
 		@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
 		@RequestBody ResolutionSaveRequest request
 	) {
-		val response = userResolutionService.createResolution(136L, request);
+		val response = userResolutionService.createResolution(memberDetails.getId(), request);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 }
