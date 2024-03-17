@@ -2,6 +2,7 @@ package org.sopt.makers.internal.resolution.domain;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -18,6 +19,9 @@ public enum ResolutionTag {
 	private final String value;
 	private final int index;
 
+	private static final Map<String, ResolutionTag> TAG_MAP = Arrays.stream(ResolutionTag.values())
+		.collect(Collectors.toMap(tag -> tag.value, tag -> tag));
+
 	ResolutionTag(String value, int index) {
 		this.value = value;
 		this.index = index;
@@ -25,14 +29,15 @@ public enum ResolutionTag {
 
 	public static String getTagIds(List<String> tagNames) {
 		return tagNames.stream()
-			.map(tag -> String.valueOf(ResolutionTag.of(tag).index))
+			.map(tag -> String.valueOf(TAG_MAP.get(tag).index))
 			.collect(Collectors.joining(","));
 	}
 
 	public static ResolutionTag of(String value) {
-		return Arrays.stream(ResolutionTag.values())
-			.filter(tag -> value.equals(tag.value))
-			.findFirst()
-			.orElseThrow(() -> new ClientBadRequestException("Unknown Tag Name"));
+		ResolutionTag tag = TAG_MAP.get(value);
+		if (tag == null) {
+			throw new ClientBadRequestException("Unknown Tag Name");
+		}
+		return tag;
 	}
 }
