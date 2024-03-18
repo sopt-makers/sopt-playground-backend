@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.resolution.service;
 
 import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
@@ -23,6 +24,12 @@ public class UserResolutionService {
 	@Transactional
 	public void createResolution(Long writerId, ResolutionSaveRequest request) {
 		val member = getMemberById(writerId);
+		if (member.getGeneration() == null) {
+			throw new ClientBadRequestException("Not exists profile info");
+		}
+		if (!member.getGeneration().equals(34)) {  // 기수 갱신 시 조건 변경
+			throw new ClientBadRequestException("Only new generation can enroll resolution");
+		}
 		UserResolution userResolution = UserResolution.builder()
 			.member(member)
 			.tagIds(ResolutionTag.getTagIds(request.tags()))
