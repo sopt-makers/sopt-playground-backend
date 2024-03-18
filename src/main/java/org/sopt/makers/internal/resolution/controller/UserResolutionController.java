@@ -29,9 +29,9 @@ public class UserResolutionController {
 	@Operation(summary = "다짐 메세지 조회")
 	@GetMapping
 	public ResponseEntity<ResolutionResponse> getResolution(
-//			@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+			@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
 	) {
-		return ResponseEntity.status(HttpStatus.OK).body(userResolutionService.getResolution(136L));
+		return ResponseEntity.status(HttpStatus.OK).body(userResolutionService.getResolution(memberDetails.getId()));
 	}
 
 	@Operation(summary = "다짐 메세지 생성")
