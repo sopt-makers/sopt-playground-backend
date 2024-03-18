@@ -6,6 +6,8 @@ import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
+import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
+import org.sopt.makers.internal.resolution.mapper.UserResolutionResponseMapper;
 import org.sopt.makers.internal.resolution.repository.UserResolutionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,15 @@ public class UserResolutionService {
 
 	private final UserResolutionRepository userResolutionRepository;
 	private final MemberRepository memberRepository;
+
+	private final UserResolutionResponseMapper userResolutionResponseMapper;
+
+	@Transactional(readOnly = true)
+	public ResolutionResponse getResolution(Long memberId) {
+		val member = getMemberById(memberId);
+		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
+		return userResolutionResponseMapper.toResolutionResponse(member, resolution);
+	}
 
 	@Transactional
 	public void createResolution(Long writerId, ResolutionSaveRequest request) {
