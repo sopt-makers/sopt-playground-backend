@@ -1,10 +1,12 @@
 package org.sopt.makers.internal.resolution.dto.response;
 
+import java.util.List;
+
 public record ResolutionResponse(
 
         String memberImageUrl,
         String memberName,
-        String tags,
+        List<String> tags,
         String content
 ) {
 }

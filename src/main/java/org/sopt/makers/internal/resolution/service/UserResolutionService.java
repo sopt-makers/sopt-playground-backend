@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserResolutionService {
@@ -28,7 +30,8 @@ public class UserResolutionService {
 	public ResolutionResponse getResolution(Long memberId) {
 		val member = getMemberById(memberId);
 		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
-		return userResolutionResponseMapper.toResolutionResponse(member, resolution);
+		val tags = ResolutionTag.getTagNames(resolution.getTagIds());
+		return userResolutionResponseMapper.toResolutionResponse(member, tags, resolution.getContent());
 	}
 
 	@Transactional

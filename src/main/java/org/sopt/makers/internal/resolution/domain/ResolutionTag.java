@@ -39,4 +39,13 @@ public enum ResolutionTag {
 		}
 		return value;
 	}
+
+	public static List<String> getTagNames(String tagIds) {
+		List<String> indexList = Arrays.asList(tagIds.split(","));
+
+		return Arrays.stream(ResolutionTag.values())
+				.filter(tag -> indexList.contains(String.valueOf(tag.index)))
+				.map(tag -> tag.value)
+				.collect(Collectors.toList());
+	}
 }
