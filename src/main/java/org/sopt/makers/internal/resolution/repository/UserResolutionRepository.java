@@ -10,4 +10,6 @@ public interface UserResolutionRepository extends JpaRepository<UserResolution, 
 
     // READ
     Optional<UserResolution> findUserResolutionByMember(Member member);
+
+    boolean existsByMember(Member member);
 }

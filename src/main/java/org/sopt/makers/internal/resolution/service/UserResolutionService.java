@@ -44,6 +44,9 @@ public class UserResolutionService {
 		if (!member.getGeneration().equals(34)) {  // 기수 갱신 시 조건 변경
 			throw new ClientBadRequestException("Only new generation can enroll resolution");
 		}
+		if (!userResolutionRepository.existsByMember(member)) {
+			throw new ClientBadRequestException("Already exist user resolution message");
+		}
 		UserResolution userResolution = UserResolution.builder()
 			.member(member)
 			.tagIds(ResolutionTag.getTagIds(request.tags()))
