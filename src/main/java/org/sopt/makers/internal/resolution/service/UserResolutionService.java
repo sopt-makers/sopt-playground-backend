@@ -25,6 +25,8 @@ public class UserResolutionService {
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 
+	private final static int CURRENT_GENERATION = 34;
+
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
 		val member = getMemberById(memberId);
@@ -39,10 +41,10 @@ public class UserResolutionService {
 		if (member.getGeneration() == null) {
 			throw new ClientBadRequestException("Not exists profile info");
 		}
-		if (!member.getGeneration().equals(34)) {  // 기수 갱신 시 조건 변경
+		if (!member.getGeneration().equals(CURRENT_GENERATION)) {  // 기수 갱신 시 조건 변경
 			throw new ClientBadRequestException("Only new generation can enroll resolution");
 		}
-		if (userResolutionRepository.existsByMember(member)) {
+		if (userResolutionRepository.countByMember(member, CURRENT_GENERATION) == 1) {  // TODO 기수마다 1개씩 가능하도록 수정
 			throw new ClientBadRequestException("Already exist user resolution message");
 		}
 		UserResolution userResolution = UserResolution.builder()
