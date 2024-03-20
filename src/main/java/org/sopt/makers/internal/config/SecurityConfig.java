@@ -49,10 +49,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         val configuration = new CorsConfiguration();
 
-        configuration.addAllowedOrigin("sopt.org");
+        configuration.addAllowedOrigin("*");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
 
         val source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
