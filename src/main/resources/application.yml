@@ -99,8 +99,8 @@ push-notification:
   x-api-key: test
   service: test
 
-crew-server:
-  url: test
+crew:
+  server-url: test
 
 member:
   profile:
