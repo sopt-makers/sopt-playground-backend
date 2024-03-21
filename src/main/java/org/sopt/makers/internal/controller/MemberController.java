@@ -116,28 +116,6 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "멤버 이메일 마스킹 여부 업데이트")
-    @PutMapping("/email/blind")
-    public ResponseEntity<Map<String, Boolean>> updateEmailBlind(
-            @RequestBody @Valid final MemberBlindRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
-    ) {
-
-        memberService.updateEmailBlind(request.blind(), memberDetails.getId());
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("이메일 마스킹 변경 성공", true));
-    }
-
-    @Operation(summary = "멤버 전화번호 마스킹 여부 업데이트")
-    @PutMapping("/phone/blind")
-    public ResponseEntity<Map<String, Boolean>> updatePhoneBlind(
-            @RequestBody @Valid final MemberBlindRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
-    ) {
-
-        memberService.updatePhoneBlind(request.blind(), memberDetails.getId());
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("전화번호 마스킹 변경 성공", true));
-    }
-
     @Operation(summary = "멤버 프로필 조회 API")
     @GetMapping("/profile/{id}")
     public ResponseEntity<MemberProfileSpecificResponse> getUserProfile (

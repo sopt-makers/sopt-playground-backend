@@ -140,10 +140,6 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
-    public void editActivityChangeToFalse() {
-        this.editActivitiesAble = false;
-    }
-
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
@@ -159,14 +155,6 @@ public class Member {
 
     public void disagreeToUseSoulmate () {
         this.openToSoulmate = false;
-    }
-
-    public void changeEmailBlind(Boolean isBlind) {
-        this.isEmailBlind = isBlind;
-    }
-
-    public void changePhoneBlind(Boolean isBlind) {
-        this.isPhoneBlind = isBlind;
     }
 
     public void saveMemberProfile(
@@ -190,7 +178,9 @@ public class Member {
             Boolean allowOfficial,
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
-            List<MemberCareer> careers
+            List<MemberCareer> careers,
+            Boolean isEmailBlind,
+            Boolean isPhoneBlind
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -214,5 +204,7 @@ public class Member {
         this.links.clear(); this.links.addAll(links);
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
+        this.isEmailBlind = isEmailBlind;
+        this.isPhoneBlind = isPhoneBlind;
     }
 }
