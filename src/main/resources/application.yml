@@ -98,3 +98,11 @@ push-notification:
   action: test
   x-api-key: test
   service: test
+
+crew-server:
+  url: test
+
+member:
+  profile:
+    crew-default-img: test
+
