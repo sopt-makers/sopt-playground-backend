@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import java.util.UUID;
-
 @FeignClient(value = "pushServer", url = "${push-notification.server-url}")
 public interface PushServerClient {
 

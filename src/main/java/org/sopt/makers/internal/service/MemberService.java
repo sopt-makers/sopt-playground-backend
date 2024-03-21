@@ -1,12 +1,12 @@
 package org.sopt.makers.internal.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -21,6 +21,7 @@ import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.external.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
@@ -40,23 +41,28 @@ import java.util.stream.Stream;
 public class MemberService {
     @Value("${spring.profiles.active}")
     private String activeProfile;
+
+    @Value("${member.profile.crew-default-img}")
+    private String CREW_DEFAULT_IMG;
+
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
+    private final MakersCrewClient makersCrewClient;
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
 
     private final SlackMessageUtil slackMessageUtil;
 
     @Transactional(readOnly = true)
-    public Member getMemberById (Long id) {
+    public Member getMemberById(Long id) {
         return memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
     }
 
     @Transactional(readOnly = true)
-    public Member getMemberHasProfileById (Long id) {
+    public Member getMemberHasProfileById(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다."));
         if (member.getHasProfile()) return member;
@@ -79,11 +85,11 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<MemberProfileProjectDao> getMemberProfileProjects (Long id) {
+    public List<MemberProfileProjectDao> getMemberProfileProjects(Long id) {
         return memberProfileQueryRepository.findMemberProfileProjectsByMemberId(id);
     }
 
-    public Map<String, List<ActivityVo>> getMemberProfileActivity (
+    public Map<String, List<ActivityVo>> getMemberProfileActivity(
             List<MemberSoptActivity> memberActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
@@ -109,7 +115,7 @@ public class MemberService {
                 ));
     }
 
-    public Map<String, List<ActivityVo>> getMemberProfileList (
+    public Map<String, List<ActivityVo>> getMemberProfileList(
             List<MemberSoptActivity> memberActivities
     ) {
         val cardinalInfoMap = memberActivities.stream()
@@ -127,7 +133,7 @@ public class MemberService {
                 ));
     }
 
-    public  List<MemberProfileProjectVo> getMemberProfileProjects (
+    public List<MemberProfileProjectVo> getMemberProfileProjects(
             List<MemberSoptActivity> memberActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
@@ -149,7 +155,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public int getMemberProfilesCount(Integer filter, String name, Integer generation,
-           Double sojuCapacity, String mbti, String team) {
+                                      Double sojuCapacity, String mbti, String team) {
         val part = getMemberPart(filter);
         return memberProfileQueryRepository.countAllMemberProfile(part, name, generation, sojuCapacity, mbti, team);
     }
@@ -158,17 +164,16 @@ public class MemberService {
     public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
                                           Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
-        if(limit != null) {
+        if (limit != null) {
             return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
                     sojuCapacity, orderBy, mbti, team);
-        }
-        else {
+        } else {
             return memberProfileQueryRepository.findAllMemberProfile(part, name, generation,
                     sojuCapacity, orderBy, mbti, team);
         }
     }
 
-    private String getMemberPart (Integer filter) {
+    private String getMemberPart(Integer filter) {
         if (filter == null) return null;
         return switch (filter) {
             case 1 -> "기획";
@@ -181,32 +186,32 @@ public class MemberService {
         };
     }
 
-    private String checkActivityTeamConditions (String team) {
+    private String checkActivityTeamConditions(String team) {
         Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
         val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
-        if(isNullResult) return null;
+        if (isNullResult) return null;
         else return team;
     }
 
     @Transactional
-    public Member saveMemberProfile (Long id, MemberProfileSaveRequest request) {
+    public Member saveMemberProfile(Long id, MemberProfileSaveRequest request) {
         val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
         val memberId = member.getId();
         if (memberId == null) throw new NotFoundDBEntityException("Member id is null");
         val memberLinkEntities = request.links().stream().map(link ->
-                        MemberLink.builder()
-                                .memberId(memberId)
-                                .title(link.title())
-                                .url(link.url())
-                                .build()).collect(Collectors.toList());
+                MemberLink.builder()
+                        .memberId(memberId)
+                        .title(link.title())
+                        .url(link.url())
+                        .build()).collect(Collectors.toList());
         memberLinkEntities.forEach(link -> link.setMemberId(memberId));
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
 
         val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
             val sameGenerationInActivity = request.activities().stream()
                     .filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
-            if(sameGenerationInActivity.isPresent()) {
+            if (sameGenerationInActivity.isPresent()) {
                 val team = sameGenerationInActivity.map(MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team).orElse(null);
                 return MemberSoptActivity.builder()
                         .memberId(activity.getMemberId())
@@ -293,7 +298,7 @@ public class MemberService {
     }
 
     @Transactional
-    public Member updateMemberProfile (Long id, MemberProfileUpdateRequest request) {
+    public Member updateMemberProfile(Long id, MemberProfileUpdateRequest request) {
         val member = getMemberById(id);
 
         if (!member.getEditActivitiesAble()) {
@@ -345,12 +350,12 @@ public class MemberService {
         }).collect(Collectors.toList());
 
         val userFavor = UserFavor.builder().isMintChocoLover(request.userFavor().isMintChocoLover())
-                        .isSojuLover(request.userFavor().isSojuLover())
-                        .isPourSauceLover(request.userFavor().isPourSauceLover())
-                         .isRedBeanFishBreadLover(request.userFavor().isRedBeanFishBreadLover())
-                         .isRiceTteokLover(request.userFavor().isRiceTteokLover())
-                         .isHardPeachLover(request.userFavor().isHardPeachLover())
-                                 .build();
+                .isSojuLover(request.userFavor().isSojuLover())
+                .isPourSauceLover(request.userFavor().isPourSauceLover())
+                .isRedBeanFishBreadLover(request.userFavor().isRedBeanFishBreadLover())
+                .isRiceTteokLover(request.userFavor().isRiceTteokLover())
+                .isHardPeachLover(request.userFavor().isHardPeachLover())
+                .build();
         member.saveMemberProfile(
                 member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
@@ -363,21 +368,21 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteUserProfileLink (Long linkId, Long memberId) {
+    public void deleteUserProfileLink(Long linkId, Long memberId) {
         val link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Link"));
         memberLinkRepository.delete(link);
     }
 
     @Transactional
-    public void deleteUserProfileActivity (Long activityId, Long memberId) {
+    public void deleteUserProfileActivity(Long activityId, Long memberId) {
         val activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
         memberSoptActivityRepository.delete(activity);
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberByName (String name) {
+    public List<Member> getMemberByName(String name) {
         return memberRepository.findAllByNameContaining(name);
     }
 
@@ -395,5 +400,24 @@ public class MemberService {
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
 
         member.changeBlind("phone", blind);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberCrewResponse getAllCrewByUserId(int page, int take, Long id) {
+        MemberCrewResponse response = makersCrewClient.getUserAllCrew(page, take, id);
+
+        List<MemberCrewVo> updatedUserCrews = response.meetings().stream()
+                .map(crew -> new MemberCrewVo(
+                        crew.id(),
+                        crew.isMeetingLeader(),
+                        crew.title(),
+                        crew.imageUrl() != null ? crew.imageUrl() : CREW_DEFAULT_IMG,
+                        crew.category(),
+                        crew.isActiveMeeting(),
+                        crew.mstartDate(),
+                        crew.mendDate()))
+                .collect(Collectors.toList());
+
+        return new MemberCrewResponse(updatedUserCrews, response.meta());
     }
 }

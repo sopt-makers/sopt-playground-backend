@@ -12,7 +12,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.MakersCrewDevClient;
+import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
@@ -39,7 +39,8 @@ public class MemberController {
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
-    private final MakersCrewDevClient makersCrewDevClient;
+    private final MakersCrewClient makersCrewDevClient;
+
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -245,8 +246,7 @@ public class MemberController {
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "take") Integer take
     ) {
-        val response = makersCrewDevClient.getUserAllCrew(page, take, id);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getAllCrewByUserId(page, take, id));
     }
 
     @Operation(summary = "멤버 프로필 링크 삭제 API")
