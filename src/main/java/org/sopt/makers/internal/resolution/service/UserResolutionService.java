@@ -68,13 +68,11 @@ public class UserResolutionService {
 	}
 
 	private boolean existsCurrentResolution(Member member) {
-		return userResolutionRepository.countByMember(member, CURRENT_GENERATION) >= 1;
+		return userResolutionRepository.existsByMemberAndMemberGeneration(member, CURRENT_GENERATION);
 	}
 
 	private Member getMemberById(Long userId) {
 		return memberRepository.findById(userId).orElseThrow(
 			() -> new NotFoundDBEntityException("Is not a Member"));
 	}
-
-
 }

@@ -12,6 +12,5 @@ public interface UserResolutionRepository extends JpaRepository<UserResolution, 
     // READ
     Optional<UserResolution> findUserResolutionByMember(Member member);
 
-    @Query("select count(ur.id) from UserResolution ur where ur.member=:member and ur.member.generation=:generation")
-    int countByMember(Member member, int generation);
+    boolean existsByMemberAndMemberGeneration(Member member, int generation);
 }
