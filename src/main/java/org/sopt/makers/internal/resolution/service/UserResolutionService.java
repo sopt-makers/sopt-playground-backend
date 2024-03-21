@@ -8,6 +8,7 @@ import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
+import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
 import org.sopt.makers.internal.resolution.mapper.UserResolutionResponseMapper;
 import org.sopt.makers.internal.resolution.repository.UserResolutionRepository;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class UserResolutionService {
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 
 	private final static int CURRENT_GENERATION = 34;
+	private final static String DEFAULT_PROFILE_IMAGE = "";
 
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
@@ -33,6 +35,17 @@ public class UserResolutionService {
 		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
 		val tags = ResolutionTag.getTagNames(resolution.getTagIds());
 		return userResolutionResponseMapper.toResolutionResponse(member, tags, resolution.getContent());
+	}
+
+	@Transactional(readOnly = true)
+	public ResolutionValidResponse validation(Long memberId) {
+		val member = getMemberById(memberId);
+		val profileImgUrl = member.getProfileImage() != null ? member.getProfileImage() : DEFAULT_PROFILE_IMAGE;
+
+		if (existsCurrentResolution(member)) {
+			return userResolutionResponseMapper.toResolutionValidResponse(profileImgUrl, true);
+		}
+		return userResolutionResponseMapper.toResolutionValidResponse(profileImgUrl, false);
 	}
 
 	@Transactional
@@ -44,7 +57,7 @@ public class UserResolutionService {
 		if (!member.getGeneration().equals(CURRENT_GENERATION)) {  // 기수 갱신 시 조건 변경
 			throw new ClientBadRequestException("Only new generation can enroll resolution");
 		}
-		if (userResolutionRepository.countByMember(member, CURRENT_GENERATION) == 1) {  // TODO 기수마다 1개씩 가능하도록 수정
+		if (existsCurrentResolution(member)) {  // TODO 기수마다 1개씩 가능하도록 수정
 			throw new ClientBadRequestException("Already exist user resolution message");
 		}
 		UserResolution userResolution = UserResolution.builder()
@@ -54,8 +67,14 @@ public class UserResolutionService {
 		userResolutionRepository.save(userResolution);
 	}
 
+	private boolean existsCurrentResolution(Member member) {
+		return userResolutionRepository.countByMember(member, CURRENT_GENERATION) >= 1;
+	}
+
 	private Member getMemberById(Long userId) {
 		return memberRepository.findById(userId).orElseThrow(
 			() -> new NotFoundDBEntityException("Is not a Member"));
 	}
+
+
 }

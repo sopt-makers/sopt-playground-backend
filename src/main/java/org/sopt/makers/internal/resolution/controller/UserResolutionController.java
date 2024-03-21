@@ -5,6 +5,7 @@ import java.util.Map;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
+import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
 import org.sopt.makers.internal.resolution.service.UserResolutionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,4 +44,13 @@ public class UserResolutionController {
 		userResolutionService.createResolution(memberDetails.getId(), request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("다짐 메시지 생성 성공", true));
 	}
+
+	@Operation(summary = "다짐 메세지 유효성 검사")
+	@GetMapping("/validation")
+	public ResponseEntity<ResolutionValidResponse> validation(
+		@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+	) {
+		return ResponseEntity.status(HttpStatus.OK).body(userResolutionService.validation(memberDetails.getId()));
+	}
+
 }
