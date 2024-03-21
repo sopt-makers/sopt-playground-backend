@@ -396,4 +396,12 @@ public class MemberService {
 
         member.changeBlind("phone", blind);
     }
+
+    @Transactional
+    public void checkActivities(Long memberId, Boolean isCheck) {
+        val member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+
+        member.editActivityChange(isCheck);
+    }
 }
