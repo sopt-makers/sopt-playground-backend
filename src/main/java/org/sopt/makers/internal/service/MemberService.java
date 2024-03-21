@@ -386,7 +386,7 @@ public class MemberService {
         val member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
 
-        member.changeBlind("email", blind);
+        member.changeEmailBlind("email", blind);
     }
 
     @Transactional
@@ -394,7 +394,7 @@ public class MemberService {
         val member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
 
-        member.changeBlind("phone", blind);
+        member.changePhoneBlind("phone", blind);
     }
 
     @Transactional
