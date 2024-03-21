@@ -161,16 +161,12 @@ public class Member {
         this.openToSoulmate = false;
     }
 
-    public void changeEmailBlind(String section, Boolean isBlind) {
-        if (section.equals("email")) {
-            this.isEmailBlind = isBlind;
-        }
+    public void changeEmailBlind(Boolean isBlind) {
+        this.isEmailBlind = isBlind;
     }
 
-    public void changePhoneBlind(String section, Boolean isBlind) {
-        if (section.equals("phone")) {
-            this.isPhoneBlind = isBlind;
-        }
+    public void changePhoneBlind(Boolean isBlind) {
+        this.isPhoneBlind = isBlind;
     }
 
     public void saveMemberProfile(
