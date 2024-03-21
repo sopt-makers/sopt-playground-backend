@@ -144,6 +144,10 @@ public class Member {
         this.editActivitiesAble = false;
     }
 
+    public void editActivityChange(Boolean isCheck) {
+        this.editActivitiesAble = isCheck;
+    }
+
     public void updateMemberAuth (String authUserId, String idpType) {
         this.authUserId = authUserId;
         this.idpType = idpType;

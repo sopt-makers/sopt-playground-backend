@@ -238,6 +238,19 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(
+            summary = "본인 활동 기수 확인 여부 API",
+            description = "해당 API를 호출하면 유저의 editActivitiesAble이 false로 바뀝니다"
+    )
+    @PutMapping("/activity/check")
+    public ResponseEntity<Map<String, Boolean>> isOkayActivities(
+            @RequestBody @Valid final CheckActivityRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        memberService.checkActivities(memberDetails.getId(), request.isCheck());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 기수 확인 여부가 변경됐습니다.", true));
+    }
+
     @Operation(summary = "멤버 크루 조회 API")
     @GetMapping("/crew/{id}")
     public ResponseEntity<MemberCrewResponse> getUserCrew(
