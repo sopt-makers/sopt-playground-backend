@@ -9,12 +9,12 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 
 public enum ResolutionTag {
 
-	SKILL_ENHANCEMENT("능력 향상", 1),
-	IT_KNOWLEDGE("IT 지식", 2),
-	FRIENDSHIP("친목", 3),
-	ENTREPRENEURSHIP_FOUNDATION("창업 기반", 4),
-	COLLABORATION_EXPERIENCE("협업 경험", 5),
-	GREAT_TEAM("좋은 팀", 6);
+	STARTUP_FOUNDATION("창업 기반", 1),
+	PROBLEM_SOLVING("문제해결 능력", 2),
+	EXPERTISE_DEVELOPMENT("전문성 강화", 3),
+	COLLABORATION_EXPERIENCE("협업 경험", 4),
+	PRODUCT_RELEASE("프로덕트 릴리즈", 5),
+	NETWORKING("네트워킹", 6);
 
 	private final String value;
 	private final int index;
