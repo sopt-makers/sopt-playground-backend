@@ -259,7 +259,9 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers
+                memberActivities, memberLinks, memberCareers,
+                request.isEmailBlind(),
+                request.isPhoneBlind()
         );
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -357,7 +359,8 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers
+                memberActivities, memberLinks, memberCareers,
+                request.isEmailBlind(), request.isPhoneBlind()
         );
         return member;
     }
@@ -379,22 +382,6 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
-    }
-
-    @Transactional
-    public void updateEmailBlind(Boolean blind, Long memberId) {
-        val member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-
-        member.changeEmailBlind(blind);
-    }
-
-    @Transactional
-    public void updatePhoneBlind(Boolean blind, Long memberId) {
-        val member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-
-        member.changePhoneBlind(blind);
     }
 
     @Transactional
