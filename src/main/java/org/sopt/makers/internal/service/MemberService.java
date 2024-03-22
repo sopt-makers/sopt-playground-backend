@@ -259,7 +259,9 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers
+                memberActivities, memberLinks, memberCareers,
+                request.isEmailBlind(),
+                request.isPhoneBlind()
         );
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -295,6 +297,13 @@ public class MemberService {
     @Transactional
     public Member updateMemberProfile (Long id, MemberProfileUpdateRequest request) {
         val member = getMemberById(id);
+
+        if (!member.getEditActivitiesAble()) {
+            if (!request.compareProfileActivities(request.activities(), member.getActivities())) {
+                throw new ClientBadRequestException("이미 프로필을 수정한 적이 있는 유저입니다.");
+            }
+        }
+
         val memberId = member.getId();
         val memberLinks = memberLinkRepository.saveAll(
                 request.links().stream().map(link ->
@@ -350,7 +359,8 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers
+                memberActivities, memberLinks, memberCareers,
+                request.isEmailBlind(), request.isPhoneBlind()
         );
         return member;
     }
@@ -372,5 +382,13 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
+    }
+
+    @Transactional
+    public void checkActivities(Long memberId, Boolean isCheck) {
+        val member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
+
+        member.editActivityChange(isCheck);
     }
 }

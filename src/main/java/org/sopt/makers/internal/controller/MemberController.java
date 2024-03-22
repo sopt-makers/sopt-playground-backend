@@ -12,6 +12,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
@@ -20,9 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,7 @@ public class MemberController {
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
+    private final MakersCrewDevClient makersCrewDevClient;
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -135,9 +139,12 @@ public class MemberController {
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
-        );
+        val response = MemberProfileSpecificResponse.checkIsBlindPhoneAndEmail(
+            memberMapper.toProfileSpecificResponse(
+                member, true, memberProfileProjects, activityResponses, soptActivityResponse
+            ),
+            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
+            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -198,10 +205,38 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
-        val memberList = members.stream().map(memberMapper::toProfileResponse).collect(Collectors.toList());
+        val memberList = members.stream().map(member -> {
+                return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
+                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
+                    memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
+            }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+            summary = "본인 활동 기수 확인 여부 API",
+            description = "해당 API를 호출하면 유저의 editActivitiesAble이 false로 바뀝니다"
+    )
+    @PutMapping("/activity/check")
+    public ResponseEntity<Map<String, Boolean>> isOkayActivities(
+            @RequestBody @Valid final CheckActivityRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        memberService.checkActivities(memberDetails.getId(), request.isCheck());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 기수 확인 여부가 변경됐습니다.", true));
+    }
+
+    @Operation(summary = "멤버 크루 조회 API")
+    @GetMapping("/crew/{id}")
+    public ResponseEntity<MemberCrewResponse> getUserCrew(
+            @PathVariable Long id,
+            @RequestParam(required = false, name = "page") Integer page,
+            @RequestParam(required = false, name = "take") Integer take
+    ) {
+        val response = makersCrewDevClient.getUserAllCrew(page, take, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

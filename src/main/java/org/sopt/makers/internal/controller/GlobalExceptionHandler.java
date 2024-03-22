@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.controller;
 
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.dto.CommonExceptionResponse;
 import org.sopt.makers.internal.dto.auth.RegisterTokenBySmsResponse;
@@ -111,6 +112,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new SoulmateResponse(false, ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<String> feignClientException(FeignException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid external api request");
     }
 
     @ExceptionHandler(RuntimeException.class)

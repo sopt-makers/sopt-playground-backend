@@ -180,6 +180,11 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
+    public int getProjectsCount(String name, String category, Boolean isAvailable, Boolean isFounding) {
+        return projectQueryRepository.countAllProjects(name, category, isAvailable, isFounding);
+    }
+
+    @Transactional(readOnly = true)
     public Long getAllCount() {
         return projectRepository.count();
     }

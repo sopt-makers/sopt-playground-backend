@@ -6,31 +6,31 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record MemberProfileResponse(
-        @Schema(required = true)
-        Long id,
-        @Schema(required = true)
-        String name,
-        String profileImage,
-        LocalDate birthday,
-        String phone,
-        String email,
-        String address,
-        String university,
-        String major,
-        String introduction,
-        String skill,
-        String mbti,
-        String mbtiDescription,
-        Double sojuCapacity,
-        String interest,
-        UserFavorResponse userFavor,
-        String idealType,
-        String selfIntroduction,
-        @Schema(required = true)
-        List<MemberSoptActivityResponse> activities,
-        List<MemberLinkResponse> links,
-        List<MemberCareerResponse> careers,
-        Boolean allowOfficial
+    @Schema(required = true)
+    Long id,
+    @Schema(required = true)
+    String name,
+    String profileImage,
+    LocalDate birthday,
+    String phone,
+    String email,
+    String address,
+    String university,
+    String major,
+    String introduction,
+    String skill,
+    String mbti,
+    String mbtiDescription,
+    Double sojuCapacity,
+    String interest,
+    UserFavorResponse userFavor,
+    String idealType,
+    String selfIntroduction,
+    @Schema(required = true)
+    List<MemberSoptActivityResponse> activities,
+    List<MemberLinkResponse> links,
+    List<MemberCareerResponse> careers,
+    Boolean allowOfficial
 ) {
 
     public record UserFavorResponse(
@@ -63,4 +63,32 @@ public record MemberProfileResponse(
             String endDate,
             Boolean isCurrent
     ){}
+
+    public static MemberProfileResponse checkIsBlindPhoneAndEmail(MemberProfileResponse response, String phone, String email) {
+        return new MemberProfileResponse(
+            response.id(),
+            response.name(),
+            response.profileImage(),
+            response.birthday(),
+            phone,
+            email,
+            response.address(),
+            response.university(),
+            response.major(),
+            response.introduction(),
+            response.skill(),
+            response.mbti(),
+            response.mbtiDescription(),
+            response.sojuCapacity(),
+            response.interest(),
+            response.userFavor(),
+            response.idealType(),
+            response.selfIntroduction(),
+            response.activities(),
+            response.links(),
+            response.careers(),
+            response.allowOfficial()
+        );
+    }
+
 }

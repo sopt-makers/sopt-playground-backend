@@ -123,15 +123,25 @@ public class Member {
 
     @Builder.Default
     @Column(name = "edit_activities_able")
-    @ColumnDefault("true")
+    @ColumnDefault("false")
     private Boolean editActivitiesAble = true;
 
     @Builder.Default
     @Column(name = "openToSoulmate")
     private Boolean openToSoulmate = false;
 
-    public void editActivityChangeToFalse() {
-        this.editActivitiesAble = false;
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    private Boolean isEmailBlind = true;
+
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    private Boolean isPhoneBlind = true;
+
+    public void editActivityChange(Boolean isCheck) {
+        this.editActivitiesAble = isCheck;
     }
 
     public void updateMemberAuth (String authUserId, String idpType) {
@@ -168,7 +178,9 @@ public class Member {
             Boolean allowOfficial,
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
-            List<MemberCareer> careers
+            List<MemberCareer> careers,
+            Boolean isEmailBlind,
+            Boolean isPhoneBlind
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -192,5 +204,7 @@ public class Member {
         this.links.clear(); this.links.addAll(links);
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
+        this.isEmailBlind = isEmailBlind;
+        this.isPhoneBlind = isPhoneBlind;
     }
 }

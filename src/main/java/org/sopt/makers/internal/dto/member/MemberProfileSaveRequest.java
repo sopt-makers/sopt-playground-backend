@@ -29,7 +29,9 @@ public record MemberProfileSaveRequest(
 		@Schema(required = true)
 		List<MemberSoptActivitySaveRequest> activities,
 		List<MemberCareerSaveRequest> careers,
-		Boolean allowOfficial
+		Boolean allowOfficial,
+		Boolean isEmailBlind,
+		Boolean isPhoneBlind
 ) {
 	public record UserFavorRequest(
 			Boolean isPourSauceLover,
