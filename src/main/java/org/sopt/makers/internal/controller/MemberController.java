@@ -166,7 +166,8 @@ public class MemberController {
                 member, true, memberProfileProjects, activityResponses, soptActivityResponse
             ),
             memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
-            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
+            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()),
+            isMine);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
