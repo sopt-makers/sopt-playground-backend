@@ -2,12 +2,16 @@ package org.sopt.makers.internal.dto.member;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 
+@Slf4j
 public record MemberProfileUpdateRequest (
         @Schema(required = true)
         String name,
@@ -33,6 +37,7 @@ public record MemberProfileUpdateRequest (
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial
 ){
+
     public record UserFavorRequest(
             Boolean isPourSauceLover,
             Boolean isHardPeachLover,
@@ -69,7 +74,14 @@ public record MemberProfileUpdateRequest (
             Boolean isCurrent
     ){}
 
+
     public boolean compareProfileActivities (List<MemberSoptActivityUpdateRequest> requests, List<MemberSoptActivity> activities) {
+        Comparator<MemberSoptActivityUpdateRequest> requestComparator = Comparator.comparingInt(r -> r.generation);
+        requests.sort(requestComparator);
+
+        Comparator<MemberSoptActivity> activityComparator = Comparator.comparingInt(MemberSoptActivity::getGeneration);
+        activities.sort(activityComparator);
+
         if (requests.size() != activities.size()) {
             return false;
         }
