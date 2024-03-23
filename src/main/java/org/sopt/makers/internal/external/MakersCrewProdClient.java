@@ -12,6 +12,6 @@ public interface MakersCrewProdClient {
     MemberCrewResponse getUserAllCrew(
             @RequestParam("page") Integer page,
             @RequestParam("take") Integer take,
-            @RequestParam("orgUserId") Integer orgUserId
+            @RequestParam("orgUserId") Long orgUserId
     );
 }
