@@ -88,7 +88,7 @@ public record MemberProfileSpecificResponse(
             Boolean isCurrent
     ){}
 
-    public static MemberProfileSpecificResponse checkIsBlindPhoneAndEmail(MemberProfileSpecificResponse response, String phone, String email) {
+    public static MemberProfileSpecificResponse checkIsBlindPhoneAndEmail(MemberProfileSpecificResponse response, String phone, String email, Boolean isMine) {
         return new MemberProfileSpecificResponse(
             response.name(),
             response.profileImage(),
@@ -115,7 +115,7 @@ public record MemberProfileSpecificResponse(
             response.projects(),
             response.careers(),
             response.allowOfficial(),
-            response.isMine()
+            isMine
         );
     }
 }

@@ -2,12 +2,16 @@ package org.sopt.makers.internal.dto.member;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 
+@Slf4j
 public record MemberProfileUpdateRequest (
         @Schema(required = true)
         String name,
@@ -35,6 +39,7 @@ public record MemberProfileUpdateRequest (
         Boolean isEmailBlind,
         Boolean isPhoneBlind
 ){
+
     public record UserFavorRequest(
             Boolean isPourSauceLover,
             Boolean isHardPeachLover,
@@ -56,8 +61,7 @@ public record MemberProfileUpdateRequest (
             String team
     ){
         private boolean equalsInfo (MemberSoptActivity activity) {
-            return generation.equals(activity.getGeneration()) && part.equals(activity.getPart()) &&
-                (team == null || team.equals(activity.getTeam()));
+            return generation.equals(activity.getGeneration()) && part.equals(activity.getPart());
         }
     }
 
@@ -72,7 +76,14 @@ public record MemberProfileUpdateRequest (
             Boolean isCurrent
     ){}
 
+
     public boolean compareProfileActivities (List<MemberSoptActivityUpdateRequest> requests, List<MemberSoptActivity> activities) {
+        Comparator<MemberSoptActivityUpdateRequest> requestComparator = Comparator.comparingInt(r -> r.generation);
+        requests.sort(requestComparator);
+
+        Comparator<MemberSoptActivity> activityComparator = Comparator.comparingInt(MemberSoptActivity::getGeneration);
+        activities.sort(activityComparator);
+
         if (requests.size() != activities.size()) {
             return false;
         }
