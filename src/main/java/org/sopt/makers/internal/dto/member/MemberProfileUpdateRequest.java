@@ -54,8 +54,7 @@ public record MemberProfileUpdateRequest (
             String team
     ){
         private boolean equalsInfo (MemberSoptActivity activity) {
-            return generation.equals(activity.getGeneration()) && part.equals(activity.getPart()) &&
-                (team == null || team.equals(activity.getTeam()));
+            return generation.equals(activity.getGeneration()) && part.equals(activity.getPart());
         }
     }
 
