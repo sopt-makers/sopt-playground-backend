@@ -132,13 +132,13 @@ public class Member {
 
     @Builder.Default
     @Column(nullable = false)
-    @ColumnDefault("true")
-    private Boolean isEmailBlind = true;
+    @ColumnDefault("false")
+    private Boolean isEmailBlind = false;
 
     @Builder.Default
     @Column(nullable = false)
-    @ColumnDefault("true")
-    private Boolean isPhoneBlind = true;
+    @ColumnDefault("false")
+    private Boolean isPhoneBlind = false;
 
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;

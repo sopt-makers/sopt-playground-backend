@@ -87,6 +87,10 @@ public class MemberService {
             List<MemberSoptActivity> memberActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
+        if (memberActivities.isEmpty()) {
+            throw new NotFoundDBEntityException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
+        }
+
         val cardinalInfoMap = memberActivities.stream()
                 .collect(Collectors.toMap(
                         MemberSoptActivity::getGeneration,
