@@ -28,7 +28,7 @@ public class MemberProfileQueryRepository {
 
     private BooleanExpression checkActivityContainsPart(String part) {
         if(part == null) return null;
-        return QMemberSoptActivity.memberSoptActivity.part.eq(part);
+        return QMemberSoptActivity.memberSoptActivity.part.contains(part);
     }
 
     private BooleanExpression checkUserContainsPart(String part) {
