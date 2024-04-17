@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
+import org.sopt.makers.internal.domain.community.AnonymousNickname;
+import org.sopt.makers.internal.domain.community.AnonymousProfileImg;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
@@ -41,6 +44,9 @@ public class CommunityCommentService {
     private final CommunityCommentRepository communityCommentsRepository;
     private final ReportCommentRepository reportCommentRepository;
     private final CommunityQueryRepository communityQueryRepository;
+    private final AnonymousCommentProfileRepository anonymousCommentProfileRepository;
+    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final AnonymousNicknameRepository anonymousNicknameRepository;
     private final InternalApiService internalApiService;
     private final PushNotificationService pushNotificationService;
     private final SlackMessageUtil slackMessageUtil;
@@ -58,6 +64,20 @@ public class CommunityCommentService {
 
         if (request.isChildComment() && !communityCommentsRepository.existsById(request.parentCommentId())) {
             throw new NotFoundDBEntityException("CommunityComment");
+        }
+
+        val excludeImgList = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
+            .map(p -> p.getProfileImg().getIndex()).toList();
+        val excludeNickname = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
+            .map(AnonymousCommentProfile::getNickname).toList();
+        val anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
+
+        if (request.isBlindWriter()) {
+            anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
+                .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : getRandomNickname(excludeNickname))
+                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : getRandomProfileImg(excludeImgList))
+                .member(member)
+                .build());
         }
 
         communityCommentsRepository.save(CommunityComment.builder()
@@ -94,11 +114,25 @@ public class CommunityCommentService {
         }
     }
 
+    private AnonymousProfileImg getRandomProfileImg(List<Integer> excludes) { // TODO Filter 리스트 추가
+        return AnonymousProfileImg.filtered(excludes);
+    }
+
+    private AnonymousNickname getRandomNickname(List<AnonymousNickname> excludes) {
+        List<AnonymousNickname> nicknames = anonymousNicknameRepository.findAll();
+        return nicknames.stream().filter(u -> !excludes.contains(u)).toList().get(0);
+    }
+
     @Transactional(readOnly = true)
     public List<CommentDao> getPostCommentList(Long postId) {
         val post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
         return communityQueryRepository.findCommentByPostId(postId);
+    }
+
+    @Transactional(readOnly = true)
+    public AnonymousCommentProfile getAnonymousCommentProfile(CommunityComment comment) {
+        return anonymousCommentProfileRepository.findByCommunityComment(comment).orElse(null);
     }
 
     @Transactional(readOnly = true)

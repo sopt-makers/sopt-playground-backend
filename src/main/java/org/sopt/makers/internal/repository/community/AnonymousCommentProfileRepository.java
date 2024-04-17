@@ -1,7 +1,15 @@
 package org.sopt.makers.internal.repository.community;
 
-import org.sopt.makers.internal.domain.community.AnonymousPostCommentProfile;
+import java.util.List;
+import java.util.Optional;
+
+import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
+import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AnonymousPostCommentProfileRepository extends JpaRepository<AnonymousPostCommentProfile, Long> {
+public interface AnonymousCommentProfileRepository extends JpaRepository<AnonymousCommentProfile, Long> {
+
+	List<AnonymousCommentProfile> findAllByCommunityCommentPostId(Long postId);
+
+	Optional<AnonymousCommentProfile> findByCommunityComment(CommunityComment comment);
 }
