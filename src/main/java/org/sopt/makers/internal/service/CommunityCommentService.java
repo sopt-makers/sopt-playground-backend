@@ -1,9 +1,10 @@
 package org.sopt.makers.internal.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
@@ -19,16 +20,24 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
-import org.sopt.makers.internal.repository.community.*;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.repository.community.AnonymousCommentProfileRepository;
+import org.sopt.makers.internal.repository.community.AnonymousNicknameRepository;
+import org.sopt.makers.internal.repository.community.AnonymousPostProfileRepository;
+import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
+import org.sopt.makers.internal.repository.community.CommunityPostRepository;
+import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
+import org.sopt.makers.internal.repository.community.DeletedCommunityCommentRepository;
+import org.sopt.makers.internal.repository.community.ReportCommentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Objects;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @RequiredArgsConstructor
 @Service
@@ -71,22 +80,25 @@ public class CommunityCommentService {
         val excludeNickname = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
             .map(AnonymousCommentProfile::getNickname).toList();
         val anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
+        val anonymousCommentProfile = anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(writerId, postId);
 
-        if (request.isBlindWriter()) {
+        CommunityComment comment = CommunityComment.builder()
+            .content(request.content())
+            .postId(postId)
+            .writerId(member.getId())
+            .parentCommentId(request.parentCommentId())
+            .isBlindWriter(request.isBlindWriter())
+            .build();
+        communityCommentsRepository.save(comment);
+
+        if (request.isBlindWriter() && anonymousCommentProfile.isEmpty()) {
             anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
                 .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : getRandomNickname(excludeNickname))
                 .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : getRandomProfileImg(excludeImgList))
                 .member(member)
+                .communityComment(comment)
                 .build());
         }
-
-        communityCommentsRepository.save(CommunityComment.builder()
-                        .content(request.content())
-                        .postId(postId)
-                        .writerId(member.getId())
-                        .parentCommentId(request.parentCommentId())
-                        .isBlindWriter(request.isBlindWriter())
-                .build());
 
         // 본인 게시글의 본인 댓글에는 알림이 가지 않음
         if (post.getMember().getId().equals(writerId)) return;
@@ -114,13 +126,19 @@ public class CommunityCommentService {
         }
     }
 
-    private AnonymousProfileImg getRandomProfileImg(List<Integer> excludes) { // TODO Filter 리스트 추가
+    private AnonymousProfileImg getRandomProfileImg(List<Integer> excludes) {
+        if (excludes.isEmpty()) {
+            return AnonymousProfileImg.shuffle((int)(Math.random() * 5));
+        }
         return AnonymousProfileImg.filtered(excludes);
     }
 
     private AnonymousNickname getRandomNickname(List<AnonymousNickname> excludes) {
-        List<AnonymousNickname> nicknames = anonymousNicknameRepository.findAll();
-        return nicknames.stream().filter(u -> !excludes.contains(u)).toList().get(0);
+        if (excludes.isEmpty()) {
+            return anonymousNicknameRepository.findRandomOne();
+        }
+        return anonymousNicknameRepository.findRandomOneByIdNotIn(
+            excludes.stream().map(AnonymousNickname::getId).toList());
     }
 
     @Transactional(readOnly = true)
@@ -132,7 +150,7 @@ public class CommunityCommentService {
 
     @Transactional(readOnly = true)
     public AnonymousCommentProfile getAnonymousCommentProfile(CommunityComment comment) {
-        return anonymousCommentProfileRepository.findByCommunityComment(comment).orElse(null);
+        return anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(comment.getWriterId(), comment.getPostId()).orElse(null);
     }
 
     @Transactional(readOnly = true)

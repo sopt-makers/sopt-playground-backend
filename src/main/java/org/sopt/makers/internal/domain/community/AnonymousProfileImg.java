@@ -8,6 +8,7 @@ import lombok.Getter;
 
 @Getter
 public enum AnonymousProfileImg {
+	// TODO 실제 S3 URL로 변경
 	BLUE(1, "profile_blue.svg"),
 	ORANGE(2, "profile_orange.svg"),
 	PINK(3, "profile_pink.svg"),
@@ -36,5 +37,9 @@ public enum AnonymousProfileImg {
 			.filter(i -> !excludes.contains(i))
 			.findFirst()
 			.map(profileImgMap::get).orElse(null);
+	}
+
+	public static AnonymousProfileImg shuffle(int index) {
+		return profileImgMap.get(index);
 	}
 }
