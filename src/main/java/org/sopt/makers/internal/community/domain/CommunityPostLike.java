@@ -17,6 +17,7 @@ public class CommunityPostLike extends AuditingTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "community_post_like_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
