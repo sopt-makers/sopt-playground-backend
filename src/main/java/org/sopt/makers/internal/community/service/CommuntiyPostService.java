@@ -1,10 +1,13 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.community.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.community.domain.CommunityPostLike;
+import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
+import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.domain.community.ReportPost;
 import org.sopt.makers.internal.dto.community.*;
@@ -16,6 +19,7 @@ import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.repository.community.*;
+import org.sopt.makers.internal.service.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,7 @@ public class CommuntiyPostService {
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final CommunityCommentRepository communityCommentRepository;
+    private final CommunityPostLikeRepository communityPostLikeRepository;
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
@@ -52,8 +57,8 @@ public class CommuntiyPostService {
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Integer limit, Long cursor) {
-        if(limit == null || limit >= 50) limit = 50;
-        if(categoryId == null) {
+        if (limit == null || limit >= 50) limit = 50;
+        if (categoryId == null) {
             val posts = communityQueryRepository.findAllPostByCursor(limit, cursor);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {
@@ -67,7 +72,7 @@ public class CommuntiyPostService {
     @Transactional(readOnly = true)
     public CommunityPostMemberVo getPostById(Long postId) {
         val postDao = communityQueryRepository.getPostById(postId);
-        if(Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
+        if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
         return communityResponseMapper.toCommunityVo(postDao);
     }
 
@@ -150,6 +155,7 @@ public class CommuntiyPostService {
         communityQueryRepository.updateHitsByPostId(postIdLists);
     }
 
+    @Transactional
     public void reportPost(Long memberId, Long postId) {
         val member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
@@ -170,6 +176,35 @@ public class CommuntiyPostService {
                 .postId(postId)
                 .createdAt(LocalDateTime.now(KST))
                 .build());
+    }
+
+    @Transactional
+    public void likePost(Long memberId, Long postId) {
+
+        Member member = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        CommunityPost post = CommunityPostServiceUtil.findCommunityPostById(communityPostRepository, postId);
+
+        if (CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId)) {
+            throw new ClientBadRequestException("이미 좋아요를 누른 게시물입니다.");
+        }
+
+        communityPostLikeRepository.save(CommunityPostLike.builder().member(member).post(post).build());
+    }
+
+    @Transactional
+    public void unlikePost(Long memberId, Long postId) {
+
+        MemberServiceUtil.checkExistsMemberById(memberRepository, memberId);
+        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+
+        if (!CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId)) {
+            throw new ClientBadRequestException("좋아요를 누른적이 없는 게시물입니다.");
+        }
+
+        CommunityPostLike communityPostLike = communityPostLikeRepository.findCommunityPostLikeByMemberIdAndPostId(memberId, postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("좋아요를 누른적이 없는 게시물입니다"));
+
+        communityPostLikeRepository.delete(communityPostLike);
     }
 
     private JsonNode createSlackRequest(Long id, String name) {
