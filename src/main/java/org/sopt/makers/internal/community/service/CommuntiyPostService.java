@@ -202,7 +202,7 @@ public class CommuntiyPostService {
         }
 
         CommunityPostLike communityPostLike = communityPostLikeRepository.findCommunityPostLikeByMemberIdAndPostId(memberId, postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("좋아요를 누른적이 업는 게시물입니다"));
+                .orElseThrow(() -> new NotFoundDBEntityException("좋아요를 누른적이 없는 게시물입니다"));
 
         communityPostLikeRepository.delete(communityPostLike);
     }
