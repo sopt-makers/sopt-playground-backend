@@ -113,4 +113,10 @@ public class AuthConfig {
 
     @Value("${dictionary.key}")
     private String dictionaryKey;
+
+    @Value("${gabia.sms-id}")
+    private String gabiaSMSId;
+
+    @Value("${gabia.api-key}")
+    private String gabiaApiKey;
 }

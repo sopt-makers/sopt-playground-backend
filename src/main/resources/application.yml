@@ -105,3 +105,7 @@ crew:
 member:
   profile:
     crew-default-img: test
+
+gabia:
+  sms-id: test
+  api-key: test
