@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.controller;
+package org.sopt.makers.internal.community.controller;
 
 import io.github.bucket4j.Bucket;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +13,7 @@ import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.service.CommunityCategoryService;
 import org.sopt.makers.internal.service.CommunityCommentService;
-import org.sopt.makers.internal.service.CommuntiyPostService;
+import org.sopt.makers.internal.community.service.CommuntiyPostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -178,5 +178,27 @@ public class CommunityController {
     ) {
         communityCommentService.reportComment(memberDetails.getId(), commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 게시글 좋아요 API")
+    @PostMapping("/posts/like/{postId}")
+    public ResponseEntity<Map<String, Boolean>> likePost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+
+        communityPostService.likePost(memberDetails.getId(), postId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 게시글 좋아요 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 게시글 좋아요 취소 API")
+    @DeleteMapping("/posts/unlike/{postId}")
+    public ResponseEntity<Map<String, Boolean>> unlikePost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+
+        communityPostService.unlikePost(memberDetails.getId(), postId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 게시글 좋아요 취소 성공", true));
     }
 }
