@@ -155,7 +155,8 @@ public class CommunityController {
     ) {
         val comments = communityCommentService.getPostCommentList(postId);
         val response = comments.stream().
-                map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId())).toList();
+                map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId(),
+                    communityCommentService.getAnonymousCommentProfile(comment.comment()))).toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
