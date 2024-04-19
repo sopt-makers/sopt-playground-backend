@@ -3,6 +3,7 @@ package org.sopt.makers.internal.mapper;
 import lombok.val;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
+import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
 import org.sopt.makers.internal.domain.community.Category;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.dto.community.*;
@@ -14,12 +15,13 @@ import java.util.stream.Collectors;
 
 @Component
 public class CommunityResponseMapper {
-    public CommentResponse toCommentResponse(CommentDao dao, Long memberId) {
+    public CommentResponse toCommentResponse(CommentDao dao, Long memberId, AnonymousCommentProfile profile) {
         val member = dao.comment().getIsBlindWriter() ? null : toMemberResponse(dao.member());
         val comment = dao.comment();
+        val anonymousProfile = dao.comment().getIsBlindWriter() && profile != null? toAnonymousCommentProfileVo(profile) : null;
         val isMine = Objects.equals(dao.member().getId(), memberId);
         return new CommentResponse(comment.getId(), member, isMine, comment.getPostId(), comment.getParentCommentId(),
-                comment.getContent(), comment.getIsBlindWriter(), comment.getIsReported(), comment.getCreatedAt());
+                comment.getContent(), comment.getIsBlindWriter(), anonymousProfile, comment.getIsReported(), comment.getCreatedAt());
     }
 
     public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao) {
@@ -73,8 +75,12 @@ public class CommunityResponseMapper {
         val member = dao.post().isBlindWriter() ? null : dao.member();
         val writerId = dao.post().isBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
-        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId)).collect(Collectors.toList());
+        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(Collectors.toList());
         return new PostResponse(post.id(), member, writerId, isMine, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.createdAt(), comments);
+    }
+
+    public AnonymousProfileVo toAnonymousCommentProfileVo(AnonymousCommentProfile profile) {
+        return new AnonymousProfileVo(profile.getNickname().getNickname(), profile.getProfileImg().getContent());
     }
 }
