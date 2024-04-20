@@ -75,7 +75,8 @@ public class CommunityController {
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId());
+            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);

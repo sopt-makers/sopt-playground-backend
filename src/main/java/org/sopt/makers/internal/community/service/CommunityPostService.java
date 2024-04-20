@@ -223,6 +223,12 @@ public class CommunityPostService {
         communityPostLikeRepository.delete(communityPostLike);
     }
 
+    @Transactional(readOnly = true)
+    public AnonymousPostProfile getAnonymousPostProfile(Long memberId, Long postId) {
+        return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
+    }
+
+
     private JsonNode createSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();
         rootNode.put("text", "🚨글 신고 발생!🚨");
