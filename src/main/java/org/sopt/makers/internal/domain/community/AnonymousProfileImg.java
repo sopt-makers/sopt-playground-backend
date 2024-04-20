@@ -42,4 +42,11 @@ public enum AnonymousProfileImg {
 	public static AnonymousProfileImg shuffle(int index) {
 		return profileImgMap.get(index);
 	}
+
+	public static AnonymousProfileImg getRandomProfileImg(List<Integer> excludes) {
+		if (excludes.isEmpty()) {
+			return AnonymousProfileImg.shuffle((int)(Math.random() * 5));
+		}
+		return AnonymousProfileImg.filtered(excludes);
+	}
 }

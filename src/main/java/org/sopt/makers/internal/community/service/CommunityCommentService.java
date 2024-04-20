@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.community.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -29,6 +29,8 @@ import org.sopt.makers.internal.repository.community.CommunityPostRepository;
 import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
 import org.sopt.makers.internal.repository.community.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.repository.community.ReportCommentRepository;
+import org.sopt.makers.internal.service.InternalApiService;
+import org.sopt.makers.internal.service.PushNotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,8 +95,8 @@ public class CommunityCommentService {
 
         if (request.isBlindWriter() && anonymousCommentProfile.isEmpty()) {
             anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
-                .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : getRandomNickname(excludeNickname))
-                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : getRandomProfileImg(excludeImgList))
+                .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, excludeNickname))
+                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : AnonymousProfileImg.getRandomProfileImg(excludeImgList))
                 .member(member)
                 .communityComment(comment)
                 .build());
@@ -124,21 +126,6 @@ public class CommunityCommentService {
         } catch (Exception error) {
             log.error(error.getMessage());
         }
-    }
-
-    private AnonymousProfileImg getRandomProfileImg(List<Integer> excludes) {
-        if (excludes.isEmpty()) {
-            return AnonymousProfileImg.shuffle((int)(Math.random() * 5));
-        }
-        return AnonymousProfileImg.filtered(excludes);
-    }
-
-    private AnonymousNickname getRandomNickname(List<AnonymousNickname> excludes) {
-        if (excludes.isEmpty()) {
-            return anonymousNicknameRepository.findRandomOne();
-        }
-        return anonymousNicknameRepository.findRandomOneByIdNotIn(
-            excludes.stream().map(AnonymousNickname::getId).toList());
     }
 
     @Transactional(readOnly = true)
