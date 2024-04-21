@@ -60,7 +60,8 @@ public class CommunityController {
             summary = "커뮤니티 글 전체 조회",
             description =
                     """
-                            categoryId: 카테고리 전체조회시 id값, 전체일 경우 null\n
+                            categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
+                            
                             cursor: 처음 조회시 null, 이외에 마지막 글 id
                             """
     )
@@ -76,7 +77,8 @@ public class CommunityController {
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id());
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile);
+            val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);

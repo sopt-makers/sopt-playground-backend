@@ -11,6 +11,7 @@ public record PostResponse(
         MemberVo member,
         Long writerId,
         Boolean isMine,
+        Boolean isLiked,
         Long categoryId,
         String categoryName,
         String title,
