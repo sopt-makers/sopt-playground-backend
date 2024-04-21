@@ -15,8 +15,8 @@ public enum AnonymousProfileImg {
 	SKYBLUE(4, "profile_skyblue.svg"),
 	YELLOW(5, "profile_yellow.svg");
 
-	private int index;
-	private String content;
+	private final int index;
+	private final String content;
 
 	private static final Map<Integer, AnonymousProfileImg> profileImgMap = new HashMap<>();
 
@@ -44,9 +44,9 @@ public enum AnonymousProfileImg {
 	}
 
 	public static AnonymousProfileImg getRandomProfileImg(List<Integer> excludes) {
-		if (excludes.isEmpty()) {
-			return AnonymousProfileImg.shuffle((int)(Math.random() * 5));
+		if (excludes.isEmpty() || excludes.size() >= AnonymousProfileImg.values().length) {
+			return shuffle((int)(Math.random() * 5));
 		}
-		return AnonymousProfileImg.filtered(excludes);
+		return filtered(excludes);
 	}
 }
