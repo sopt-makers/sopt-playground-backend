@@ -224,6 +224,15 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
+    public Boolean isLiked(Long memberId, Long postId) {
+
+        MemberServiceUtil.checkExistsMemberById(memberRepository, memberId);
+        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+
+        return CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId);
+    }
+
+    @Transactional(readOnly = true)
     public AnonymousPostProfile getAnonymousPostProfile(Long memberId, Long postId) {
         return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
     }
