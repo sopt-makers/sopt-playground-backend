@@ -8,8 +8,7 @@ import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.community.CommunityPost;
-import org.sopt.makers.internal.domain.community.ReportPost;
+import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -29,15 +28,18 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class CommuntiyPostService {
+public class CommunityPostService {
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final CommunityCommentRepository communityCommentRepository;
+    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final AnonymousNicknameRepository anonymousNicknameRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
@@ -78,11 +80,8 @@ public class CommuntiyPostService {
 
     @Transactional
     public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
-        val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
-        val post = communityPostRepository.save(CommunityPost.builder()
+        Member member = MemberServiceUtil.findMemberById(memberRepository, writerId);
+        CommunityPost post = communityPostRepository.save(CommunityPost.builder()
                 .member(member)
                 .categoryId(request.categoryId())
                 .title(request.title())
@@ -91,9 +90,28 @@ public class CommuntiyPostService {
                 .images(request.images())
                 .isQuestion(request.isQuestion())
                 .isBlindWriter(request.isBlindWriter())
-                .createdAt(LocalDateTime.now(KST))
                 .comments(new ArrayList<>())
                 .build());
+
+        if (request.isBlindWriter()) {
+            List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRepository.findTop4ByOrderByCreatedAtDesc();
+            List<AnonymousPostProfile> lastFiftyAnonymousNickname = anonymousPostProfileRepository.findTop50ByOrderByCreatedAtDesc();
+            List<Integer> usedAnonymousProfileImages = lastFourAnonymousPostProfiles.stream()
+                    .map(anonymousProfile -> anonymousProfile.getProfileImg().getIndex()).toList();
+            List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousNickname.stream()
+                    .map(AnonymousPostProfile::getNickname).toList();
+
+            AnonymousProfileImg anonymousProfileImg = AnonymousProfileImg.getRandomProfileImg(usedAnonymousProfileImages);
+            AnonymousNickname anonymousNickname = AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, usedAnonymousNicknames);
+            anonymousPostProfileRepository.save(AnonymousPostProfile.builder()
+                    .member(member)
+                    .nickname(anonymousNickname)
+                    .profileImg(anonymousProfileImg)
+                    .communityPost(post)
+                    .build()
+            );
+        }
+
         return communityResponseMapper.toPostSaveResponse(post);
     }
 
@@ -121,8 +139,6 @@ public class CommuntiyPostService {
                 .isQuestion(request.isQuestion())
                 .isBlindWriter(request.isBlindWriter())
                 .comments(communityCommentRepository.findAllByPostId(request.postId()))
-                .createdAt(post.getCreatedAt())
-                .updatedAt(LocalDateTime.now(KST))
                 .build());
         return communityResponseMapper.toPostUpdateResponse(post);
     }
@@ -206,6 +222,12 @@ public class CommuntiyPostService {
 
         communityPostLikeRepository.delete(communityPostLike);
     }
+
+    @Transactional(readOnly = true)
+    public AnonymousPostProfile getAnonymousPostProfile(Long memberId, Long postId) {
+        return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
+    }
+
 
     private JsonNode createSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();

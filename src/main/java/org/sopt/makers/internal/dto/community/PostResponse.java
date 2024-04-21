@@ -20,6 +20,7 @@ public record PostResponse(
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
+        AnonymousProfileVo anonymousProfile,
         LocalDateTime createdAt,
         List<CommentResponse> comments
 ) {}

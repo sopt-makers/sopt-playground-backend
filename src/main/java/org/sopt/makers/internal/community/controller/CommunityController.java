@@ -8,12 +8,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.service.CommunityCategoryService;
-import org.sopt.makers.internal.service.CommunityCommentService;
-import org.sopt.makers.internal.community.service.CommuntiyPostService;
+import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Community 관련 API", description = "Community 관련 API List")
 public class CommunityController {
 
-    private final CommuntiyPostService communityPostService;
+    private final CommunityPostService communityPostService;
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
@@ -75,7 +75,8 @@ public class CommunityController {
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId());
+            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);

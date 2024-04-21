@@ -4,6 +4,7 @@ import lombok.val;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
+import org.sopt.makers.internal.domain.community.AnonymousPostProfile;
 import org.sopt.makers.internal.domain.community.Category;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.sopt.makers.internal.dto.community.*;
@@ -69,15 +70,20 @@ public class CommunityResponseMapper {
                 post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt());
     }
 
-    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId) {
+    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId, AnonymousPostProfile anonymousPostProfile) {
         val post = dao.post();
         val category = dao.category();
         val member = dao.post().isBlindWriter() ? null : dao.member();
         val writerId = dao.post().isBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
         val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(Collectors.toList());
+        val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         return new PostResponse(post.id(), member, writerId, isMine, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.createdAt(), comments);
+                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), anonymousProfile, post.createdAt(), comments);
+    }
+
+    private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
+        return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getContent());
     }
 
     public AnonymousProfileVo toAnonymousCommentProfileVo(AnonymousCommentProfile profile) {
