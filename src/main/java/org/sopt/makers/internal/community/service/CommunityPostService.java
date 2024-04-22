@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.domain.Member;
@@ -28,13 +29,15 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class CommunityPostService {
+
+    private final AnonymousProfileImageService anonymousProfileImageService;
+
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final CommunityCommentRepository communityCommentRepository;
@@ -96,12 +99,12 @@ public class CommunityPostService {
         if (request.isBlindWriter()) {
             List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRepository.findTop4ByOrderByCreatedAtDesc();
             List<AnonymousPostProfile> lastFiftyAnonymousNickname = anonymousPostProfileRepository.findTop50ByOrderByCreatedAtDesc();
-            List<Integer> usedAnonymousProfileImages = lastFourAnonymousPostProfiles.stream()
-                    .map(anonymousProfile -> anonymousProfile.getProfileImg().getIndex()).toList();
+            List<Long> usedAnonymousProfileImages = lastFourAnonymousPostProfiles.stream()
+                    .map(anonymousProfile -> anonymousProfile.getProfileImg().getId()).toList();
             List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousNickname.stream()
                     .map(AnonymousPostProfile::getNickname).toList();
 
-            AnonymousProfileImg anonymousProfileImg = AnonymousProfileImg.getRandomProfileImg(usedAnonymousProfileImages);
+            AnonymousProfileImage anonymousProfileImg = anonymousProfileImageService.getRandomProfileImage(usedAnonymousProfileImages);
             AnonymousNickname anonymousNickname = AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, usedAnonymousNicknames);
             anonymousPostProfileRepository.save(AnonymousPostProfile.builder()
                     .member(member)

@@ -8,8 +8,6 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
-import org.sopt.makers.internal.domain.community.AnonymousNickname;
-import org.sopt.makers.internal.domain.community.AnonymousProfileImg;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
 import org.sopt.makers.internal.dto.community.CommentDao;
@@ -59,6 +57,7 @@ public class CommunityCommentService {
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
     private final AnonymousNicknameRepository anonymousNicknameRepository;
     private final InternalApiService internalApiService;
+    private final AnonymousProfileImageService anonymousProfileImageService;
     private final PushNotificationService pushNotificationService;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
@@ -78,7 +77,7 @@ public class CommunityCommentService {
         }
 
         val excludeImgList = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
-            .map(p -> p.getProfileImg().getIndex()).toList();
+            .map(p -> p.getProfileImg().getId()).toList();
         val excludeNickname = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
             .map(AnonymousCommentProfile::getNickname).toList();
         val anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
@@ -96,7 +95,7 @@ public class CommunityCommentService {
         if (request.isBlindWriter() && anonymousCommentProfile.isEmpty()) {
             anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
                 .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, excludeNickname))
-                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : AnonymousProfileImg.getRandomProfileImg(excludeImgList))
+                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : anonymousProfileImageService.getRandomProfileImage(excludeImgList))
                 .member(member)
                 .communityComment(comment)
                 .build());

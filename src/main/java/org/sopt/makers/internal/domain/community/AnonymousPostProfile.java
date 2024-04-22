@@ -3,8 +3,6 @@ package org.sopt.makers.internal.domain.community;
 import javax.persistence.Column;
 import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,6 +11,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
+import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
@@ -40,16 +39,16 @@ public class AnonymousPostProfile extends AuditingTimeEntity {
 	@JoinColumn(name = "an_id", nullable = false)
 	private AnonymousNickname nickname;
 
-	@Enumerated(value = EnumType.STRING)
-	@Column(nullable = false)
-	private AnonymousProfileImg profileImg;
+	@ManyToOne
+	@JoinColumn(name = "anpi_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT), nullable = false)
+	private AnonymousProfileImage profileImg;
 
 	@OneToOne
 	@JoinColumn(name = "post_id", nullable = false)
 	private CommunityPost communityPost;
 
 	@Builder
-	private AnonymousPostProfile(AnonymousNickname nickname, Member member, AnonymousProfileImg profileImg, CommunityPost communityPost) {
+	private AnonymousPostProfile(AnonymousNickname nickname, Member member, AnonymousProfileImage profileImg, CommunityPost communityPost) {
 		this.nickname = nickname;
 		this.member = member;
 		this.profileImg = profileImg;
