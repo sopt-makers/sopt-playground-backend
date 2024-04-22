@@ -8,34 +8,45 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class AnonymousProfileImageService {
 
     private final AnonymousProfileImageRepository anonymousProfileImageRepository;
 
+    public AnonymousProfileImageService(AnonymousProfileImageRepository anonymousProfileImageRepository) {
+        this.anonymousProfileImageRepository = anonymousProfileImageRepository;
+        initializeProfileImageMap();
+    }
+
+    private static final Map<Long, AnonymousProfileImage> profileImageMap = new HashMap<>();
+
     @Transactional(readOnly = true)
     public AnonymousProfileImage getRandomProfileImage(List<Long> excludes) {
-        if (excludes.isEmpty() || excludes.size() >= AnonymousProfileImg.values().length) {
+        if (excludes.isEmpty() || excludes.size() >= profileImageMap.size()) {
             return shuffle((long)(Math.random() * 5));
         }
         return filtered(excludes);
     }
 
     private AnonymousProfileImage filtered(List<Long> excludes) {
-        List<AnonymousProfileImage> anonymousProfileImages = anonymousProfileImageRepository.findAll();
-
-        return anonymousProfileImages.stream()
-                .filter(index -> !excludes.contains(index.getId()))
+        return profileImageMap.keySet().stream()
+                .filter(i -> !excludes.contains(i))
                 .findFirst()
-                .orElse(null);
+                .map(profileImageMap::get).orElse(null);
     }
 
     private AnonymousProfileImage shuffle(Long index) {
-        return anonymousProfileImageRepository.findById(index).orElseThrow(
-                () -> new NotFoundDBEntityException("존재하지 않는 익명 프로필 인덱스 값입니다")
-        );
+        return profileImageMap.get(index);
+    }
+
+    private void initializeProfileImageMap() {
+        List<AnonymousProfileImage> anonymousProfileImages = anonymousProfileImageRepository.findAll();
+        for (AnonymousProfileImage image : anonymousProfileImages) {
+            profileImageMap.put(image.getId(), image);
+        }
     }
 }
