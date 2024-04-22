@@ -13,6 +13,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
+import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
@@ -40,16 +41,16 @@ public class AnonymousCommentProfile extends AuditingTimeEntity {
 	@JoinColumn(name = "an_id", nullable = false)
 	private AnonymousNickname nickname;
 
-	@Enumerated(value = EnumType.STRING)
-	@Column(nullable = false)
-	private AnonymousProfileImg profileImg;
+	@ManyToOne
+	@JoinColumn(name = "anpi_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT), nullable = false)
+	private AnonymousProfileImage profileImg;
 
 	@OneToOne
 	@JoinColumn(name = "comment_id", nullable = false)
 	private CommunityComment communityComment;
 
 	@Builder
-	private AnonymousCommentProfile(AnonymousNickname nickname, Member member, AnonymousProfileImg profileImg, CommunityComment communityComment) {
+	private AnonymousCommentProfile(AnonymousNickname nickname, Member member, AnonymousProfileImage profileImg, CommunityComment communityComment) {
 		this.nickname = nickname;
 		this.member = member;
 		this.profileImg = profileImg;

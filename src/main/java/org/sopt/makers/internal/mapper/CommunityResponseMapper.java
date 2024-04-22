@@ -83,10 +83,10 @@ public class CommunityResponseMapper {
     }
 
     private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
-        return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getContent());
+        return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getImageUrl());
     }
 
     public AnonymousProfileVo toAnonymousCommentProfileVo(AnonymousCommentProfile profile) {
-        return new AnonymousProfileVo(profile.getNickname().getNickname(), profile.getProfileImg().getContent());
+        return new AnonymousProfileVo(profile.getNickname().getNickname(), profile.getProfileImg().getImageUrl());
     }
 }
