@@ -52,7 +52,10 @@ public class CommunityController {
             @PathVariable("postId") Long postId
     ) {
         val post = communityPostService.getPostById(postId);
-        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId());
+        val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
+        val likes = communityPostService.getLikes(post.post().id());
+        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes, anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -78,7 +81,8 @@ public class CommunityController {
             val comments = communityCommentService.getPostCommentList(post.post().id());
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
             val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked);
+            val likes = communityPostService.getLikes(post.post().id());
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked, likes);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);

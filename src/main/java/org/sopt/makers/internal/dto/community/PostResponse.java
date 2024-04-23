@@ -12,6 +12,7 @@ public record PostResponse(
         Long writerId,
         Boolean isMine,
         Boolean isLiked,
+        Integer likes,
         Long categoryId,
         String categoryName,
         String title,
