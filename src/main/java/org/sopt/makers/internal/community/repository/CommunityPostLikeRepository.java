@@ -14,6 +14,8 @@ public interface CommunityPostLikeRepository extends JpaRepository<CommunityPost
 
     Optional<CommunityPostLike> findCommunityPostLikeByMemberIdAndPostId(Long memberId, Long postId);
 
+    Integer countAllByPostId(Long postId);
+
     // UPDATE
 
     // DELETE

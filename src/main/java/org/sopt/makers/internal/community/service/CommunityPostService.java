@@ -236,6 +236,12 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
+    public Integer getLikes(Long postId) {
+        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+        return communityPostLikeRepository.countAllByPostId(postId);
+    }
+
+    @Transactional(readOnly = true)
     public AnonymousPostProfile getAnonymousPostProfile(Long memberId, Long postId) {
         return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
     }
