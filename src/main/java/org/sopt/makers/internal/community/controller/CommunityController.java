@@ -48,13 +48,13 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<PostDetailResponse> getCategoryList(
-//            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @PathVariable("postId") Long postId
     ) {
         val post = communityPostService.getPostById(postId);
-        val isLiked = communityPostService.isLiked(1L, post.post().id());
+        val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
         val likes = communityPostService.getLikes(post.post().id());
-        val response = communityResponseMapper.toPostDetailReponse(post, 1L, isLiked, likes);
+        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -69,7 +69,7 @@ public class CommunityController {
     )
     @GetMapping("/posts")
     public ResponseEntity<PostAllResponse> getAllPosts(
-//            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestParam(required = false, name = "categoryId") Long categoryId,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
@@ -79,9 +79,9 @@ public class CommunityController {
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id());
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
-            val isLiked = communityPostService.isLiked(1L, post.post().id());
+            val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, 1L, anonymousPostProfile, isLiked, likes);
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked, likes);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
