@@ -14,7 +14,9 @@ public record PostDetailResponse(
         @Schema(required = true)
         Boolean isLiked,
         @Schema(required = true)
-        Integer likes
+        Integer likes,
+        @Schema(required = false)
+        AnonymousProfileVo anonymousProfile
 ) {
     @QueryProjection
     public PostDetailResponse {}

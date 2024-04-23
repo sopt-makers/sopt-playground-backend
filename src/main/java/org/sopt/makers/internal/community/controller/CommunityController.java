@@ -54,7 +54,8 @@ public class CommunityController {
         val post = communityPostService.getPostById(postId);
         val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
         val likes = communityPostService.getLikes(post.post().id());
-        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes);
+        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes, anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

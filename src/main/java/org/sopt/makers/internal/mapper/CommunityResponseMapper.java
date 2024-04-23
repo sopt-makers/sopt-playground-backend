@@ -43,10 +43,11 @@ public class CommunityResponseMapper {
                 post.getIsBlindWriter(), post.getCreatedAt());
     }
 
-    public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId, Boolean isLiked, Integer likes) {
+    public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId, Boolean isLiked, Integer likes, AnonymousPostProfile anonymousPostProfile) {
         val member = post.post().isBlindWriter() ? null : post.member();
         val isMine = Objects.equals(post.member().id(), memberId);
-        return new PostDetailResponse(member, post.post(), post.category(), isMine, isLiked, likes);
+        val anonymousProfile = post.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
+        return new PostDetailResponse(member, post.post(), post.category(), isMine, isLiked, likes, anonymousProfile);
     }
 
     public MemberVo toMemberResponse(Member member) {
