@@ -12,6 +12,8 @@ import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,6 +22,8 @@ import java.util.Objects;
 public class MemberProfileQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    private static final List<Long> WHITE_LIST = List.of(894L);
 
     private BooleanExpression checkMemberContainsName(String name) {
         if(name == null) return null;
@@ -133,6 +137,10 @@ public class MemberProfileQueryRepository {
         }
     }
 
+    private BooleanExpression checkNotInWhiteList(QMember member) {
+        return member.id.notIn(WHITE_LIST);
+    }
+
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
         val orderByNumIsEmpty = Objects.isNull(orderByNum);
         if (orderByNumIsEmpty) return QMember.member.id.desc();
@@ -177,10 +185,12 @@ public class MemberProfileQueryRepository {
     ) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
+
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkMemberMbti(mbti), checkActivityContainsGenerationAndTeamAndPart(generation, team, part)
+                        checkMemberMbti(mbti), checkActivityContainsGenerationAndTeamAndPart(generation, team, part),
+                        checkNotInWhiteList(member)
                 ).offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
@@ -205,7 +215,7 @@ public class MemberProfileQueryRepository {
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
-                        checkActivityContainsPart(part), checkMemberMbti(mbti),
+                        checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
                         checkActivityContainsGenerationAndTeamAndPart(generation, team, part)
                 ).groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
