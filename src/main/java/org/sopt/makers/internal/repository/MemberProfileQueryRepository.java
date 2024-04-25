@@ -1,21 +1,27 @@
 package org.sopt.makers.internal.repository;
 
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import java.util.List;
+import java.util.Objects;
+
 import org.sopt.makers.internal.common.MakersMemberId;
-import org.sopt.makers.internal.domain.*;
+import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.OrderByCondition;
+import org.sopt.makers.internal.domain.Part;
+import org.sopt.makers.internal.domain.QMember;
+import org.sopt.makers.internal.domain.QMemberProjectRelation;
+import org.sopt.makers.internal.domain.QMemberSoptActivity;
+import org.sopt.makers.internal.domain.QProject;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
 import org.springframework.stereotype.Repository;
-
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 @Repository
 @RequiredArgsConstructor
