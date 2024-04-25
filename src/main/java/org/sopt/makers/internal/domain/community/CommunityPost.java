@@ -3,6 +3,7 @@ package org.sopt.makers.internal.domain.community;
 import lombok.*;
 import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table
-public class CommunityPost {
+public class CommunityPost extends AuditingTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,14 +55,6 @@ public class CommunityPost {
     @Builder.Default
     @Column
     private Boolean isReported = false;
-
-    @Builder.Default
-    @Column
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column
-    private LocalDateTime updatedAt;
-
 
     @Builder.Default
     @OneToMany(
