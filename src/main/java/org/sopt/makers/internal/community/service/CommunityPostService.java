@@ -1,12 +1,15 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.community.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.SlackMessageUtil;
-import org.sopt.makers.internal.domain.community.CommunityPost;
-import org.sopt.makers.internal.domain.community.ReportPost;
+import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.CommunityPostLike;
+import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
+import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -16,6 +19,7 @@ import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.repository.community.*;
+import org.sopt.makers.internal.service.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +34,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class CommuntiyPostService {
+public class CommunityPostService {
+
+    private final AnonymousProfileImageService anonymousProfileImageService;
+
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final CommunityCommentRepository communityCommentRepository;
+    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final AnonymousNicknameRepository anonymousNicknameRepository;
+    private final CommunityPostLikeRepository communityPostLikeRepository;
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
@@ -52,8 +62,8 @@ public class CommuntiyPostService {
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Integer limit, Long cursor) {
-        if(limit == null || limit >= 50) limit = 50;
-        if(categoryId == null) {
+        if (limit == null || limit >= 50) limit = 50;
+        if (categoryId == null) {
             val posts = communityQueryRepository.findAllPostByCursor(limit, cursor);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {
@@ -67,17 +77,14 @@ public class CommuntiyPostService {
     @Transactional(readOnly = true)
     public CommunityPostMemberVo getPostById(Long postId) {
         val postDao = communityQueryRepository.getPostById(postId);
-        if(Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
+        if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
         return communityResponseMapper.toCommunityVo(postDao);
     }
 
     @Transactional
     public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
-        val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
-        val post = communityPostRepository.save(CommunityPost.builder()
+        Member member = MemberServiceUtil.findMemberById(memberRepository, writerId);
+        CommunityPost post = communityPostRepository.save(CommunityPost.builder()
                 .member(member)
                 .categoryId(request.categoryId())
                 .title(request.title())
@@ -86,9 +93,28 @@ public class CommuntiyPostService {
                 .images(request.images())
                 .isQuestion(request.isQuestion())
                 .isBlindWriter(request.isBlindWriter())
-                .createdAt(LocalDateTime.now(KST))
                 .comments(new ArrayList<>())
                 .build());
+
+        if (request.isBlindWriter()) {
+            List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRepository.findTop4ByOrderByCreatedAtDesc();
+            List<AnonymousPostProfile> lastFiftyAnonymousNickname = anonymousPostProfileRepository.findTop50ByOrderByCreatedAtDesc();
+            List<Long> usedAnonymousProfileImages = lastFourAnonymousPostProfiles.stream()
+                    .map(anonymousProfile -> anonymousProfile.getProfileImg().getId()).toList();
+            List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousNickname.stream()
+                    .map(AnonymousPostProfile::getNickname).toList();
+
+            AnonymousProfileImage anonymousProfileImg = anonymousProfileImageService.getRandomProfileImage(usedAnonymousProfileImages);
+            AnonymousNickname anonymousNickname = AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, usedAnonymousNicknames);
+            anonymousPostProfileRepository.save(AnonymousPostProfile.builder()
+                    .member(member)
+                    .nickname(anonymousNickname)
+                    .profileImg(anonymousProfileImg)
+                    .communityPost(post)
+                    .build()
+            );
+        }
+
         return communityResponseMapper.toPostSaveResponse(post);
     }
 
@@ -116,8 +142,6 @@ public class CommuntiyPostService {
                 .isQuestion(request.isQuestion())
                 .isBlindWriter(request.isBlindWriter())
                 .comments(communityCommentRepository.findAllByPostId(request.postId()))
-                .createdAt(post.getCreatedAt())
-                .updatedAt(LocalDateTime.now(KST))
                 .build());
         return communityResponseMapper.toPostUpdateResponse(post);
     }
@@ -150,6 +174,7 @@ public class CommuntiyPostService {
         communityQueryRepository.updateHitsByPostId(postIdLists);
     }
 
+    @Transactional
     public void reportPost(Long memberId, Long postId) {
         val member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
@@ -171,6 +196,56 @@ public class CommuntiyPostService {
                 .createdAt(LocalDateTime.now(KST))
                 .build());
     }
+
+    @Transactional
+    public void likePost(Long memberId, Long postId) {
+
+        Member member = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        CommunityPost post = CommunityPostServiceUtil.findCommunityPostById(communityPostRepository, postId);
+
+        if (CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId)) {
+            throw new ClientBadRequestException("이미 좋아요를 누른 게시물입니다.");
+        }
+
+        communityPostLikeRepository.save(CommunityPostLike.builder().member(member).post(post).build());
+    }
+
+    @Transactional
+    public void unlikePost(Long memberId, Long postId) {
+
+        MemberServiceUtil.checkExistsMemberById(memberRepository, memberId);
+        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+
+        if (!CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId)) {
+            throw new ClientBadRequestException("좋아요를 누른적이 없는 게시물입니다.");
+        }
+
+        CommunityPostLike communityPostLike = communityPostLikeRepository.findCommunityPostLikeByMemberIdAndPostId(memberId, postId)
+                .orElseThrow(() -> new NotFoundDBEntityException("좋아요를 누른적이 없는 게시물입니다"));
+
+        communityPostLikeRepository.delete(communityPostLike);
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean isLiked(Long memberId, Long postId) {
+
+        MemberServiceUtil.checkExistsMemberById(memberRepository, memberId);
+        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+
+        return CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId);
+    }
+
+    @Transactional(readOnly = true)
+    public Integer getLikes(Long postId) {
+        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+        return communityPostLikeRepository.countAllByPostId(postId);
+    }
+
+    @Transactional(readOnly = true)
+    public AnonymousPostProfile getAnonymousPostProfile(Long memberId, Long postId) {
+        return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
+    }
+
 
     private JsonNode createSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();
