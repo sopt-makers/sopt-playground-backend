@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.controller;
+package org.sopt.makers.internal.community.controller;
 
 import io.github.bucket4j.Bucket;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,12 +8,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.service.CommunityCategoryService;
-import org.sopt.makers.internal.service.CommunityCommentService;
-import org.sopt.makers.internal.service.CommuntiyPostService;
+import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Community 관련 API", description = "Community 관련 API List")
 public class CommunityController {
 
-    private final CommuntiyPostService communityPostService;
+    private final CommunityPostService communityPostService;
     private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
@@ -52,7 +52,10 @@ public class CommunityController {
             @PathVariable("postId") Long postId
     ) {
         val post = communityPostService.getPostById(postId);
-        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId());
+        val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
+        val likes = communityPostService.getLikes(post.post().id());
+        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes, anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -60,7 +63,8 @@ public class CommunityController {
             summary = "커뮤니티 글 전체 조회",
             description =
                     """
-                            categoryId: 카테고리 전체조회시 id값, 전체일 경우 null\n
+                            categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
+                            
                             cursor: 처음 조회시 null, 이외에 마지막 글 id
                             """
     )
@@ -75,7 +79,10 @@ public class CommunityController {
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId());
+            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+            val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
+            val likes = communityPostService.getLikes(post.post().id());
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked, likes);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -155,7 +162,8 @@ public class CommunityController {
     ) {
         val comments = communityCommentService.getPostCommentList(postId);
         val response = comments.stream().
-                map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId())).toList();
+                map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId(),
+                    communityCommentService.getAnonymousCommentProfile(comment.comment()))).toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -178,5 +186,27 @@ public class CommunityController {
     ) {
         communityCommentService.reportComment(memberDetails.getId(), commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 게시글 좋아요 API")
+    @PostMapping("/posts/like/{postId}")
+    public ResponseEntity<Map<String, Boolean>> likePost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+
+        communityPostService.likePost(memberDetails.getId(), postId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 게시글 좋아요 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 게시글 좋아요 취소 API")
+    @DeleteMapping("/posts/unlike/{postId}")
+    public ResponseEntity<Map<String, Boolean>> unlikePost(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+
+        communityPostService.unlikePost(memberDetails.getId(), postId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 게시글 좋아요 취소 성공", true));
     }
 }

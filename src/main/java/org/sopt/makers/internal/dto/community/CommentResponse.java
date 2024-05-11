@@ -13,6 +13,7 @@ public record CommentResponse(
         Long parentCommentId,
         String content,
         Boolean isBlindWriter,
+        AnonymousProfileVo anonymousProfile,
         Boolean isReported,
         LocalDateTime createdAt
 ){}

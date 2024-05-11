@@ -11,6 +11,8 @@ public record PostResponse(
         MemberVo member,
         Long writerId,
         Boolean isMine,
+        Boolean isLiked,
+        Integer likes,
         Long categoryId,
         String categoryName,
         String title,
@@ -20,6 +22,7 @@ public record PostResponse(
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
+        AnonymousProfileVo anonymousProfile,
         LocalDateTime createdAt,
         List<CommentResponse> comments
 ) {}

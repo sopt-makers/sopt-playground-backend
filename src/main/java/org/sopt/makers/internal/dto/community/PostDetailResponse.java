@@ -10,7 +10,13 @@ public record PostDetailResponse(
         @Schema(required = true)
         CategoryVo category,
         @Schema(required = true)
-        Boolean isMine
+        Boolean isMine,
+        @Schema(required = true)
+        Boolean isLiked,
+        @Schema(required = true)
+        Integer likes,
+        @Schema(required = false)
+        AnonymousProfileVo anonymousProfile
 ) {
     @QueryProjection
     public PostDetailResponse {}
