@@ -119,4 +119,7 @@ public class AuthConfig {
 
     @Value("${gabia.api-key}")
     private String gabiaApiKey;
+
+    @Value("${gabia.send-number}")
+    private String gabiaSendNumber;
 }
