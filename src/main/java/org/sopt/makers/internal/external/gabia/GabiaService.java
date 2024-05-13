@@ -4,11 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import lombok.RequiredArgsConstructor;
 import okhttp3.*;
+import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.dto.auth.GabiaAuthResponse;
 import org.sopt.makers.internal.dto.auth.GabiaSMSResponse;
 import org.sopt.makers.internal.dto.auth.GabiaSMSResponseData;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,20 +19,12 @@ import java.util.*;
 @RequiredArgsConstructor
 public class GabiaService {
 
-    @Value("${gabia.sms-id}")
-    private String gabiaSMSId;
-
-    @Value("${gabia.api-key}")
-    private String gabiaApiKey;
-
-    @Value("${gabia.send-number}")
-    private String gabiaSendNumber;
-
+    private final AuthConfig authConfig;
     private static final String SMS_OAUTH_TOKEN_URL = "https://sms.gabia.com/oauth/token";
     private static final String SMS_SEND_URL = "https://sms.gabia.com/api/send/sms";
 
     private GabiaAuthResponse getGabiaAccessToken() {
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", gabiaSMSId, gabiaApiKey).getBytes(StandardCharsets.UTF_8));
+        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), authConfig.getGabiaApiKey()).getBytes(StandardCharsets.UTF_8));
 
         OkHttpClient client = new OkHttpClient();
         RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -79,12 +71,12 @@ public class GabiaService {
 
     private GabiaSMSResponse attemptToSendSMS(String phone, String message) {
         GabiaAuthResponse gabiaAuthResponse = getGabiaAccessToken();
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", gabiaSMSId, gabiaAuthResponse.access_token()).getBytes(StandardCharsets.UTF_8));
+        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), gabiaAuthResponse.access_token()).getBytes(StandardCharsets.UTF_8));
         OkHttpClient client = new OkHttpClient();
 
         RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
                 .addFormDataPart("phone", phone)
-                .addFormDataPart("callback", gabiaSendNumber)
+                .addFormDataPart("callback", authConfig.getGabiaSendNumber())
                 .addFormDataPart("message", message)
                 .addFormDataPart("refkey", UUID.randomUUID().toString())
                 .build();
