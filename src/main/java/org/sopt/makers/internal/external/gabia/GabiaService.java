@@ -1,7 +1,6 @@
 package org.sopt.makers.internal.external.gabia;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import lombok.RequiredArgsConstructor;
 import okhttp3.*;
 import org.sopt.makers.internal.config.AuthConfig;
@@ -59,7 +58,7 @@ public class GabiaService {
                 sentSuccessfully = true;
 
                 // TODO:Slack에 알림 전송
-                if (Integer.parseInt(response.data().AFTRE_SMS_QTY()) == 50) {
+                if (Integer.parseInt(response.data().getAFTER_SMS_QTY()) == 50) {
 
                 }
 
@@ -91,23 +90,23 @@ public class GabiaService {
 
         try {
             Response response = client.newCall(request).execute();
-            HashMap<String, Object> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
+            HashMap<String, String> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
             return mapToGabiaSMSResponse(result);
         } catch (IOException e) {
             throw new ClientBadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
         }
     }
 
-    private static GabiaSMSResponse mapToGabiaSMSResponse(HashMap<String, Object> result) {
-        String code = (String) result.get("code");
-        String message = (String) result.get("message");
+    private static GabiaSMSResponse mapToGabiaSMSResponse(HashMap<String, String> result) {
+        if (!result.containsKey("code") || !result.containsKey("message")) {
+            throw new ClientBadRequestException("Gabia 서버 통신에 실패했습니다");
+        }
 
-        LinkedTreeMap<String, Object> dataMap = (LinkedTreeMap<String, Object>) result.get("data");
-        GabiaSMSResponseData data = new GabiaSMSResponseData(
-                String.valueOf(dataMap.get("BEFORE_SMS_QTY")),
-                String.valueOf(dataMap.get("AFTER_SMS_QTY"))
-        );
+        String code = result.get("code");
+        String message = result.get("message");
+        String data = new Gson().toJson(result.get("data"));
+        GabiaSMSResponseData gabiaSMSResponseData = new Gson().fromJson(data, GabiaSMSResponseData.class);
 
-        return new GabiaSMSResponse(code, message, data);
+        return new GabiaSMSResponse(code, message, gabiaSMSResponseData);
     }
 }
