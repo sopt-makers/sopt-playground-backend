@@ -113,7 +113,7 @@ public class AuthConfig {
     private String dictionaryKey;
 
     @Value("${gabia.sms-id}")
-    private String gabiaSmsId;
+    private String gabiaSMSId;
 
     @Value("${gabia.api-key}")
     private String gabiaApiKey;

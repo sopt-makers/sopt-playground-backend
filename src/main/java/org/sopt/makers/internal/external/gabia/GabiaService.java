@@ -23,7 +23,7 @@ public class GabiaService {
     private static final String SMS_SEND_URL = "https://sms.gabia.com/api/send/sms";
 
     private GabiaAuthResponse getGabiaAccessToken() {
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSmsId(), authConfig.getGabiaApiKey()).getBytes(StandardCharsets.UTF_8));
+        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), authConfig.getGabiaApiKey()).getBytes(StandardCharsets.UTF_8));
 
         OkHttpClient client = new OkHttpClient();
         RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -70,7 +70,7 @@ public class GabiaService {
 
     private GabiaSMSResponse attemptToSendSMS(String phone, String message) {
         GabiaAuthResponse gabiaAuthResponse = getGabiaAccessToken();
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSmsId(), gabiaAuthResponse.access_token()).getBytes(StandardCharsets.UTF_8));
+        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), gabiaAuthResponse.access_token()).getBytes(StandardCharsets.UTF_8));
         OkHttpClient client = new OkHttpClient();
 
         RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -102,8 +102,8 @@ public class GabiaService {
             throw new ClientBadRequestException("Gabia 서버 통신에 실패했습니다");
         }
 
-        String code = (String) result.get("code");
-        String message = (String) result.get("message");
+        String code = result.get("code");
+        String message = result.get("message");
         String data = new Gson().toJson(result.get("data"));
         GabiaSMSResponseData gabiaSMSResponseData = new Gson().fromJson(data, GabiaSMSResponseData.class);
 

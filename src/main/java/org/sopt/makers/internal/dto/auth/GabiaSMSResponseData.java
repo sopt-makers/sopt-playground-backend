@@ -12,3 +12,4 @@ public class GabiaSMSResponseData {
         private String BEFORE_SMS_QTY;
         private String AFTER_SMS_QTY;
 }
+
