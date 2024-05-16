@@ -1,16 +1,28 @@
 package org.sopt.makers.internal.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
+
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
-import org.sopt.makers.internal.dto.member.*;
+import org.sopt.makers.internal.dto.member.CheckActivityRequest;
+import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberCrewResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileProjectVo;
+import org.sopt.makers.internal.dto.member.MemberProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileSaveRequest;
+import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
@@ -20,15 +32,22 @@ import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 @RestController
 @RequiredArgsConstructor
@@ -60,10 +79,10 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "유저 이름으로 조회 API")
+    @Operation(summary = "유저 이름/학교/회사로 조회 API")
     @GetMapping("/search")
-    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
-        val members = memberService.getMemberByName(name);
+    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String cond) {
+        val members = memberService.getMemberBySearchCond(cond);
         val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }

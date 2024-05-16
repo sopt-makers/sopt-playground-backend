@@ -8,6 +8,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.OrderByCondition;
 import org.sopt.makers.internal.domain.Part;
 import org.sopt.makers.internal.domain.QMember;
+import org.sopt.makers.internal.domain.QMemberCareer;
 import org.sopt.makers.internal.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.domain.QMemberSoptActivity;
 import org.sopt.makers.internal.domain.QProject;
@@ -147,6 +148,18 @@ public class MemberProfileQueryRepository {
         return member.id.notIn(WHITE_LIST);
     }
 
+    private BooleanExpression checkCompanyNameContains(QMemberCareer memberCareer, String companyName) {
+        return memberCareer.companyName.contains(companyName);
+    }
+
+    private BooleanExpression checkNameContains(QMember member, String name) {
+        return member.name.contains(name);
+    }
+
+    private BooleanExpression checkUniversityContains(QMember member, String university) {
+        return member.university.contains(university);
+    }
+
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
         val orderByNumIsEmpty = Objects.isNull(orderByNum);
         if (orderByNumIsEmpty) return QMember.member.id.desc();
@@ -228,6 +241,19 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
+    public List<Member> findAllMemberProfilesBySearchCond(String cond) {
+        val member = QMember.member;
+        val career = QMemberCareer.memberCareer;
+        return queryFactory.selectFrom(member)
+            .innerJoin(member.careers, career)
+            .where(checkCompanyNameContains(career, cond)
+                .or(checkUniversityContains(member, cond))
+                .or(checkNameContains(member, cond)))
+            .groupBy(member.id)
+            .fetch();
+    }
+
+
     public List<Long> findAllMemberIdsByGeneration(Integer generation) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
@@ -261,6 +287,7 @@ public class MemberProfileQueryRepository {
                     .fetch();
         }
     }
+
 
     public int countMembersByGeneration(Integer generation) {
         val member = QMember.member;

@@ -384,8 +384,8 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberByName (String name) {
-        return memberRepository.findAllByNameContaining(name);
+    public List<Member> getMemberBySearchCond (String cond) {
+        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(cond);
     }
 
     @Transactional
