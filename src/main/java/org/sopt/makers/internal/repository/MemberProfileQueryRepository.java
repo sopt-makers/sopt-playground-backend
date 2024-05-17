@@ -149,6 +149,7 @@ public class MemberProfileQueryRepository {
     }
 
     private BooleanExpression checkContainsSearchCond(QMember member, QMemberCareer memberCareer, String cond) {
+        if (cond == null) return null;
         return memberCareer.companyName.contains(cond)
             .or(member.name.contains(cond))
             .or(member.university.contains(cond));
