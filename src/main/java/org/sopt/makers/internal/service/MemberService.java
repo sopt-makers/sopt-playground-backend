@@ -152,22 +152,22 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public int getMemberProfilesCount(Integer filter, String name, Integer generation,
+    public int getMemberProfilesCount(Integer filter, String cond, Integer generation,
            Double sojuCapacity, String mbti, String team) {
         val part = getMemberPart(filter);
-        return memberProfileQueryRepository.countAllMemberProfile(part, name, generation, sojuCapacity, mbti, team);
+        return memberProfileQueryRepository.countAllMemberProfile(part, cond, generation, sojuCapacity, mbti, team);
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String cond, Integer generation,
                                           Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, cond, generation,
                     sojuCapacity, orderBy, mbti, team);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, name, generation,
+            return memberProfileQueryRepository.findAllMemberProfile(part, cond, generation,
                     sojuCapacity, orderBy, mbti, team);
         }
     }
@@ -386,6 +386,11 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> getMemberBySearchCond (String cond) {
+        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(cond);
     }
 
     @Transactional
