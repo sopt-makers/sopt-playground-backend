@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.scheduler;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.domain.community.CommunityPost;
@@ -74,7 +73,6 @@ public class PushNotificationScheduler {
         pushNotificationService.sendPushNotification(pushNotificationRequest);
     }
 
-    @Getter
-        private record PostWithPoints(CommunityPost post, int points, int hits) {
+    private record PostWithPoints(CommunityPost post, int points, int hits) {
     }
 }
