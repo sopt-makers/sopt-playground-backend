@@ -148,17 +148,13 @@ public class MemberProfileQueryRepository {
         return member.id.notIn(WHITE_LIST);
     }
 
-    private BooleanExpression checkCompanyNameContains(QMemberCareer memberCareer, String companyName) {
-        return memberCareer.companyName.contains(companyName);
+    private BooleanExpression checkContainsSearchCond(QMember member, QMemberCareer memberCareer, String cond) {
+        if (cond == null) return null;
+        return memberCareer.companyName.contains(cond)
+            .or(member.name.contains(cond))
+            .or(member.university.contains(cond));
     }
 
-    private BooleanExpression checkNameContains(QMember member, String name) {
-        return member.name.contains(name);
-    }
-
-    private BooleanExpression checkUniversityContains(QMember member, String university) {
-        return member.university.contains(university);
-    }
 
     private OrderSpecifier getOrderByCondition(OrderByCondition orderByNum) {
         val orderByNumIsEmpty = Objects.isNull(orderByNum);
@@ -199,18 +195,22 @@ public class MemberProfileQueryRepository {
     }
 
     public List<Member> findAllLimitedMemberProfile(
-            String part, Integer limit, Integer cursor, String name,
+            String part, Integer limit, Integer cursor, String cond,
             Integer generation, Double sojuCapacity, Integer orderBy, String mbti, String team
     ) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
+        val career = QMemberCareer.memberCareer;
 
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
+                .innerJoin(member.careers, career)
+                .where(checkMemberHasProfile(),
+                        checkContainsSearchCond(member, career, cond),
+                        checkMemberSojuCapacity(sojuCapacity),
                         checkMemberMbti(mbti), checkActivityContainsGenerationAndTeamAndPart(generation, team, part),
-                        checkNotInWhiteList(member)
-                ).offset(cursor)
+                        checkNotInWhiteList(member))
+                .offset(cursor)
                 .limit(limit)
                 .groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy))).fetch();
@@ -227,16 +227,20 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-    public List<Member> findAllMemberProfile(String part, String name, Integer generation,
+    public List<Member> findAllMemberProfile(String part, String cond, Integer generation,
                                              Double sojuCapacity, Integer orderBy, String mbti, String team) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
+        val career = QMemberCareer.memberCareer;
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
+                .innerJoin(member.careers, career)
+                .where(checkMemberHasProfile(),
+                        checkContainsSearchCond(member, career, cond),
+                        checkMemberSojuCapacity(sojuCapacity),
                         checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
-                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part)
-                ).groupBy(member.id)
+                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
+                .groupBy(member.id)
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
                 .fetch();
     }
@@ -246,9 +250,7 @@ public class MemberProfileQueryRepository {
         val career = QMemberCareer.memberCareer;
         return queryFactory.selectFrom(member)
             .innerJoin(member.careers, career)
-            .where(checkCompanyNameContains(career, cond)
-                .or(checkUniversityContains(member, cond))
-                .or(checkNameContains(member, cond)))
+            .where(checkContainsSearchCond(member, career, cond))
             .groupBy(member.id)
             .fetch();
     }
@@ -301,14 +303,17 @@ public class MemberProfileQueryRepository {
                 .size();
     }
 
-    public int countAllMemberProfile(String part, String name, Integer generation, Double sojuCapacity, String mbti, String team) {
+    public int countAllMemberProfile(String part, String cond, Integer generation, Double sojuCapacity, String mbti, String team) {
         val member = QMember.member;
+        val career = QMemberCareer.memberCareer;
         val activities = QMemberSoptActivity.memberSoptActivity;
         return queryFactory.select(member.id)
                 .from(member)
                 .innerJoin(member.activities, activities)
+                .innerJoin(member.careers, career)
                 .where(checkMemberHasProfile(),
-                        checkMemberContainsName(name), checkMemberSojuCapacity(sojuCapacity),
+                        checkContainsSearchCond(member, career, cond),
+                        checkMemberSojuCapacity(sojuCapacity),
                         checkActivityContainsPart(part),checkMemberMbti(mbti),
                         checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
                 .groupBy(member.id)
