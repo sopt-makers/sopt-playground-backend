@@ -208,9 +208,8 @@ public class MemberController {
                     참고로 asc(오름차순)로 정렬되어 있음 \n
                     cond :
                     이름 / 학교명 / 회사명 중에 속하는 문자열로 검색 \n
-                    sojuCapacity :\s
-                    0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
-                    2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상 \n
+                    employed :\s
+                    0 -> 무직/휴직중 / 1 -> 재직중 \n
                     orderBy :
                     1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \n
                     team :
@@ -224,19 +223,19 @@ public class MemberController {
             @RequestParam(required = false, name = "cursor") Integer cursor,
             @RequestParam(required = false, name = "cond") String cond,
             @RequestParam(required = false, name = "generation") Integer generation,
-            @RequestParam(required = false, name = "sojuCapacity") Double sojuCapacity,
+            @RequestParam(required = false, name = "employed") Integer employed,
             @RequestParam(required = false, name = "orderBy") Integer orderBy,
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, cond, generation, sojuCapacity, orderBy, mbti, team);
+        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, cond, generation, employed, orderBy, mbti, team);
         val memberList = members.stream().map(member -> {
                 return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
                     memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
                     memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
             }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
-        val totalMembersCount = memberService.getMemberProfilesCount(filter, cond, generation, sojuCapacity, mbti, team);
+        val totalMembersCount = memberService.getMemberProfilesCount(filter, cond, generation, employed, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
