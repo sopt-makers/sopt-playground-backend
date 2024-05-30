@@ -152,22 +152,22 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public int getMemberProfilesCount(Integer filter, String cond, Integer generation,
+    public int getMemberProfilesCount(Integer filter, String search, Integer generation,
            Integer employed, String mbti, String team) {
         val part = getMemberPart(filter);
-        return memberProfileQueryRepository.countAllMemberProfile(part, cond, generation, employed, mbti, team);
+        return memberProfileQueryRepository.countAllMemberProfile(part, search, generation, employed, mbti, team);
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String cond, Integer generation,
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String search, Integer generation,
                                           Integer employed, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, cond, generation,
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, search, generation,
                     employed, orderBy, mbti, team);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, cond, generation,
+            return memberProfileQueryRepository.findAllMemberProfile(part, search, generation,
                     employed, orderBy, mbti, team);
         }
     }
@@ -389,8 +389,8 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberBySearchCond (String cond) {
-        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(cond);
+    public List<Member> getMemberBySearchCond (String search) {
+        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(search);
     }
 
     @Transactional
