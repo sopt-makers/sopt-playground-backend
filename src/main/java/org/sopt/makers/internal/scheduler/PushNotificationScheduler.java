@@ -32,7 +32,7 @@ public class PushNotificationScheduler {
 
     @Scheduled(cron = "0 40 11 * * ?")
     public void sendHotPostPushNotification() {
-        LocalDate yesterday = LocalDate.now();
+        LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime startOfDay = yesterday.atStartOfDay().minusHours(9);
         LocalDateTime endOfDay = yesterday.atTime(LocalTime.MAX).minusHours(9);
         List<CommunityPost> todayCommunityPosts = communityPostRepository.findAllByCreatedAtBetween(startOfDay, endOfDay);
