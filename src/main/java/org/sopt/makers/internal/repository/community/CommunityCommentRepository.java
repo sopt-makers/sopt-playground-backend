@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface CommunityCommentRepository extends JpaRepository<CommunityComment, Long> {
     List<CommunityComment> findAllByPostId(Long postId);
+
+    int countAllByPostId(Long postId);
 }

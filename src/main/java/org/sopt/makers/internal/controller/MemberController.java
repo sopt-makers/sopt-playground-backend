@@ -1,16 +1,28 @@
 package org.sopt.makers.internal.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
+
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
-import org.sopt.makers.internal.dto.member.*;
+import org.sopt.makers.internal.dto.member.CheckActivityRequest;
+import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberCrewResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileProjectVo;
+import org.sopt.makers.internal.dto.member.MemberProfileResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileSaveRequest;
+import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
@@ -20,15 +32,22 @@ import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 @RestController
 @RequiredArgsConstructor
@@ -67,6 +86,7 @@ public class MemberController {
         val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
+
 
     @Operation(summary = "유저 프로필 생성 API",
             description =
@@ -186,9 +206,10 @@ public class MemberController {
                     filter :
                     1 -> 기획 / 2 -> 디자인 / 3 -> 웹 / 4 -> 서버 / 5 -> 안드로이드 / 6 -> iOS,
                     참고로 asc(오름차순)로 정렬되어 있음 \n
-                    sojuCapacity :\s
-                    0 -> 못마셔요 / 0.5 -> 0.5병 / 1.0 -> 1병 / 1.5 -> 1.5병 /
-                    2.0 -> 2병 / 2.5 -> 2.5병 / 3.0 -> 3병 이상 \n
+                    search :
+                    이름 / 학교명 / 회사명 중에 속하는 문자열로 검색 \n
+                    employed :\s
+                    0 -> 무직/휴직중 / 1 -> 재직중 \n
                     orderBy :
                     1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \n
                     team :
@@ -200,21 +221,21 @@ public class MemberController {
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Integer cursor,
-            @RequestParam(required = false, name = "name") String name,
+            @RequestParam(required = false, name = "search") String search,
             @RequestParam(required = false, name = "generation") Integer generation,
-            @RequestParam(required = false, name = "sojuCapacity") Double sojuCapacity,
+            @RequestParam(required = false, name = "employed") Integer employed,
             @RequestParam(required = false, name = "orderBy") Integer orderBy,
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, generation, sojuCapacity, orderBy, mbti, team);
+        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, search, generation, employed, orderBy, mbti, team);
         val memberList = members.stream().map(member -> {
                 return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
                     memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
                     memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
             }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
-        val totalMembersCount = memberService.getMemberProfilesCount(filter, name, generation, sojuCapacity, mbti, team);
+        val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
