@@ -9,7 +9,6 @@ import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
-import org.sopt.makers.internal.external.gabia.GabiaService;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
@@ -40,7 +39,6 @@ public class AuthService {
     private final SoptMemberHistoryRepository soptMemberHistoryRepository;
     private final EmailSender emailSender;
 
-    private final GabiaService gabiaService;
     private final SmsSender smsSender;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -340,8 +338,7 @@ public class AuthService {
 
         val message = "[SOPT Makers] 인증번호 [" + sixNumberCode + "]를 입력해주세요.";
         log.info(message);
-        gabiaService.sendSMS(phone, message);
-//        smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
+        smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
         clearMapByRandomAccess();
         return "success";
     }
@@ -371,14 +368,14 @@ public class AuthService {
     }
 
     private void clearMapByRandomAccess () {
-        log.info("[Before clear Map] Map size : {}", memberAndSmsTokenMap.size());
-        val isMapEmpty = memberAndSmsTokenMap.isEmpty();
+        log.info("[Before clear Map] Map size : " + memberAndSmsTokenMap.size());
+        val isMapEmpty = memberAndSmsTokenMap.size() == 0;
         if (!isMapEmpty) {
             val smsToken = memberAndSmsTokenMap.entrySet().iterator().next().getValue();
             val isExpiredSmsToken = checkIsExpiredSmsToken(smsToken);
             if (isExpiredSmsToken) {
                 memberAndSmsTokenMap.keySet().removeAll(findShouldDeleteKeys());
-                log.info("[After clear Map] Map size : {}", memberAndSmsTokenMap.size());
+                log.info("[After clear Map] Map size : " + memberAndSmsTokenMap.size());
             }
         }
     }

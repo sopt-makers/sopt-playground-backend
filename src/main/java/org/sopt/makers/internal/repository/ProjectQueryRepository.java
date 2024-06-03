@@ -1,25 +1,19 @@
 package org.sopt.makers.internal.repository;
 
-import java.util.List;
-import java.util.Objects;
-
-import org.sopt.makers.internal.domain.Project;
-import org.sopt.makers.internal.domain.QMember;
-import org.sopt.makers.internal.domain.QMemberProjectRelation;
-import org.sopt.makers.internal.domain.QProject;
-import org.sopt.makers.internal.domain.QProjectLink;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.dto.project.ProjectMemberDao;
 import org.sopt.makers.internal.dto.project.QProjectLinkDao;
 import org.sopt.makers.internal.dto.project.QProjectMemberDao;
 import org.springframework.stereotype.Repository;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import java.util.List;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -68,12 +62,12 @@ public class ProjectQueryRepository {
 
     private BooleanExpression checkProjectIsFounding(Boolean isFounding) {
         val checkIsFoundingIsEmpty = Objects.isNull(isFounding);
-        return checkIsFoundingIsEmpty || isFounding.equals(Boolean.FALSE) ? null : QProject.project.isFounding.eq(isFounding);
+        return checkIsFoundingIsEmpty ? null : QProject.project.isFounding.eq(isFounding);
     }
 
     private BooleanExpression checkProjectIsAvailable(Boolean isAvailable) {
         val checkIsAvailableIsEmpty = Objects.isNull(isAvailable);
-        return checkIsAvailableIsEmpty || isAvailable.equals(Boolean.FALSE) ? null : QProject.project.isAvailable.eq(isAvailable);
+        return checkIsAvailableIsEmpty ? null : QProject.project.isAvailable.eq(isAvailable);
     }
 
     private BooleanExpression ltProjectId(Long projectId) {
