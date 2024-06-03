@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -30,8 +32,10 @@ public class PushNotificationScheduler {
 
     @Scheduled(cron = "0 40 11 * * ?")
     public void sendHotPostPushNotification() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        List<CommunityPost> todayCommunityPosts = communityPostRepository.findAllByCreatedAt(yesterday);
+        LocalDate yesterday = LocalDate.now();
+        LocalDateTime startOfDay = yesterday.atStartOfDay().minusHours(9);
+        LocalDateTime endOfDay = yesterday.atTime(LocalTime.MAX).minusHours(9);
+        List<CommunityPost> todayCommunityPosts = communityPostRepository.findAllByCreatedAtBetween(startOfDay, endOfDay);
 
         CommunityPost hotPost = findHotPost(todayCommunityPosts);
 
@@ -70,7 +74,7 @@ public class PushNotificationScheduler {
                 .webLink(webLink)
                 .build();
 
-        pushNotificationService.sendPushNotification(pushNotificationRequest);
+        pushNotificationService.sendAllPushNotification(pushNotificationRequest);
     }
 
     private record PostWithPoints(CommunityPost post, int points, int hits) {
