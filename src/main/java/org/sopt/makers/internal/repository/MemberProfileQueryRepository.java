@@ -147,11 +147,11 @@ public class MemberProfileQueryRepository {
         return member.id.notIn(WHITE_LIST);
     }
 
-    private BooleanExpression checkContainsSearchCond(QMember member, QMemberCareer memberCareer, String cond) {
-        if (cond == null) return null;
-        return memberCareer.companyName.contains(cond)
-            .or(member.name.contains(cond))
-            .or(member.university.contains(cond));
+    private BooleanExpression checkContainsSearchCond(QMember member, QMemberCareer memberCareer, String search) {
+        if (search == null) return null;
+        return memberCareer.companyName.contains(search)
+            .or(member.name.contains(search))
+            .or(member.university.contains(search));
     }
 
     private BooleanExpression checkMemberCurrentlyEmployed(QMemberCareer memberCareer, Integer employed) {
@@ -204,7 +204,7 @@ public class MemberProfileQueryRepository {
     }
 
     public List<Member> findAllLimitedMemberProfile(
-            String part, Integer limit, Integer cursor, String cond,
+            String part, Integer limit, Integer cursor, String search,
             Integer generation, Integer employed, Integer orderBy, String mbti, String team
     ) {
         val member = QMember.member;
@@ -215,7 +215,7 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .innerJoin(member.careers, career)
                 .where(checkMemberHasProfile(),
-                        checkContainsSearchCond(member, career, cond),
+                        checkContainsSearchCond(member, career, search),
                         checkMemberCurrentlyEmployed(career, employed),
                         checkMemberMbti(mbti), checkActivityContainsGenerationAndTeamAndPart(generation, team, part),
                         checkNotInWhiteList(member))
@@ -236,7 +236,7 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-    public List<Member> findAllMemberProfile(String part, String cond, Integer generation,
+    public List<Member> findAllMemberProfile(String part, String search, Integer generation,
                                              Integer employed, Integer orderBy, String mbti, String team) {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
@@ -246,7 +246,7 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .innerJoin(member.careers, career)
                 .where(checkMemberHasProfile(),
-                        checkContainsSearchCond(member, career, cond),
+                        checkContainsSearchCond(member, career, search),
                         checkMemberCurrentlyEmployed(career, employed),
                         checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
                         checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
@@ -255,12 +255,12 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-    public List<Member> findAllMemberProfilesBySearchCond(String cond) {
+    public List<Member> findAllMemberProfilesBySearchCond(String search) {
         val member = QMember.member;
         val career = QMemberCareer.memberCareer;
         return queryFactory.selectFrom(member)
             .innerJoin(member.careers, career)
-            .where(checkContainsSearchCond(member, career, cond))
+            .where(checkContainsSearchCond(member, career, search))
             .groupBy(member.id)
             .fetch();
     }
@@ -313,7 +313,7 @@ public class MemberProfileQueryRepository {
                 .size();
     }
 
-    public int countAllMemberProfile(String part, String cond, Integer generation, Integer employed, String mbti, String team) {
+    public int countAllMemberProfile(String part, String search, Integer generation, Integer employed, String mbti, String team) {
         val member = QMember.member;
         val career = QMemberCareer.memberCareer;
         val activities = QMemberSoptActivity.memberSoptActivity;
@@ -322,7 +322,7 @@ public class MemberProfileQueryRepository {
                 .innerJoin(member.activities, activities)
                 .innerJoin(member.careers, career)
                 .where(checkMemberHasProfile(),
-                        checkContainsSearchCond(member, career, cond),
+                        checkContainsSearchCond(member, career, search),
                         checkMemberCurrentlyEmployed(career, employed),
                         checkActivityContainsPart(part),checkMemberMbti(mbti),
                         checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
