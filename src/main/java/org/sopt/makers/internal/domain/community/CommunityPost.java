@@ -33,7 +33,7 @@ public class CommunityPost extends AuditingTimeEntity {
     @Column
     private String title;
 
-    @Column(length = 10000)
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Builder.Default

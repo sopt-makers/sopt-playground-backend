@@ -152,23 +152,23 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public int getMemberProfilesCount(Integer filter, String name, Integer generation,
-           Double sojuCapacity, String mbti, String team) {
+    public int getMemberProfilesCount(Integer filter, String search, Integer generation,
+           Integer employed, String mbti, String team) {
         val part = getMemberPart(filter);
-        return memberProfileQueryRepository.countAllMemberProfile(part, name, generation, sojuCapacity, mbti, team);
+        return memberProfileQueryRepository.countAllMemberProfile(part, search, generation, employed, mbti, team);
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String name, Integer generation,
-                                          Double sojuCapacity, Integer orderBy, String mbti, String team) {
+    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String search, Integer generation,
+                                          Integer employed, Integer orderBy, String mbti, String team) {
         val part = getMemberPart(filter);
         if(limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, name, generation,
-                    sojuCapacity, orderBy, mbti, team);
+            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, search, generation,
+                    employed, orderBy, mbti, team);
         }
         else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, name, generation,
-                    sojuCapacity, orderBy, mbti, team);
+            return memberProfileQueryRepository.findAllMemberProfile(part, search, generation,
+                    employed, orderBy, mbti, team);
         }
     }
 
@@ -386,6 +386,11 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<Member> getMemberByName (String name) {
         return memberRepository.findAllByNameContaining(name);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> getMemberBySearchCond (String search) {
+        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(search);
     }
 
     @Transactional

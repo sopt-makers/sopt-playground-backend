@@ -4,8 +4,6 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-
 @Getter
 @Configuration
 public class AuthConfig {
@@ -113,4 +111,13 @@ public class AuthConfig {
 
     @Value("${dictionary.key}")
     private String dictionaryKey;
+
+    @Value("${gabia.sms-id}")
+    private String gabiaSMSId;
+
+    @Value("${gabia.api-key}")
+    private String gabiaApiKey;
+
+    @Value("${gabia.send-number}")
+    private String gabiaSendNumber;
 }
