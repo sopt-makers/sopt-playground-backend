@@ -35,4 +35,16 @@ public class PushNotificationService {
 
         // TODO: 푸시알림 에러에 따른 플로우 처리
     }
+
+    public void sendAllPushNotification(PushNotificationRequest request) {
+        PushNotificationResponse response = pushServerClient.sendPushNotification(
+                pushNotificationApiKey,
+                "sendAll",
+                UUID.randomUUID().toString(),
+                service,
+                request
+        );
+
+        // TODO: 푸시알림 에러에 따른 플로우 처리
+    }
 }

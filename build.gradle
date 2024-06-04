@@ -33,6 +33,8 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
 	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+	implementation 'com.google.code.gson:gson:2.9.0'
 	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
 
