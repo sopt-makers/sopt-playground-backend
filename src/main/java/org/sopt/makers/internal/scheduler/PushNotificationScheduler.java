@@ -21,8 +21,7 @@ import java.util.List;
 public class PushNotificationScheduler {
 
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
-    private static final String NOTIFICATION_TITLE = "";
-    private static final String NOTIFICATION_CONTENT = "🔥 어제 가장 인기있는 게시글이에요.";
+    private static final String NOTIFICATION_TITLE = "🔥 어제 가장 인기있는 게시글이에요.";
     private static final String NOTIFICATION_CATEGORY = "NEWS";
 
     private final PushNotificationService pushNotificationService;
@@ -69,7 +68,7 @@ public class PushNotificationScheduler {
         String webLink = "https://playground.sopt.org/?feed=" + hotPost.getId();
         PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
                 .title(NOTIFICATION_TITLE)
-                .content(NOTIFICATION_CONTENT)
+                .content(hotPost.getTitle())
                 .category(NOTIFICATION_CATEGORY)
                 .webLink(webLink)
                 .build();
