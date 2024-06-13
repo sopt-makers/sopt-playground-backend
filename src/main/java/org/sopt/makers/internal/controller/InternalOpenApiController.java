@@ -120,6 +120,18 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "프로필 정보 기반 추천 친구 목록 조회 API")
+    @PostMapping("/members/profile/me/recommend")
+    public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList (
+        @RequestBody InternalRecommendMemberListRequest request
+    ) {
+        val memberIds = internalApiService.getMembersIdByRecommendFilter(request.generations(),
+            request.getValueByKey(SearchContent.UNIVERSITY),
+            request.getValueByKey(SearchContent.MBTI));
+        val response = new InternalRecommendMemberListResponse(memberIds);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @Operation(
             summary = "멤버 프로필 전체 조회 API",
             description =
