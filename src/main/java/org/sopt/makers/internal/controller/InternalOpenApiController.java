@@ -120,7 +120,14 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "프로필 정보 기반 추천 친구 목록 조회 API")
+    @Operation(summary = "프로필 정보 기반 추천 친구 목록 조회 API",
+        description = """
+            key 필드는 유효한 추천 필터 값이 들어가야 함 
+            - MBTI
+            - UNIVERSITY
+            
+            *대소문자 무관
+            """)
     @PostMapping("/members/profile/recommend")
     public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList (
         @RequestBody InternalRecommendMemberListRequest request
