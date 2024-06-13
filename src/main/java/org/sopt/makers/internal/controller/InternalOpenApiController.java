@@ -121,7 +121,7 @@ public class InternalOpenApiController {
     }
 
     @Operation(summary = "프로필 정보 기반 추천 친구 목록 조회 API")
-    @PostMapping("/members/profile/me/recommend")
+    @PostMapping("/members/profile/recommend")
     public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList (
         @RequestBody InternalRecommendMemberListRequest request
     ) {
