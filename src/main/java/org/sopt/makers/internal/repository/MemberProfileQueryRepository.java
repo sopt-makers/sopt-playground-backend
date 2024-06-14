@@ -72,6 +72,16 @@ public class MemberProfileQueryRepository {
         );
     }
 
+    private BooleanExpression checkUserActivityContainsGenerations(List<Integer> generations) {
+        if(generations.isEmpty()) return null;
+        return QMember.member.id.in(
+            queryFactory.select(QMember.member.id)
+                .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+                .where(QMemberSoptActivity.memberSoptActivity.generation.in(generations))
+        );
+    }
+
+
     private BooleanExpression checkActivityContainsGenerationAndPart(Integer generation, String part) {
         if(generation == null && part == null) return null;
         return QMember.member.id.in(
@@ -115,6 +125,11 @@ public class MemberProfileQueryRepository {
     private BooleanExpression checkMemberMbti(String mbti) {
         val isMbtiEmpty = !StringUtils.hasText(mbti);
         return isMbtiEmpty ? null : QMember.member.mbti.eq(mbti);
+    }
+
+    private BooleanExpression checkMemberUniversity(String university) {
+        val isUniversityEmpty = !StringUtils.hasText(university);
+        return isUniversityEmpty ? null : QMember.member.university.contains(university);
     }
 
     private BooleanExpression checkActivityContainsTeam(String team) {
@@ -275,6 +290,22 @@ public class MemberProfileQueryRepository {
                 .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation)
                 ).groupBy(member.id)
                 .fetch();
+    }
+
+    public List<Long> findAllMemberIdsByRecommendFilter(List<Integer> generations, String university, String mbti) {
+        if (generations.isEmpty()) return null;
+
+        val member = QMember.member;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+
+        return queryFactory.select(member.id)
+            .from(member)
+            .innerJoin(member.activities, activities)
+            .where(checkMemberHasProfile(), checkUserActivityContainsGenerations(generations),
+                checkMemberMbti(mbti), checkMemberUniversity(university))
+            .groupBy(member.id)
+            .fetch();
+
     }
 
     public List<Long> findAllInactivityMemberIdsByGenerationAndPart(Integer generation, Part part) {

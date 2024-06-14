@@ -161,6 +161,11 @@ public class InternalApiService {
     }
 
     @Transactional(readOnly = true)
+    public List<Long> getMembersIdByRecommendFilter (List<Integer> generations, String university, String mbti) {
+        return memberProfileQueryRepository.findAllMemberIdsByRecommendFilter(generations, university, mbti);
+    }
+
+    @Transactional(readOnly = true)
     public List<Long> getInactivityMemberIdListByGenerationAndPart(Integer generation, Part part) {
         return memberProfileQueryRepository.findAllInactivityMemberIdsByGenerationAndPart(generation, part);
     }
