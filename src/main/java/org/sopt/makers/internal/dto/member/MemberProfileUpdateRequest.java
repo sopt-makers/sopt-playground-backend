@@ -36,7 +36,6 @@ public record MemberProfileUpdateRequest (
         List<MemberSoptActivityUpdateRequest> activities,
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial,
-        Boolean isEmailBlind,
         Boolean isPhoneBlind
 ){
 

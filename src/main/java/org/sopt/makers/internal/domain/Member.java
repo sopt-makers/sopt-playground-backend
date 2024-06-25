@@ -133,11 +133,6 @@ public class Member {
     @Builder.Default
     @Column(nullable = false)
     @ColumnDefault("true")
-    private Boolean isEmailBlind = true;
-
-    @Builder.Default
-    @Column(nullable = false)
-    @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
     public void editActivityChange(Boolean isCheck) {
@@ -179,7 +174,6 @@ public class Member {
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
             List<MemberCareer> careers,
-            Boolean isEmailBlind,
             Boolean isPhoneBlind
     ) {
         this.name = name;
@@ -204,7 +198,6 @@ public class Member {
         this.links.clear(); this.links.addAll(links);
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
-        this.isEmailBlind = isEmailBlind;
         this.isPhoneBlind = isPhoneBlind;
     }
 }
