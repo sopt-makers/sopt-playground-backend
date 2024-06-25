@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
@@ -115,6 +116,11 @@ public class CommunityPostService {
             );
         }
 
+        if (!MakersMemberId.getMakersMember().contains(member.getId()) && Objects.equals(activeProfile, "prod")) {
+            val slackRequest = createPostSlackRequest(post.getId());
+            slackClient.postNotMakersMessage(slackRequest.toString());
+        }
+
         return communityResponseMapper.toPostSaveResponse(post);
     }
 
@@ -183,7 +189,7 @@ public class CommunityPostService {
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createSlackRequest(post.getId(), member.getName());
+                val slackRequest = createReportSlackRequest(post.getId(), member.getName());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
@@ -247,7 +253,7 @@ public class CommunityPostService {
     }
 
 
-    private JsonNode createSlackRequest(Long id, String name) {
+    private JsonNode createReportSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();
         rootNode.put("text", "🚨글 신고 발생!🚨");
 
@@ -266,4 +272,21 @@ public class CommunityPostService {
         return rootNode;
     }
 
+    private JsonNode createPostSlackRequest(Long postId) {
+        val rootNode = slackMessageUtil.getObjectNode();
+        rootNode.put("text", "💙 비 메이커스 유저 글 작성");
+
+        val blocks = slackMessageUtil.getArrayNode();
+        val textField = slackMessageUtil.createTextField("비 메이커스 유저가 글을 작성했어요!");
+        val contentNode = slackMessageUtil.createSection();
+
+        val fields = slackMessageUtil.getArrayNode();
+        fields.add(slackMessageUtil.createTextFieldNode("*글 링크:*\n<https://playground.sopt.org/feed/" + postId + "|링크>"));
+        contentNode.set("fields", fields);
+
+        blocks.add(textField);
+        blocks.add(contentNode);
+        rootNode.set("blocks", blocks);
+        return rootNode;
+    }
 }
