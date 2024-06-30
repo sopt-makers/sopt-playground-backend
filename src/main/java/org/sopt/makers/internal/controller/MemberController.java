@@ -161,12 +161,10 @@ public class MemberController {
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = MemberProfileSpecificResponse.checkIsBlindPhoneAndEmail(
+        val response = MemberProfileSpecificResponse.checkIsBlindPhone(
             memberMapper.toProfileSpecificResponse(
                 member, true, memberProfileProjects, activityResponses, soptActivityResponse
             ),
-            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
-            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()),
             isMine);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -229,11 +227,8 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, search, generation, employed, orderBy, mbti, team);
-        val memberList = members.stream().map(member -> {
-                return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
-                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
-                    memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
-            }).collect(Collectors.toList());
+        val memberList = members.stream().map(member -> MemberProfileResponse.checkIsBlindPhone(memberMapper.toProfileResponse(member),
+            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);

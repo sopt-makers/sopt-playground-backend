@@ -30,7 +30,6 @@ public record MemberProfileSaveRequest(
 		List<MemberSoptActivitySaveRequest> activities,
 		List<MemberCareerSaveRequest> careers,
 		Boolean allowOfficial,
-		Boolean isEmailBlind,
 		Boolean isPhoneBlind
 ) {
 	public record UserFavorRequest(

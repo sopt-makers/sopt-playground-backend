@@ -79,8 +79,4 @@ public interface MemberMapper {
     default String mapPhoneIfBlind(Boolean isPhoneBlind, String phone) {
         return isPhoneBlind ? null : phone;
     }
-
-    default String mapEmailIfBlind(Boolean isEmailBlind, String email) {
-        return isEmailBlind ? null : email;
-    }
 }
