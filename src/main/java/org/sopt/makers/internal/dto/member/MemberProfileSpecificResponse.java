@@ -87,14 +87,14 @@ public record MemberProfileSpecificResponse(
             Boolean isCurrent
     ){}
 
-    public static MemberProfileSpecificResponse checkIsBlindPhoneAndEmail(MemberProfileSpecificResponse response, String phone, String email, Boolean isMine) {
+    public static MemberProfileSpecificResponse checkIsBlindPhone(MemberProfileSpecificResponse response, Boolean isMine) {
         return new MemberProfileSpecificResponse(
             response.name(),
             response.profileImage(),
             response.birthday(),
             response.isPhoneBlind(),
-            phone,
-            email,
+            response.isPhoneBlind() ? null : response.phone(),
+            response.email(),
             response.address(),
             response.university(),
             response.major(),
