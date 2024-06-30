@@ -166,7 +166,7 @@ public class MemberController {
                 member, true, memberProfileProjects, activityResponses, soptActivityResponse
             ),
             memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
-            memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()),
+            member.getEmail(),
             isMine);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -232,7 +232,7 @@ public class MemberController {
         val memberList = members.stream().map(member -> {
                 return MemberProfileResponse.checkIsBlindPhoneAndEmail(memberMapper.toProfileResponse(member),
                     memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()),
-                    memberMapper.mapEmailIfBlind(member.getIsEmailBlind(), member.getEmail()));
+                    member.getEmail());
             }).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);

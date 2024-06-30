@@ -264,7 +264,6 @@ public class MemberService {
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers,
-                request.isEmailBlind(),
                 request.isPhoneBlind()
         );
         try {
@@ -364,7 +363,7 @@ public class MemberService {
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers,
-                request.isEmailBlind(), request.isPhoneBlind()
+                request.isPhoneBlind()
         );
         return member;
     }
