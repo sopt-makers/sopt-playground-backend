@@ -25,9 +25,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -60,6 +63,7 @@ public class CommunityPostService {
 
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final int MIN_POINTS_FOR_HOT_POST = 10;
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Integer limit, Long cursor) {
@@ -252,6 +256,38 @@ public class CommunityPostService {
         return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
     }
 
+    @Transactional(readOnly = true)
+    public List<CommunityPost> getTodayPosts() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDateTime startOfDay = yesterday.atStartOfDay().minusHours(9);
+        LocalDateTime endOfDay = yesterday.atTime(LocalTime.MAX).minusHours(9);
+        return communityPostRepository.findAllByCreatedAtBetween(startOfDay, endOfDay);
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityPost findHotPost(List<CommunityPost> posts) {
+        return posts.stream()
+            .map(this::createPostWithPoints)
+            .filter(post -> post.points() >= MIN_POINTS_FOR_HOT_POST)
+            .max(Comparator.comparingInt(PostWithPoints::points)
+                .thenComparingInt(PostWithPoints::hits))
+            .map(PostWithPoints::post)
+            .orElse(null);
+    }
+
+
+    private PostWithPoints createPostWithPoints(CommunityPost post) {
+        int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+        int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
+        int points = calculatePoints(commentCount, likeCount);
+        return new PostWithPoints(post, points, post.getHits());
+    }
+
+
+    private int calculatePoints(int commentCount, int likeCount) {
+        return commentCount * 2 + likeCount;
+    }
+
 
     private JsonNode createReportSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();
@@ -289,4 +325,6 @@ public class CommunityPostService {
         rootNode.set("blocks", blocks);
         return rootNode;
     }
+
+    private record PostWithPoints(CommunityPost post, int points, int hits) {}
 }
