@@ -265,7 +265,12 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public CommunityPost findHotPost(List<CommunityPost> posts) {
+    public CommunityPost getRecentHotPost() {
+        return communityQueryRepository.findRecentHotPost();
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityPost findTodayHotPost(List<CommunityPost> posts) {
         return posts.stream()
             .map(this::createPostWithPoints)
             .filter(post -> post.points() >= MIN_POINTS_FOR_HOT_POST)
@@ -273,6 +278,11 @@ public class CommunityPostService {
                 .thenComparingInt(PostWithPoints::hits))
             .map(PostWithPoints::post)
             .orElse(null);
+    }
+
+    @Transactional
+    public void saveHotPost(CommunityPost post) {
+        communityQueryRepository.updateIsHotByPostId(post.getId());
     }
 
 

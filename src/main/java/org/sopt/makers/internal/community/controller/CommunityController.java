@@ -214,10 +214,11 @@ public class CommunityController {
     @GetMapping("/posts/hot")
     public ResponseEntity<Object> getTodayHotPost() {
         val todayPosts = communityPostService.getTodayPosts();
-        val hotPost = communityPostService.findHotPost(todayPosts);
-        if (hotPost == null) {
-            return ResponseEntity.status(HttpStatus.OK).body("오늘의 핫 게시물이 존재하지 않습니다.");
+        val todayHotPost = communityPostService.findTodayHotPost(todayPosts);
+        if (todayHotPost == null) {
+            val recentHotPost = communityPostService.getRecentHotPost();
+            return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(recentHotPost));
         }
-        return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(hotPost));
+        return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(todayHotPost));
     }
 }
