@@ -57,6 +57,10 @@ public class CommunityPost extends AuditingTimeEntity {
     private Boolean isReported = false;
 
     @Builder.Default
+    @Column
+    private Boolean isHot = false;
+
+    @Builder.Default
     @OneToMany(
             cascade = CascadeType.ALL,
             orphanRemoval = true

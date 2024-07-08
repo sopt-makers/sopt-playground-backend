@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
@@ -24,9 +25,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -59,6 +63,7 @@ public class CommunityPostService {
 
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final int MIN_POINTS_FOR_HOT_POST = 10;
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Integer limit, Long cursor) {
@@ -113,6 +118,11 @@ public class CommunityPostService {
                     .communityPost(post)
                     .build()
             );
+        }
+
+        if (!MakersMemberId.getMakersMember().contains(member.getId()) && Objects.equals(activeProfile, "prod")) {
+            val slackRequest = createPostSlackRequest(post.getId());
+            slackClient.postNotMakersMessage(slackRequest.toString());
         }
 
         return communityResponseMapper.toPostSaveResponse(post);
@@ -183,7 +193,7 @@ public class CommunityPostService {
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createSlackRequest(post.getId(), member.getName());
+                val slackRequest = createReportSlackRequest(post.getId(), member.getName());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
@@ -246,8 +256,50 @@ public class CommunityPostService {
         return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
     }
 
+    @Transactional(readOnly = true)
+    public List<CommunityPost> getTodayPosts() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDateTime startOfDay = yesterday.atStartOfDay().minusHours(9);
+        LocalDateTime endOfDay = yesterday.atTime(LocalTime.MAX).minusHours(9);
+        return communityPostRepository.findAllByCreatedAtBetween(startOfDay, endOfDay);
+    }
 
-    private JsonNode createSlackRequest(Long id, String name) {
+    @Transactional(readOnly = true)
+    public CommunityPost getRecentHotPost() {
+        return communityQueryRepository.findRecentHotPost();
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityPost findTodayHotPost(List<CommunityPost> posts) {
+        return posts.stream()
+            .map(this::createPostWithPoints)
+            .filter(post -> post.points() >= MIN_POINTS_FOR_HOT_POST)
+            .max(Comparator.comparingInt(PostWithPoints::points)
+                .thenComparingInt(PostWithPoints::hits))
+            .map(PostWithPoints::post)
+            .orElse(null);
+    }
+
+    @Transactional
+    public void saveHotPost(CommunityPost post) {
+        communityQueryRepository.updateIsHotByPostId(post.getId());
+    }
+
+
+    private PostWithPoints createPostWithPoints(CommunityPost post) {
+        int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+        int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
+        int points = calculatePoints(commentCount, likeCount);
+        return new PostWithPoints(post, points, post.getHits());
+    }
+
+
+    private int calculatePoints(int commentCount, int likeCount) {
+        return commentCount * 2 + likeCount;
+    }
+
+
+    private JsonNode createReportSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();
         rootNode.put("text", "🚨글 신고 발생!🚨");
 
@@ -266,4 +318,23 @@ public class CommunityPostService {
         return rootNode;
     }
 
+    private JsonNode createPostSlackRequest(Long postId) {
+        val rootNode = slackMessageUtil.getObjectNode();
+        rootNode.put("text", "💙 비 메이커스 유저 글 작성");
+
+        val blocks = slackMessageUtil.getArrayNode();
+        val textField = slackMessageUtil.createTextField("비 메이커스 유저가 글을 작성했어요!");
+        val contentNode = slackMessageUtil.createSection();
+
+        val fields = slackMessageUtil.getArrayNode();
+        fields.add(slackMessageUtil.createTextFieldNode("*글 링크:*\n<https://playground.sopt.org/feed/" + postId + "|링크>"));
+        contentNode.set("fields", fields);
+
+        blocks.add(textField);
+        blocks.add(contentNode);
+        rootNode.set("blocks", blocks);
+        return rootNode;
+    }
+
+    private record PostWithPoints(CommunityPost post, int points, int hits) {}
 }

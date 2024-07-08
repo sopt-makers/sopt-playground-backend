@@ -64,14 +64,14 @@ public record MemberProfileResponse(
             Boolean isCurrent
     ){}
 
-    public static MemberProfileResponse checkIsBlindPhoneAndEmail(MemberProfileResponse response, String phone, String email) {
+    public static MemberProfileResponse checkIsBlindPhone(MemberProfileResponse response, String phone) {
         return new MemberProfileResponse(
             response.id(),
             response.name(),
             response.profileImage(),
             response.birthday(),
             phone,
-            email,
+            response.email(),
             response.address(),
             response.university(),
             response.major(),

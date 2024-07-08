@@ -12,4 +12,7 @@ public interface SlackClient {
 
     @PostMapping(value = "${slack.community-report-channel}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     void postReportMessage(@RequestBody String request);
+
+    @PostMapping(value = "${slack.community-not-makers}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    void postNotMakersMessage(@RequestBody String request);
 }
