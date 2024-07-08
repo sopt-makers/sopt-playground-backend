@@ -209,4 +209,16 @@ public class CommunityController {
         communityPostService.unlikePost(memberDetails.getId(), postId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 게시글 좋아요 취소 성공", true));
     }
+
+    @Operation(summary = "핫 게시물 조회 API")
+    @GetMapping("/posts/hot")
+    public ResponseEntity<Object> getTodayHotPost() {
+        val todayPosts = communityPostService.getTodayPosts();
+        val todayHotPost = communityPostService.findTodayHotPost(todayPosts);
+        if (todayHotPost == null) {
+            val recentHotPost = communityPostService.getRecentHotPost();
+            return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(recentHotPost));
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(todayHotPost));
+    }
 }

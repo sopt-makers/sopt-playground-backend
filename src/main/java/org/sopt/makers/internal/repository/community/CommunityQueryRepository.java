@@ -96,6 +96,16 @@ public class CommunityQueryRepository {
                 .fetch();
     }
 
+    public CommunityPost findRecentHotPost() {
+        val post = QCommunityPost.communityPost;
+
+        return queryFactory
+            .selectFrom(post)
+            .where(post.isHot.eq(true))
+            .orderBy(post.createdAt.desc())
+            .fetchFirst();
+    }
+
     public void updateHitsByPostId(List<Long> postIdList) {
         val post = QCommunityPost.communityPost;
 
@@ -103,6 +113,15 @@ public class CommunityQueryRepository {
                 .set(post.hits, post.hits.add(1))
                 .where(post.id.in(postIdList))
                 .execute();
+    }
+
+    public void updateIsHotByPostId(Long postId) {
+        val post = QCommunityPost.communityPost;
+
+        queryFactory.update(post)
+            .set(post.isHot, true)
+            .where(post.id.eq(postId))
+            .execute();
     }
 
     private BooleanExpression ltPostId(Long cursor) {
