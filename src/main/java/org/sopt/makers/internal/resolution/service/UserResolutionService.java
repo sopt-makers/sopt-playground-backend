@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.resolution.service;
 
+import static org.sopt.makers.internal.common.Constant.*;
+
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -26,7 +28,6 @@ public class UserResolutionService {
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 
-	private final static int CURRENT_GENERATION = 34;
 	private final static String DEFAULT_PROFILE_IMAGE = "";
 
 	@Transactional(readOnly = true)
