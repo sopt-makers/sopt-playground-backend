@@ -24,7 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/review")
-@SecurityRequirement(name = "Authorization")@Tag(name = "활동 후기 관련 API", description = "활동 후기 관련 API List")
+@SecurityRequirement(name = "Authorization")
+@Tag(name = "활동 후기 관련 API", description = "활동 후기 관련 API List")
 public class ActivityReviewController {
 
 	private final ActivityReviewService activityReviewService;
