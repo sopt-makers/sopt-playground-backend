@@ -41,12 +41,9 @@ public class UserResolutionService {
 	@Transactional(readOnly = true)
 	public ResolutionValidResponse validation(Long memberId) {
 		val member = getMemberById(memberId);
-		val profileImgUrl = member.getProfileImage() != null ? member.getProfileImage() : DEFAULT_PROFILE_IMAGE;
+		val isRegistration = existsCurrentResolution(member);
 
-		if (existsCurrentResolution(member)) {
-			return userResolutionResponseMapper.toResolutionValidResponse(profileImgUrl, true);
-		}
-		return userResolutionResponseMapper.toResolutionValidResponse(profileImgUrl, false);
+		return userResolutionResponseMapper.toResolutionValidResponse(isRegistration);
 	}
 
 	@Transactional
