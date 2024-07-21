@@ -1,19 +1,19 @@
 package org.sopt.makers.internal.review.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
 
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.review.dto.request.CreateActivityReviewRequest;
+import org.sopt.makers.internal.review.dto.response.ActivityReviewResponse;
 import org.sopt.makers.internal.review.service.ActivityReviewService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,5 +38,16 @@ public class ActivityReviewController {
 	) {
 		activityReviewService.createActivityReview(request, memberDetails.getId());
 		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("활동 후기 생성 성공", true));
+	}
+
+	@Operation(summary = "활동 후기 조회")
+	@GetMapping
+	public ResponseEntity<List<ActivityReviewResponse>> getActivityReviews(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		return ResponseEntity.status(HttpStatus.OK).body(
+				activityReviewService.getActivityReviews(PageRequest.of(page, size))
+		);
 	}
 }
