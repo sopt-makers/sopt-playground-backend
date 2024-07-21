@@ -3,6 +3,7 @@ package org.sopt.makers.internal.review.service;
 import static org.sopt.makers.internal.common.Constant.*;
 import static org.sopt.makers.internal.service.MemberServiceUtil.*;
 
+import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.review.domain.ActivityReview;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -39,8 +41,11 @@ public class ActivityReviewService {
 
     @Transactional(readOnly = true)
     public List<ActivityReviewResponse> getActivityReviews(Pageable pageable) {
-        return activityReviewRepository.findAll(pageable).stream().map(review ->
-				new ActivityReviewResponse(review.getContent())
-		).toList();
+        return activityReviewRepository.findAll(pageable).stream()
+                .sorted((review1, review2) -> review2.getCreatedAt().compareTo(review1.getCreatedAt()))
+                .map(review ->
+                    new ActivityReviewResponse(review.getContent())
+                )
+                .toList();
     }
 }
