@@ -20,9 +20,8 @@ public class UserResolutionResponseMapper {
         );
     }
 
-    public ResolutionValidResponse toResolutionValidResponse(String profileImgUrl, boolean isRegistration) {
+    public ResolutionValidResponse toResolutionValidResponse(boolean isRegistration) {
         return new ResolutionValidResponse(
-            profileImgUrl,
             isRegistration
         );
     }
