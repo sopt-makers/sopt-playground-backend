@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.review.dto.request.CreateActivityReviewRequest;
 import org.sopt.makers.internal.review.dto.response.ActivityReviewResponse;
+import org.sopt.makers.internal.review.dto.response.PagedActivityReviewResponse;
 import org.sopt.makers.internal.review.service.ActivityReviewService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class ActivityReviewController {
 
 	@Operation(summary = "활동 후기 조회")
 	@GetMapping
-	public ResponseEntity<List<ActivityReviewResponse>> getActivityReviews(
+	public ResponseEntity<PagedActivityReviewResponse> getActivityReviews(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size
 	) {
