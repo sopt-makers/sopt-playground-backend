@@ -1,5 +1,8 @@
 package org.sopt.makers.internal.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.dto.CommonExceptionResponse;
@@ -9,6 +12,8 @@ import org.sopt.makers.internal.dto.soulmate.SoulmateResponse;
 import org.sopt.makers.internal.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.Errors;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,11 +32,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> methodArgumentNotValidException (MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, String>> methodArgumentNotValidException (MethodArgumentNotValidException ex) {
         log.error(ex.getMessage());
+
+        Errors errors = ex.getBindingResult();
+        Map<String, String> validateDetails = new HashMap<>();
+
+        for (FieldError error : errors.getFieldErrors()) {
+            String validKeyName = String.format("valid_%s", error.getField());
+            validateDetails.put(validKeyName, error.getDefaultMessage());
+        }
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
+            .status(HttpStatus.BAD_REQUEST)
+            .body(validateDetails);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
