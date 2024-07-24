@@ -99,7 +99,7 @@ public class MemberController {
     @PostMapping("/profile")
     public ResponseEntity<MemberProfileResponse> createUserProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @RequestBody MemberProfileSaveRequest request
+            @Valid @RequestBody MemberProfileSaveRequest request
     ) {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
                 ActivityTeam.hasActivityTeam(activity.team())).count();
@@ -124,7 +124,7 @@ public class MemberController {
     @PutMapping("/profile")
     public ResponseEntity<MemberProfileResponse> updateUserProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @RequestBody MemberProfileUpdateRequest request
+            @Valid @RequestBody MemberProfileUpdateRequest request
     ) {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
                 ActivityTeam.hasActivityTeam(activity.team())).count();
