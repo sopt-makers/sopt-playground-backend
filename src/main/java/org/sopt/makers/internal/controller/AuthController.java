@@ -144,10 +144,6 @@ public class AuthController {
                     .body(new SmsCodeResponse(true, null, null, true, registerToken));
         }
 
-        if (!request.phone().startsWith("010")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, "wrongPhoneNumber", "잘못된 핸드폰 번호입니다.", false, null));
-        }
         val state = authService.sendSixNumberSmsCode(request.phone(), status);
         return switch (state) {
             case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null, false, null));

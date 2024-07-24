@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.dto.member;
 
+import static org.sopt.makers.internal.common.Constant.*;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -14,7 +16,7 @@ public record MemberProfileSaveRequest(
 		String name,
 		String profileImage,
 		LocalDate birthday,
-		@Pattern(regexp = "^010\\d{8}$", message = "잘못된 전화번호 형식입니다. '-'을 제외한 11자의 번호를 입력해주세요.")
+		@Pattern(regexp = PHONE_NUMBER_REGEX, message = "잘못된 전화번호 형식입니다. '-'을 제외한 11자의 번호를 입력해주세요.")
 		String phone,
 		String email,
 		String address,
