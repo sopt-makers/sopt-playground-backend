@@ -8,7 +8,9 @@ import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.review.domain.ActivityReview;
 import org.sopt.makers.internal.review.dto.request.CreateActivityReviewRequest;
 import org.sopt.makers.internal.review.dto.response.ActivityReviewResponse;
+import org.sopt.makers.internal.review.dto.response.PagedActivityReviewResponse;
 import org.sopt.makers.internal.review.repository.ActivityReviewRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,12 +40,12 @@ public class ActivityReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityReviewResponse> getActivityReviews(Pageable pageable) {
-        return activityReviewRepository.findAll(pageable).stream()
+    public PagedActivityReviewResponse getActivityReviews(Pageable pageable) {
+        Page<ActivityReview> reviewPage = activityReviewRepository.findAll(pageable);
+        List<ActivityReviewResponse> reviews = reviewPage.getContent().stream()
                 .sorted((review1, review2) -> review2.getCreatedAt().compareTo(review1.getCreatedAt()))
-                .map(review ->
-                    new ActivityReviewResponse(review.getId(), review.getContent())
-                )
+                .map(review -> new ActivityReviewResponse(review.getId(), review.getContent()))
                 .toList();
+        return new PagedActivityReviewResponse(reviews, reviewPage.hasNext());
     }
 }
