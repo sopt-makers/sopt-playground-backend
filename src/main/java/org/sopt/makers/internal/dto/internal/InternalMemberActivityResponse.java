@@ -9,6 +9,7 @@ public record InternalMemberActivityResponse(
         @Schema(required = true)
         String name,
         String profileImage,
+        String phone,
         @Schema(required = true)
         List<InternalMemberActivityResponse.MemberSoptActivityResponse> activities
 ) {
