@@ -11,6 +11,7 @@ import org.sopt.makers.internal.review.dto.response.ActivityReviewResponse;
 import org.sopt.makers.internal.review.dto.response.PagedActivityReviewResponse;
 import org.sopt.makers.internal.review.service.ActivityReviewService;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,8 +48,9 @@ public class ActivityReviewController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size
 	) {
+		PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 		return ResponseEntity.status(HttpStatus.OK).body(
-				activityReviewService.getActivityReviews(PageRequest.of(page, size))
+				activityReviewService.getActivityReviews(pageRequest)
 		);
 	}
 }
