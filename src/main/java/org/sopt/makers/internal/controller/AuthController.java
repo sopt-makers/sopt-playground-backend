@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.controller;
 
+import javax.validation.Valid;
+
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -126,7 +128,7 @@ public class AuthController {
 
     @Operation(summary = "Get 6 numbers code, status = {registration/change}")
     @PostMapping("/{status}/sms/code")
-    public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@PathVariable String status, @RequestBody RegistrationPhoneRequest request) {
+    public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@PathVariable String status, @Valid @RequestBody RegistrationPhoneRequest request) {
         if(!status.equals("registration") && !status.equals("change")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new SmsCodeResponse(false, "wrongPath", "잘못된 요청입니다.", false, null));
@@ -142,10 +144,6 @@ public class AuthController {
                     .body(new SmsCodeResponse(true, null, null, true, registerToken));
         }
 
-        if (!request.phone().startsWith("010")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SmsCodeResponse(false, "wrongPhoneNumber", "잘못된 핸드폰 번호입니다.", false, null));
-        }
         val state = authService.sendSixNumberSmsCode(request.phone(), status);
         return switch (state) {
             case "success" -> ResponseEntity.status(HttpStatus.OK).body(new SmsCodeResponse(true, null, null, false, null));
