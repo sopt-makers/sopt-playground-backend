@@ -264,7 +264,7 @@ public class MemberService {
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers,
-                request.isPhoneBlind()
+                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio()
         );
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -363,7 +363,7 @@ public class MemberService {
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers,
-                request.isPhoneBlind()
+                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio()
         );
         return member;
     }

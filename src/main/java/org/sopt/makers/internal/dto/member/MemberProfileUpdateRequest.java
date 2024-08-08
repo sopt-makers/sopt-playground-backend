@@ -42,7 +42,9 @@ public record MemberProfileUpdateRequest (
         List<MemberSoptActivityUpdateRequest> activities,
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial,
-        Boolean isPhoneBlind
+        Boolean isPhoneBlind,
+        Boolean isCoffeeChatActivate,
+        String coffeeChatBio
 ){
 
     public record UserFavorRequest(

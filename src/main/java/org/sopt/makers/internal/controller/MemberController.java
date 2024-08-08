@@ -15,6 +15,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CheckActivityRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
 import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberCrewResponse;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectVo;
@@ -281,7 +282,19 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "커피챗")
+    @Operation(summary = "커피챗 활성 유저 조회 API")
+    @GetMapping("/coffeechat")
+    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList(
+        @RequestParam(required = false, name = "limit") Integer limit,
+        @RequestParam(required = false, name = "cursor") Long cursor
+    ) {
+        val coffeechats = coffeeChatService.getCoffeeChatList(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        val hasNextCoffeeChats = infiniteScrollUtil.checkHasNextElement(limit, coffeechats);
+        val response = new CoffeeChatResponse(coffeechats, hasNextCoffeeChats, coffeechats.size());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커피챗 수신 API")
     @PostMapping("/coffeechat")
     public ResponseEntity<CommonResponse> requestCoffeeChat(
             @RequestBody CoffeeChatRequest request,

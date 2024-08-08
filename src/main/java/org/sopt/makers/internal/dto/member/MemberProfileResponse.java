@@ -30,7 +30,9 @@ public record MemberProfileResponse(
     List<MemberSoptActivityResponse> activities,
     List<MemberLinkResponse> links,
     List<MemberCareerResponse> careers,
-    Boolean allowOfficial
+    Boolean allowOfficial,
+    Boolean isCoffeeChatActivate,
+    String coffeeChatBio
 ) {
 
     public record UserFavorResponse(
@@ -87,7 +89,9 @@ public record MemberProfileResponse(
             response.activities(),
             response.links(),
             response.careers(),
-            response.allowOfficial()
+            response.allowOfficial(),
+            response.isCoffeeChatActivate(),
+            response.coffeeChatBio()
         );
     }
 

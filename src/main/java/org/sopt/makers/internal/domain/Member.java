@@ -135,6 +135,14 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private Boolean isCoffeeChatActivate = false;
+
+    @Column(name = "coffee_chat_bio")
+    private String coffeeChatBio;
+
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
@@ -143,6 +151,7 @@ public class Member {
         this.authUserId = authUserId;
         this.idpType = idpType;
     }
+
 
     public void agreeToUseSoulmate () {
         this.openToSoulmate = true;
@@ -174,7 +183,9 @@ public class Member {
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
             List<MemberCareer> careers,
-            Boolean isPhoneBlind
+            Boolean isPhoneBlind,
+            Boolean isCoffeeChatActivate,
+            String coffeeChatBio
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -199,5 +210,7 @@ public class Member {
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
         this.isPhoneBlind = isPhoneBlind;
+        this.isCoffeeChatActivate = isCoffeeChatActivate;
+        this.coffeeChatBio = coffeeChatBio;
     }
 }
