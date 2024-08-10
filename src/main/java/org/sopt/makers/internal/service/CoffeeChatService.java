@@ -4,10 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
+import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
+import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
+import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +20,14 @@ import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
 public class CoffeeChatService {
     private final EmailSender emailSender;
     private final MemberRepository memberRepository;
+    private final MemberProfileQueryRepository memberQueryRepository;
     private final EmailHistoryRepository emailHistoryRepository;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -59,5 +66,30 @@ public class CoffeeChatService {
             throw new BusinessLogicException("커피챗 이메일 전송에 실패했습니다.");
         }
 
+    }
+
+    public List<CoffeeChatVo> getCoffeeChatList (Integer limit, Long cursor) {
+        if (limit == null || limit >= 50) limit = 50;
+        if (cursor == null) cursor = 0L;
+        val members = memberQueryRepository.findAllLimitedCoffeeChatByCursor(limit, cursor);
+        return members.stream().map(
+            m -> {
+                val career = getCurrentMemberCareer(m);
+                return new CoffeeChatVo(
+                    m.getId(), m.getName(), m.getProfileImage(),
+                    career == null ? m.getUniversity() : career.getCompanyName(),
+                    career == null ? m.getIntroduction() : career.getTitle(),
+                    m.getCoffeeChatBio()
+                );
+            }
+        ).toList();
+    }
+
+    private MemberCareer getCurrentMemberCareer(Member member) {
+        List<MemberCareer> careers = member.getCareers();
+        if (!careers.isEmpty()) {
+            return careers.get(careers.size() - 1);
+        }
+        return null;
     }
 }
