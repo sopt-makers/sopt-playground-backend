@@ -284,13 +284,9 @@ public class MemberController {
 
     @Operation(summary = "커피챗 활성 유저 조회 API")
     @GetMapping("/coffeechat")
-    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList(
-        @RequestParam(required = false, name = "limit") Integer limit,
-        @RequestParam(required = false, name = "cursor") Long cursor
-    ) {
-        val coffeechats = coffeeChatService.getCoffeeChatList(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        val hasNextCoffeeChats = infiniteScrollUtil.checkHasNextElement(limit, coffeechats);
-        val response = new CoffeeChatResponse(coffeechats, hasNextCoffeeChats, coffeechats.size());
+    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
+        val coffeechats = coffeeChatService.getCoffeeChatList();
+        val response = new CoffeeChatResponse(coffeechats, coffeechats.size());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
