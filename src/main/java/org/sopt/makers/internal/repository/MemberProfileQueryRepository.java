@@ -361,14 +361,4 @@ public class MemberProfileQueryRepository {
                 .fetch()
                 .size();
     }
-
-    public List<Member> findAllLimitedCoffeeChatByCursor(Integer limit, Long cursor) {
-        val members = QMember.member;
-
-        return queryFactory.selectFrom(members)
-            .where(members.isCoffeeChatActivate.eq(true))
-            .offset(cursor)
-            .limit(limit)
-            .fetch();
-    }
 }

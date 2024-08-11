@@ -4,7 +4,6 @@ import java.util.List;
 
 public record CoffeeChatResponse(
 	List<CoffeeChatVo> coffeeChatList,
-	Boolean hasNext,
 	Integer totalCount
 ) {
 	public record CoffeeChatVo(

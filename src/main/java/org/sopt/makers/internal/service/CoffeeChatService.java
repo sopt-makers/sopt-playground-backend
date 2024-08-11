@@ -27,7 +27,6 @@ import java.util.List;
 public class CoffeeChatService {
     private final EmailSender emailSender;
     private final MemberRepository memberRepository;
-    private final MemberProfileQueryRepository memberQueryRepository;
     private final EmailHistoryRepository emailHistoryRepository;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -68,17 +67,15 @@ public class CoffeeChatService {
 
     }
 
-    public List<CoffeeChatVo> getCoffeeChatList (Integer limit, Long cursor) {
-        if (limit == null || limit >= 50) limit = 50;
-        if (cursor == null) cursor = 0L;
-        val members = memberQueryRepository.findAllLimitedCoffeeChatByCursor(limit, cursor);
+    public List<CoffeeChatVo> getCoffeeChatList () {
+        val members = memberRepository.findAllByIsCoffeeChatActivateTrue();
         return members.stream().map(
             m -> {
                 val career = getCurrentMemberCareer(m);
                 return new CoffeeChatVo(
                     m.getId(), m.getName(), m.getProfileImage(),
                     career == null ? m.getUniversity() : career.getCompanyName(),
-                    career == null ? m.getIntroduction() : career.getTitle(),
+                    career == null ? m.getSkill() : career.getTitle(),
                     m.getCoffeeChatBio()
                 );
             }
