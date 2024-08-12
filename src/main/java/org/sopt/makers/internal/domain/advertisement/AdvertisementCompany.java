@@ -3,6 +3,7 @@ package org.sopt.makers.internal.domain.advertisement;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
 
@@ -17,4 +18,8 @@ public class AdvertisementCompany {
 
     @Column(nullable = false)
     private String companyName;
+
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    private Boolean isActive;
 }
