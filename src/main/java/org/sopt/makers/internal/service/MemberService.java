@@ -1,10 +1,10 @@
 package org.sopt.makers.internal.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -264,7 +264,7 @@ public class MemberService {
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers,
-                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio()
+                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio(), LocalDateTime.now()
         );
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -356,6 +356,11 @@ public class MemberService {
                          .isRiceTteokLover(request.userFavor().isRiceTteokLover())
                          .isHardPeachLover(request.userFavor().isHardPeachLover())
                                  .build();
+
+        val coffeeChatUpdatedAt = (!Objects.equals(member.getCoffeeChatBio(), request.coffeeChatBio())
+            || member.getIsCoffeeChatActivate() != request.isCoffeeChatActivate())
+            ? LocalDateTime.now() : member.getCoffeeChatUpdatedAt();
+
         member.saveMemberProfile(
                 member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
@@ -363,7 +368,7 @@ public class MemberService {
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
                 memberActivities, memberLinks, memberCareers,
-                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio()
+                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio(), coffeeChatUpdatedAt
         );
         return member;
     }

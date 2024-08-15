@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,6 +144,9 @@ public class Member {
     @Column(name = "coffee_chat_bio")
     private String coffeeChatBio;
 
+    @Column(name = "coffee_chat_updated_at")
+    private LocalDateTime coffeeChatUpdatedAt;
+
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
@@ -151,7 +155,6 @@ public class Member {
         this.authUserId = authUserId;
         this.idpType = idpType;
     }
-
 
     public void agreeToUseSoulmate () {
         this.openToSoulmate = true;
@@ -185,7 +188,8 @@ public class Member {
             List<MemberCareer> careers,
             Boolean isPhoneBlind,
             Boolean isCoffeeChatActivate,
-            String coffeeChatBio
+            String coffeeChatBio,
+            LocalDateTime coffeeChatUpdatedAt
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -212,5 +216,6 @@ public class Member {
         this.isPhoneBlind = isPhoneBlind;
         this.isCoffeeChatActivate = isCoffeeChatActivate;
         this.coffeeChatBio = coffeeChatBio;
+        this.coffeeChatUpdatedAt = coffeeChatUpdatedAt;
     }
 }

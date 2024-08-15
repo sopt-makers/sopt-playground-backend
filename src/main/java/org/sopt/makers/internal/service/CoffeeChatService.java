@@ -68,7 +68,7 @@ public class CoffeeChatService {
     }
 
     public List<CoffeeChatVo> getCoffeeChatList () {
-        val members = memberRepository.findAllByIsCoffeeChatActivateTrue();
+        val members = memberRepository.findAllByIsCoffeeChatActivateTrueOrderByCoffeeChatUpdatedAtDesc();
         return members.stream().map(
             m -> {
                 val career = getCurrentMemberCareer(m);
@@ -83,10 +83,15 @@ public class CoffeeChatService {
     }
 
     private MemberCareer getCurrentMemberCareer(Member member) {
-        List<MemberCareer> careers = member.getCareers();
-        if (!careers.isEmpty()) {
-            return careers.get(careers.size() - 1);
-        }
-        return null;
+        return member.getCareers().stream()
+            .sorted((c1, c2) -> {
+                val dateComparison = c2.getStartDate().compareTo(c1.getStartDate());
+                if (dateComparison == 0) {
+                    return Boolean.compare(c2.getIsCurrent(), c1.getIsCurrent());
+                }
+                return dateComparison;
+            })
+            .findFirst()
+            .orElse(null);
     }
 }

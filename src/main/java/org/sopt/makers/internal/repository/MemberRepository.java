@@ -19,7 +19,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     List<Member> findAllByHasProfileTrue();
 
-    List<Member> findAllByIsCoffeeChatActivateTrue();
+    List<Member> findAllByIsCoffeeChatActivateTrueOrderByCoffeeChatUpdatedAtDesc();
 
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
     Long countByIdIn(Set<Long> memberIds);
