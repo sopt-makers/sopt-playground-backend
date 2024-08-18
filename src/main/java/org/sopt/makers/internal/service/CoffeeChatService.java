@@ -4,10 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
+import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
+import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
+import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +20,7 @@ import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -59,5 +65,33 @@ public class CoffeeChatService {
             throw new BusinessLogicException("커피챗 이메일 전송에 실패했습니다.");
         }
 
+    }
+
+    public List<CoffeeChatVo> getCoffeeChatList () {
+        val members = memberRepository.findAllByIsCoffeeChatActivateTrueOrderByCoffeeChatUpdatedAtDesc();
+        return members.stream().map(
+            m -> {
+                val career = getCurrentMemberCareer(m);
+                return new CoffeeChatVo(
+                    m.getId(), m.getName(), m.getProfileImage(),
+                    career == null ? m.getUniversity() : career.getCompanyName(),
+                    career == null ? m.getSkill() : career.getTitle(),
+                    m.getCoffeeChatBio()
+                );
+            }
+        ).toList();
+    }
+
+    private MemberCareer getCurrentMemberCareer(Member member) {
+        return member.getCareers().stream()
+            .sorted((c1, c2) -> {
+                val dateComparison = c2.getStartDate().compareTo(c1.getStartDate());
+                if (dateComparison == 0) {
+                    return Boolean.compare(c2.getIsCurrent(), c1.getIsCurrent());
+                }
+                return dateComparison;
+            })
+            .findFirst()
+            .orElse(null);
     }
 }

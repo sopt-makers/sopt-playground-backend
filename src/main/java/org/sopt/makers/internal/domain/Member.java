@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,6 +136,17 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private Boolean isCoffeeChatActivate = false;
+
+    @Column(name = "coffee_chat_bio")
+    private String coffeeChatBio;
+
+    @Column(name = "coffee_chat_updated_at")
+    private LocalDateTime coffeeChatUpdatedAt;
+
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
@@ -174,7 +186,10 @@ public class Member {
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
             List<MemberCareer> careers,
-            Boolean isPhoneBlind
+            Boolean isPhoneBlind,
+            Boolean isCoffeeChatActivate,
+            String coffeeChatBio,
+            LocalDateTime coffeeChatUpdatedAt
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -199,5 +214,8 @@ public class Member {
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
         this.isPhoneBlind = isPhoneBlind;
+        this.isCoffeeChatActivate = isCoffeeChatActivate;
+        this.coffeeChatBio = coffeeChatBio;
+        this.coffeeChatUpdatedAt = coffeeChatUpdatedAt;
     }
 }
