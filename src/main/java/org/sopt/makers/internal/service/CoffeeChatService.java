@@ -69,7 +69,7 @@ public class CoffeeChatService {
     }
 
     public List<CoffeeChatVo> getCoffeeChatList () {
-        val members = memberRepository.findAllByIsCoffeeChatActivateTrueOrderByCoffeeChatUpdatedAtDesc();
+        val members = memberRepository.findAllByIsCoffeeChatActivateTrue();
         Collections.shuffle(members);
 
         return members.stream().map(
