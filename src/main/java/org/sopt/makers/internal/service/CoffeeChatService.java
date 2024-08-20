@@ -20,6 +20,7 @@ import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -68,7 +69,9 @@ public class CoffeeChatService {
     }
 
     public List<CoffeeChatVo> getCoffeeChatList () {
-        val members = memberRepository.findAllByIsCoffeeChatActivateTrueOrderByCoffeeChatUpdatedAtDesc();
+        val members = memberRepository.findAllByIsCoffeeChatActivateTrue();
+        Collections.shuffle(members);
+
         return members.stream().map(
             m -> {
                 val career = getCurrentMemberCareer(m);
