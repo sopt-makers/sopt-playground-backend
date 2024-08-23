@@ -124,7 +124,7 @@ public class Member {
 
     @Builder.Default
     @Column(name = "edit_activities_able")
-    @ColumnDefault("false")
+    @ColumnDefault("true")
     private Boolean editActivitiesAble = true;
 
     @Builder.Default
@@ -162,6 +162,10 @@ public class Member {
 
     public void disagreeToUseSoulmate () {
         this.openToSoulmate = false;
+    }
+
+    public void changeEmail(String email) {
+        this.email = email;
     }
 
     public void saveMemberProfile(
