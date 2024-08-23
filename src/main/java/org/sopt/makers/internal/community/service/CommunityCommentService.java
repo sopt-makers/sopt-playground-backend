@@ -16,7 +16,7 @@ import org.sopt.makers.internal.dto.community.CommentSaveRequest;
 import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.external.SlackClient;
+import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.community.AnonymousCommentProfileRepository;
