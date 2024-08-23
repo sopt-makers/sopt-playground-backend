@@ -57,7 +57,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> entityNotfoundException (EntityNotFoundException ex) {
-        log.error(ex.getMessage());
+
+        sendErrorMessageToSlack(ex, MessageType.CLIENT);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
@@ -65,7 +66,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClientBadRequestException.class)
     public ResponseEntity<String> clientBadRequestException (ClientBadRequestException ex) {
-        log.error(ex.getMessage());
+
+        sendErrorMessageToSlack(ex, MessageType.CLIENT);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
@@ -98,6 +100,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WrongAccessTokenException.class)
     public ResponseEntity<String> wrongAccessTokenException (WrongAccessTokenException ex) {
         log.error(ex.getMessage());
+
+        HashMap<String, String> map = new HashMap<>();
+        map.put("message", ex.getMessage());
+
+        slackService.sendMessage("Error test", map, MessageType.CLIENT);
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ex.getMessage());
