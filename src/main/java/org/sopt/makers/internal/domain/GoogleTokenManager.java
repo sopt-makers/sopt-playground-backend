@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
-import org.sopt.makers.internal.dto.auth.GoogleAccessTokenResponse;
-import org.sopt.makers.internal.dto.auth.GoogleUserInfoResponse;
+import org.sopt.makers.internal.dto.auth.google.GoogleAccessTokenResponse;
+import org.sopt.makers.internal.dto.auth.google.GoogleUserInfoResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -34,12 +34,10 @@ public class GoogleTokenManager {
         return accessTokenResponse;
     }
 
-    public String getUserInfo (String accessToken) {
+    public GoogleUserInfoResponse getUserInfo (String accessToken) {
         val host = "https://oauth2.googleapis.com/tokeninfo?id_token=";
         val url = host + accessToken.trim();
-        val idToken = authClient.getForObject(url, GoogleUserInfoResponse.class);
-        if (idToken == null) return null;
-        return idToken.sub();
+        return authClient.getForObject(url, GoogleUserInfoResponse.class);
     }
 
 }

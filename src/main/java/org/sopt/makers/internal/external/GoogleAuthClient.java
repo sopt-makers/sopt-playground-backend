@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.external;
 
-import org.sopt.makers.internal.dto.auth.GoogleAccessTokenResponse;
+import org.sopt.makers.internal.dto.auth.google.GoogleAccessTokenResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;

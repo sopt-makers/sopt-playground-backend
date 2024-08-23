@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
-import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
@@ -70,7 +69,7 @@ public class AuthService {
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
         val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(googleUserInfo, "google");
+        member.updateMemberAuth(googleUserInfo.sub(), "google");
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -94,7 +93,7 @@ public class AuthService {
 
             val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
             if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-            authUserId = googleUserInfo;
+            authUserId = googleUserInfo.sub();
         }
         else if(Objects.equals(socialType, "apple")) {
             val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
@@ -102,7 +101,7 @@ public class AuthService {
 
             val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
             if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-            authUserId = appleUserInfo;
+            authUserId = appleUserInfo.userId();
         }
         if(authUserId == null) throw new AuthFailureException("잘못된 소셜로그인입니다.");
         val member = memberRepository.save(
@@ -143,7 +142,7 @@ public class AuthService {
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
         val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(appleUserInfo, "apple");
+        member.updateMemberAuth(appleUserInfo.userId(), "apple");
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -190,8 +189,9 @@ public class AuthService {
         val googleAccessToken = googleAccessTokenResponse.idToken();
         val googleUserInfoResponse = googleTokenManager.getUserInfo(googleAccessToken);
         log.info("Google user id : " + googleUserInfoResponse);
-        val member = memberRepository.findByAuthUserId(googleUserInfoResponse)
+        val member = memberRepository.findByAuthUserId(googleUserInfoResponse.sub())
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Google] : " + googleUserInfoResponse));
+        checkEmailIsNull(member, googleUserInfoResponse.email());
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -215,8 +215,8 @@ public class AuthService {
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
 
         val member = state.equals("change")
-                ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo)
-                : insertMemberAndActivityData("google", googleUserInfo, memberHistories);
+                ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo.sub())
+                : insertMemberAndActivityData("google", googleUserInfo.sub(), memberHistories);
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -228,7 +228,7 @@ public class AuthService {
         }
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         log.info("Apple user id : " + appleUserInfo);
-        val member = memberRepository.findByAuthUserId(appleUserInfo)
+        val member = memberRepository.findByAuthUserId(appleUserInfo.userId())
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
 
         return tokenManager.createAuthToken(member.getId());
@@ -251,8 +251,8 @@ public class AuthService {
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
 
         val member = state.equals("change")
-                ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo)
-                : insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
+                ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo.userId())
+                : insertMemberAndActivityData("apple", appleUserInfo.userId(), memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -402,5 +402,11 @@ public class AuthService {
         val random = new Random();
         int number = random.nextInt(999999);
         return String.format("%06d", number);
+    }
+
+    private void checkEmailIsNull(Member member, String email) {
+        if (member.getEmail() == null) {
+            member.changeEmail(email);
+        }
     }
 }

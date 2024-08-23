@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.auth;
+package org.sopt.makers.internal.dto.auth.google;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
