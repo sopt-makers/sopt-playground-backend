@@ -101,7 +101,7 @@ public class AuthService {
 
             val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
             if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
-            authUserId = appleUserInfo.userId();
+            authUserId = appleUserInfo;
         }
         if(authUserId == null) throw new AuthFailureException("잘못된 소셜로그인입니다.");
         val member = memberRepository.save(
@@ -142,7 +142,7 @@ public class AuthService {
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
         val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(appleUserInfo.userId(), "apple");
+        member.updateMemberAuth(appleUserInfo, "apple");
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -228,7 +228,7 @@ public class AuthService {
         }
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         log.info("Apple user id : " + appleUserInfo);
-        val member = memberRepository.findByAuthUserId(appleUserInfo.userId())
+        val member = memberRepository.findByAuthUserId(appleUserInfo)
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
 
         return tokenManager.createAuthToken(member.getId());
@@ -251,8 +251,8 @@ public class AuthService {
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
 
         val member = state.equals("change")
-                ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo.userId())
-                : insertMemberAndActivityData("apple", appleUserInfo.userId(), memberHistories);
+                ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo)
+                : insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
 
         return tokenManager.createAuthToken(member.getId());
     }
