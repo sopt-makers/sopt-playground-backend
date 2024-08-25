@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.external;
+package org.sopt.makers.internal.external.slack;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
