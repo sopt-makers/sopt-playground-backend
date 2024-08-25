@@ -100,11 +100,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WrongAccessTokenException.class)
     public ResponseEntity<String> wrongAccessTokenException (WrongAccessTokenException ex) {
         log.error(ex.getMessage());
-
-        HashMap<String, String> map = new HashMap<>();
-        map.put("message", ex.getMessage());
-
-        slackService.sendMessage("Error test", map, MessageType.CLIENT);
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ex.getMessage());
