@@ -14,7 +14,7 @@ import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.external.SlackClient;
+import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
