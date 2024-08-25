@@ -80,6 +80,7 @@ coffeechat:
   default: testUrl
 slack:
   url: test
+  playground-error-channel: test
 internal:
   official:
     url: test
