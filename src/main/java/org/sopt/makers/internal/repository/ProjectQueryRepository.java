@@ -58,7 +58,7 @@ public class ProjectQueryRepository {
 
     private BooleanExpression checkProjectContainsName(String name) {
         val checkNameIsEmpty = Objects.isNull(name);
-        return checkNameIsEmpty ? null : QProject.project.name.contains(name);
+        return checkNameIsEmpty ? null : QProject.project.name.lower().contains(name.toLowerCase());
     }
 
     private BooleanExpression checkProjectCategory(String category) {
