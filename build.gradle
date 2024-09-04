@@ -74,6 +74,9 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// Slack
+	implementation 'com.slack.api:slack-api-client:1.41.0'
 }
 
 dependencyManagement {

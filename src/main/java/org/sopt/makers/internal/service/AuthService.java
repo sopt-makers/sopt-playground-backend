@@ -3,9 +3,9 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
-import org.sopt.makers.internal.dto.auth.NaverSmsRequest;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
@@ -70,7 +70,7 @@ public class AuthService {
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
         val member = memberRepository.findByName("User1")
                 .orElseThrow(() -> new EntityNotFoundException("Test 유저를 찾을 수 없습니다."));
-        member.updateMemberAuth(googleUserInfo, "google");
+        member.updateMemberAuth(googleUserInfo.sub(), "google");
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -94,7 +94,7 @@ public class AuthService {
 
             val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
             if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
-            authUserId = googleUserInfo;
+            authUserId = googleUserInfo.sub();
         }
         else if(Objects.equals(socialType, "apple")) {
             val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
@@ -190,8 +190,13 @@ public class AuthService {
         val googleAccessToken = googleAccessTokenResponse.idToken();
         val googleUserInfoResponse = googleTokenManager.getUserInfo(googleAccessToken);
         log.info("Google user id : " + googleUserInfoResponse);
-        val member = memberRepository.findByAuthUserId(googleUserInfoResponse)
+        val member = memberRepository.findByAuthUserId(googleUserInfoResponse.sub())
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Google] : " + googleUserInfoResponse));
+        checkEmailIsNull(member, googleUserInfoResponse.email());
+
+        if(isOBMemberCurrentGeneration(member) && checkNotEnrollOBMemberSoptActivities(member)) {
+            enrollOBMemberCurrentActivity(member);
+        }
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -215,8 +220,8 @@ public class AuthService {
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
 
         val member = state.equals("change")
-                ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo)
-                : insertMemberAndActivityData("google", googleUserInfo, memberHistories);
+                ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo.sub())
+                : insertMemberAndActivityData("google", googleUserInfo.sub(), memberHistories);
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -230,6 +235,10 @@ public class AuthService {
         log.info("Apple user id : " + appleUserInfo);
         val member = memberRepository.findByAuthUserId(appleUserInfo)
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
+
+        if(isOBMemberCurrentGeneration(member) && checkNotEnrollOBMemberSoptActivities(member)) {
+            enrollOBMemberCurrentActivity(member);
+        }
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -402,5 +411,35 @@ public class AuthService {
         val random = new Random();
         int number = random.nextInt(999999);
         return String.format("%06d", number);
+    }
+
+    private void checkEmailIsNull(Member member, String email) {
+        if (member.getEmail() == null) {
+            member.changeEmail(email);
+        }
+    }
+
+    private void enrollOBMemberCurrentActivity(Member member) {
+        SoptMemberHistory soptMemberHistory = soptMemberHistoryRepository.findByGenerationAndPhone(Constant.CURRENT_GENERATION, member.getPhone())
+                .orElseThrow(() -> new EntityNotFoundException("현재 기수에 등록되지 않은 유저입니다."));
+        memberSoptActivityRepository.save(
+                MemberSoptActivity.builder()
+                        .memberId(member.getId())
+                        .part(soptMemberHistory.getPart())
+                        .generation(soptMemberHistory.getGeneration())
+                        .build()
+        );
+    }
+
+    private boolean checkNotEnrollOBMemberSoptActivities(Member member) {
+        List<MemberSoptActivity> memberSoptActivities = memberSoptActivityRepository.findAllByMemberId(member.getId());
+        return memberSoptActivities.stream()
+                .noneMatch(activity -> activity.getGeneration().equals(Constant.CURRENT_GENERATION));
+    }
+
+    private boolean isOBMemberCurrentGeneration(Member member) {
+        List<SoptMemberHistory> histories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(member.getPhone());
+        return histories.size() >= 2 && histories.stream()
+                .anyMatch(history -> history.getGeneration().equals(Constant.CURRENT_GENERATION));
     }
 }

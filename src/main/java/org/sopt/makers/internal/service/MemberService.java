@@ -21,7 +21,7 @@ import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.external.SlackClient;
+import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
 import org.springframework.beans.factory.annotation.Value;
