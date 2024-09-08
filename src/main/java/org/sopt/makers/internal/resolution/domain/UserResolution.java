@@ -24,6 +24,9 @@ public class UserResolution extends AuditingTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(nullable = false)
+    private Integer generation;
+
     @Column
     private String tagIds;
 }

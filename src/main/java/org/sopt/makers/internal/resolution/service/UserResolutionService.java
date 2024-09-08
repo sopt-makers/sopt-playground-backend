@@ -61,7 +61,8 @@ public class UserResolutionService {
 		UserResolution userResolution = UserResolution.builder()
 			.member(member)
 			.tagIds(ResolutionTag.getTagIds(request.tags()))
-			.content(request.content()).build();
+			.content(request.content())
+			.generation(member.getGeneration()).build();
 		userResolutionRepository.save(userResolution);
 	}
 
