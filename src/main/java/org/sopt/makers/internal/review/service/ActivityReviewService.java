@@ -35,13 +35,14 @@ public class ActivityReviewService {
         }
         val activityReview = ActivityReview.builder()
                 .member(member)
-                .content(request.content()).build();
+                .content(request.content())
+                .generation(member.getGeneration()).build();
         activityReviewRepository.save(activityReview);
     }
 
     @Transactional(readOnly = true)
     public PagedActivityReviewResponse getActivityReviews(Pageable pageable) {
-        Page<ActivityReview> reviewPage = activityReviewRepository.findAll(pageable);
+        Page<ActivityReview> reviewPage = activityReviewRepository.findAllByGeneration(CURRENT_GENERATION, pageable);
         List<ActivityReviewResponse> reviews = reviewPage.getContent().stream()
                 .sorted((review1, review2) -> review2.getCreatedAt().compareTo(review1.getCreatedAt()))
                 .map(review -> new ActivityReviewResponse(review.getId(), review.getContent()))
