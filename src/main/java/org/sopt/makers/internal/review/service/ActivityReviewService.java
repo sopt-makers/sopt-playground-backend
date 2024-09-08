@@ -36,7 +36,7 @@ public class ActivityReviewService {
         val activityReview = ActivityReview.builder()
                 .member(member)
                 .content(request.content())
-                .generation(member.getGeneration()).build();
+                .generation(CURRENT_GENERATION).build();
         activityReviewRepository.save(activityReview);
     }
 

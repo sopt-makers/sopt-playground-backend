@@ -62,7 +62,7 @@ public class UserResolutionService {
 			.member(member)
 			.tagIds(ResolutionTag.getTagIds(request.tags()))
 			.content(request.content())
-			.generation(member.getGeneration()).build();
+			.generation(CURRENT_GENERATION).build();
 		userResolutionRepository.save(userResolution);
 	}
 
