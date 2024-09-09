@@ -25,8 +25,7 @@ public class MemberReport extends AuditingTimeEntity {
     @JoinColumn(name = "reported_member_id", nullable = false)
     private Member reportedMember;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String reason;
 
     public MemberReport newInstance(Member reporter, Member reportedMember, String reason) {
