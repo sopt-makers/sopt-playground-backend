@@ -49,9 +49,10 @@ public class CommunityController {
     @GetMapping("/posts/{postId}")
     public ResponseEntity<PostDetailResponse> getCategoryList(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @PathVariable("postId") Long postId
+            @PathVariable("postId") Long postId,
+            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
-        val post = communityPostService.getPostById(postId);
+        val post = communityPostService.getPostById(memberDetails.getId(), postId, isBlockOn);
         val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
         val likes = communityPostService.getLikes(post.post().id());
         val anonymousProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
@@ -72,13 +73,14 @@ public class CommunityController {
     public ResponseEntity<PostAllResponse> getAllPosts(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestParam(required = false, name = "categoryId") Long categoryId,
+            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val posts = communityPostService.getAllPosts(categoryId, infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        val posts = communityPostService.getAllPosts(categoryId, isBlockOn, memberDetails.getId(), infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getPostCommentList(post.post().id());
+            val comments = communityCommentService.getPostCommentList(post.post().id(), memberDetails.getId(), isBlockOn);
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
             val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
@@ -158,9 +160,10 @@ public class CommunityController {
     @GetMapping("/{postId}/comment")
     public ResponseEntity<List<CommentResponse>> getComments(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @PathVariable("postId") Long postId
+            @PathVariable("postId") Long postId,
+            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
-        val comments = communityCommentService.getPostCommentList(postId);
+        val comments = communityCommentService.getPostCommentList(postId, memberDetails.getId(), isBlockOn);
         val response = comments.stream().
                 map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId(),
                     communityCommentService.getAnonymousCommentProfile(comment.comment()))).toList();
