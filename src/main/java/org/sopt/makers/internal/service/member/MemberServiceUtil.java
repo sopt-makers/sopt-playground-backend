@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.service.member;
 
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -8,7 +8,7 @@ public class MemberServiceUtil {
 
     public static Member findMemberById(MemberRepository memberRepository, Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 사용자의 id값 입니다."));
+                .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 사용자의 id값 입니다. id: [" + memberId + "]"));
     }
 
     public static void checkExistsMemberById(MemberRepository memberRepository, Long memberId) {

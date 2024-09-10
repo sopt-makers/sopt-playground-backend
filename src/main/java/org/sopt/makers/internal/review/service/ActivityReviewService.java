@@ -1,7 +1,7 @@
 package org.sopt.makers.internal.review.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
-import static org.sopt.makers.internal.service.MemberServiceUtil.*;
+import static org.sopt.makers.internal.service.member.MemberServiceUtil.*;
 
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.repository.MemberRepository;
