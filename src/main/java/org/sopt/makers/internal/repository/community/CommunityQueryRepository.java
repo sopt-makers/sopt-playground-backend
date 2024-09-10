@@ -1,11 +1,13 @@
 package org.sopt.makers.internal.repository.community;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.domain.community.*;
+import org.sopt.makers.internal.domain.member.QMemberBlock;
 import org.sopt.makers.internal.dto.community.CategoryPostMemberDao;
 import org.sopt.makers.internal.dto.community.CommentDao;
 import org.sopt.makers.internal.dto.community.QCategoryPostMemberDao;
@@ -20,14 +22,15 @@ public class CommunityQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<CategoryPostMemberDao> findAllPostByCursor(Integer limit, Long cursor) {
+    public List<CategoryPostMemberDao> findAllPostByCursor(Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
         val posts = QCommunityPost.communityPost;
-        val careers = QMemberCareer.memberCareer;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        val category = QCategory.category;
         val member = QMember.member;
+        val category = QCategory.category;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        val careers = QMemberCareer.memberCareer;
+        val memberBlock = QMemberBlock.memberBlock;
 
-        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+        JPAQuery<CategoryPostMemberDao> query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
                 .from(posts)
                 .innerJoin(posts.member, member)
                 .leftJoin(member.activities, activities)
@@ -36,20 +39,29 @@ public class CommunityQueryRepository {
                 .where(ltPostId(cursor))
                 .limit(limit)
                 .distinct()
-                .orderBy(posts.createdAt.desc())
-                .fetch();
+                .orderBy(posts.createdAt.desc());
+
+        if (filterBlockedUsers) {
+            query.leftJoin(memberBlock).on(
+                            memberBlock.blocker.id.eq(memberId)
+                                    .and(memberBlock.blocked.id.eq(member.id))
+                                    .and(memberBlock.isBlocked.isTrue())
+                    )
+                    .where(memberBlock.isNull());
+        }
+
+        return query.fetch();
     }
 
-    public List<CategoryPostMemberDao> findAllParentCategoryPostByCursor(
-            Long categoryId, Integer limit, Long cursor
-    ) {
-        val member = QMember.member;
-        val careers = QMemberCareer.memberCareer;
-        val activities = QMemberSoptActivity.memberSoptActivity;
+    public List<CategoryPostMemberDao> findAllParentCategoryPostByCursor(Long categoryId, Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
         val posts = QCommunityPost.communityPost;
+        val member = QMember.member;
         val category = QCategory.category;
+        val activities = QMemberSoptActivity.memberSoptActivity;
+        val careers = QMemberCareer.memberCareer;
+        val memberBlock = QMemberBlock.memberBlock;
 
-        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+        JPAQuery<CategoryPostMemberDao> query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
                 .from(posts)
                 .innerJoin(posts.member, member)
                 .innerJoin(member.activities, activities)
@@ -58,8 +70,18 @@ public class CommunityQueryRepository {
                 .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
                 .limit(limit)
                 .distinct()
-                .orderBy(posts.createdAt.desc())
-                .fetch();
+                .orderBy(posts.createdAt.desc());
+
+        if (filterBlockedUsers) {
+            query.leftJoin(memberBlock).on(
+                            memberBlock.blocker.id.eq(memberId)
+                                    .and(memberBlock.blocked.id.eq(member.id))
+                                    .and(memberBlock.isBlocked.isTrue())
+                    )
+                    .where(memberBlock.isNull());
+        }
+
+        return query.fetch();
     }
 
     public CategoryPostMemberDao getPostById(Long postId) {
@@ -78,22 +100,32 @@ public class CommunityQueryRepository {
                 .where(posts.id.eq(postId)).distinct().fetchOne();
     }
 
-    public List<CommentDao> findCommentByPostId(Long postId) {
-        //TODO: 계층형 댓글 조회로 변경
+    public List<CommentDao> findCommentByPostId(Long postId, Long memberId, boolean isBlockedOn) {
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         val careers = QMemberCareer.memberCareer;
+        val memberBlock = QMemberBlock.memberBlock;
 
-        return queryFactory.select(new QCommentDao(member, comment))
+        JPAQuery<CommentDao> query = queryFactory.select(new QCommentDao(member, comment))
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
                 .innerJoin(member.activities, activities)
                 .leftJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
                 .distinct()
-                .orderBy(comment.createdAt.asc())
-                .fetch();
+                .orderBy(comment.createdAt.asc());
+
+        if (isBlockedOn) {
+            query.leftJoin(memberBlock).on(
+                            memberBlock.blocker.id.eq(memberId)
+                                    .and(memberBlock.blocked.id.eq(member.id))
+                                    .and(memberBlock.isBlocked.isTrue())
+                    )
+                    .where(memberBlock.isNull());
+        }
+
+        return query.fetch();
     }
 
     public CommunityPost findRecentHotPost() {

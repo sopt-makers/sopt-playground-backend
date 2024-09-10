@@ -128,10 +128,11 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentDao> getPostCommentList(Long postId) {
+    public List<CommentDao> getPostCommentList(Long postId, Long memberId, Boolean isBlockedOn) {
         val post = communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
-        return communityQueryRepository.findCommentByPostId(postId);
+                .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 postId입니다."));
+
+        return communityQueryRepository.findCommentByPostId(postId, memberId, isBlockedOn);
     }
 
     @Transactional(readOnly = true)
