@@ -11,5 +11,4 @@ public interface SoptMemberHistoryRepository extends JpaRepository<SoptMemberHis
     Optional<SoptMemberHistory> findTopByEmailOrderByIdDesc(String email);
     Optional<SoptMemberHistory> findTopByPhoneOrderByIdDesc(String phone);
     List<SoptMemberHistory> findAllByPhoneOrderByIdDesc(String phone);
-    Optional<SoptMemberHistory> findByGenerationAndPhone(Integer generation, String phone);
 }

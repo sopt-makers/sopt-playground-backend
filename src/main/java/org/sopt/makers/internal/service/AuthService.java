@@ -3,7 +3,6 @@ package org.sopt.makers.internal.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.exception.AuthFailureException;
@@ -194,10 +193,6 @@ public class AuthService {
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Google] : " + googleUserInfoResponse));
         checkEmailIsNull(member, googleUserInfoResponse.email());
 
-        if(isOBMemberCurrentGeneration(member) && checkNotEnrollOBMemberSoptActivities(member)) {
-            enrollOBMemberCurrentActivity(member);
-        }
-
         return tokenManager.createAuthToken(member.getId());
     }
 
@@ -235,10 +230,6 @@ public class AuthService {
         log.info("Apple user id : " + appleUserInfo);
         val member = memberRepository.findByAuthUserId(appleUserInfo)
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
-
-        if(isOBMemberCurrentGeneration(member) && checkNotEnrollOBMemberSoptActivities(member)) {
-            enrollOBMemberCurrentActivity(member);
-        }
 
         return tokenManager.createAuthToken(member.getId());
     }
@@ -417,29 +408,5 @@ public class AuthService {
         if (member.getEmail() == null) {
             member.changeEmail(email);
         }
-    }
-
-    private void enrollOBMemberCurrentActivity(Member member) {
-        SoptMemberHistory soptMemberHistory = soptMemberHistoryRepository.findByGenerationAndPhone(Constant.CURRENT_GENERATION, member.getPhone())
-                .orElseThrow(() -> new EntityNotFoundException("현재 기수에 등록되지 않은 유저입니다."));
-        memberSoptActivityRepository.save(
-                MemberSoptActivity.builder()
-                        .memberId(member.getId())
-                        .part(soptMemberHistory.getPart())
-                        .generation(soptMemberHistory.getGeneration())
-                        .build()
-        );
-    }
-
-    private boolean checkNotEnrollOBMemberSoptActivities(Member member) {
-        List<MemberSoptActivity> memberSoptActivities = memberSoptActivityRepository.findAllByMemberId(member.getId());
-        return memberSoptActivities.stream()
-                .noneMatch(activity -> activity.getGeneration().equals(Constant.CURRENT_GENERATION));
-    }
-
-    private boolean isOBMemberCurrentGeneration(Member member) {
-        List<SoptMemberHistory> histories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(member.getPhone());
-        return histories.size() >= 2 && histories.stream()
-                .anyMatch(history -> history.getGeneration().equals(Constant.CURRENT_GENERATION));
     }
 }
