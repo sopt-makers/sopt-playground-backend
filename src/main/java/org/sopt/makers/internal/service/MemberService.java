@@ -427,11 +427,18 @@ public class MemberService {
         val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
         val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockMemberId);
 
-        memberBlockRepository.save(MemberBlock.builder()
-                .blocker(blocker)
-                .blockedMember(blockedMember)
-                .isBlocked(true).build()
-        );
+        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        if (blockHistory.isPresent()) {
+            val block = blockHistory.get();
+            block.updateIsBlocked(true);
+            memberBlockRepository.save(block);
+        } else {
+            val newBlock = MemberBlock.builder()
+                    .blocker(blocker)
+                    .blockedMember(blockedMember)
+                    .isBlocked(true).build();
+            memberBlockRepository.save(newBlock);
+        }
     }
 
     @Transactional
