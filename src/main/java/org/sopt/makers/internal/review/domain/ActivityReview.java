@@ -32,10 +32,14 @@ public class ActivityReview extends AuditingTimeEntity {
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String content;
 
+	@Column(nullable = false)
+	private Integer generation;
+
 	@Builder
-	private ActivityReview(Member member, String content) {
+	private ActivityReview(Member member, String content, Integer generation) {
 		this.member = member;
 		this.content = content;
+		this.generation = generation;
 	}
 
 }
