@@ -285,17 +285,28 @@ public class MemberController {
 
     @Operation(summary = "유저 차단 활성하기 API")
     @PatchMapping("/block/activate")
-    public ResponseEntity<Map<String, Boolean>> requestUserBlock(
+    public ResponseEntity<Map<String, Boolean>> requestUserBlock (
             @RequestBody MemberBlockRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
+        System.out.println("왜 안되지?");
         memberService.blockUser(memberDetails.getId(), request.blockMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 차단 활성 성공", true));
     }
 
+    @Operation(summary = "유저 차단 여부 조회하기 API")
+    @GetMapping("/block/{memberId}")
+    public ResponseEntity<MemberBlockResponse> getUserBlockStatus (
+            @RequestParam Long memberId,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        val response = memberService.getBlockStatus(memberDetails.getId(), memberId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @Operation(summary = "유저 신고하기 API")
     @PostMapping("/report")
-    public ResponseEntity<Map<String, Boolean>> requestUserReport(
+    public ResponseEntity<Map<String, Boolean>> requestUserReport (
             @RequestBody MemberReportRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {

@@ -412,6 +412,16 @@ public class MemberService {
         member.editActivityChange(isCheck);
     }
 
+    public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
+        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockedMemberId);
+
+        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        return blockHistory.map(memberBlock ->
+                MemberBlockResponse.of(memberBlock.getIsBlocked(), blocker, blockedMember)
+        ).orElseGet(() -> MemberBlockResponse.of(false, blocker, blockedMember));
+    }
+
     @Transactional
     public void blockUser(Long memberId, Long blockMemberId) {
         val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
