@@ -44,7 +44,7 @@ public class CommunityQueryRepository {
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
                             memberBlock.blocker.id.eq(memberId)
-                                    .and(memberBlock.blocked.id.eq(member.id))
+                                    .and(memberBlock.blockedMember.id.eq(member.id))
                                     .and(memberBlock.isBlocked.isTrue())
                     )
                     .where(memberBlock.isNull());
@@ -75,7 +75,7 @@ public class CommunityQueryRepository {
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
                             memberBlock.blocker.id.eq(memberId)
-                                    .and(memberBlock.blocked.id.eq(member.id))
+                                    .and(memberBlock.blockedMember.id.eq(member.id))
                                     .and(memberBlock.isBlocked.isTrue())
                     )
                     .where(memberBlock.isNull());
@@ -119,7 +119,7 @@ public class CommunityQueryRepository {
         if (isBlockedOn) {
             query.leftJoin(memberBlock).on(
                             memberBlock.blocker.id.eq(memberId)
-                                    .and(memberBlock.blocked.id.eq(member.id))
+                                    .and(memberBlock.blockedMember.id.eq(member.id))
                                     .and(memberBlock.isBlocked.isTrue())
                     )
                     .where(memberBlock.isNull());

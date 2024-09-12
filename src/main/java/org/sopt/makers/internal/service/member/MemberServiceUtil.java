@@ -21,7 +21,7 @@ public class MemberServiceUtil {
     }
 
     public static void checkBlockedMember(MemberBlockRepository memberBlockRepository, Member blocker, Member blockedMember) {
-        MemberBlock memberBlock = memberBlockRepository.findByBlockerAndBlocked(blocker, blockedMember)
+        MemberBlock memberBlock = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember)
                 .orElseThrow(() -> new NotFoundDBEntityException("차단되지 않은 사용자입니다."));
         if (memberBlock.getIsBlocked()) {
             throw new ClientBadRequestException("차단한 사용자의 게시글은 조회할 수 없습니다.");

@@ -90,7 +90,7 @@ public class CommunityPostService {
         val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
         val blockedMember = MemberServiceUtil.findMemberById(memberRepository, postDao.member().getId());
 
-        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlocked(blocker, blockedMember)) {
+        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
             MemberServiceUtil.checkBlockedMember(memberBlockRepository, blocker, blockedMember);
         }
 

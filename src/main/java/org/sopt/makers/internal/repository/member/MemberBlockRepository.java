@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface MemberBlockRepository extends JpaRepository<MemberBlock, Long> {
 
     // READ
-    Optional<MemberBlock> findByBlockerAndBlocked(Member blocker, Member blocked);
+    Optional<MemberBlock> findByBlockerAndBlockedMember(Member blocker, Member blocked);
 
-    Boolean existsByBlockerAndBlocked(Member blocker, Member blocked);
+    Boolean existsByBlockerAndBlockedMember(Member blocker, Member blocked);
 }
