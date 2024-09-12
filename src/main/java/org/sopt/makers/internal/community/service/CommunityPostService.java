@@ -11,6 +11,7 @@ import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.community.*;
+import org.sopt.makers.internal.domain.member.MemberBlock;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -20,7 +21,8 @@ import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.repository.community.*;
-import org.sopt.makers.internal.service.MemberServiceUtil;
+import org.sopt.makers.internal.repository.member.MemberBlockRepository;
+import org.sopt.makers.internal.service.member.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +59,7 @@ public class CommunityPostService {
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final CommunityMapper communityMapper;
     private final CommunityQueryRepository communityQueryRepository;
+    private final MemberBlockRepository memberBlockRepository;
     private final CommunityResponseMapper communityResponseMapper;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
@@ -66,23 +69,31 @@ public class CommunityPostService {
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
 
     @Transactional(readOnly = true)
-    public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Integer limit, Long cursor) {
+    public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
         if (limit == null || limit >= 50) limit = 50;
         if (categoryId == null) {
-            val posts = communityQueryRepository.findAllPostByCursor(limit, cursor);
+            val posts = communityQueryRepository.findAllPostByCursor(limit, cursor, memberId, isBlockedOn);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {
             categoryRepository.findById(categoryId).orElseThrow(
                     () -> new ClientBadRequestException("존재하지 않는 categoryId입니다."));
-            val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor);
+            val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         }
     }
 
     @Transactional(readOnly = true)
-    public CommunityPostMemberVo getPostById(Long postId) {
+    public CommunityPostMemberVo getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
         val postDao = communityQueryRepository.getPostById(postId);
         if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
+
+        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, postDao.member().getId());
+
+        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
+            MemberServiceUtil.checkBlockedMember(memberBlockRepository, blocker, blockedMember);
+        }
+
         return communityResponseMapper.toCommunityVo(postDao);
     }
 
