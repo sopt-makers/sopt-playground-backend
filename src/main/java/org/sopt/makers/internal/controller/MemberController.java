@@ -24,6 +24,7 @@ import org.sopt.makers.internal.dto.member.MemberProfileSaveRequest;
 import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.dto.member.MemberResponse;
+import org.sopt.makers.internal.dto.member.MemberReportRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
@@ -299,6 +300,16 @@ public class MemberController {
         coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 커피챗 이메일을 보냈습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "유저 신고하기 API")
+    @PostMapping("/report")
+    public ResponseEntity<Map<String, Boolean>> requestUserReport(
+            @RequestBody MemberReportRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        memberService.reportUser(memberDetails.getId(), request.reportMemberId());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 신고 성공", true));
     }
 
     private void sortProfileCareer (MemberProfileSpecificResponse response) {
