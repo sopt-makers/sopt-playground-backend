@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.domain.member;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
@@ -28,10 +29,7 @@ public class MemberReport extends AuditingTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String reason;
 
-    public MemberReport newInstance(Member reporter, Member reportedMember, String reason) {
-        return new MemberReport(reporter, reportedMember, reason);
-    }
-
+    @Builder
     private MemberReport(Member reporter, Member reportedMember, String reason) {
         this.reporter = reporter;
         this.reportedMember = reportedMember;

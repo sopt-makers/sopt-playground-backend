@@ -47,7 +47,7 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<PostDetailResponse> getCategoryList(
+    public ResponseEntity<PostDetailResponse> getOnePost(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @PathVariable("postId") Long postId,
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn

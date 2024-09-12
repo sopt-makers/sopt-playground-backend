@@ -1,10 +1,10 @@
 package org.sopt.makers.internal.domain.member;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
@@ -12,7 +12,6 @@ import javax.persistence.*;
 
 @Entity
 @Getter
-@DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberBlock extends AuditingTimeEntity {
 
@@ -26,18 +25,15 @@ public class MemberBlock extends AuditingTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "blocked_id", nullable = false)
-    private Member blocked;
+    private Member blockedMember;
 
     @Column(nullable = false)
     @ColumnDefault("true")
-    private Boolean isBlocked;
+    private Boolean isBlocked = true;
 
-    public MemberBlock newInstance(Member blocker, Member blocked) {
-        return new MemberBlock(blocker, blocked);
-    }
-
-    private MemberBlock(Member blocker, Member blocked) {
+    @Builder
+    private MemberBlock(Member blocker, Member blockedMember) {
         this.blocker = blocker;
-        this.blocked = blocked;
+        this.blockedMember = blockedMember;
     }
 }

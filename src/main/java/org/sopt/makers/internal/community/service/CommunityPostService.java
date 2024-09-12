@@ -88,14 +88,10 @@ public class CommunityPostService {
         if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
 
         val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val blocked = MemberServiceUtil.findMemberById(memberRepository, postDao.member().getId());
+        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, postDao.member().getId());
 
-        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlocked(blocker, blocked)) {
-            MemberBlock memberBlock = memberBlockRepository.findByBlockerAndBlocked(blocker, blocked)
-                    .orElseThrow(() -> new NotFoundDBEntityException("차단되지 않은 사용자입니다."));
-            if (memberBlock.getIsBlocked()) {
-                throw new ClientBadRequestException("차단한 사용자의 게시글은 조회할 수 없습니다.");
-            }
+        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlocked(blocker, blockedMember)) {
+            MemberServiceUtil.checkBlockedMember(memberBlockRepository, blocker, blockedMember);
         }
 
         return communityResponseMapper.toCommunityVo(postDao);
