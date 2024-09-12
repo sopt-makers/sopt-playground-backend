@@ -17,6 +17,7 @@ import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.UserFavor;
+import org.sopt.makers.internal.domain.member.MemberBlock;
 import org.sopt.makers.internal.domain.member.MemberReport;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -25,6 +26,7 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
+import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
 import org.sopt.makers.internal.service.member.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +51,7 @@ public class MemberService {
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberReportRepository memberReportRepository;
+    private final MemberBlockRepository memberBlockRepository;
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
 
@@ -409,6 +412,19 @@ public class MemberService {
         member.editActivityChange(isCheck);
     }
 
+    @Transactional
+    public void blockUser(Long memberId, Long blockMemberId) {
+        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockMemberId);
+
+        memberBlockRepository.save(MemberBlock.builder()
+                .blocker(blocker)
+                .blockedMember(blockedMember)
+                .isBlocked(true).build()
+        );
+    }
+
+    @Transactional
     public void reportUser(Long memberId, Long reportMemberId) {
         val reporter = MemberServiceUtil.findMemberById(memberRepository, memberId);
         val reportedMember = MemberServiceUtil.findMemberById(memberRepository, reportMemberId);

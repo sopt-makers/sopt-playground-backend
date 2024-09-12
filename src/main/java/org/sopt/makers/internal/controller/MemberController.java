@@ -13,18 +13,7 @@ import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
-import org.sopt.makers.internal.dto.member.CheckActivityRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
-import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
-import org.sopt.makers.internal.dto.member.MemberCrewResponse;
-import org.sopt.makers.internal.dto.member.MemberProfileProjectVo;
-import org.sopt.makers.internal.dto.member.MemberProfileResponse;
-import org.sopt.makers.internal.dto.member.MemberProfileSaveRequest;
-import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
-import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
-import org.sopt.makers.internal.dto.member.MemberResponse;
-import org.sopt.makers.internal.dto.member.MemberReportRequest;
+import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
@@ -34,15 +23,7 @@ import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -300,6 +281,16 @@ public class MemberController {
         coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 커피챗 이메일을 보냈습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "유저 차단 활성하기 API")
+    @PatchMapping("/block/activate")
+    public ResponseEntity<Map<String, Boolean>> requestUserBlock(
+            @RequestBody MemberBlockRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        memberService.blockUser(memberDetails.getId(), request.blockMemberId());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 차단 활성 성공", true));
     }
 
     @Operation(summary = "유저 신고하기 API")
