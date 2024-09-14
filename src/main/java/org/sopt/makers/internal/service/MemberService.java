@@ -17,6 +17,8 @@ import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 import org.sopt.makers.internal.domain.UserFavor;
+import org.sopt.makers.internal.domain.member.MemberBlock;
+import org.sopt.makers.internal.domain.member.MemberReport;
 import org.sopt.makers.internal.dto.member.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
@@ -24,6 +26,9 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.repository.*;
+import org.sopt.makers.internal.repository.member.MemberBlockRepository;
+import org.sopt.makers.internal.repository.member.MemberReportRepository;
+import org.sopt.makers.internal.service.member.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +50,8 @@ public class MemberService {
     private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
+    private final MemberReportRepository memberReportRepository;
+    private final MemberBlockRepository memberBlockRepository;
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
 
@@ -403,5 +410,77 @@ public class MemberService {
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
 
         member.editActivityChange(isCheck);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
+        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockedMemberId);
+
+        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        return blockHistory.map(memberBlock ->
+                MemberBlockResponse.of(memberBlock.getIsBlocked(), blocker, blockedMember)
+        ).orElseGet(() -> MemberBlockResponse.of(false, blocker, blockedMember));
+    }
+
+    @Transactional
+    public void blockUser(Long memberId, Long blockMemberId) {
+        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockMemberId);
+
+        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        if (blockHistory.isPresent()) {
+            val block = blockHistory.get();
+            block.updateIsBlocked(true);
+            memberBlockRepository.save(block);
+        } else {
+            val newBlock = MemberBlock.builder()
+                    .blocker(blocker)
+                    .blockedMember(blockedMember).build();
+            memberBlockRepository.save(newBlock);
+        }
+    }
+
+    @Transactional
+    public void reportUser(Long memberId, Long reportMemberId) {
+        val reporter = MemberServiceUtil.findMemberById(memberRepository, memberId);
+        val reportedMember = MemberServiceUtil.findMemberById(memberRepository, reportMemberId);
+
+        sendReportToSlack(reporter, reportedMember);
+
+        memberReportRepository.save(MemberReport.builder()
+                .reporter(reporter)
+                .reportedMember(reportedMember).build()
+        );
+    }
+
+    private void sendReportToSlack(Member reporter, Member reportedMember) {
+        try {
+            if (Objects.equals(activeProfile, "prod")) {
+                val slackRequest = createReportSlackRequest(reporter.getId(), reporter.getName(), reportedMember.getId(), reportedMember.getName());
+                slackClient.postReportMessage(slackRequest.toString());
+            }
+        } catch (RuntimeException ex) {
+            log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
+        }
+    }
+
+    private JsonNode createReportSlackRequest(Long blockerId, String blockerName, Long blockedMemberId, String blockedMemberName) {
+        val rootNode = slackMessageUtil.getObjectNode();
+        rootNode.put("text", "🚨유저 신고 발생!🚨");
+
+        val blocks = slackMessageUtil.getArrayNode();
+        val textField = slackMessageUtil.createTextField("유저 신고가 들어왔어요!");
+        val contentNode = slackMessageUtil.createSection();
+
+        val fields = slackMessageUtil.getArrayNode();
+        fields.add(slackMessageUtil.createTextFieldNode("*신고자:*\n" + blockerName + "(id: " + blockerId + ")"));
+        fields.add(slackMessageUtil.createTextFieldNode("*신고 당한 유저:*\n"  + blockedMemberName + "(id: " + blockedMemberId + ")" + "<https://playground.sopt.org/members/" + blockedMemberId + ">"));
+        contentNode.set("fields", fields);
+
+        blocks.add(textField);
+        blocks.add(contentNode);
+        rootNode.set("blocks", blocks);
+        return rootNode;
     }
 }

@@ -36,4 +36,8 @@ public class MemberBlock extends AuditingTimeEntity {
         this.blocker = blocker;
         this.blockedMember = blockedMember;
     }
+
+    public void updateIsBlocked(Boolean isBlocked) {
+        this.isBlocked = isBlocked;
+    }
 }
