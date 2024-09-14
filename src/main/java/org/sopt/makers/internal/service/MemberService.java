@@ -412,6 +412,7 @@ public class MemberService {
         member.editActivityChange(isCheck);
     }
 
+    @Transactional(readOnly = true)
     public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
         val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
         val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockedMemberId);
@@ -435,8 +436,7 @@ public class MemberService {
         } else {
             val newBlock = MemberBlock.builder()
                     .blocker(blocker)
-                    .blockedMember(blockedMember)
-                    .isBlocked(true).build();
+                    .blockedMember(blockedMember).build();
             memberBlockRepository.save(newBlock);
         }
     }
@@ -446,6 +446,15 @@ public class MemberService {
         val reporter = MemberServiceUtil.findMemberById(memberRepository, memberId);
         val reportedMember = MemberServiceUtil.findMemberById(memberRepository, reportMemberId);
 
+        sendReportToSlack(reporter, reportedMember);
+
+        memberReportRepository.save(MemberReport.builder()
+                .reporter(reporter)
+                .reportedMember(reportedMember).build()
+        );
+    }
+
+    private void sendReportToSlack(Member reporter, Member reportedMember) {
         try {
             if (Objects.equals(activeProfile, "prod")) {
                 val slackRequest = createReportSlackRequest(reporter.getId(), reporter.getName(), reportedMember.getId(), reportedMember.getName());
@@ -454,11 +463,6 @@ public class MemberService {
         } catch (RuntimeException ex) {
             log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
         }
-
-        memberReportRepository.save(MemberReport.builder()
-                .reporter(reporter)
-                .reportedMember(reportedMember).build()
-        );
     }
 
     private JsonNode createReportSlackRequest(Long blockerId, String blockerName, Long blockedMemberId, String blockedMemberName) {

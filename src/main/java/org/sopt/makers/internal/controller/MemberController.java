@@ -36,7 +36,16 @@ import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -298,11 +307,11 @@ public class MemberController {
 
     @Operation(summary = "유저 차단 활성하기 API")
     @PatchMapping("/block/activate")
-    public ResponseEntity<Map<String, Boolean>> requestUserBlock (
+    public ResponseEntity<Map<String, Boolean>> blockUser (
             @RequestBody MemberBlockRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
-        memberService.blockUser(memberDetails.getId(), request.blockMemberId());
+        memberService.blockUser(memberDetails.getId(), request.blockedMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 차단 활성 성공", true));
     }
 
@@ -318,7 +327,7 @@ public class MemberController {
 
     @Operation(summary = "유저 신고하기 API")
     @PostMapping("/report")
-    public ResponseEntity<Map<String, Boolean>> requestUserReport (
+    public ResponseEntity<Map<String, Boolean>> reportUser (
             @RequestBody MemberReportRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
