@@ -24,7 +24,7 @@ public class MemberBlock extends AuditingTimeEntity {
     private Member blocker;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocked_id", nullable = false)
+    @JoinColumn(name = "blocked_member_id", nullable = false)
     private Member blockedMember;
 
     @Column(nullable = false)
