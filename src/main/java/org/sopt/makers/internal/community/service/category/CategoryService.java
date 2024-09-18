@@ -1,0 +1,43 @@
+package org.sopt.makers.internal.community.service.category;
+
+import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.community.controller.dto.response.CommunityCategoryResponse;
+import org.sopt.makers.internal.community.domain.category.Category;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class CategoryService {
+
+    private final CategoryRetriever categoryRetriever;
+
+    public List<CommunityCategoryResponse> getAllCategoriesWithChildren() {
+
+        List<Category> categories = categoryRetriever.getAllCategories();
+        System.out.println(categories.size());
+
+        return categories.stream()
+                .filter(category -> category.getParent() == null)
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private CommunityCategoryResponse mapToResponse(Category category) {
+        List<CommunityCategoryResponse> childrenResponses = category.getChildren().stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        return new CommunityCategoryResponse(
+                category.getId(),
+                category.getName(),
+                category.getContent(),
+                category.getHasAll(),
+                category.getHasBlind(),
+                category.getHasQuestion(),
+                childrenResponses
+        );
+    }
+}
