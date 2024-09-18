@@ -38,13 +38,6 @@ public class CommunityController {
     private final InfiniteScrollUtil infiniteScrollUtil;
     private final Bucket bucket;
 
-    @Operation(summary = "커뮤니티 전체 카테고리 조회")
-    @GetMapping("/category")
-    public ResponseEntity<List<CategoryDto>> getCategoryList() {
-        val response = communityCategoryService.getAllCategory();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<PostDetailResponse> getOnePost(
