@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.domain.community;
+package org.sopt.makers.internal.community.domain.category;
 
 import lombok.AccessLevel;
 import lombok.Getter;
