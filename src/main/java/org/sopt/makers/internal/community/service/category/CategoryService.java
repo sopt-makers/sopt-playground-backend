@@ -17,7 +17,6 @@ public class CategoryService {
     public List<CommunityCategoryResponse> getAllCategoriesWithChildren() {
 
         List<Category> categories = categoryRetriever.getAllCategories();
-        System.out.println(categories.size());
 
         return categories.stream()
                 .filter(category -> category.getParent() == null)
