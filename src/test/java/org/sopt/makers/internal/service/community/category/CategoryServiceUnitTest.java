@@ -67,8 +67,9 @@ public class CategoryServiceUnitTest {
 
         parentOneCategory.getChildren().add(childrenCategory);
 
-        // When
         when(categoryRetriever.getAllCategories()).thenReturn(Arrays.asList(parentOneCategory, parentTwoCategory));
+
+        // Given
         List<CommunityCategoryResponse> responses = categoryService.getAllCategoriesWithChildren();
 
         // Then
