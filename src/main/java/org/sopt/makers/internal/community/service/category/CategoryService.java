@@ -25,18 +25,10 @@ public class CategoryService {
     }
 
     private CommunityCategoryResponse mapToResponse(Category category) {
-        List<CommunityCategoryResponse> childrenResponses = category.getChildren().stream()
+        List<CommunityCategoryResponse> children = category.getChildren().stream()
                 .map(this::mapToResponse)
                 .toList();
 
-        return new CommunityCategoryResponse(
-                category.getId(),
-                category.getName(),
-                category.getContent(),
-                category.getHasAll(),
-                category.getHasBlind(),
-                category.getHasQuestion(),
-                childrenResponses
-        );
+        return CommunityCategoryResponse.of(category, children);
     }
 }
