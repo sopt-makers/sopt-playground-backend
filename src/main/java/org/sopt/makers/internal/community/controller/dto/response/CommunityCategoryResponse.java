@@ -32,4 +32,12 @@ public record CommunityCategoryResponse(
                 children
         );
     }
+
+    public static CommunityCategoryResponse from(Category category) {
+        List<CommunityCategoryResponse> children = category.getChildren().stream()
+                .map(CommunityCategoryResponse::from)
+                .toList();
+
+        return CommunityCategoryResponse.of(category, children);
+    }
 }

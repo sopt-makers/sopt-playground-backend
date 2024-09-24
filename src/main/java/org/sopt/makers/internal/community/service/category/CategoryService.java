@@ -20,15 +20,7 @@ public class CategoryService {
 
         return categories.stream()
                 .filter(category -> category.getParent() == null)
-                .map(this::mapToResponse)
+                .map(CommunityCategoryResponse::from)
                 .collect(Collectors.toList());
-    }
-
-    private CommunityCategoryResponse mapToResponse(Category category) {
-        List<CommunityCategoryResponse> children = category.getChildren().stream()
-                .map(this::mapToResponse)
-                .toList();
-
-        return CommunityCategoryResponse.of(category, children);
     }
 }
