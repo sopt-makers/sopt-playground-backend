@@ -1,9 +1,6 @@
 package org.sopt.makers.internal.community.domain.category;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -12,7 +9,6 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class Category {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,4 +36,16 @@ public class Category {
 
     @OneToMany(mappedBy = "parent")
     private List<Category> children = new ArrayList<>();
+
+    @Builder
+    private Category(Long id, String name, String content, Boolean hasAll, Boolean hasBlind, Boolean hasQuestion, Category parent, List<Category> children) {
+        this.id = id;
+        this.name = name;
+        this.content = content;
+        this.hasAll = hasAll;
+        this.hasBlind = hasBlind;
+        this.hasQuestion = hasQuestion;
+        this.parent = parent;
+        this.children = children;
+    }
 }

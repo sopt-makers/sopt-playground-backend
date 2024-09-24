@@ -32,38 +32,38 @@ public class CategoryServiceUnitTest {
     public void testGetAllCategoriesWithChildren() {
 
         // Given
-        Category parentOneCategory = new Category(
-                1L,
-                "Parent One Category",
-                "This Category is parent one category",
-                true,
-                true,
-                true,
-                null,
-                new ArrayList<>()
-        );
+        Category parentOneCategory = Category.builder()
+                .id(1L)
+                .name("Parent One Category")
+                .content("This Category is parent one category")
+                .hasAll(true)
+                .hasBlind(true)
+                .hasQuestion(true)
+                .parent(null)
+                .children(new ArrayList<>())
+                .build();
 
-        Category parentTwoCategory = new Category(
-                2L,
-                "Parent Two Category",
-                "This Category is parent two category",
-                true,
-                true,
-                true,
-                null,
-                new ArrayList<>()
-        );
+        Category parentTwoCategory = Category.builder()
+                .id(2L)
+                .name("Parent Two Category")
+                .content("This Category is parent two category")
+                .hasAll(true)
+                .hasBlind(true)
+                .hasQuestion(true)
+                .parent(null)
+                .children(new ArrayList<>())
+                .build();
 
-        Category childrenCategory = new Category(
-                3L,
-                "Child Category",
-                "This Category is child category",
-                true,
-                true,
-                true,
-                parentOneCategory,
-                new ArrayList<>()
-        );
+        Category childrenCategory = Category.builder()
+                .id(3L)
+                .name("Child Category")
+                .content("This Category is child category")
+                .hasAll(true)
+                .hasBlind(true)
+                .hasQuestion(true)
+                .parent(parentOneCategory)
+                .children(new ArrayList<>())
+                .build();
 
         parentOneCategory.getChildren().add(childrenCategory);
 
