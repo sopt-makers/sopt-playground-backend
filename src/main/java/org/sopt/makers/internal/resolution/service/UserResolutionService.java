@@ -67,7 +67,7 @@ public class UserResolutionService {
 	}
 
 	private boolean existsCurrentResolution(Member member) {
-		return userResolutionRepository.existsByMemberAndMemberGeneration(member, CURRENT_GENERATION);
+		return userResolutionRepository.existsByMemberAndGeneration(member, CURRENT_GENERATION);
 	}
 
 	private Member getMemberById(Long userId) {

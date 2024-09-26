@@ -11,5 +11,5 @@ public interface UserResolutionRepository extends JpaRepository<UserResolution, 
     // READ
     Optional<UserResolution> findUserResolutionByMemberAndGeneration(Member member, int generation);
 
-    boolean existsByMemberAndMemberGeneration(Member member, int generation);
+    boolean existsByMemberAndGeneration(Member member, int generation);
 }
