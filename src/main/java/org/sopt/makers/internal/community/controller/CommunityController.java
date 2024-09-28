@@ -12,7 +12,6 @@ import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.service.CommunityCategoryService;
 import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,18 +31,10 @@ import java.util.stream.Collectors;
 public class CommunityController {
 
     private final CommunityPostService communityPostService;
-    private final CommunityCategoryService communityCategoryService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
     private final Bucket bucket;
-
-    @Operation(summary = "커뮤니티 전체 카테고리 조회")
-    @GetMapping("/category")
-    public ResponseEntity<List<CategoryDto>> getCategoryList() {
-        val response = communityCategoryService.getAllCategory();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
