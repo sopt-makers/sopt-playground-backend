@@ -36,7 +36,8 @@ public class AnonymousProfileImageService {
         return profileImageMap.keySet().stream()
                 .filter(i -> !excludes.contains(i))
                 .findFirst()
-                .map(profileImageMap::get).orElse(null);
+                .map(profileImageMap::get)
+                .orElseGet(() -> shuffle((long)(Math.random() * 5)));
     }
 
     private AnonymousProfileImage shuffle(Long index) {
