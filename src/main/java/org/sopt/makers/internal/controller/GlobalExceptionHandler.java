@@ -33,9 +33,11 @@ public class GlobalExceptionHandler {
     private final SlackService slackService;
 
     @ExceptionHandler(BusinessLogicException.class)
-    public ResponseEntity<String> businessLogicException (BusinessLogicException ex) {
+    public ResponseEntity<String> businessLogicException (BusinessLogicException ex, final HttpServletRequest request) {
 
-//        sendErrorMessageToSlack(ex, MessageType.CLIENT);
+        if (!(ex instanceof WordChainGameHasWrongInputException)) {
+            sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
+        }
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
