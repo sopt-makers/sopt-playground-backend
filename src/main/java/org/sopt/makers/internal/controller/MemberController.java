@@ -289,9 +289,9 @@ public class MemberController {
     @Operation(summary = "커피챗 활성 유저 조회 API")
     @GetMapping("/coffeechat")
     public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
-        val coffeechats = coffeeChatService.getCoffeeChatList();
-        val response = new CoffeeChatResponse(coffeechats, coffeechats.size());
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+//        val coffeechats = coffeeChatService.getCoffeeChatList();
+//        val response = new CoffeeChatResponse(coffeechats, coffeechats.size());
+        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
     @Operation(summary = "커피챗 수신 API")

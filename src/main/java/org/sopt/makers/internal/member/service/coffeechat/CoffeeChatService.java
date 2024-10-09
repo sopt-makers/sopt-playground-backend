@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
@@ -27,6 +24,8 @@ public class CoffeeChatService {
     private final EmailSender emailSender;
     private final MemberRepository memberRepository;
     private final EmailHistoryRepository emailHistoryRepository;
+
+    private final CoffeeChatRetriever coffeeChatRetriever;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -66,33 +65,10 @@ public class CoffeeChatService {
 
     }
 
-    public List<CoffeeChatVo> getCoffeeChatList () {
-        val members = memberRepository.findAllByIsCoffeeChatActivateTrue();
-        Collections.shuffle(members);
+    public List<Long> getCoffeeChatActivateMemberList () {
+        List<Long> coffeeChatActivateMemberIdList = coffeeChatRetriever.findMemberIdsByIsCoffeeChatActivate(true);
+        Collections.shuffle(coffeeChatActivateMemberIdList);
 
-        return members.stream().map(
-            m -> {
-                val career = getCurrentMemberCareer(m);
-                return new CoffeeChatVo(
-                    m.getId(), m.getName(), m.getProfileImage(),
-                    career == null ? m.getUniversity() : career.getCompanyName(),
-                    career == null ? m.getSkill() : career.getTitle(),
-                    m.getCoffeeChatBio()
-                );
-            }
-        ).toList();
-    }
-
-    private MemberCareer getCurrentMemberCareer(Member member) {
-        return member.getCareers().stream()
-            .sorted((c1, c2) -> {
-                val dateComparison = c2.getStartDate().compareTo(c1.getStartDate());
-                if (dateComparison == 0) {
-                    return Boolean.compare(c2.getIsCurrent(), c1.getIsCurrent());
-                }
-                return dateComparison;
-            })
-            .findFirst()
-            .orElse(null);
+        return coffeeChatActivateMemberIdList;
     }
 }
