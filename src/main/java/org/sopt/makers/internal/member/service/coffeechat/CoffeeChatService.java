@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -7,12 +7,10 @@ import org.sopt.makers.internal.domain.EmailSender;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
-import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 

@@ -31,7 +31,7 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.service.CoffeeChatService;
+import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
