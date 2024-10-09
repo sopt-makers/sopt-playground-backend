@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.controller;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import feign.FeignException;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.persistence.EntityNotFoundException;
+import javax.servlet.http.HttpServletRequest;
 
 @Slf4j
 @RestControllerAdvice
@@ -31,9 +33,11 @@ public class GlobalExceptionHandler {
     private final SlackService slackService;
 
     @ExceptionHandler(BusinessLogicException.class)
-    public ResponseEntity<String> businessLogicException (BusinessLogicException ex) {
+    public ResponseEntity<String> businessLogicException (BusinessLogicException ex, final HttpServletRequest request) {
 
-        sendErrorMessageToSlack(ex, MessageType.CLIENT);
+        if (!(ex instanceof WordChainGameHasWrongInputException)) {
+            sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
+        }
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
@@ -56,18 +60,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> entityNotfoundException (EntityNotFoundException ex) {
+    public ResponseEntity<String> entityNotfoundException (EntityNotFoundException ex, final HttpServletRequest request) {
 
-        sendErrorMessageToSlack(ex, MessageType.CLIENT);
+        sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
 
     @ExceptionHandler(ClientBadRequestException.class)
-    public ResponseEntity<String> clientBadRequestException (ClientBadRequestException ex) {
+    public ResponseEntity<String> clientBadRequestException (ClientBadRequestException ex, final HttpServletRequest request) {
 
-        sendErrorMessageToSlack(ex, MessageType.CLIENT);
+        sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
@@ -145,21 +149,20 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> unknownException (RuntimeException ex) {
-        sendErrorMessageToSlack(ex, MessageType.SERVER);
+    public ResponseEntity<String> unknownException (RuntimeException ex, final HttpServletRequest request) {
+        sendErrorMessageToSlack(ex, MessageType.SERVER, request);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ex.getMessage());
     }
 
-    private void sendErrorMessageToSlack(Exception exception, MessageType messageType) {
-        HashMap<String, String> content = new HashMap<>();
+    private void sendErrorMessageToSlack(Exception exception, MessageType messageType, final HttpServletRequest request) {
+        LinkedHashMap<String, String> content = new LinkedHashMap<>();
 
-        content.put("Exception Message", exception.getMessage());
         content.put("Exception Class", exception.getClass().getName());
+        content.put("Exception Message", exception.getMessage());
         content.put("Stack Trace", getStackTraceAsString(exception));
-
-        slackService.sendMessage("Internal server error", content, messageType);
+        slackService.sendMessage(messageType.getTitle(), content, messageType, request);
     }
 
     private String getStackTraceAsString(Throwable throwable) {
