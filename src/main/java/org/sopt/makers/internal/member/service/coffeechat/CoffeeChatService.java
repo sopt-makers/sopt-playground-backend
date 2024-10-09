@@ -10,6 +10,7 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
@@ -65,6 +66,7 @@ public class CoffeeChatService {
 
     }
 
+    @Transactional(readOnly = true)
     public List<Long> getCoffeeChatActivateMemberList () {
         List<Long> coffeeChatActivateMemberIdList = coffeeChatRetriever.findMemberIdsByIsCoffeeChatActivate(true);
         Collections.shuffle(coffeeChatActivateMemberIdList);
