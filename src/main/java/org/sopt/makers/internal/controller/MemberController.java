@@ -16,6 +16,7 @@ import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CheckActivityRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
+import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockRequest;
@@ -284,14 +285,6 @@ public class MemberController {
         memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "커피챗 활성 유저 조회 API")
-    @GetMapping("/coffeechat")
-    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
-//        val coffeechats = coffeeChatService.getCoffeeChatList();
-//        val response = new CoffeeChatResponse(coffeechats, coffeechats.size());
-        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
     @Operation(summary = "커피챗 수신 API")
