@@ -25,6 +25,7 @@ import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
+import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.repository.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
