@@ -34,4 +34,9 @@ public class CoffeeChat extends AuditingTimeEntity {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
+
+    public void updateCoffeeChatInformation(Boolean isCoffeeChatActivate, String coffeeChatBio) {
+        this.isCoffeeChatActivate = isCoffeeChatActivate;
+        this.coffeeChatBio = coffeeChatBio;
+    }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
+import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
@@ -11,7 +12,6 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
-import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
@@ -33,9 +33,8 @@ public class CoffeeChatService {
 
     private final MemberRetriever memberRetriever;
 
+    private final CoffeeChatCreator coffeeChatCreator;
     private final CoffeeChatRetriever coffeeChatRetriever;
-
-    private final MemberCareerRetriever memberCareerRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
@@ -84,5 +83,13 @@ public class CoffeeChatService {
         Collections.shuffle(coffeeChatActivateList);
 
         return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList);
+    }
+
+    @Transactional
+    public void createCoffeeChat (Long memberId, String coffeeChatBio) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
+        coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
     }
 }
