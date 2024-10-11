@@ -5,6 +5,7 @@ import lombok.val;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
 import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
@@ -12,6 +13,7 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ public class CoffeeChatService {
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private final MemberCareerRetriever memberCareerRetriever;
 
     public void sendCoffeeChatRequest (CoffeeChatRequest request, Long senderId) {
         val receiver  = memberRepository.findById(request.receiverId())
@@ -80,9 +83,11 @@ public class CoffeeChatService {
     public List<CoffeeChatVo> getCoffeeChatActivateMemberList () {
 
         List<CoffeeChat> coffeeChatActivateList = coffeeChatRetriever.findCoffeeChatActivate(true);
+        List<Member> memberList = coffeeChatActivateList.stream().map(CoffeeChat::getMember).toList();
+        List<MemberCareer> careerList = memberList.stream().map(member -> memberCareerRetriever.findMemberLastCareerByMemberId(member.getId())).toList();
         Collections.shuffle(coffeeChatActivateList);
 
-        return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList);
+        return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
     }
 
     @Transactional
