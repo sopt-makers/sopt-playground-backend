@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.member;
+package org.sopt.makers.internal.member.controller;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
