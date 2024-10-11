@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -47,7 +48,7 @@ public record MemberProfileUpdateRequest (
         @NotNull(message = "커피챗 활성 여부가 입력되지 않았습니다.")
         Boolean isCoffeeChatActivate,
 
-        @NotNull(message = "커피챗 설명란은 공란일 수 없습니다.")
+        @NotBlank(message = "커피챗 설명란은 공란일 수 없습니다.")
         @Size(max = 40, message = "커피챗 설명란은 40자를 초과할 수 없습니다.")
         String coffeeChatBio
 ){
