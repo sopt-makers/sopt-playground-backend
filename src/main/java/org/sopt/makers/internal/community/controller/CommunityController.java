@@ -215,9 +215,4 @@ public class CommunityController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(todayHotPost));
     }
-
-    @GetMapping("/error")
-    public ResponseEntity error() {
-        throw new IllegalArgumentException("Error Test");
-    }
 }
