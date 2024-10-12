@@ -1,7 +1,6 @@
 package org.sopt.makers.internal.member.domain.coffeechat;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +13,6 @@ import javax.persistence.*;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class CoffeeChatHistory extends AuditingTimeEntity {
 
 	@Id
