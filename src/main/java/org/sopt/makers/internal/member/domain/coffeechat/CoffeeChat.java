@@ -11,7 +11,6 @@ import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
 
-
 @Entity
 @Getter
 @Builder
@@ -28,8 +27,25 @@ public class CoffeeChat extends AuditingTimeEntity {
     @ColumnDefault("true")
     private Boolean isCoffeeChatActivate = true;
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CoffeeChatSection section;
+
     @Column(nullable = false, length = 40)
     private String coffeeChatBio;
+
+    @Column(nullable = false, length = 1000)
+    private String description;
+
+    @Column(nullable = false, length = 1000)
+    private String interestTopic;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private CoffeeChatType type;
+
+    @Column(length = 1000)
+    private String guideline;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "member_id", nullable = false)
