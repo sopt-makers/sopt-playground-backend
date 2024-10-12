@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.controller;
+package org.sopt.makers.internal.member.controller;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +15,6 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CheckActivityRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
 import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockRequest;
@@ -31,7 +30,7 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.service.CoffeeChatService;
+import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -283,14 +282,6 @@ public class MemberController {
     ) {
         memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "커피챗 활성 유저 조회 API")
-    @GetMapping("/coffeechat")
-    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
-        val coffeechats = coffeeChatService.getCoffeeChatList();
-        val response = new CoffeeChatResponse(coffeechats, coffeechats.size());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

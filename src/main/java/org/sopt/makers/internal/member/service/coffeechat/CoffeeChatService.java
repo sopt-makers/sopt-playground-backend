@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -7,14 +7,17 @@ import org.sopt.makers.internal.domain.EmailSender;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
-import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
@@ -30,7 +33,15 @@ public class CoffeeChatService {
     private final MemberRepository memberRepository;
     private final EmailHistoryRepository emailHistoryRepository;
 
+    private final MemberRetriever memberRetriever;
+
+    private final CoffeeChatCreator coffeeChatCreator;
+    private final CoffeeChatRetriever coffeeChatRetriever;
+
+    private final CoffeeChatResponseMapper coffeeChatResponseMapper;
+
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private final MemberCareerRetriever memberCareerRetriever;
 
     public void sendCoffeeChatRequest (CoffeeChatRequest request, Long senderId) {
         val receiver  = memberRepository.findById(request.receiverId())
@@ -68,33 +79,23 @@ public class CoffeeChatService {
 
     }
 
-    public List<CoffeeChatVo> getCoffeeChatList () {
-        val members = memberRepository.findAllByIsCoffeeChatActivateTrue();
-        Collections.shuffle(members);
+    @Transactional(readOnly = true)
+    public List<CoffeeChatVo> getCoffeeChatActivateMemberList () {
 
-        return members.stream().map(
-            m -> {
-                val career = getCurrentMemberCareer(m);
-                return new CoffeeChatVo(
-                    m.getId(), m.getName(), m.getProfileImage(),
-                    career == null ? m.getUniversity() : career.getCompanyName(),
-                    career == null ? m.getSkill() : career.getTitle(),
-                    m.getCoffeeChatBio()
-                );
-            }
-        ).toList();
+        List<CoffeeChat> coffeeChatActivateList = coffeeChatRetriever.findCoffeeChatActivate(true);
+        List<Member> memberList = coffeeChatActivateList.stream().map(CoffeeChat::getMember).toList();
+        List<MemberCareer> careerList = memberList.stream().map(member -> memberCareerRetriever.findMemberLastCareerByMemberId(member.getId())).toList();
+
+        List<CoffeeChatVo> coffeeChatVoList = coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
+        Collections.shuffle(coffeeChatVoList);
+        return coffeeChatVoList;
     }
 
-    private MemberCareer getCurrentMemberCareer(Member member) {
-        return member.getCareers().stream()
-            .sorted((c1, c2) -> {
-                val dateComparison = c2.getStartDate().compareTo(c1.getStartDate());
-                if (dateComparison == 0) {
-                    return Boolean.compare(c2.getIsCurrent(), c1.getIsCurrent());
-                }
-                return dateComparison;
-            })
-            .findFirst()
-            .orElse(null);
+    @Transactional
+    public void createCoffeeChat (Long memberId, String coffeeChatBio) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
+        coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
     }
 }
