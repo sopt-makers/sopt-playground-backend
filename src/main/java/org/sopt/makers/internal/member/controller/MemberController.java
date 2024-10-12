@@ -26,8 +26,7 @@ import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.MakersCrewDevClient;
-import org.sopt.makers.internal.external.MakersCrewProdClient;
+import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -60,8 +59,7 @@ public class MemberController {
     private final MemberService memberService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
-    private final MakersCrewProdClient makersCrewProdClient;
-    private final MakersCrewDevClient makersCrewDevClient;
+    private final MakersCrewClient makersCrewClient;
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -256,7 +254,7 @@ public class MemberController {
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "take") Integer take
     ) {
-        val response = makersCrewProdClient.getUserAllCrew(page, take, id);
+        val response = makersCrewClient.getUserAllCrew(page, take, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
