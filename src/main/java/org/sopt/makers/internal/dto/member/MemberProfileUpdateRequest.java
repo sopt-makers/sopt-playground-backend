@@ -7,12 +7,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 import org.sopt.makers.internal.domain.MemberSoptActivity;
 
@@ -43,7 +44,12 @@ public record MemberProfileUpdateRequest (
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial,
         Boolean isPhoneBlind,
+
+        @NotNull(message = "커피챗 활성 여부가 입력되지 않았습니다.")
         Boolean isCoffeeChatActivate,
+
+        @NotBlank(message = "커피챗 설명란은 공란일 수 없습니다.")
+        @Size(max = 40, message = "커피챗 설명란은 40자를 초과할 수 없습니다.")
         String coffeeChatBio
 ){
 
