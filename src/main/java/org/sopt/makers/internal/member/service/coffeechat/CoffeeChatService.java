@@ -48,8 +48,8 @@ public class CoffeeChatService {
 
     @Transactional
     public void sendCoffeeChatRequest (CoffeeChatRequest request, Long senderId) {
-        val receiver  = memberRetriever.findMemberById(request.receiverId());
-        val sender = memberRetriever.findMemberById(senderId);
+        Member receiver  = memberRetriever.findMemberById(request.receiverId());
+        Member sender = memberRetriever.findMemberById(senderId);
         if (request.category().equals(ChatCategory.COFFEE_CHAT.getValue())) {
             sendCoffeeChatMessage(request, sender, receiver);
         } else {
@@ -63,7 +63,7 @@ public class CoffeeChatService {
             email = sender.getEmail();
         }
 
-        val html = emailSender.createCoffeeChatEmailHtml(
+        String html = emailSender.createCoffeeChatEmailHtml(
                 sender.getName(),
                 email,
                 sender.getId(),
@@ -71,7 +71,7 @@ public class CoffeeChatService {
                 sender.getProfileImage(),
                 request.content()
         );
-        val subject = """
+        String subject = """
             띠링, %s님이 보낸 쪽지가 도착했어요!""".formatted(sender.getName());
         try {
             emailSender.sendEmail(
@@ -99,7 +99,7 @@ public class CoffeeChatService {
             phone = sender.getPhone();
         }
 
-        val message = "[Web발신][SOPT makers] 커피챗 신청이 도착했어요!\n" +
+        String message = "[Web발신][SOPT makers] 커피챗 신청이 도착했어요!\n" +
                 "전달드린 전화번호로 직접 연결어쩌고해저쩌고주세요.\n\n" +
                 "- 이름 : " + sender.getName() + "\n" +
                 "- 연락처 : " + phone + "\n" +
