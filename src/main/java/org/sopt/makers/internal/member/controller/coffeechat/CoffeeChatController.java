@@ -42,7 +42,7 @@ public class CoffeeChatController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 커피챗 이메일을 보냈습니다.");
+        val response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
