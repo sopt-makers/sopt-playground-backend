@@ -14,7 +14,6 @@ import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CheckActivityRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockRequest;
@@ -30,7 +29,6 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewDevClient;
 import org.sopt.makers.internal.external.MakersCrewProdClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +58,6 @@ import lombok.val;
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
     private final MemberService memberService;
-    private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
     private final MakersCrewProdClient makersCrewProdClient;
@@ -282,17 +279,6 @@ public class MemberController {
     ) {
         memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "커피챗 수신 API")
-    @PostMapping("/coffeechat")
-    public ResponseEntity<CommonResponse> requestCoffeeChat(
-            @RequestBody CoffeeChatRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
-    ) {
-        coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 커피챗 이메일을 보냈습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
