@@ -8,8 +8,11 @@ import lombok.AccessLevel;
 import org.hibernate.annotations.ColumnDefault;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
+import org.sopt.makers.internal.member.util.coffeechat.CoffeeChatSectionConverter;
+import org.sopt.makers.internal.member.util.coffeechat.CoffeeChatTopicTypeConverter;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Getter
@@ -34,23 +37,23 @@ public class CoffeeChat extends AuditingTimeEntity {
     @Column(nullable = false, length = 200)
     private String introduction;
 
+    @Convert(converter = CoffeeChatSectionConverter.class)
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CoffeeChatSection section;
+    private List<CoffeeChatSection> section;
 
     @Column(nullable = false, length = 40)
     private String coffeeChatBio;
 
+    @Convert(converter = CoffeeChatTopicTypeConverter.class)
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CoffeeChatTopicType coffeeChatTopicType;
+    private List<CoffeeChatTopicType> coffeeChatTopicType;
 
     @Column(nullable = false, length = 1000)
     private String topic;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private MeetingType type;
+    private MeetingType meetingType;
 
     @Column(length = 1000)
     private String guideline;
