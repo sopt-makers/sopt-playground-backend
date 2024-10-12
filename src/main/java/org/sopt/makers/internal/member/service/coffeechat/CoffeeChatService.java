@@ -85,9 +85,10 @@ public class CoffeeChatService {
         List<CoffeeChat> coffeeChatActivateList = coffeeChatRetriever.findCoffeeChatActivate(true);
         List<Member> memberList = coffeeChatActivateList.stream().map(CoffeeChat::getMember).toList();
         List<MemberCareer> careerList = memberList.stream().map(member -> memberCareerRetriever.findMemberLastCareerByMemberId(member.getId())).toList();
-        Collections.shuffle(coffeeChatActivateList);
 
-        return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
+        List<CoffeeChatVo> coffeeChatVoList = coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
+        Collections.shuffle(coffeeChatVoList);
+        return coffeeChatVoList;
     }
 
     @Transactional
