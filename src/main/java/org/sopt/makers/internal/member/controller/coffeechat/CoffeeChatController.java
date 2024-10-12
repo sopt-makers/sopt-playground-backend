@@ -35,7 +35,7 @@ public class CoffeeChatController {
     }
 
 
-    @Operation(summary = "커피챗 수신 API")
+    @Operation(summary = "커피챗/쪽지 수신 API")
     @PostMapping("")
     public ResponseEntity<CommonResponse> requestCoffeeChat(
             @RequestBody CoffeeChatRequest request,
