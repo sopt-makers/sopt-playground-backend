@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -38,7 +40,7 @@ public class CoffeeChatController {
     @Operation(summary = "커피챗/쪽지 수신 API")
     @PostMapping("")
     public ResponseEntity<CommonResponse> requestCoffeeChat(
-            @RequestBody CoffeeChatRequest request,
+            @Valid @RequestBody CoffeeChatRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
