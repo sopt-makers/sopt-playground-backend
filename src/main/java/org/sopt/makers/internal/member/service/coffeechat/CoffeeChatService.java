@@ -2,7 +2,6 @@ package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
 import org.sopt.makers.internal.domain.Member;
@@ -51,21 +50,22 @@ public class CoffeeChatService {
         Member receiver  = memberRetriever.findMemberById(request.receiverId());
         Member sender = memberRetriever.findMemberById(senderId);
         if (request.category().equals(ChatCategory.COFFEE_CHAT.getValue())) {
-            sendCoffeeChatMessage(request, sender, receiver);
+            String phone = applyDefaultPhone(request.senderPhone(), sender.getPhone());
+
+            sendCoffeeChatSMS(request, sender, receiver, phone);
+            coffeeChatCreator.createCoffeeChatHistory(sender, receiver, request.content());
         } else {
-            sendChatEmail(request, sender, receiver);
+            String email = applyDefaultEmail(request.senderEmail(), sender.getEmail());
+
+            sendChatEmail(request, sender, receiver, email);
+            createEmailHistory(request, sender, email);
         }
     }
 
-    private void sendChatEmail(CoffeeChatRequest request, Member sender, Member receiver) {
-        String email = request.senderEmail();
-        if (email == null) {
-            email = sender.getEmail();
-        }
-
+    private void sendChatEmail(CoffeeChatRequest request, Member sender, Member receiver, String senderEmail) {
         String html = emailSender.createCoffeeChatEmailHtml(
                 sender.getName(),
-                email,
+                senderEmail,
                 sender.getId(),
                 request.category(),
                 sender.getProfileImage(),
@@ -79,37 +79,23 @@ public class CoffeeChatService {
                     subject,
                     html
             );
-
-            emailHistoryRepository.save(EmailHistory.builder()
-                    .senderId(sender.getId())
-                    .receiverId(request.receiverId())
-                    .senderEmail(email)
-                    .category(request.category())
-                    .content(request.content())
-                    .createdAt(LocalDateTime.now(KST)).build());
         } catch (MessagingException | UnsupportedEncodingException exception) {
             log.error(exception.getMessage());
             throw new BusinessLogicException("커피챗 이메일 전송에 실패했습니다.");
         }
     }
 
-    private void sendCoffeeChatMessage(CoffeeChatRequest request, Member sender, Member receiver) {
-        String phone = request.senderPhone();
-        if (phone == null) {
-            phone = sender.getPhone();
-        }
-
+    private void sendCoffeeChatSMS(CoffeeChatRequest request, Member sender, Member receiver, String senderPhone) {
         String message = "[Web발신][SOPT makers] 커피챗 신청이 도착했어요!\n" +
                 "전달드린 전화번호로 직접 연결어쩌고해저쩌고주세요.\n\n" +
                 "- 이름 : " + sender.getName() + "\n" +
-                "- 연락처 : " + phone + "\n" +
+                "- 연락처 : " + senderPhone + "\n" +
                 "- 파트 : " + memberRetriever.concatPartAndGeneration(sender.getId()) + "\n" +
                 "- 멤버 프로필 링크 : https://playground.sopt.org/members/" + sender.getId() + "\n\n" +
                 "- 이런 내용이 궁금해요\n" +
                 request.content();
 
-        gabiaService.sendSMS(phone, message);
-        coffeeChatCreator.createCoffeeChatHistory(sender, receiver, request.content());
+        gabiaService.sendSMS(receiver.getPhone(), message);
     }
 
     @Transactional(readOnly = true)
@@ -130,5 +116,29 @@ public class CoffeeChatService {
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    private void createEmailHistory(CoffeeChatRequest request, Member sender, String email) {
+        emailHistoryRepository.save(EmailHistory.builder()
+                .senderId(sender.getId())
+                .receiverId(request.receiverId())
+                .senderEmail(email)
+                .category(request.category())
+                .content(request.content())
+                .createdAt(LocalDateTime.now(KST)).build());
+    }
+
+    private String applyDefaultEmail(String requestEmail, String senderEmail) {
+        if (requestEmail == null) {
+            return senderEmail;
+        }
+        return requestEmail;
+    }
+
+    private String applyDefaultPhone(String requestPhone, String senderPhone) {
+        if (requestPhone == null) {
+            return senderPhone;
+        }
+        return requestPhone;
     }
 }
