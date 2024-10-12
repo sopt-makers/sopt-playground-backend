@@ -29,20 +29,28 @@ public class CoffeeChat extends AuditingTimeEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    private Career career;
+
+    @Column(nullable = false, length = 200)
+    private String introduction;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private CoffeeChatSection section;
 
     @Column(nullable = false, length = 40)
     private String coffeeChatBio;
 
-    @Column(nullable = false, length = 1000)
-    private String description;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CoffeeChatTopicType coffeeChatTopicType;
 
     @Column(nullable = false, length = 1000)
-    private String interestTopic;
+    private String topic;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private CoffeeChatType type;
+    private MeetingType type;
 
     @Column(length = 1000)
     private String guideline;
