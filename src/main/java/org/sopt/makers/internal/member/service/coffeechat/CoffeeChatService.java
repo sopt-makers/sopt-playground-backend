@@ -40,20 +40,25 @@ public class CoffeeChatService {
         Member receiver  = memberRetriever.findMemberById(request.receiverId());
         Member sender = memberRetriever.findMemberById(senderId);
 
-        String replyInfo;
-        if (!request.category().equals(ChatCategory.COFFEE_CHAT)) {
-            replyInfo = applyDefaultPhone(request.senderPhone(), sender.getPhone());
-        } else {
-            replyInfo = applyDefaultEmail(request.senderEmail(), sender.getEmail());
-        }
+        String replyInfo = getReplyInfo(request, sender);
 
         MessageSender senderStrategy = messageSenderFactory.getSender(request.category());
         senderStrategy.sendMessage(sender, receiver, request.content(), replyInfo, request.category());
 
-        if (!request.category().equals(ChatCategory.COFFEE_CHAT)) {
-            emailHistoryService.createEmailHistory(request, sender, sender.getEmail());
-        } else {
+        createHistoryByCategory(request, sender, receiver);
+    }
+
+    private String getReplyInfo(CoffeeChatRequest request, Member sender) {
+        return request.category().equals(ChatCategory.COFFEE_CHAT)
+                ? applyDefaultPhone(request.senderPhone(), sender.getPhone())
+                : applyDefaultEmail(request.senderEmail(), sender.getEmail());
+    }
+
+    private void createHistoryByCategory(CoffeeChatRequest request, Member sender, Member receiver) {
+        if (request.category().equals(ChatCategory.COFFEE_CHAT)) {
             coffeeChatCreator.createCoffeeChatHistory(sender, receiver, request.content());
+        } else {
+            emailHistoryService.createEmailHistory(request, sender, sender.getEmail());
         }
     }
 
