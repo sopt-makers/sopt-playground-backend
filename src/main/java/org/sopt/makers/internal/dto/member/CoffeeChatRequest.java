@@ -14,7 +14,6 @@ public record CoffeeChatRequest(
         @JsonProperty(required = false) String senderEmail,
         @JsonProperty(required = false) String senderPhone,
 
-		@NotBlank(message = "수신 카테고리는 필수 입력 값입니다.")
 		ChatCategory category,
 
 		@NotBlank(message = "수신 본문은 필수 입력 값입니다.")

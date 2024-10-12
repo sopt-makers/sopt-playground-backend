@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.member.domain.coffeechat;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 
@@ -27,5 +28,10 @@ public enum ChatCategory {
 				.filter(category -> category.value.equals(value))
 				.findFirst()
 				.orElseThrow(() -> new ClientBadRequestException("Unknown Chat Category Value: " + value));
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }
