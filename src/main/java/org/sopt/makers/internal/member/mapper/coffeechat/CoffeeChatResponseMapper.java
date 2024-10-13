@@ -28,7 +28,9 @@ public class CoffeeChatResponseMapper {
                         Optional.ofNullable(memberCareerList.get(index))
                                 .map(MemberCareer::getTitle)
                                 .orElse(memberList.get(index).getSkill()),
-                        coffeeChatList.get(index).getCoffeeChatBio()
+                        coffeeChatList.get(index).getCoffeeChatBio(),
+                        coffeeChatList.get(index).getCoffeeChatTopicType(),
+                        coffeeChatList.get(index).getSection()
                 ))
                 .collect(Collectors.toList());
     }

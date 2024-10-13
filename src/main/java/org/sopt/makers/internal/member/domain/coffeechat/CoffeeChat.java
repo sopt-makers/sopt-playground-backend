@@ -6,10 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import org.hibernate.annotations.ColumnDefault;
+import org.sopt.makers.internal.common.GenericEnumListConverter;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
-import org.sopt.makers.internal.member.util.coffeechat.CoffeeChatSectionConverter;
-import org.sopt.makers.internal.member.util.coffeechat.CoffeeChatTopicTypeConverter;
 
 import javax.persistence.*;
 import java.util.List;
@@ -65,5 +64,19 @@ public class CoffeeChat extends AuditingTimeEntity {
     public void updateCoffeeChatInformation(Boolean isCoffeeChatActivate, String coffeeChatBio) {
         this.isCoffeeChatActivate = isCoffeeChatActivate;
         this.coffeeChatBio = coffeeChatBio;
+    }
+
+    @Converter(autoApply = true)
+    public static class CoffeeChatSectionConverter extends GenericEnumListConverter<CoffeeChatSection> {
+        public CoffeeChatSectionConverter() {
+            super(CoffeeChatSection.class);
+        }
+    }
+
+    @Converter(autoApply = true)
+    public static class CoffeeChatTopicTypeConverter extends GenericEnumListConverter<CoffeeChatTopicType> {
+        public CoffeeChatTopicTypeConverter() {
+            super(CoffeeChatTopicType.class);
+        }
     }
 }
