@@ -15,6 +15,7 @@ public enum CoffeeChatTopicType {
     PROFESSIONALISM("직무 전문성"),
     IMPROVEMENT("자기계발"),
     NETWORKING("네트워킹"),
+    PROJECT("프로젝트"),
     ETC("기타")
     ;
 
