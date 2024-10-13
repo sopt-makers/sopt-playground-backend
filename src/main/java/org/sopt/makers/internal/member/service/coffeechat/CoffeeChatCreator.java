@@ -3,6 +3,7 @@ package org.sopt.makers.internal.member.service.coffeechat;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
 import org.springframework.stereotype.Component;
 
@@ -12,12 +13,28 @@ public class CoffeeChatCreator {
 
     private final CoffeeChatRepository coffeeChatRepository;
 
+    // TODO deprecate 예정
     public void createCoffeeChat(Member member, String coffeeChatBio) {
 
         coffeeChatRepository.save(CoffeeChat.builder()
                 .member(member)
                 .coffeeChatBio(coffeeChatBio)
                 .build()
+        );
+    }
+
+    public void createCoffeeChatDetails(Member member, CoffeeChatDetailsRequest request) {
+
+        coffeeChatRepository.save(CoffeeChat.builder()
+                .member(member)
+                .career(request.memberInfo().career())
+                .introduction(request.memberInfo().introduction())
+                .section(request.coffeeChatInfo().sections())
+                .coffeeChatBio(request.coffeeChatInfo().bio())
+                .coffeeChatTopicType(request.coffeeChatInfo().topicTypes())
+                .topic(request.coffeeChatInfo().topic())
+                .meetingType(request.coffeeChatInfo().meetingType())
+                .guideline(request.coffeeChatInfo().guideline()).build()
         );
     }
 }
