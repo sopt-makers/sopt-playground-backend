@@ -106,4 +106,21 @@ public class CoffeeChatService {
 
         coffeeChatCreator.createCoffeeChatDetails(member, request);
     }
+
+    @Transactional
+    public void updateCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        coffeeChat.updateCoffeeChatInfo(
+                request.memberInfo().career(),
+                request.memberInfo().introduction(),
+                request.coffeeChatInfo().sections(),
+                request.coffeeChatInfo().bio(),
+                request.coffeeChatInfo().topicTypes(),
+                request.coffeeChatInfo().topic(),
+                request.coffeeChatInfo().meetingType(),
+                request.coffeeChatInfo().guideline()
+        );
+    }
 }
