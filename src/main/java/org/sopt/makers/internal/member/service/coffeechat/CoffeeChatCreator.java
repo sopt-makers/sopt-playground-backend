@@ -37,4 +37,9 @@ public class CoffeeChatCreator {
                 .guideline(request.coffeeChatInfo().guideline()).build()
         );
     }
+
+    public void deleteCoffeeChatDetails(CoffeeChat coffeeChat) {
+
+        coffeeChatRepository.delete(coffeeChat);
+    }
 }

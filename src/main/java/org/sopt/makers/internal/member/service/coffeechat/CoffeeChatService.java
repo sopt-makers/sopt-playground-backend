@@ -106,4 +106,12 @@ public class CoffeeChatService {
 
         coffeeChatCreator.createCoffeeChatDetails(member, request);
     }
+
+    @Transactional
+    public void deleteCoffeeChatDetails (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        coffeeChatCreator.deleteCoffeeChatDetails(coffeeChat);
+    }
 }
