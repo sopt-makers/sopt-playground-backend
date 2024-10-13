@@ -6,10 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import org.hibernate.annotations.ColumnDefault;
+import org.sopt.makers.internal.common.GenericEnumListConverter;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Getter
@@ -34,23 +36,23 @@ public class CoffeeChat extends AuditingTimeEntity {
     @Column(nullable = false, length = 200)
     private String introduction;
 
+    @Convert(converter = CoffeeChatSectionConverter.class)
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CoffeeChatSection section;
+    private List<CoffeeChatSection> section;
 
     @Column(nullable = false, length = 40)
     private String coffeeChatBio;
 
+    @Convert(converter = CoffeeChatTopicTypeConverter.class)
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CoffeeChatTopicType coffeeChatTopicType;
+    private List<CoffeeChatTopicType> coffeeChatTopicType;
 
     @Column(nullable = false, length = 1000)
     private String topic;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private MeetingType type;
+    private MeetingType meetingType;
 
     @Column(length = 1000)
     private String guideline;
@@ -62,5 +64,19 @@ public class CoffeeChat extends AuditingTimeEntity {
     public void updateCoffeeChatInformation(Boolean isCoffeeChatActivate, String coffeeChatBio) {
         this.isCoffeeChatActivate = isCoffeeChatActivate;
         this.coffeeChatBio = coffeeChatBio;
+    }
+
+    @Converter(autoApply = true)
+    public static class CoffeeChatSectionConverter extends GenericEnumListConverter<CoffeeChatSection> {
+        public CoffeeChatSectionConverter() {
+            super(CoffeeChatSection.class);
+        }
+    }
+
+    @Converter(autoApply = true)
+    public static class CoffeeChatTopicTypeConverter extends GenericEnumListConverter<CoffeeChatTopicType> {
+        public CoffeeChatTopicTypeConverter() {
+            super(CoffeeChatTopicType.class);
+        }
     }
 }
