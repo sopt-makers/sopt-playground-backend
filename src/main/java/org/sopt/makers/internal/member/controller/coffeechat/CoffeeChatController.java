@@ -2,8 +2,8 @@ package org.sopt.makers.internal.member.controller.coffeechat;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse;
+import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

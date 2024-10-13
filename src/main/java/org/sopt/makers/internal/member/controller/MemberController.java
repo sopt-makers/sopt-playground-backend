@@ -14,7 +14,7 @@ import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CheckActivityRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockRequest;
