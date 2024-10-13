@@ -6,6 +6,7 @@ import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.EmailSender;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.exception.BusinessLogicException;
@@ -97,5 +98,12 @@ public class CoffeeChatService {
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    @Transactional
+    public void createCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        coffeeChatCreator.createCoffeeChatDetails(member, request);
     }
 }
