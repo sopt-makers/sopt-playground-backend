@@ -21,6 +21,7 @@ public record CoffeeChatRequest(
 		@Pattern(regexp = PHONE_NUMBER_REGEX, message = "잘못된 전화번호 형식입니다. '-'을 제외한 11자의 번호를 입력해주세요.")
 		String senderPhone,
 
+		@Schema(required = true)
 		ChatCategory category,
 
 		@Schema(required = true)
