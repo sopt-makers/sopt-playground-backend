@@ -1,5 +1,8 @@
 package org.sopt.makers.internal.dto.member;
 
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
+
 import java.util.List;
 
 public record CoffeeChatResponse(
@@ -12,6 +15,8 @@ public record CoffeeChatResponse(
 		String memberProfileImage,
 		String organization,
 		String careerTitle,
-		String coffeeChatBio
+		String coffeeChatBio,
+		List<CoffeeChatTopicType> topicTypes,
+		List<CoffeeChatSection> sections
 	) { }
 }
