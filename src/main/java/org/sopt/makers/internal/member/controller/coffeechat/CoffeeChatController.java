@@ -6,8 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import lombok.val;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,18 @@ public class CoffeeChatController {
     public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
         List<CoffeeChatVo> coffeeChatActivateMemberList = coffeeChatService.getCoffeeChatActivateMemberList();
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
+    }
+
+
+    @Operation(summary = "커피챗/쪽지 수신 API")
+    @PostMapping("")
+    public ResponseEntity<CommonResponse> requestCoffeeChat(
+            @Valid @RequestBody CoffeeChatRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
+        CommonResponse response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "커피챗 정보 생성 API")
