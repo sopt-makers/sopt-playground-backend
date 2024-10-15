@@ -1,82 +1,65 @@
 package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.sopt.makers.internal.domain.EmailHistory;
-import org.sopt.makers.internal.domain.EmailSender;
+import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.MessageSender;
+import org.sopt.makers.internal.external.MessageSenderFactory;
+import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.sopt.makers.internal.repository.EmailHistoryRepository;
-import org.sopt.makers.internal.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.mail.MessagingException;
-import java.io.UnsupportedEncodingException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CoffeeChatService {
-    private final EmailSender emailSender;
-    private final MemberRepository memberRepository;
-    private final EmailHistoryRepository emailHistoryRepository;
+    private final MessageSenderFactory messageSenderFactory;
 
     private final MemberRetriever memberRetriever;
+    private final MemberCareerRetriever memberCareerRetriever;
+
+    private final EmailHistoryService emailHistoryService;
 
     private final CoffeeChatCreator coffeeChatCreator;
     private final CoffeeChatRetriever coffeeChatRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
-    private final ZoneId KST = ZoneId.of("Asia/Seoul");
-    private final MemberCareerRetriever memberCareerRetriever;
-
+    @Transactional
     public void sendCoffeeChatRequest (CoffeeChatRequest request, Long senderId) {
-        val receiver  = memberRepository.findById(request.receiverId())
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        val sender = memberRepository.findById(senderId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        val html = emailSender.createCoffeeChatEmailHtml(
-                sender.getName(),
-                request.senderEmail(),
-                senderId,
-                request.category(),
-                sender.getProfileImage(),
-                request.content()
-        );
-        val subject = """
-                띠링, %s님이 보낸 쪽지가 도착했어요!""".formatted(sender.getName());
-        try {
-            emailSender.sendEmail(
-                    receiver.getEmail(),
-                    subject,
-                    html
-            );
+        Member receiver  = memberRetriever.findMemberById(request.receiverId());
+        Member sender = memberRetriever.findMemberById(senderId);
 
-            emailHistoryRepository.save(EmailHistory.builder()
-                            .senderId(senderId)
-                            .receiverId(request.receiverId())
-                            .senderEmail(request.senderEmail())
-                            .category(request.category())
-                            .content(request.content())
-                            .createdAt(LocalDateTime.now(KST)).build());
-        } catch (MessagingException | UnsupportedEncodingException exception) {
-            exception.printStackTrace();
-            throw new BusinessLogicException("커피챗 이메일 전송에 실패했습니다.");
+        String replyInfo = getReplyInfo(request, sender);
+
+        MessageSender senderStrategy = messageSenderFactory.getSender(request.category());
+        senderStrategy.sendMessage(sender, receiver, request.content(), replyInfo, request.category());
+
+        createHistoryByCategory(request, sender, receiver);
+    }
+
+    private String getReplyInfo(CoffeeChatRequest request, Member sender) {
+        return request.category().equals(ChatCategory.COFFEE_CHAT)
+                ? applyDefaultPhone(request.senderPhone(), sender.getPhone())
+                : applyDefaultEmail(request.senderEmail(), sender.getEmail());
+    }
+
+    private void createHistoryByCategory(CoffeeChatRequest request, Member sender, Member receiver) {
+        if (request.category().equals(ChatCategory.COFFEE_CHAT)) {
+            coffeeChatCreator.createCoffeeChatHistory(sender, receiver, request.content());
+        } else {
+            emailHistoryService.createEmailHistory(request, sender, sender.getEmail());
         }
-
     }
 
     @Transactional(readOnly = true)
@@ -97,5 +80,19 @@ public class CoffeeChatService {
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    private String applyDefaultEmail(String requestEmail, String senderEmail) {
+        if (requestEmail == null) {
+            return senderEmail;
+        }
+        return requestEmail;
+    }
+
+    private String applyDefaultPhone(String requestPhone, String senderPhone) {
+        if (requestPhone == null) {
+            return senderPhone;
+        }
+        return requestPhone;
     }
 }
