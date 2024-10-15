@@ -8,6 +8,7 @@ import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
+import org.sopt.makers.internal.external.email.EmailSender;
 import org.sopt.makers.internal.external.gabia.GabiaService;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.MemberSoptActivityRepository;

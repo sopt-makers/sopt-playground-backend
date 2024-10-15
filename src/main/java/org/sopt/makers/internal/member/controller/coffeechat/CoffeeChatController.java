@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
@@ -14,6 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -30,10 +38,22 @@ public class CoffeeChatController {
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
     }
 
+
+    @Operation(summary = "커피챗/쪽지 수신 API")
+    @PostMapping("")
+    public ResponseEntity<CommonResponse> requestCoffeeChat(
+            @Valid @RequestBody CoffeeChatRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
+        CommonResponse response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @Operation(summary = "커피챗 정보 생성 API")
     @PostMapping("/details")
     public ResponseEntity<CommonResponse> createCoffeeChatDetails(
-            @RequestBody CoffeeChatDetailsRequest request,
+            @Valid @RequestBody CoffeeChatDetailsRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         coffeeChatService.createCoffeeChatDetails(memberDetails.getId(), request);
