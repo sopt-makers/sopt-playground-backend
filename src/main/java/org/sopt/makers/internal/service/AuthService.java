@@ -10,7 +10,7 @@ import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.exception.WrongTokenException;
 import org.sopt.makers.internal.external.gabia.GabiaService;
 import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
+import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.SoptMemberHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

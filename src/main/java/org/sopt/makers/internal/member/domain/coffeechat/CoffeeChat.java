@@ -61,6 +61,11 @@ public class CoffeeChat extends AuditingTimeEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private Boolean isBlind = false;
+
     public void updateCoffeeChatInformation(Boolean isCoffeeChatActivate, String coffeeChatBio) {
         this.isCoffeeChatActivate = isCoffeeChatActivate;
         this.coffeeChatBio = coffeeChatBio;
