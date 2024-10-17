@@ -3,17 +3,18 @@ package org.sopt.makers.internal.member.controller.coffeechat;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +45,18 @@ public class CoffeeChatController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
-        val response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
+        CommonResponse response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커피챗 공개/비공개 토글 API")
+    @PatchMapping("/open")
+    public ResponseEntity<CommonResponse> updateCoffeeChatActivate(
+            @Valid @RequestBody CoffeeChatOpenRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        coffeeChatService.updateCoffeeChatOpen(memberDetails.getId(), request);
+        CommonResponse response = new CommonResponse(true, "커피챗 공개 여부 변경에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
