@@ -9,11 +9,12 @@ import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import lombok.val;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,6 +58,16 @@ public class CoffeeChatController {
     ) {
         coffeeChatService.createCoffeeChatDetails(memberDetails.getId(), request);
         CommonResponse response = new CommonResponse(true, "커피챗 정보 생성에 성공했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커피챗 정보 삭제 API")
+    @DeleteMapping("/details")
+    public ResponseEntity<CommonResponse> deleteCoffeeChatDetails(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        coffeeChatService.deleteCoffeeChatDetails(memberDetails.getId());
+        CommonResponse response = new CommonResponse(true, "커피챗 정보 삭제에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
