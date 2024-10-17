@@ -6,6 +6,5 @@ import java.util.List;
 
 public interface CoffeeChatRepositoryCustom {
 
-    List<Long> findRecentCoffeeChatMember();
-    List<CoffeeChatInfoDto> findCoffeeChatInfoByMemberIdList(List<Long> memberIdList);
+    List<CoffeeChatInfoDto> findRecentCoffeeChatInfo();
 }

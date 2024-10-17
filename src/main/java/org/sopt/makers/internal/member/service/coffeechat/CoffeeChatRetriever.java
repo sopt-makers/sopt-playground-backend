@@ -36,11 +36,7 @@ public class CoffeeChatRetriever {
         return coffeeChatRepository.existsCoffeeChatByMember(member);
     }
 
-    public List<Long> recentCoffeeMemberIdList() {
-        return coffeeChatRepository.findRecentCoffeeChatMember();
-    }
-
-    public List<CoffeeChatInfoDto> recentCoffeeChatInfoList(List<Long> memberIdList) {
-        return coffeeChatRepository.findCoffeeChatInfoByMemberIdList(memberIdList);
+    public List<CoffeeChatInfoDto> recentCoffeeChatInfoList() {
+        return coffeeChatRepository.findRecentCoffeeChatInfo();
     }
 }

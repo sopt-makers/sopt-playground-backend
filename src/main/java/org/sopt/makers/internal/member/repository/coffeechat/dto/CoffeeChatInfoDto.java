@@ -3,6 +3,7 @@ package org.sopt.makers.internal.member.repository.coffeechat.dto;
 import org.sopt.makers.internal.member.domain.coffeechat.Career;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record CoffeeChatInfoDto(
@@ -19,6 +20,8 @@ public record CoffeeChatInfoDto(
 
         Career career,
 
-        String university
+        String university,
+
+        LocalDateTime createdAt
 ) {
 }

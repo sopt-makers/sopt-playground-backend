@@ -89,9 +89,7 @@ public class CoffeeChatService {
     @Transactional(readOnly = true)
     public List<RecentCoffeeChat> getRecentCoffeeChatList() {
 
-        List<Long> recentCoffeeChatMemberIdList = coffeeChatRetriever.recentCoffeeMemberIdList();
-        List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList(recentCoffeeChatMemberIdList);
-
+        List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
             return new RecentCoffeeChat(
