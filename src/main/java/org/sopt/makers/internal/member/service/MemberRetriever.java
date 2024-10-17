@@ -3,6 +3,7 @@ package org.sopt.makers.internal.member.service;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.member.repository.soptactivity.dto.SoptActivityInfoDto;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.springframework.stereotype.Component;
@@ -26,5 +27,10 @@ public class MemberRetriever {
         return memberSoptActivityRepository.findAllByMemberId(memberId).stream()
                 .map(activity -> String.format("%d기 %s", activity.getGeneration(), activity.getPart()))
                 .toList();
+    }
+
+    public List<String> findAllSoptActivitiesByMemberId(Long memberId) {
+        List<SoptActivityInfoDto> soptActivityInfoList = memberSoptActivityRepository.findAllSoptActivitiesByMemberId(memberId);
+        return soptActivityInfoList.stream().map(activity -> activity.generation() + "기 " + activity.part()).toList();
     }
 }

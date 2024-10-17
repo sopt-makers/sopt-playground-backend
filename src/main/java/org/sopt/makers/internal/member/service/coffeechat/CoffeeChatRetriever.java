@@ -6,6 +6,7 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,5 +34,13 @@ public class CoffeeChatRetriever {
 
     public boolean existsCoffeeChat(Member member) {
         return coffeeChatRepository.existsCoffeeChatByMember(member);
+    }
+
+    public List<Long> recentCoffeeMemberIdList() {
+        return coffeeChatRepository.findRecentCoffeeChatMember();
+    }
+
+    public List<CoffeeChatInfoDto> recentCoffeeChatInfoList(List<Long> memberIdList) {
+        return coffeeChatRepository.findCoffeeChatInfoByMemberIdList(memberIdList);
     }
 }

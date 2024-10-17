@@ -8,9 +8,13 @@ import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
 import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.stereotype.Service;
@@ -80,6 +84,28 @@ public class CoffeeChatService {
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecentCoffeeChat> getRecentCoffeeChatList() {
+
+        List<Long> recentCoffeeChatMemberIdList = coffeeChatRetriever.recentCoffeeMemberIdList();
+        List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList(recentCoffeeChatMemberIdList);
+
+        return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
+            MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
+            return new RecentCoffeeChat(
+                    coffeeChatInfo.memberId(),
+                    coffeeChatInfo.bio(),
+                    coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
+                    coffeeChatInfo.profileImage(),
+                    coffeeChatInfo.name(),
+                    coffeeChatInfo.career().getTitle(),
+                    memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
+                    memberCareer != null ? memberCareer.getTitle() : null,
+                    memberRetriever.findAllSoptActivitiesByMemberId(coffeeChatInfo.memberId())
+            );
+        }).toList();
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {
