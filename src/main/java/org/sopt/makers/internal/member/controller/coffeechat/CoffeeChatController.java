@@ -46,7 +46,6 @@ public class CoffeeChatController {
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
     }
 
-
     @Operation(summary = "커피챗/쪽지 수신 API")
     @PostMapping("")
     public ResponseEntity<CommonResponse> requestCoffeeChat(
