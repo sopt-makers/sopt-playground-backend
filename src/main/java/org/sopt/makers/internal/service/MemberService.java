@@ -27,6 +27,7 @@ import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
+import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatCreator;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatRetriever;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
