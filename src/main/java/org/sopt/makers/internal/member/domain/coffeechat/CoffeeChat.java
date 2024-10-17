@@ -66,6 +66,10 @@ public class CoffeeChat extends AuditingTimeEntity {
         this.coffeeChatBio = coffeeChatBio;
     }
 
+    public void updateCoffeeChatActivate(Boolean isCoffeeChatActivate) {
+        this.isCoffeeChatActivate = isCoffeeChatActivate;
+    }
+
     @Converter(autoApply = true)
     public static class CoffeeChatSectionConverter extends GenericEnumListConverter<CoffeeChatSection> {
         public CoffeeChatSectionConverter() {

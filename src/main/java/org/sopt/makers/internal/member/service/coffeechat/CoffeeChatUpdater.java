@@ -11,4 +11,8 @@ public class CoffeeChatUpdater {
         coffeeChatBio = coffeeChatBio != null ? coffeeChatBio : "";
         coffeeChat.updateCoffeeChatInformation(isCoffeeChatActivate, coffeeChatBio);
     }
+
+    public void updateCoffeeChatActivate(CoffeeChat coffeeChat, Boolean isCoffeeChatActivate) {
+        coffeeChat.updateCoffeeChatActivate(isCoffeeChatActivate);
+    }
 }
