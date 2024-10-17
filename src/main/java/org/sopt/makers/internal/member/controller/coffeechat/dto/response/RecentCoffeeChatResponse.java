@@ -12,7 +12,9 @@ public record RecentCoffeeChatResponse(
 
             String bio,
 
-            List<String> sectionList,
+            List<String> topicTypeList,
+
+            String profileImage,
 
             String name,
 

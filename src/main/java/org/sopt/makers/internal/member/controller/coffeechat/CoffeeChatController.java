@@ -34,9 +34,8 @@ public class CoffeeChatController {
     @Operation(summary = "최근 진행된 커피챗 유저 조회 API")
     @GetMapping("/recent")
     public ResponseEntity<RecentCoffeeChatResponse> getRecentCoffeeChatList() {
-//        List<RecentCoffeeChat> recentCoffeeChatList = coffeeChatService.getRecentCoffeeChatList();
-//        return ResponseEntity.status(HttpStatus.OK).body(new RecentCoffeeChatResponse(recentCoffeeChatList));
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+        List<RecentCoffeeChat> recentCoffeeChatList = coffeeChatService.getRecentCoffeeChatList();
+        return ResponseEntity.status(HttpStatus.OK).body(new RecentCoffeeChatResponse(recentCoffeeChatList));
     }
 
     @Operation(summary = "커피챗 활성 유저 조회 API")
