@@ -16,22 +16,22 @@ public enum ChatCategory {
 	OTHER("기타")
 	;
 
-	final String value;
+	final String title;
 
-	ChatCategory(String value) {
-		this.value = value;
+	ChatCategory(String title) {
+		this.title = title;
 	}
 
 	@JsonCreator
-	public static ChatCategory fromValue(String value) {
+	public static ChatCategory fromTitle(String title) {
 		return Arrays.stream(ChatCategory.values())
-				.filter(category -> category.value.equals(value))
+				.filter(category -> category.title.equals(title))
 				.findFirst()
-				.orElseThrow(() -> new ClientBadRequestException("Unknown Chat Category Value: " + value));
+				.orElseThrow(() -> new ClientBadRequestException("Unknown Chat Category Title: " + title));
 	}
 
 	@JsonValue
-	public String getValue() {
-		return value;
+	public String getTitle() {
+		return title;
 	}
 }

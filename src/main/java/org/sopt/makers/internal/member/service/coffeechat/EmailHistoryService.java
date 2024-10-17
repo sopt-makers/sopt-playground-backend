@@ -3,7 +3,7 @@ package org.sopt.makers.internal.member.service.coffeechat;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.EmailHistory;
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.repository.EmailHistoryRepository;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ public class EmailHistoryService {
 				.senderId(sender.getId())
 				.receiverId(request.receiverId())
 				.senderEmail(email)
-				.category(request.category().getValue())
+				.category(request.category().getTitle())
 				.content(request.content())
 				.createdAt(LocalDateTime.now(KST)).build());
 	}

@@ -24,7 +24,7 @@ public class EmailChatSender implements MessageSender {
 				sender.getName(),
 				replyInfo,
 				sender.getId(),
-				category.getValue(),
+				category.getTitle(),
 				sender.getProfileImage(),
 				content
 		);

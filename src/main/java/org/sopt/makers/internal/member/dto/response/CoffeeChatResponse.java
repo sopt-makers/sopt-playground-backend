@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.member;
+package org.sopt.makers.internal.member.dto.response;
 
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
