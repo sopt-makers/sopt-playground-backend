@@ -101,6 +101,7 @@ public class CoffeeChatService {
     public void createCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
 
+        coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChatDetails(member, request);
     }
 }
