@@ -24,11 +24,11 @@ public enum CoffeeChatSection {
     private final String title;
 
     @JsonCreator
-    public static CoffeeChatSection fromValue(String value) {
+    public static CoffeeChatSection fromTitle(String title) {
         return Arrays.stream(CoffeeChatSection.values())
-                .filter(section -> section.title.equals(value))
+                .filter(section -> section.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown CoffeeChat Section Value: " + value));
+                .orElseThrow(() -> new ClientBadRequestException("Unknown CoffeeChat Section Title: " + title));
     }
 
     @JsonValue

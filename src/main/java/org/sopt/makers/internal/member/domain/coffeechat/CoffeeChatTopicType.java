@@ -27,11 +27,11 @@ public enum CoffeeChatTopicType {
     private final String title;
 
     @JsonCreator
-    public static CoffeeChatTopicType fromValue(String value) {
+    public static CoffeeChatTopicType fromTitle(String title) {
         return Arrays.stream(CoffeeChatTopicType.values())
-                .filter(type -> type.title.equals(value))
+                .filter(type -> type.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown CoffeeChat Topic Type Value: " + value));
+                .orElseThrow(() -> new ClientBadRequestException("Unknown CoffeeChat Topic Type Title: " + title));
     }
 
     @JsonValue

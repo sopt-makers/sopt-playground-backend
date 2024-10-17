@@ -17,18 +17,18 @@ public enum MeetingType {
     ANYTHING("무관")
     ;
 
-    final String value;
+    final String title;
 
     @JsonCreator
-    public static MeetingType fromValue(String value) {
+    public static MeetingType fromTitle(String title) {
         return Arrays.stream(MeetingType.values())
-                .filter(type -> type.value.equals(value))
+                .filter(type -> type.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown Meeting Type Value: " + value));
+                .orElseThrow(() -> new ClientBadRequestException("Unknown Meeting Type Title: " + title));
     }
 
     @JsonValue
-    public String getValue() {
-        return value;
+    public String getTitle() {
+        return title;
     }
 }

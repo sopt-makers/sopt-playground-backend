@@ -22,11 +22,11 @@ public enum Career {
     private final String title;
 
     @JsonCreator
-    public static Career fromValue(String value) {
+    public static Career fromTitle(String title) {
         return Arrays.stream(Career.values())
-                .filter(career -> career.title.equals(value))
+                .filter(career -> career.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown Career Value: " + value));
+                .orElseThrow(() -> new ClientBadRequestException("Unknown Career Title: " + title));
     }
 
     @JsonValue

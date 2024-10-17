@@ -23,7 +23,7 @@ public class EmailHistoryService {
 				.senderId(sender.getId())
 				.receiverId(request.receiverId())
 				.senderEmail(email)
-				.category(request.category().getValue())
+				.category(request.category().getTitle())
 				.content(request.content())
 				.createdAt(LocalDateTime.now(KST)).build());
 	}
