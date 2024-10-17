@@ -66,7 +66,7 @@ public class CoffeeChatController {
     @Operation(summary = "커피챗 정보 수정 API")
     @PutMapping("/details")
     public ResponseEntity<CommonResponse> updateCoffeeChatDetails(
-            @RequestBody CoffeeChatDetailsRequest request,
+            @Valid @RequestBody CoffeeChatDetailsRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         coffeeChatService.updateCoffeeChatDetails(memberDetails.getId(), request);

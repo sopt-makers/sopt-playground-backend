@@ -6,13 +6,15 @@ import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.domain.coffeechat.MeetingType;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.util.List;
 
 public record CoffeeChatDetailsRequest(
-		MemberInfoRequest memberInfo,
-		CoffeeChatInfo coffeeChatInfo
+		@Valid MemberInfoRequest memberInfo,
+		@Valid CoffeeChatInfo coffeeChatInfo
 ) {
 
 	public record MemberInfoRequest(
@@ -27,6 +29,7 @@ public record CoffeeChatDetailsRequest(
 
 	public record CoffeeChatInfo(
 			@Schema(required = true)
+			@NotEmpty(message = "커피챗 분야는 필수 입력 값입니다.")
 			List<CoffeeChatSection> sections,
 
 			@Schema(required = true)
@@ -35,6 +38,7 @@ public record CoffeeChatDetailsRequest(
 			String bio,
 
 			@Schema(required = true)
+			@NotEmpty(message = "커피챗 주제 태그는 필수 입력 값입니다.")
 			List<CoffeeChatTopicType> topicTypes,
 
 			@Schema(required = true)
