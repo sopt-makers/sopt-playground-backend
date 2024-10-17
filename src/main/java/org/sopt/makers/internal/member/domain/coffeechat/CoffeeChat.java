@@ -57,7 +57,7 @@ public class CoffeeChat extends AuditingTimeEntity {
     @Column(length = 1000)
     private String guideline;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 

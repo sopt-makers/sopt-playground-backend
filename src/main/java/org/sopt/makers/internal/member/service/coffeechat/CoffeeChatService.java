@@ -101,6 +101,7 @@ public class CoffeeChatService {
     public void createCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
 
+        coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChatDetails(member, request);
     }
 
@@ -119,5 +120,12 @@ public class CoffeeChatService {
                 request.coffeeChatInfo().meetingType(),
                 request.coffeeChatInfo().guideline()
         );
+    
+    @Transactional
+    public void deleteCoffeeChatDetails (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        coffeeChatCreator.deleteCoffeeChatDetails(coffeeChat);
     }
 }
