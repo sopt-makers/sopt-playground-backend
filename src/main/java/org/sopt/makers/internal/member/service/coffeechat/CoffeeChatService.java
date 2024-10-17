@@ -10,6 +10,7 @@ import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
@@ -31,6 +32,7 @@ public class CoffeeChatService {
     private final EmailHistoryService emailHistoryService;
 
     private final CoffeeChatCreator coffeeChatCreator;
+    private final CoffeeChatUpdater coffeeChatUpdater;
     private final CoffeeChatRetriever coffeeChatRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
@@ -80,6 +82,14 @@ public class CoffeeChatService {
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
         coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    @Transactional
+    public void updateCoffeeChatOpen(Long memberId, CoffeeChatOpenRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+
+        coffeeChatUpdater.updateCoffeeChatActivate(coffeeChat, request.open());
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {
