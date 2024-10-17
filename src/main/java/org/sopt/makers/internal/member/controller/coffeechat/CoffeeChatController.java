@@ -17,11 +17,13 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+
 import java.util.List;
 
 @RestController
@@ -61,7 +63,16 @@ public class CoffeeChatController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "커피챗 정보 삭제 API")
+    @Operation(summary = "커피챗 정보 수정 API")
+    @PutMapping("/details")
+    public ResponseEntity<CommonResponse> updateCoffeeChatDetails(
+            @RequestBody CoffeeChatDetailsRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        coffeeChatService.updateCoffeeChatDetails(memberDetails.getId(), request);
+        CommonResponse response = new CommonResponse(true, "커피챗 정보 수정에 성공했습니다.");
+
+      @Operation(summary = "커피챗 정보 삭제 API")
     @DeleteMapping("/details")
     public ResponseEntity<CommonResponse> deleteCoffeeChatDetails(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
