@@ -120,6 +120,7 @@ public class CoffeeChatService {
                 request.coffeeChatInfo().meetingType(),
                 request.coffeeChatInfo().guideline()
         );
+    }
     
     @Transactional
     public void deleteCoffeeChatDetails (Long memberId) {

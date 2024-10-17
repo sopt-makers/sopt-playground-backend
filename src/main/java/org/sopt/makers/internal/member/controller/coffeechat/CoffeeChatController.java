@@ -71,8 +71,10 @@ public class CoffeeChatController {
     ) {
         coffeeChatService.updateCoffeeChatDetails(memberDetails.getId(), request);
         CommonResponse response = new CommonResponse(true, "커피챗 정보 수정에 성공했습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
-      @Operation(summary = "커피챗 정보 삭제 API")
+    @Operation(summary = "커피챗 정보 삭제 API")
     @DeleteMapping("/details")
     public ResponseEntity<CommonResponse> deleteCoffeeChatDetails(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
