@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.repository.MemberSoptActivityRepository;
+import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
