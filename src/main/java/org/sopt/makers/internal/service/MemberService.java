@@ -27,10 +27,9 @@ import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatCreator;
+import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatModifier;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatRetriever;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatUpdater;
 import org.sopt.makers.internal.repository.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
@@ -62,9 +61,8 @@ public class MemberService {
     private final SlackClient slackClient;
     private final CoffeeChatService coffeeChatService;
 
-    private final CoffeeChatCreator coffeeChatCreator;
+    private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
-    private final CoffeeChatUpdater coffeeChatUpdater;
 
     private final SlackMessageUtil slackMessageUtil;
 
@@ -396,10 +394,10 @@ public class MemberService {
 
         if (coffeeChatRetriever.existsCoffeeChat(member)) {
             CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
-            coffeeChatUpdater.updateCoffeeChat(coffeeChat, request.isCoffeeChatActivate(), request.coffeeChatBio() != null ? request.coffeeChatBio() : null);
+            coffeeChatModifier.updateCoffeeChat(coffeeChat, request.isCoffeeChatActivate(), request.coffeeChatBio() != null ? request.coffeeChatBio() : null);
         } else {
             if (request.isCoffeeChatActivate()) {
-                coffeeChatCreator.createCoffeeChat(member, request.coffeeChatBio());
+                coffeeChatModifier.createCoffeeChat(member, request.coffeeChatBio());
             }
         }
 

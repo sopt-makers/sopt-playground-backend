@@ -11,10 +11,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CoffeeChatCreator {  // TODO Creator 대신 C,U,D를 수행하는 컴포넌트를 공통으로 만들면 어떨지? (파일 수가 많아지는 것 대비)
+public class CoffeeChatModifier {
 
     private final CoffeeChatRepository coffeeChatRepository;
     private final CoffeeChatHistoryRepository coffeeChatHistoryRepository;
+
+    // CREATE
 
     // TODO deprecate 예정
     public void createCoffeeChat(Member member, String coffeeChatBio) {
@@ -49,6 +51,21 @@ public class CoffeeChatCreator {  // TODO Creator 대신 C,U,D를 수행하는 �
                 .requestContent(content)
                 .build());
     }
+
+    // UPDATE
+
+    public void updateCoffeeChat(CoffeeChat coffeeChat, Boolean isCoffeeChatActivate, String coffeeChatBio) {
+
+        coffeeChatBio = coffeeChatBio != null ? coffeeChatBio : "";
+        coffeeChat.updateCoffeeChatInformation(isCoffeeChatActivate, coffeeChatBio);
+    }
+
+    public void updateCoffeeChatActivate(CoffeeChat coffeeChat, Boolean isCoffeeChatActivate) {
+        coffeeChat.updateCoffeeChatActivate(isCoffeeChatActivate);
+    }
+
+
+    // DELETE
 
     public void deleteCoffeeChatDetails(CoffeeChat coffeeChat) {
 

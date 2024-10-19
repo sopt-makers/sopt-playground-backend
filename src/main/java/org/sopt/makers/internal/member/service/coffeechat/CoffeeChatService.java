@@ -11,6 +11,7 @@ import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
@@ -31,7 +32,7 @@ public class CoffeeChatService {
 
     private final EmailHistoryService emailHistoryService;
 
-    private final CoffeeChatCreator coffeeChatCreator;
+    private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
@@ -57,7 +58,7 @@ public class CoffeeChatService {
 
     private void createHistoryByCategory(CoffeeChatRequest request, Member sender, Member receiver) {
         if (request.category().equals(ChatCategory.COFFEE_CHAT)) {
-            coffeeChatCreator.createCoffeeChatHistory(sender, receiver, request.content());
+            coffeeChatModifier.createCoffeeChatHistory(sender, receiver, request.content());
         } else {
             emailHistoryService.createEmailHistory(request, sender, sender.getEmail());
         }
@@ -80,7 +81,15 @@ public class CoffeeChatService {
         Member member = memberRetriever.findMemberById(memberId);
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
-        coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+        coffeeChatModifier.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    @Transactional
+    public void updateCoffeeChatOpen(Long memberId, CoffeeChatOpenRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+
+        coffeeChatModifier.updateCoffeeChatActivate(coffeeChat, request.open());
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {
@@ -102,7 +111,7 @@ public class CoffeeChatService {
         Member member = memberRetriever.findMemberById(memberId);
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
-        coffeeChatCreator.createCoffeeChatDetails(member, request);
+        coffeeChatModifier.createCoffeeChatDetails(member, request);
     }
 
     @Transactional
@@ -121,12 +130,12 @@ public class CoffeeChatService {
                 request.coffeeChatInfo().guideline()
         );
     }
-    
+
     @Transactional
     public void deleteCoffeeChatDetails (Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
 
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
-        coffeeChatCreator.deleteCoffeeChatDetails(coffeeChat);
+        coffeeChatModifier.deleteCoffeeChatDetails(coffeeChat);
     }
 }
