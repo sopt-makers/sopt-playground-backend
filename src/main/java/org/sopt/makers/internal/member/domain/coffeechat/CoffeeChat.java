@@ -66,6 +66,10 @@ public class CoffeeChat extends AuditingTimeEntity {
         this.coffeeChatBio = coffeeChatBio;
     }
 
+    public void updateCoffeeChatActivate(Boolean isCoffeeChatActivate) {
+        this.isCoffeeChatActivate = isCoffeeChatActivate;
+    }
+
     public void updateCoffeeChatInfo(Career career, String introduction, List<CoffeeChatSection> sections, String coffeeChatBio, List<CoffeeChatTopicType> coffeeChatTopicType, String topic, MeetingType meetingType, String guideline) {
         this.career = career;
         this.introduction = introduction;
