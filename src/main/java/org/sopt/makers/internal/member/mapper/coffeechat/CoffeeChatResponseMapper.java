@@ -53,13 +53,14 @@ public class CoffeeChatResponseMapper {
                 coffeeChat.getCareer().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : member.getUniversity(),
                 memberCareer != null ? memberCareer.getTitle() : null,
-                member.getPhone(),
+                member.getIsPhoneBlind() ? null : member.getPhone(),
                 member.getEmail(),
                 coffeeChat.getIntroduction(),
                 coffeeChat.getCoffeeChatTopicType().stream().map(CoffeeChatTopicType::getTitle).toList(),
                 coffeeChat.getTopic(),
                 coffeeChat.getMeetingType().getTitle(),
                 coffeeChat.getGuideline(),
+                coffeeChat.getIsCoffeeChatActivate(),
                 isMine
         );
     }

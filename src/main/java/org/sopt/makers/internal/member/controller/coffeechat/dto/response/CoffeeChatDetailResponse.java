@@ -14,7 +14,7 @@ public record CoffeeChatDetailResponse(
 
         String organization,
 
-        String companyJob,
+        String memberCareerTitle,
 
         String phone,
 
@@ -29,6 +29,8 @@ public record CoffeeChatDetailResponse(
         String meetingType,
 
         String guideline,
+
+        Boolean isCoffeeChatActivate,
 
         Boolean isMine
 ) {
