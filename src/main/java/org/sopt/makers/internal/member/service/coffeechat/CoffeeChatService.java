@@ -6,6 +6,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -76,6 +78,17 @@ public class CoffeeChatService {
         List<CoffeeChatVo> coffeeChatVoList = coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
         Collections.shuffle(coffeeChatVoList);
         return coffeeChatVoList;
+    }
+
+    @Transactional(readOnly = true)
+    public CoffeeChatDetailResponse getCoffeeChatDetail (Long memberId, Long detailMemberId) {
+        memberRetriever.checkExistsMemberById(memberId);
+
+        Member member = memberRetriever.findMemberById(detailMemberId);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(memberId);
+        Boolean isMine = Objects.equals(memberId, detailMemberId);
+        return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);
     }
 
     @Transactional
