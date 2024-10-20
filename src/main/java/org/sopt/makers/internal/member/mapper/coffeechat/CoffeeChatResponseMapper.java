@@ -3,7 +3,7 @@ package org.sopt.makers.internal.member.mapper.coffeechat;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.springframework.stereotype.Component;
 

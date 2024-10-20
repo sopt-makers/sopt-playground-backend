@@ -57,7 +57,7 @@ public class CoffeeChat extends AuditingTimeEntity {
     @Column(length = 1000)
     private String guideline;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
@@ -68,6 +68,17 @@ public class CoffeeChat extends AuditingTimeEntity {
 
     public void updateCoffeeChatActivate(Boolean isCoffeeChatActivate) {
         this.isCoffeeChatActivate = isCoffeeChatActivate;
+    }
+
+    public void updateCoffeeChatInfo(Career career, String introduction, List<CoffeeChatSection> sections, String coffeeChatBio, List<CoffeeChatTopicType> coffeeChatTopicType, String topic, MeetingType meetingType, String guideline) {
+        this.career = career;
+        this.introduction = introduction;
+        this.section = sections;
+        this.coffeeChatBio = coffeeChatBio;
+        this.coffeeChatTopicType = coffeeChatTopicType;
+        this.topic = topic;
+        this.meetingType = meetingType;
+        this.guideline = guideline;
     }
 
     @Converter(autoApply = true)

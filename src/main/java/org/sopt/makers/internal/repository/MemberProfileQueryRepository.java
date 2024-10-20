@@ -315,7 +315,7 @@ public class MemberProfileQueryRepository {
                     .from(member)
                     .innerJoin(member.activities, activities)
                     .where(activities.generation.ne(generation))
-                    .where(activities.part.eq(part.getValue()))
+                    .where(activities.part.eq(part.getTitle()))
                     .groupBy(member.id)
                     .orderBy(member.id.asc())
                     .fetch();
