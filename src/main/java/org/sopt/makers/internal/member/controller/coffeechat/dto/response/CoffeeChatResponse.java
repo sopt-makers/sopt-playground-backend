@@ -2,7 +2,7 @@ package org.sopt.makers.internal.member.controller.coffeechat.dto.response;
 
 import java.util.List;
 
-public record RecentCoffeeChatResponse(
+public record CoffeeChatResponse(
 
         List<RecentCoffeeChat> recentCoffeeChatList
 ) {

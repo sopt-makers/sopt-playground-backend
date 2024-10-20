@@ -5,40 +5,36 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
-import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.IntStream;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class CoffeeChatResponseMapper {
 
-    public List<CoffeeChatVo> toCoffeeChatResponse(List<CoffeeChat> coffeeChatList, List<Member> memberList, List<MemberCareer> memberCareerList) {
-        return IntStream.range(0, coffeeChatList.size())
-                .mapToObj(index -> new CoffeeChatVo(
-                        memberList.get(index).getId(),
-                        memberList.get(index).getName(),
-                        memberList.get(index).getProfileImage(),
-                        Optional.ofNullable(memberCareerList.get(index))
-                                .map(MemberCareer::getCompanyName)
-                                .orElse(memberList.get(index).getUniversity()),
-                        Optional.ofNullable(memberCareerList.get(index))
-                                .map(MemberCareer::getTitle)
-                                .orElse(memberList.get(index).getSkill()),
-                        coffeeChatList.get(index).getCoffeeChatBio(),
-                        coffeeChatList.get(index).getCoffeeChatTopicType(),
-                        coffeeChatList.get(index).getSection()
-                ))
-                .collect(Collectors.toList());
-    }
+//    public List<CoffeeChatVo> toCoffeeChatResponse(List<CoffeeChat> coffeeChatList, List<Member> memberList, List<MemberCareer> memberCareerList) {
+//        return IntStream.range(0, coffeeChatList.size())
+//                .mapToObj(index -> new CoffeeChatVo(
+//                        memberList.get(index).getId(),
+//                        memberList.get(index).getName(),
+//                        memberList.get(index).getProfileImage(),
+//                        Optional.ofNullable(memberCareerList.get(index))
+//                                .map(MemberCareer::getCompanyName)
+//                                .orElse(memberList.get(index).getUniversity()),
+//                        Optional.ofNullable(memberCareerList.get(index))
+//                                .map(MemberCareer::getTitle)
+//                                .orElse(memberList.get(index).getSkill()),
+//                        coffeeChatList.get(index).getCoffeeChatBio(),
+//                        coffeeChatList.get(index).getCoffeeChatTopicType(),
+//                        coffeeChatList.get(index).getSection()
+//                ))
+//                .collect(Collectors.toList());
+//    }
 
     public CoffeeChatDetailResponse toCoffeeChatDetailResponse(CoffeeChat coffeeChat, Member member, MemberCareer memberCareer, Boolean isMine) {
 

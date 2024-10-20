@@ -7,13 +7,12 @@ import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
-import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
-import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
-import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -21,7 +20,6 @@ import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -68,17 +66,17 @@ public class CoffeeChatService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public List<CoffeeChatVo> getCoffeeChatActivateMemberList () {
-
-        List<CoffeeChat> coffeeChatActivateList = coffeeChatRetriever.findCoffeeChatActivate(true);
-        List<Member> memberList = coffeeChatActivateList.stream().map(CoffeeChat::getMember).toList();
-        List<MemberCareer> careerList = memberList.stream().map(member -> memberCareerRetriever.findMemberLastCareerByMemberId(member.getId())).toList();
-
-        List<CoffeeChatVo> coffeeChatVoList = coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
-        Collections.shuffle(coffeeChatVoList);
-        return coffeeChatVoList;
-    }
+//    @Transactional(readOnly = true)
+//    public List<CoffeeChatVo> getCoffeeChatActivateMemberList () {
+//
+//        List<CoffeeChat> coffeeChatActivateList = coffeeChatRetriever.findCoffeeChatActivate(true);
+//        List<Member> memberList = coffeeChatActivateList.stream().map(CoffeeChat::getMember).toList();
+//        List<MemberCareer> careerList = memberList.stream().map(member -> memberCareerRetriever.findMemberLastCareerByMemberId(member.getId())).toList();
+//
+//        List<CoffeeChatVo> coffeeChatVoList = coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
+//        Collections.shuffle(coffeeChatVoList);
+//        return coffeeChatVoList;
+//    }
 
     @Transactional(readOnly = true)
     public CoffeeChatDetailResponse getCoffeeChatDetail (Long memberId, Long detailMemberId) {

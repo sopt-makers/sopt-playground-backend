@@ -7,13 +7,11 @@ import javax.validation.Valid;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
-import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
-import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
-import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
-import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse;
-import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,17 +31,33 @@ public class CoffeeChatController {
 
     @Operation(summary = "최근 진행된 커피챗 유저 조회 API")
     @GetMapping("/recent")
-    public ResponseEntity<RecentCoffeeChatResponse> getRecentCoffeeChatList() {
+    public ResponseEntity<CoffeeChatResponse> getRecentCoffeeChatList() {
         List<RecentCoffeeChat> recentCoffeeChatList = coffeeChatService.getRecentCoffeeChatList();
-        return ResponseEntity.status(HttpStatus.OK).body(new RecentCoffeeChatResponse(recentCoffeeChatList));
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(recentCoffeeChatList));
     }
 
-    @Operation(summary = "커피챗 활성 유저 조회 API")
-    @GetMapping("")
-    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
-        List<CoffeeChatVo> coffeeChatActivateMemberList = coffeeChatService.getCoffeeChatActivateMemberList();
-        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
+    @Operation(summary = "커피챗 유저 검색 API")
+    @GetMapping("/search")
+    public ResponseEntity<CoffeeChatResponse> getSearchCoffeeChatList(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestParam(required = false) String section,
+            @RequestParam(required = false) String topicType,
+            @RequestParam(required = false) String career,
+            @RequestParam(required = false) String part
+    ) {
+
+        return ResponseEntity.ok(null);
     }
+
+    /*
+    deprecated api
+     */
+//    @Operation(summary = "커피챗 활성 유저 조회 API")
+//    @GetMapping("")
+//    public ResponseEntity<org.sopt.makers.internal.member.dto.response.CoffeeChatResponse> getCoffeeChatList() {
+//        List<CoffeeChatVo> coffeeChatActivateMemberList = coffeeChatService.getCoffeeChatActivateMemberList();
+//        return ResponseEntity.status(HttpStatus.OK).body(new org.sopt.makers.internal.member.dto.response.CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
+//    }
 
     @Operation(summary = "커피챗 상세 조회 API")
     @GetMapping("/{memberId}")
