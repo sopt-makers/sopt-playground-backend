@@ -28,9 +28,4 @@ public class MemberRetriever {
                 .map(activity -> String.format("%d기 %s", activity.getGeneration(), activity.getPart()))
                 .toList();
     }
-
-    public List<String> findAllSoptActivitiesByMemberId(Long memberId) {
-        List<SoptActivityInfoDto> soptActivityInfoList = memberSoptActivityRepository.findAllSoptActivitiesByMemberId(memberId);
-        return soptActivityInfoList.stream().map(activity -> activity.generation() + "기 " + activity.part()).toList();
-    }
 }

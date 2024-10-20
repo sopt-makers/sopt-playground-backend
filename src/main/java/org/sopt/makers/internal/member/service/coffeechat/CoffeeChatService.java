@@ -11,8 +11,6 @@ import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
-import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
-import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -92,17 +90,8 @@ public class CoffeeChatService {
         List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
-            return new RecentCoffeeChat(
-                    coffeeChatInfo.memberId(),
-                    coffeeChatInfo.bio(),
-                    coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
-                    coffeeChatInfo.profileImage(),
-                    coffeeChatInfo.name(),
-                    coffeeChatInfo.career().getTitle(),
-                    memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
-                    memberCareer != null ? memberCareer.getTitle() : null,
-                    memberRetriever.findAllSoptActivitiesByMemberId(coffeeChatInfo.memberId())
-            );
+            List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
+            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
         }).toList();
     }
 
