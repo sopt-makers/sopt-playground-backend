@@ -6,6 +6,8 @@ import javax.validation.Valid;
 
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
@@ -35,13 +37,19 @@ public class CoffeeChatController {
 
     private final CoffeeChatService coffeeChatService;
 
+    @Operation(summary = "최근 진행된 커피챗 유저 조회 API")
+    @GetMapping("/recent")
+    public ResponseEntity<RecentCoffeeChatResponse> getRecentCoffeeChatList() {
+        List<RecentCoffeeChat> recentCoffeeChatList = coffeeChatService.getRecentCoffeeChatList();
+        return ResponseEntity.status(HttpStatus.OK).body(new RecentCoffeeChatResponse(recentCoffeeChatList));
+    }
+
     @Operation(summary = "커피챗 활성 유저 조회 API")
     @GetMapping("")
     public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
         List<CoffeeChatVo> coffeeChatActivateMemberList = coffeeChatService.getCoffeeChatActivateMemberList();
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
     }
-
 
     @Operation(summary = "커피챗/쪽지 수신 API")
     @PostMapping("")

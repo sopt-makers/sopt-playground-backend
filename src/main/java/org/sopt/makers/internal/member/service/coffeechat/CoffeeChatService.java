@@ -6,6 +6,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
@@ -13,6 +14,7 @@ import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.stereotype.Service;
@@ -90,6 +92,17 @@ public class CoffeeChatService {
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
 
         coffeeChatModifier.updateCoffeeChatActivate(coffeeChat, request.open());
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecentCoffeeChat> getRecentCoffeeChatList() {
+
+        List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
+        return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
+            MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
+            List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
+            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
+        }).toList();
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {
