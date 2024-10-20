@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.member;
+package org.sopt.makers.internal.member.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +26,6 @@ public record CoffeeChatRequest(
 
 		@Schema(required = true)
 		@NotBlank(message = "수신 본문은 필수 입력 값입니다.")
-		@Size(max = 40, message = "본문은 ??자를 초과할 수 없습니다.")  // TODO 정책 fix 되면 반영 예정
+		@Size(max = 40, message = "본문은 40자를 초과할 수 없습니다.")  // TODO 정책 fix 되면 반영 예정
 		String content
 ) {}

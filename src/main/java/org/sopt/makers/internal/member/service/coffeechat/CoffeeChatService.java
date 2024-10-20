@@ -4,13 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
-import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatRequest;
+import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -32,7 +34,7 @@ public class CoffeeChatService {
 
     private final EmailHistoryService emailHistoryService;
 
-    private final CoffeeChatCreator coffeeChatCreator;
+    private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
@@ -58,7 +60,7 @@ public class CoffeeChatService {
 
     private void createHistoryByCategory(CoffeeChatRequest request, Member sender, Member receiver) {
         if (request.category().equals(ChatCategory.COFFEE_CHAT)) {
-            coffeeChatCreator.createCoffeeChatHistory(sender, receiver, request.content());
+            coffeeChatModifier.createCoffeeChatHistory(sender, receiver, request.content());
         } else {
             emailHistoryService.createEmailHistory(request, sender, sender.getEmail());
         }
@@ -81,7 +83,15 @@ public class CoffeeChatService {
         Member member = memberRetriever.findMemberById(memberId);
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
-        coffeeChatCreator.createCoffeeChat(member, coffeeChatBio);
+        coffeeChatModifier.createCoffeeChat(member, coffeeChatBio);
+    }
+
+    @Transactional
+    public void updateCoffeeChatOpen(Long memberId, CoffeeChatOpenRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+
+        coffeeChatModifier.updateCoffeeChatActivate(coffeeChat, request.open());
     }
 
     @Transactional(readOnly = true)
@@ -107,5 +117,38 @@ public class CoffeeChatService {
             return senderPhone;
         }
         return requestPhone;
+    }
+
+    @Transactional
+    public void createCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
+        coffeeChatModifier.createCoffeeChatDetails(member, request);
+    }
+
+    @Transactional
+    public void updateCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        coffeeChat.updateCoffeeChatInfo(
+                request.memberInfo().career(),
+                request.memberInfo().introduction(),
+                request.coffeeChatInfo().sections(),
+                request.coffeeChatInfo().bio(),
+                request.coffeeChatInfo().topicTypes(),
+                request.coffeeChatInfo().topic(),
+                request.coffeeChatInfo().meetingType(),
+                request.coffeeChatInfo().guideline()
+        );
+    }
+
+    @Transactional
+    public void deleteCoffeeChatDetails (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        coffeeChatModifier.deleteCoffeeChatDetails(coffeeChat);
     }
 }

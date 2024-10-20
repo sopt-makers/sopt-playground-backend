@@ -16,6 +16,7 @@ import org.sopt.makers.internal.external.slack.MessageType;
 import org.sopt.makers.internal.external.slack.SlackService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -63,6 +64,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> entityNotfoundException (EntityNotFoundException ex, final HttpServletRequest request) {
 
         sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    // TODO 공통 Error Response 생성 후 일괄 적용
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> httpMessageNotReadableException (HttpMessageNotReadableException ex) {
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
