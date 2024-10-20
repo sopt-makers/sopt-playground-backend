@@ -8,7 +8,7 @@ import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
@@ -32,7 +32,7 @@ public class CoffeeChatController {
     @Operation(summary = "최근 진행된 커피챗 유저 조회 API")
     @GetMapping("/recent")
     public ResponseEntity<CoffeeChatResponse> getRecentCoffeeChatList() {
-        List<RecentCoffeeChat> recentCoffeeChatList = coffeeChatService.getRecentCoffeeChatList();
+        List<CoffeeChatVo> recentCoffeeChatList = coffeeChatService.getRecentCoffeeChatList();
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(recentCoffeeChatList));
     }
 
@@ -45,6 +45,7 @@ public class CoffeeChatController {
             @RequestParam(required = false) String career,
             @RequestParam(required = false) String part
     ) {
+
 
         return ResponseEntity.ok(null);
     }

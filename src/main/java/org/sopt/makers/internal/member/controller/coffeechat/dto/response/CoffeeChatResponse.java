@@ -4,9 +4,9 @@ import java.util.List;
 
 public record CoffeeChatResponse(
 
-        List<RecentCoffeeChat> recentCoffeeChatList
+        List<CoffeeChatVo> recentCoffeeChatList
 ) {
-    public record RecentCoffeeChat(
+    public record CoffeeChatVo(
 
             Long memberId,
 

@@ -5,7 +5,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
@@ -61,8 +61,8 @@ public class CoffeeChatResponseMapper {
         );
     }
 
-    public RecentCoffeeChat toRecentCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
-        return new RecentCoffeeChat(
+    public CoffeeChatVo toRecentCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+        return new CoffeeChatVo(
                 coffeeChatInfo.memberId(),
                 coffeeChatInfo.bio(),
                 coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),

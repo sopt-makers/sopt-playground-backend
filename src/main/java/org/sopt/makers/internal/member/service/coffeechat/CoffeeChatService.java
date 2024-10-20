@@ -7,7 +7,7 @@ import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
@@ -106,7 +106,7 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<RecentCoffeeChat> getRecentCoffeeChatList() {
+    public List<CoffeeChatVo> getRecentCoffeeChatList() {
 
         List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
