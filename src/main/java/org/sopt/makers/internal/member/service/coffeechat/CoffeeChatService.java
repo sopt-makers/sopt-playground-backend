@@ -121,7 +121,7 @@ public class CoffeeChatService {
         CoffeeChatSection coffeeChatSection = section == null ? null : CoffeeChatSection.fromTitle(section);
         CoffeeChatTopicType coffeeChatTopicType = topicType == null ? null : CoffeeChatTopicType.fromTitle(topicType);
         Career coffeeChatCareer = career == null ? null : Career.fromTitle(career);
-        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
+        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(memberId, coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
         return searchCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
             List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());

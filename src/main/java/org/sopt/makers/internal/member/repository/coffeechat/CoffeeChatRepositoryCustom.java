@@ -10,5 +10,5 @@ import java.util.List;
 public interface CoffeeChatRepositoryCustom {
 
     List<CoffeeChatInfoDto> findRecentCoffeeChatInfo();
-    List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search);
+    List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search);
 }

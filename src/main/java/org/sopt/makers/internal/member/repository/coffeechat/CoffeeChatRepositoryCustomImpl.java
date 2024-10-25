@@ -49,7 +49,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
     }
 
     @Override
-    public List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
+    public List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
 
         QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
         QMember member = QMember.member;
@@ -81,6 +81,8 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                     .exists()
             );
         }
+        builder.or(coffeeChat.isCoffeeChatActivate.isTrue())
+                .or(coffeeChat.member.id.eq(memberId));
 
         return queryFactory
                 .select(Projections.constructor(
