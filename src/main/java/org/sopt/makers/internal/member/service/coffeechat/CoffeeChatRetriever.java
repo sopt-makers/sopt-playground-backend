@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.member.domain.coffeechat.Career;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
@@ -38,5 +41,9 @@ public class CoffeeChatRetriever {
 
     public List<CoffeeChatInfoDto> recentCoffeeChatInfoList() {
         return coffeeChatRepository.findRecentCoffeeChatInfo();
+    }
+
+    public List<CoffeeChatInfoDto> searchCoffeeChatInfo(CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
+        return coffeeChatRepository.findSearchCoffeeChatInfo(section, topicType, career, part, search);
     }
 }

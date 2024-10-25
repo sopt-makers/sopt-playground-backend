@@ -43,11 +43,11 @@ public class CoffeeChatController {
             @RequestParam(required = false) String section,
             @RequestParam(required = false) String topicType,
             @RequestParam(required = false) String career,
-            @RequestParam(required = false) String part
+            @RequestParam(required = false) String part,
+            @RequestParam(required = false) String search
     ) {
-
-
-        return ResponseEntity.ok(null);
+        List<CoffeeChatVo> searchCoffeeChatList = coffeeChatService.getSearchCoffeeChatList(memberDetails.getId(), section, topicType, career, part, search);
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(searchCoffeeChatList));
     }
 
     /*

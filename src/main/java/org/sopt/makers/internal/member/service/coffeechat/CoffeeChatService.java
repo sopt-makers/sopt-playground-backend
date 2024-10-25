@@ -8,8 +8,7 @@ import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
-import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.domain.coffeechat.*;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
@@ -110,6 +109,20 @@ public class CoffeeChatService {
 
         List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
+            MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
+            List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
+            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
+        }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CoffeeChatVo> getSearchCoffeeChatList (Long memberId, String section, String topicType, String career, String part, String search) {
+
+        CoffeeChatSection coffeeChatSection = section == null ? null : CoffeeChatSection.fromTitle(section);
+        CoffeeChatTopicType coffeeChatTopicType = topicType == null ? null : CoffeeChatTopicType.fromTitle(topicType);
+        Career coffeeChatCareer = career == null ? null : Career.fromTitle(career);
+        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
+        return searchCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
             List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
             return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
