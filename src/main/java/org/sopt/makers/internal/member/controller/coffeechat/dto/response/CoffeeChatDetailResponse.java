@@ -8,6 +8,8 @@ public record CoffeeChatDetailResponse(
 
         Long memberId,
 
+        String profileImage,
+
         String name,
 
         String career,

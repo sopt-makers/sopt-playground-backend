@@ -46,6 +46,7 @@ public class CoffeeChatResponseMapper {
         return new CoffeeChatDetailResponse(
                 coffeeChat.getCoffeeChatBio(),
                 member.getId(),
+                member.getProfileImage(),
                 member.getName(),
                 coffeeChat.getCareer().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : member.getUniversity(),
