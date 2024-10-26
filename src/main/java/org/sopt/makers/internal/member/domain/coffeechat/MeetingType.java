@@ -14,7 +14,7 @@ public enum MeetingType {
 
     ONLINE("온라인"),
     OFFLINE("오프라인"),
-    ANYTHING("무관")
+    ANYTHING("온/오프라인")
     ;
 
     final String title;
