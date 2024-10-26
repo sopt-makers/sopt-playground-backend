@@ -136,17 +136,6 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
-    @Builder.Default
-    @Column(nullable = false)
-    @ColumnDefault("false")
-    private Boolean isCoffeeChatActivate = false;
-
-    @Column(name = "coffee_chat_bio")
-    private String coffeeChatBio;
-
-    @Column(name = "coffee_chat_updated_at")
-    private LocalDateTime coffeeChatUpdatedAt;
-
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
@@ -190,10 +179,7 @@ public class Member {
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
             List<MemberCareer> careers,
-            Boolean isPhoneBlind,
-            Boolean isCoffeeChatActivate,
-            String coffeeChatBio,
-            LocalDateTime coffeeChatUpdatedAt
+            Boolean isPhoneBlind
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -218,8 +204,5 @@ public class Member {
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
         this.isPhoneBlind = isPhoneBlind;
-        this.isCoffeeChatActivate = isCoffeeChatActivate;
-        this.coffeeChatBio = coffeeChatBio;
-        this.coffeeChatUpdatedAt = coffeeChatUpdatedAt;
     }
 }
