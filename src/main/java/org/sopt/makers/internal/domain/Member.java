@@ -136,6 +136,17 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private Boolean isCoffeeChatActivate = false;
+
+    @Column(name = "coffee_chat_bio")
+    private String coffeeChatBio;
+
+    @Column(name = "coffee_chat_updated_at")
+    private LocalDateTime coffeeChatUpdatedAt;
+
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
