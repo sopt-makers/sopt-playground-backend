@@ -26,12 +26,8 @@ import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatModifier;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatRetriever;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.repository.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
@@ -61,11 +57,6 @@ public class MemberService {
     private final MemberBlockRepository memberBlockRepository;
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
-    private final CoffeeChatService coffeeChatService;
-
-    private final CoffeeChatModifier coffeeChatModifier;
-    private final CoffeeChatRetriever coffeeChatRetriever;
-
     private final SlackMessageUtil slackMessageUtil;
 
     @Transactional(readOnly = true)
@@ -279,13 +270,8 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers,
-                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio(), LocalDateTime.now()
+                memberActivities, memberLinks, memberCareers, request.isPhoneBlind()
         );
-
-        if (request.isCoffeeChatActivate()) {
-            coffeeChatService.createCoffeeChat(member.getId(), request.coffeeChatBio());
-        }
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -378,28 +364,14 @@ public class MemberService {
                 .isHardPeachLover(request.userFavor().isHardPeachLover())
                 .build();
 
-        val coffeeChatUpdatedAt = (!Objects.equals(member.getCoffeeChatBio(), request.coffeeChatBio())
-                || member.getIsCoffeeChatActivate() != request.isCoffeeChatActivate())
-                ? LocalDateTime.now() : member.getCoffeeChatUpdatedAt();
-
         member.saveMemberProfile(
                 member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers,
-                request.isPhoneBlind(), request.isCoffeeChatActivate(), request.coffeeChatBio(), coffeeChatUpdatedAt
+                memberActivities, memberLinks, memberCareers, request.isPhoneBlind()
         );
-
-        if (coffeeChatRetriever.existsCoffeeChat(member)) {
-            CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
-            coffeeChatModifier.updateCoffeeChat(coffeeChat, request.isCoffeeChatActivate(), request.coffeeChatBio() != null ? request.coffeeChatBio() : null);
-        } else {
-            if (request.isCoffeeChatActivate()) {
-                coffeeChatModifier.createCoffeeChat(member, request.coffeeChatBio());
-            }
-        }
 
         return member;
     }
