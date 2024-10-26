@@ -13,6 +13,7 @@ import org.sopt.makers.internal.domain.QMemberCareer;
 import org.sopt.makers.internal.domain.QMemberSoptActivity;
 import org.sopt.makers.internal.member.domain.coffeechat.*;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<CoffeeChatInfoDto> findRecentCoffeeChatInfo() {
+    public List<RecentCoffeeChatInfoDto> findRecentCoffeeChatInfo() {
 
         QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
         QCoffeeChatHistory coffeeChatHistory = QCoffeeChatHistory.coffeeChatHistory;
@@ -30,7 +31,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
 
         return queryFactory
                 .select(Projections.constructor(
-                        CoffeeChatInfoDto.class,
+                        RecentCoffeeChatInfoDto.class,
                         coffeeChat.member.id,
                         coffeeChat.coffeeChatBio,
                         coffeeChat.coffeeChatTopicType,
@@ -58,30 +59,12 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
 
         // 검색 조건
         BooleanBuilder builder = new BooleanBuilder();
-        StringPath sectionStringPath = Expressions.stringPath("section");
-        StringPath topicTypeStringPath = Expressions.stringPath("coffee_chat_topic_type");
-        if (section != null) {
-            builder.and(sectionStringPath.contains(section.name()));
-        }
-        if (topicType != null) {
-            builder.and(topicTypeStringPath.contains(topicType.name()));
-        }
-        builder.and(isInCareer(coffeeChat, career));
-        if (search != null && !search.isEmpty()) {
-            builder.or(memberCareer.companyName.like("%" + search + "%"))
-                    .or(member.university.like("%" + search + "%"))
-                    .or(member.name.like("%" + search + "%"));
-        }
-        if (part != null) {
-            builder.and(JPAExpressions
-                    .selectFrom(memberSoptActivity)
-                    .where(memberSoptActivity.memberId.eq(member.id)
-                            .and(memberSoptActivity.part.like(part + "%"))
-                    )
-                    .exists()
-            );
-        }
-        builder.or(coffeeChat.isCoffeeChatActivate.isTrue())
+        builder.and(isInSection(section))
+                .and(isInTopicType(topicType))
+                .and(isInCareer(coffeeChat, career))
+                .and(isInSearch(member, memberCareer, search))
+                .and(isInPart(member, part, memberSoptActivity))
+                .or(coffeeChat.isCoffeeChatActivate.isTrue())
                 .or(coffeeChat.member.id.eq(memberId));
 
         return queryFactory
@@ -94,7 +77,9 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         coffeeChat.coffeeChatBio,
                         coffeeChat.career,
                         coffeeChat.coffeeChatBio,
-                        coffeeChat.createdAt
+                        coffeeChat.createdAt,
+                        coffeeChat.member.id.eq(memberId),
+                        coffeeChat.isCoffeeChatActivate
                 ))
                 .from(coffeeChat)
                 .leftJoin(member).on(coffeeChat.member.id.eq(member.id))
@@ -103,12 +88,47 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .fetch();
     }
 
-    private BooleanExpression isInCareer(QCoffeeChat coffeeChat, Career career) {
+    private BooleanExpression isInSection(CoffeeChatSection section) {
+        if (section == null) {
+            return null;
+        }
+        StringPath sectionStringPath = Expressions.stringPath("section");
+        return sectionStringPath.contains(section.name());
+    }
 
+    private BooleanExpression isInTopicType(CoffeeChatTopicType topicType) {
+        if (topicType == null) {
+            return null;
+        }
+        StringPath topicTypeStringPath = Expressions.stringPath("coffee_chat_topic_type");
+        return topicTypeStringPath.contains(topicType.name());
+    }
+
+    private BooleanExpression isInCareer(QCoffeeChat coffeeChat, Career career) {
         if (career == null) {
             return null;
         }
-
         return coffeeChat.career.eq(career);
+    }
+
+    private BooleanExpression isInSearch(QMember member, QMemberCareer memberCareer, String search) {
+        if (search == null || search.isEmpty()) {
+            return null;
+        }
+        return memberCareer.companyName.contains(search)
+                .or(member.university.contains(search))
+                .or(member.name.contains(search));
+    }
+
+    private BooleanExpression isInPart(QMember member, String part, QMemberSoptActivity memberSoptActivity) {
+        if (part == null) {
+            return null;
+        }
+        return JPAExpressions
+                .selectFrom(memberSoptActivity)
+                .where(memberSoptActivity.memberId.eq(member.id)
+                        .and(memberSoptActivity.part.like(part + "%"))
+                )
+                .exists();
     }
 }

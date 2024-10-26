@@ -14,6 +14,7 @@ import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeC
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.stereotype.Service;
@@ -107,7 +108,7 @@ public class CoffeeChatService {
     @Transactional(readOnly = true)
     public List<CoffeeChatVo> getRecentCoffeeChatList() {
 
-        List<CoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
+        List<RecentCoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
             List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
@@ -116,16 +117,13 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<CoffeeChatVo> getSearchCoffeeChatList (Long memberId, String section, String topicType, String career, String part, String search) {
+    public List<CoffeeChatVo> getSearchCoffeeChatList (Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
 
-        CoffeeChatSection coffeeChatSection = section == null ? null : CoffeeChatSection.fromTitle(section);
-        CoffeeChatTopicType coffeeChatTopicType = topicType == null ? null : CoffeeChatTopicType.fromTitle(topicType);
-        Career coffeeChatCareer = career == null ? null : Career.fromTitle(career);
-        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(memberId, coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
+        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(memberId, section, topicType, career, part, search);
         return searchCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
             List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
-            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
+            return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
         }).toList();
     }
 

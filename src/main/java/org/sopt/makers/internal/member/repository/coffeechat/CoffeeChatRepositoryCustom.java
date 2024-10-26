@@ -4,11 +4,12 @@ import org.sopt.makers.internal.member.domain.coffeechat.Career;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 
 import java.util.List;
 
 public interface CoffeeChatRepositoryCustom {
 
-    List<CoffeeChatInfoDto> findRecentCoffeeChatInfo();
+    List<RecentCoffeeChatInfoDto> findRecentCoffeeChatInfo();
     List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search);
 }

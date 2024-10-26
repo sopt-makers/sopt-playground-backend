@@ -10,6 +10,7 @@ import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -39,7 +40,7 @@ public class CoffeeChatRetriever {
         return coffeeChatRepository.existsCoffeeChatByMember(member);
     }
 
-    public List<CoffeeChatInfoDto> recentCoffeeChatInfoList() {
+    public List<RecentCoffeeChatInfoDto> recentCoffeeChatInfoList() {
         return coffeeChatRepository.findRecentCoffeeChatInfo();
     }
 

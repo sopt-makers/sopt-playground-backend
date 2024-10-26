@@ -9,6 +9,7 @@ import org.sopt.makers.internal.member.controller.coffeechat.dto.response.Coffee
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public class CoffeeChatResponseMapper {
         );
     }
 
-    public CoffeeChatVo toRecentCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+    public CoffeeChatVo toRecentCoffeeChatResponse(RecentCoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
         return new CoffeeChatVo(
                 coffeeChatInfo.memberId(),
                 coffeeChatInfo.bio(),
@@ -71,7 +72,25 @@ public class CoffeeChatResponseMapper {
                 coffeeChatInfo.career().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
                 memberCareer != null ? memberCareer.getTitle() : null,
-                soptActivities
+                soptActivities,
+                null,
+                null
+        );
+    }
+
+    public CoffeeChatVo toCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+        return new CoffeeChatVo(
+                coffeeChatInfo.memberId(),
+                coffeeChatInfo.bio(),
+                coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
+                coffeeChatInfo.profileImage(),
+                coffeeChatInfo.name(),
+                coffeeChatInfo.career().getTitle(),
+                memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
+                memberCareer != null ? memberCareer.getTitle() : null,
+                soptActivities,
+                coffeeChatInfo.isMine(),
+                coffeeChatInfo.isBlind()
         );
     }
 }

@@ -4,7 +4,7 @@ import java.util.List;
 
 public record CoffeeChatResponse(
 
-        List<CoffeeChatVo> recentCoffeeChatList
+        List<CoffeeChatVo> coffeeChatList
 ) {
     public record CoffeeChatVo(
 
@@ -24,6 +24,10 @@ public record CoffeeChatResponse(
 
             String companyJob,
 
-            List<String> soptActivities
+            List<String> soptActivities,
+
+            Boolean isMine,
+
+            Boolean isBlind
     ) {}
 }
