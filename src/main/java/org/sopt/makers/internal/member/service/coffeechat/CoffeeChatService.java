@@ -83,7 +83,7 @@ public class CoffeeChatService {
         memberRetriever.checkExistsMemberById(memberId);
 
         Member member = memberRetriever.findMemberById(detailMemberId);
-        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatAndCheckIsActivated(member);
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(detailMemberId);
         Boolean isMine = Objects.equals(memberId, detailMemberId);
         return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);

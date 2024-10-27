@@ -59,7 +59,8 @@ public class CoffeeChatResponseMapper {
                 coffeeChat.getMeetingType().getTitle(),
                 coffeeChat.getGuideline(),
                 coffeeChat.getIsCoffeeChatActivate(),
-                isMine
+                isMine,
+                !coffeeChat.getIsCoffeeChatActivate()
         );
     }
 

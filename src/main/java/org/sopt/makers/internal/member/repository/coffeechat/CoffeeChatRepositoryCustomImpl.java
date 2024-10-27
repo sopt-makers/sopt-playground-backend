@@ -79,7 +79,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         coffeeChat.coffeeChatBio,
                         coffeeChat.createdAt,
                         coffeeChat.member.id.eq(memberId),
-                        coffeeChat.isCoffeeChatActivate
+                        coffeeChat.isCoffeeChatActivate.isFalse()
                 ))
                 .from(coffeeChat)
                 .leftJoin(member).on(coffeeChat.member.id.eq(member.id))

@@ -34,6 +34,8 @@ public record CoffeeChatDetailResponse(
 
         Boolean isCoffeeChatActivate,
 
-        Boolean isMine
+        Boolean isMine,
+
+        Boolean isBlind
 ) {
 }
