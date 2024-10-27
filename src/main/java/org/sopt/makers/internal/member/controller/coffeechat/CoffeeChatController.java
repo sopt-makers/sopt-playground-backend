@@ -47,7 +47,7 @@ public class CoffeeChatController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestParam(required = false) String section,
             @RequestParam(required = false) String topicType,
-            @RequestParam(required = false) Career career,
+            @RequestParam(required = false) String career,
             @RequestParam(required = false) String part,
             @RequestParam(required = false) String search
     ) {
