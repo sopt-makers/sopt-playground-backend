@@ -5,40 +5,37 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.member.controller.coffeechat.dto.response.RecentCoffeeChatResponse.RecentCoffeeChat;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
-import org.sopt.makers.internal.member.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.IntStream;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class CoffeeChatResponseMapper {
 
-    public List<CoffeeChatVo> toCoffeeChatResponse(List<CoffeeChat> coffeeChatList, List<Member> memberList, List<MemberCareer> memberCareerList) {
-        return IntStream.range(0, coffeeChatList.size())
-                .mapToObj(index -> new CoffeeChatVo(
-                        memberList.get(index).getId(),
-                        memberList.get(index).getName(),
-                        memberList.get(index).getProfileImage(),
-                        Optional.ofNullable(memberCareerList.get(index))
-                                .map(MemberCareer::getCompanyName)
-                                .orElse(memberList.get(index).getUniversity()),
-                        Optional.ofNullable(memberCareerList.get(index))
-                                .map(MemberCareer::getTitle)
-                                .orElse(memberList.get(index).getSkill()),
-                        coffeeChatList.get(index).getCoffeeChatBio(),
-                        coffeeChatList.get(index).getCoffeeChatTopicType(),
-                        coffeeChatList.get(index).getSection()
-                ))
-                .collect(Collectors.toList());
-    }
+//    public List<CoffeeChatVo> toCoffeeChatResponse(List<CoffeeChat> coffeeChatList, List<Member> memberList, List<MemberCareer> memberCareerList) {
+//        return IntStream.range(0, coffeeChatList.size())
+//                .mapToObj(index -> new CoffeeChatVo(
+//                        memberList.get(index).getId(),
+//                        memberList.get(index).getName(),
+//                        memberList.get(index).getProfileImage(),
+//                        Optional.ofNullable(memberCareerList.get(index))
+//                                .map(MemberCareer::getCompanyName)
+//                                .orElse(memberList.get(index).getUniversity()),
+//                        Optional.ofNullable(memberCareerList.get(index))
+//                                .map(MemberCareer::getTitle)
+//                                .orElse(memberList.get(index).getSkill()),
+//                        coffeeChatList.get(index).getCoffeeChatBio(),
+//                        coffeeChatList.get(index).getCoffeeChatTopicType(),
+//                        coffeeChatList.get(index).getSection()
+//                ))
+//                .collect(Collectors.toList());
+//    }
 
     public CoffeeChatDetailResponse toCoffeeChatDetailResponse(CoffeeChat coffeeChat, Member member, MemberCareer memberCareer, Boolean isMine) {
 
@@ -49,6 +46,7 @@ public class CoffeeChatResponseMapper {
         return new CoffeeChatDetailResponse(
                 coffeeChat.getCoffeeChatBio(),
                 member.getId(),
+                member.getProfileImage(),
                 member.getName(),
                 coffeeChat.getCareer().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : member.getUniversity(),
@@ -61,12 +59,13 @@ public class CoffeeChatResponseMapper {
                 coffeeChat.getMeetingType().getTitle(),
                 coffeeChat.getGuideline(),
                 coffeeChat.getIsCoffeeChatActivate(),
-                isMine
+                isMine,
+                !coffeeChat.getIsCoffeeChatActivate()
         );
     }
 
-    public RecentCoffeeChat toRecentCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
-        return new RecentCoffeeChat(
+    public CoffeeChatVo toRecentCoffeeChatResponse(RecentCoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+        return new CoffeeChatVo(
                 coffeeChatInfo.memberId(),
                 coffeeChatInfo.bio(),
                 coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
@@ -75,7 +74,25 @@ public class CoffeeChatResponseMapper {
                 coffeeChatInfo.career().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
                 memberCareer != null ? memberCareer.getTitle() : null,
-                soptActivities
+                soptActivities,
+                null,
+                null
+        );
+    }
+
+    public CoffeeChatVo toCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+        return new CoffeeChatVo(
+                coffeeChatInfo.memberId(),
+                coffeeChatInfo.bio(),
+                coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
+                coffeeChatInfo.profileImage(),
+                coffeeChatInfo.name(),
+                coffeeChatInfo.career().getTitle(),
+                memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
+                memberCareer != null ? memberCareer.getTitle() : null,
+                soptActivities,
+                coffeeChatInfo.isMine(),
+                coffeeChatInfo.isBlind()
         );
     }
 }

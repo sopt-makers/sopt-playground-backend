@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.member.dto.request;
+package org.sopt.makers.internal.member.controller.coffeechat.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.sopt.makers.internal.member.domain.coffeechat.Career;
