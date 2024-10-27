@@ -45,8 +45,8 @@ public class CoffeeChatController {
     @GetMapping("")
     public ResponseEntity<CoffeeChatResponse> getSearchCoffeeChatList(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @RequestParam(required = false) CoffeeChatSection section,
-            @RequestParam(required = false) CoffeeChatTopicType topicType,
+            @RequestParam(required = false) String section,
+            @RequestParam(required = false) String topicType,
             @RequestParam(required = false) Career career,
             @RequestParam(required = false) String part,
             @RequestParam(required = false) String search
