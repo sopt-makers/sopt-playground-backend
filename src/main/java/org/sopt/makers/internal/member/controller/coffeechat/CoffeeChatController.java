@@ -13,9 +13,6 @@ import org.sopt.makers.internal.member.controller.coffeechat.dto.response.Coffee
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
-import org.sopt.makers.internal.member.domain.coffeechat.Career;
-import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
-import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +44,7 @@ public class CoffeeChatController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestParam(required = false) String section,
             @RequestParam(required = false) String topicType,
-            @RequestParam(required = false) Career career,
+            @RequestParam(required = false) String career,
             @RequestParam(required = false) String part,
             @RequestParam(required = false) String search
     ) {
