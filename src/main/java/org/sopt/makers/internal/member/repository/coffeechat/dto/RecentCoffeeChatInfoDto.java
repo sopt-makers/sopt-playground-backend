@@ -6,7 +6,7 @@ import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record CoffeeChatInfoDto(
+public record RecentCoffeeChatInfoDto(
 
         Long memberId,
 
@@ -22,10 +22,6 @@ public record CoffeeChatInfoDto(
 
         String university,
 
-        LocalDateTime createdAt,
-
-        Boolean isMine,
-
-        Boolean isBlind
+        LocalDateTime createdAt
 ) {
 }

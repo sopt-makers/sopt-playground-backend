@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.member.dto.request;
+package org.sopt.makers.internal.member.controller.coffeechat.dto.request;
 
 import javax.validation.constraints.NotNull;
 
