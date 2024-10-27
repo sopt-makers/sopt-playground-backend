@@ -173,8 +173,7 @@ public class GlobalExceptionHandler {
     private void sendErrorMessageToSlack(Exception exception, MessageType messageType, final HttpServletRequest request) {
         LinkedHashMap<String, String> content = new LinkedHashMap<>();
 
-        String profile = activeProfile.equals("dev") ? "dev" : "prod";
-        content.put("Environment", profile);
+        content.put("Environment", activeProfile);
         content.put("Exception Class", exception.getClass().getName());
         content.put("Exception Message", exception.getMessage());
         content.put("Stack Trace", getStackTraceAsString(exception));
