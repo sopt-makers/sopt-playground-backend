@@ -4,9 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.member.domain.coffeechat.Career;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -36,7 +40,17 @@ public class CoffeeChatRetriever {
         return coffeeChatRepository.existsCoffeeChatByMember(member);
     }
 
-    public List<CoffeeChatInfoDto> recentCoffeeChatInfoList() {
+    public CoffeeChat findCoffeeChatAndCheckIsActivated(Member member) {
+        return coffeeChatRepository.findCoffeeChatByMember(member)
+                .filter(coffeeChat -> coffeeChat.getIsCoffeeChatActivate() || coffeeChat.getMember().equals(member))
+                .orElseThrow(() -> new NotFoundDBEntityException("커피챗 정보를 확인할 수 없는 유저입니다. member id: " + member.getId()));
+    }
+
+    public List<RecentCoffeeChatInfoDto> recentCoffeeChatInfoList() {
         return coffeeChatRepository.findRecentCoffeeChatInfo();
+    }
+
+    public List<CoffeeChatInfoDto> searchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
+        return coffeeChatRepository.findSearchCoffeeChatInfo(memberId, section, topicType, career, part, search);
     }
 }

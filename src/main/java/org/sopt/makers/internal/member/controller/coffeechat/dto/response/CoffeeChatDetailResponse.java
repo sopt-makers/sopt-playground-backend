@@ -8,6 +8,8 @@ public record CoffeeChatDetailResponse(
 
         Long memberId,
 
+        String profileImage,
+
         String name,
 
         String career,
@@ -32,6 +34,8 @@ public record CoffeeChatDetailResponse(
 
         Boolean isCoffeeChatActivate,
 
-        Boolean isMine
+        Boolean isMine,
+
+        Boolean isBlind
 ) {
 }

@@ -36,9 +36,7 @@ public record MemberProfileSaveRequest(
 		List<MemberSoptActivitySaveRequest> activities,
 		List<MemberCareerSaveRequest> careers,
 		Boolean allowOfficial,
-		Boolean isPhoneBlind,
-		Boolean isCoffeeChatActivate,
-		String coffeeChatBio
+		Boolean isPhoneBlind
 ) {
 	public record UserFavorRequest(
 			Boolean isPourSauceLover,

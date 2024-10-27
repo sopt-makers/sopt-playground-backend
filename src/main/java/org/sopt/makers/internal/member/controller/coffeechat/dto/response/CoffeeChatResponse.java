@@ -2,11 +2,11 @@ package org.sopt.makers.internal.member.controller.coffeechat.dto.response;
 
 import java.util.List;
 
-public record RecentCoffeeChatResponse(
+public record CoffeeChatResponse(
 
-        List<RecentCoffeeChat> recentCoffeeChatList
+        List<CoffeeChatVo> coffeeChatList
 ) {
-    public record RecentCoffeeChat(
+    public record CoffeeChatVo(
 
             Long memberId,
 
@@ -24,6 +24,10 @@ public record RecentCoffeeChatResponse(
 
             String companyJob,
 
-            List<String> soptActivities
+            List<String> soptActivities,
+
+            Boolean isMine,
+
+            Boolean isBlind
     ) {}
 }
