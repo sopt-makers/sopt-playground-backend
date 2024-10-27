@@ -14,6 +14,7 @@ import org.sopt.makers.internal.dto.soulmate.SoulmateResponse;
 import org.sopt.makers.internal.exception.*;
 import org.sopt.makers.internal.external.slack.MessageType;
 import org.sopt.makers.internal.external.slack.SlackService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -30,6 +31,9 @@ import javax.servlet.http.HttpServletRequest;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
 
     private final SlackService slackService;
 
@@ -169,6 +173,7 @@ public class GlobalExceptionHandler {
     private void sendErrorMessageToSlack(Exception exception, MessageType messageType, final HttpServletRequest request) {
         LinkedHashMap<String, String> content = new LinkedHashMap<>();
 
+        content.put("Environment", activeProfile);
         content.put("Exception Class", exception.getClass().getName());
         content.put("Exception Message", exception.getMessage());
         content.put("Stack Trace", getStackTraceAsString(exception));
