@@ -55,16 +55,6 @@ public class CoffeeChatController {
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(searchCoffeeChatList));
     }
 
-    /*
-    deprecated api
-     */
-//    @Operation(summary = "커피챗 활성 유저 조회 API")
-//    @GetMapping("")
-//    public ResponseEntity<org.sopt.makers.internal.member.dto.response.CoffeeChatResponse> getCoffeeChatList() {
-//        List<CoffeeChatVo> coffeeChatActivateMemberList = coffeeChatService.getCoffeeChatActivateMemberList();
-//        return ResponseEntity.status(HttpStatus.OK).body(new org.sopt.makers.internal.member.dto.response.CoffeeChatResponse(coffeeChatActivateMemberList, coffeeChatActivateMemberList.size()));
-//    }
-
     @Operation(summary = "커피챗 상세 조회 API")
     @GetMapping("/{memberId}")
     public ResponseEntity<CoffeeChatDetailResponse> getCoffeeChat(

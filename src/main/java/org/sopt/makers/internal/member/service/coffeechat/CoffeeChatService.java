@@ -66,18 +66,6 @@ public class CoffeeChatService {
         }
     }
 
-//    @Transactional(readOnly = true)
-//    public List<CoffeeChatVo> getCoffeeChatActivateMemberList () {
-//
-//        List<CoffeeChat> coffeeChatActivateList = coffeeChatRetriever.findCoffeeChatActivate(true);
-//        List<Member> memberList = coffeeChatActivateList.stream().map(CoffeeChat::getMember).toList();
-//        List<MemberCareer> careerList = memberList.stream().map(member -> memberCareerRetriever.findMemberLastCareerByMemberId(member.getId())).toList();
-//
-//        List<CoffeeChatVo> coffeeChatVoList = coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatActivateList, memberList, careerList);
-//        Collections.shuffle(coffeeChatVoList);
-//        return coffeeChatVoList;
-//    }
-
     @Transactional(readOnly = true)
     public CoffeeChatDetailResponse getCoffeeChatDetail (Long memberId, Long detailMemberId) {
         memberRetriever.checkExistsMemberById(memberId);
@@ -87,14 +75,6 @@ public class CoffeeChatService {
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(detailMemberId);
         Boolean isMine = Objects.equals(memberId, detailMemberId);
         return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);
-    }
-
-    @Transactional
-    public void createCoffeeChat (Long memberId, String coffeeChatBio) {
-        Member member = memberRetriever.findMemberById(memberId);
-
-        coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
-        coffeeChatModifier.createCoffeeChat(member, coffeeChatBio);
     }
 
     @Transactional

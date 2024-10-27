@@ -190,10 +190,7 @@ public class Member {
             List<MemberSoptActivity> activities,
             List<MemberLink> links,
             List<MemberCareer> careers,
-            Boolean isPhoneBlind,
-            Boolean isCoffeeChatActivate,
-            String coffeeChatBio,
-            LocalDateTime coffeeChatUpdatedAt
+            Boolean isPhoneBlind
     ) {
         this.name = name;
         this.profileImage = profileImage;
@@ -218,8 +215,5 @@ public class Member {
         this.careers.clear(); this.careers.addAll(careers);
         this.hasProfile = true;
         this.isPhoneBlind = isPhoneBlind;
-        this.isCoffeeChatActivate = isCoffeeChatActivate;
-        this.coffeeChatBio = coffeeChatBio;
-        this.coffeeChatUpdatedAt = coffeeChatUpdatedAt;
     }
 }

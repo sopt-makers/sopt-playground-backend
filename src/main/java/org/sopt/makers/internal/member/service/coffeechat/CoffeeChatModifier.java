@@ -18,16 +18,6 @@ public class CoffeeChatModifier {
 
     // CREATE
 
-    // TODO deprecate 예정
-    public void createCoffeeChat(Member member, String coffeeChatBio) {
-
-        coffeeChatRepository.save(CoffeeChat.builder()
-                .member(member)
-                .coffeeChatBio(coffeeChatBio)
-                .build()
-        );
-    }
-
     public void createCoffeeChatDetails(Member member, CoffeeChatDetailsRequest request) {
 
         coffeeChatRepository.save(CoffeeChat.builder()
@@ -53,12 +43,6 @@ public class CoffeeChatModifier {
     }
 
     // UPDATE
-
-    public void updateCoffeeChat(CoffeeChat coffeeChat, Boolean isCoffeeChatActivate, String coffeeChatBio) {
-
-        coffeeChatBio = coffeeChatBio != null ? coffeeChatBio : "";
-        coffeeChat.updateCoffeeChatInformation(isCoffeeChatActivate, coffeeChatBio);
-    }
 
     public void updateCoffeeChatActivate(CoffeeChat coffeeChat, Boolean isCoffeeChatActivate) {
         coffeeChat.updateCoffeeChatActivate(isCoffeeChatActivate);
