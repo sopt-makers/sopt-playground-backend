@@ -21,10 +21,6 @@ public class CoffeeChatRetriever {
 
     private final CoffeeChatRepository coffeeChatRepository;
 
-    public List<CoffeeChat> findCoffeeChatActivate(boolean isCoffeeChatActivate) {
-        return coffeeChatRepository.findAllByIsCoffeeChatActivate(isCoffeeChatActivate);
-    }
-
     public CoffeeChat findCoffeeChatByMember(Member member) {
         return coffeeChatRepository.findCoffeeChatByMember(member)
                 .orElseThrow(() -> new NotFoundDBEntityException("커피챗 정보를 등록한적 없는 유저입니다. " + "member id: " + member.getId()));

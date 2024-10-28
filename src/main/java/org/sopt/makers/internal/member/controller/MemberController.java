@@ -110,7 +110,8 @@ public class MemberController {
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.saveMemberProfile(memberDetails.getId(), request);
-        val response = memberMapper.toProfileResponse(member);
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -135,7 +136,8 @@ public class MemberController {
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(memberDetails.getId(), request);
-        val response = memberMapper.toProfileResponse(member);
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -228,8 +230,11 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, search, generation, employed, orderBy, mbti, team);
-        val memberList = members.stream().map(member -> MemberProfileResponse.checkIsBlindPhone(memberMapper.toProfileResponse(member),
-            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))).collect(Collectors.toList());
+        val memberList = members.stream().map(member ->
+                MemberProfileResponse.checkIsBlindPhone(
+                        memberMapper.toProfileResponse(member, coffeeChatService.getCoffeeChatActivate(member.getId())),
+                        memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))
+        ).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
