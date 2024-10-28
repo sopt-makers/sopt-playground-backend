@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
@@ -75,6 +76,17 @@ public class CoffeeChatService {
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(detailMemberId);
         Boolean isMine = Objects.equals(memberId, detailMemberId);
         return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean getCoffeeChatActivate (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        try {
+            CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+            return coffeeChat.getIsCoffeeChatActivate();
+        } catch (NotFoundDBEntityException ex) {
+            return false;
+        }
     }
 
     @Transactional
