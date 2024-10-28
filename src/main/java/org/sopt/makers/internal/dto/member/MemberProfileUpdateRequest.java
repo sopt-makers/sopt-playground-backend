@@ -43,14 +43,7 @@ public record MemberProfileUpdateRequest (
         List<MemberSoptActivityUpdateRequest> activities,
         List<MemberCareerUpdateRequest> careers,
         Boolean allowOfficial,
-        Boolean isPhoneBlind,
-
-        @NotNull(message = "커피챗 활성 여부가 입력되지 않았습니다.")
-        Boolean isCoffeeChatActivate,
-
-        @NotBlank(message = "커피챗 설명란은 공란일 수 없습니다.")
-        @Size(max = 40, message = "커피챗 설명란은 40자를 초과할 수 없습니다.")
-        String coffeeChatBio
+        Boolean isPhoneBlind
 ){
 
     public record UserFavorRequest(
