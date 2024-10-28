@@ -73,10 +73,10 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         coffeeChat.member.id,
                         coffeeChat.coffeeChatBio,
                         coffeeChat.coffeeChatTopicType,
-                        coffeeChat.coffeeChatBio,
-                        coffeeChat.coffeeChatBio,
+                        coffeeChat.member.profileImage,
+                        coffeeChat.member.name,
                         coffeeChat.career,
-                        coffeeChat.coffeeChatBio,
+                        coffeeChat.member.university,
                         coffeeChat.createdAt,
                         coffeeChat.member.id.eq(memberId),
                         coffeeChat.isCoffeeChatActivate.isFalse()

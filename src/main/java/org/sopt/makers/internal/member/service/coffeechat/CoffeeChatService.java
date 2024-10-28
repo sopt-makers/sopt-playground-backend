@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
@@ -77,6 +78,17 @@ public class CoffeeChatService {
         return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);
     }
 
+    @Transactional(readOnly = true)
+    public Boolean getCoffeeChatActivate (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        try {
+            CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
+            return coffeeChat.getIsCoffeeChatActivate();
+        } catch (NotFoundDBEntityException ex) {
+            return false;
+        }
+    }
+
     @Transactional
     public void updateCoffeeChatOpen(Long memberId, CoffeeChatOpenRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
@@ -97,9 +109,12 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<CoffeeChatVo> getSearchCoffeeChatList (Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
+    public List<CoffeeChatVo> getSearchCoffeeChatList (Long memberId, String section, String topicType, String career, String part, String search) {
 
-        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(memberId, section, topicType, career, part, search);
+        CoffeeChatSection coffeeChatSection = section != null ? CoffeeChatSection.fromTitle(section) : null;
+        CoffeeChatTopicType coffeeChatTopicType = topicType != null ? CoffeeChatTopicType.fromTitle(topicType) : null;
+        Career coffeeChatCareer = career != null ? Career.fromTitle(career) : null;
+        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(memberId, coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
         return searchCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
             List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
