@@ -21,6 +21,7 @@ public class GabiaService {
     private final AuthConfig authConfig;
     private static final String SMS_OAUTH_TOKEN_URL = "https://sms.gabia.com/oauth/token";
     private static final String SMS_SEND_URL = "https://sms.gabia.com/api/send/sms";
+    private static final String LMS_SEND_URL = "https://sms.gabia.com/api/send/lms";
 
     private GabiaAuthResponse getGabiaAccessToken() {
         String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), authConfig.getGabiaApiKey()).getBytes(StandardCharsets.UTF_8));
@@ -73,6 +74,13 @@ public class GabiaService {
         String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), gabiaAuthResponse.access_token()).getBytes(StandardCharsets.UTF_8));
         OkHttpClient client = new OkHttpClient();
 
+        String targetUrl;
+        if (message.length() <= 45) {
+            targetUrl = SMS_SEND_URL;
+        } else {
+            targetUrl = LMS_SEND_URL;
+        }
+
         RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
                 .addFormDataPart("phone", phone)
                 .addFormDataPart("callback", authConfig.getGabiaSendNumber())
@@ -81,7 +89,7 @@ public class GabiaService {
                 .build();
 
         Request request = new Request.Builder()
-                .url(SMS_SEND_URL)
+                .url(targetUrl)
                 .post(requestBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
