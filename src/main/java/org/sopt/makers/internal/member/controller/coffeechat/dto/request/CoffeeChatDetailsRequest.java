@@ -47,7 +47,6 @@ public record CoffeeChatDetailsRequest(
 			String topic,
 
 			@Schema(required = true)
-			@NotBlank(message = "진행 방식은 필수 입력 값입니다.")
 			MeetingType meetingType,
 
 			@Size(max = 1000, message = "유의사항은 1000자를 초과할 수 없습니다.")
