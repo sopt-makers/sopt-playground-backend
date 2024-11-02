@@ -50,7 +50,7 @@ public class CoffeeChat extends AuditingTimeEntity {
     @Column(nullable = false, length = 1000)
     private String topic;
 
-    @Column
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private MeetingType meetingType;
 
