@@ -1,21 +1,16 @@
 package org.sopt.makers.internal.dto.member;
 
-import static org.sopt.makers.internal.common.Constant.*;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.domain.MemberSoptActivity;
 
+import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
-
-import org.sopt.makers.internal.domain.MemberSoptActivity;
+import static org.sopt.makers.internal.common.Constant.PHONE_NUMBER_REGEX;
 
 @Slf4j
 public record MemberProfileUpdateRequest (
