@@ -64,11 +64,11 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .and(isInCareer(coffeeChat, career))
                 .and(isInSearch(member, memberCareer, search))
                 .and(isInPart(member, part, memberSoptActivity))
-                .or(coffeeChat.isCoffeeChatActivate.isTrue())
-                .or(coffeeChat.member.id.eq(memberId));
+                .and(coffeeChat.isCoffeeChatActivate.isTrue()
+                        .or(coffeeChat.member.id.eq(memberId)));
 
         return queryFactory
-                .select(Projections.constructor(
+                .selectDistinct(Projections.constructor(
                         CoffeeChatInfoDto.class,
                         coffeeChat.member.id,
                         coffeeChat.coffeeChatBio,
