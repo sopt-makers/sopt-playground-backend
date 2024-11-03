@@ -102,8 +102,8 @@ public class AuthController {
     @Operation(summary = "register 토큰으로 자기 자신 확인 API")
     @PostMapping("/registration/info")
     public ResponseEntity<RegisterTokenInfoResponse> checkRegisterToken (@RequestBody RegisterTokenInfoRequest request) {
-        if (request.registerToken().equals(authConfig.getMagicRegisterToken())) return ResponseEntity.status(200).body(new RegisterTokenInfoResponse("Tester", 32));
-        else if (request.registerToken().equals(authConfig.getDevRegisterQaToken())) return ResponseEntity.status(200).body(new RegisterTokenInfoResponse("Tester", 32));
+        if (request.registerToken().equals(authConfig.getMagicRegisterToken())) return ResponseEntity.status(200).body(new RegisterTokenInfoResponse("User", 32));
+        else if (request.registerToken().equals(authConfig.getDevRegisterQaToken())) return ResponseEntity.status(200).body(new RegisterTokenInfoResponse("User", 32));
         val memberHistory = authService.findMemberByRegisterToken(request.registerToken())
                 .orElseThrow(() -> new ForbiddenClientException("SOPT Member History를 찾을 수 없습니다."));
         return ResponseEntity.status(200).body(new RegisterTokenInfoResponse(memberHistory.getName(), memberHistory.getGeneration()));
