@@ -87,6 +87,8 @@ internal:
     sopticle-key: test
   app:
     secret: test
+  crew:
+    url: test
 dictionary:
   key: test
 

@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.controller;
+package org.sopt.makers.internal.member.controller;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -14,8 +14,6 @@ import org.sopt.makers.internal.domain.ActivityTeam;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.dto.member.CheckActivityRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatRequest;
-import org.sopt.makers.internal.dto.member.CoffeeChatResponse;
 import org.sopt.makers.internal.dto.member.MemberAllProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockResponse;
 import org.sopt.makers.internal.dto.member.MemberBlockRequest;
@@ -28,10 +26,9 @@ import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.member.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.MakersCrewDevClient;
-import org.sopt.makers.internal.external.MakersCrewProdClient;
+import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.service.CoffeeChatService;
+import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,8 +61,7 @@ public class MemberController {
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
-    private final MakersCrewProdClient makersCrewProdClient;
-    private final MakersCrewDevClient makersCrewDevClient;
+    private final MakersCrewClient makersCrewClient;
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -114,7 +110,8 @@ public class MemberController {
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.saveMemberProfile(memberDetails.getId(), request);
-        val response = memberMapper.toProfileResponse(member);
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -139,7 +136,8 @@ public class MemberController {
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(memberDetails.getId(), request);
-        val response = memberMapper.toProfileResponse(member);
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -232,8 +230,11 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, search, generation, employed, orderBy, mbti, team);
-        val memberList = members.stream().map(member -> MemberProfileResponse.checkIsBlindPhone(memberMapper.toProfileResponse(member),
-            memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))).collect(Collectors.toList());
+        val memberList = members.stream().map(member ->
+                MemberProfileResponse.checkIsBlindPhone(
+                        memberMapper.toProfileResponse(member, coffeeChatService.getCoffeeChatActivate(member.getId())),
+                        memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))
+        ).collect(Collectors.toList());
         val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
         val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);
         val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
@@ -260,7 +261,7 @@ public class MemberController {
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "take") Integer take
     ) {
-        val response = makersCrewProdClient.getUserAllCrew(page, take, id);
+        val response = makersCrewClient.getUserAllCrew(page, take, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -283,25 +284,6 @@ public class MemberController {
     ) {
         memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
         val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "커피챗 활성 유저 조회 API")
-    @GetMapping("/coffeechat")
-    public ResponseEntity<CoffeeChatResponse> getCoffeeChatList() {
-        val coffeechats = coffeeChatService.getCoffeeChatList();
-        val response = new CoffeeChatResponse(coffeechats, coffeechats.size());
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "커피챗 수신 API")
-    @PostMapping("/coffeechat")
-    public ResponseEntity<CommonResponse> requestCoffeeChat(
-            @RequestBody CoffeeChatRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
-    ) {
-        coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 커피챗 이메일을 보냈습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

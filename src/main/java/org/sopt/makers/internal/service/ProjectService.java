@@ -10,6 +10,7 @@ import org.sopt.makers.internal.dto.project.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.mapper.ProjectMapper;
+import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

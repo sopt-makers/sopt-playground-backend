@@ -15,7 +15,7 @@ public enum Part {
     SERVER("서버"),
     ;
 
-    private final String value;
+    private final String title;
 
     public String getKey() {
         return name();

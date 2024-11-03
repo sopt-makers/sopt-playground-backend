@@ -256,7 +256,6 @@ public class MemberProfileQueryRepository {
         val member = QMember.member;
         val activities = QMemberSoptActivity.memberSoptActivity;
         val career = QMemberCareer.memberCareer;
-        log.info("진입");
         return queryFactory.selectFrom(member)
                 .innerJoin(member.activities, activities)
                 .leftJoin(member.careers, career)
@@ -316,7 +315,7 @@ public class MemberProfileQueryRepository {
                     .from(member)
                     .innerJoin(member.activities, activities)
                     .where(activities.generation.ne(generation))
-                    .where(activities.part.eq(part.getValue()))
+                    .where(activities.part.eq(part.getTitle()))
                     .groupBy(member.id)
                     .orderBy(member.id.asc())
                     .fetch();
@@ -356,7 +355,8 @@ public class MemberProfileQueryRepository {
                     checkContainsSearchCond(member, career, search),
                     checkMemberCurrentlyEmployed(career, employed),
                     checkActivityContainsPart(part),checkMemberMbti(mbti),
-                    checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
+                    checkActivityContainsGenerationAndTeamAndPart(generation, team, part),
+                    checkNotInWhiteList(member))
                 .groupBy(member.id)
                 .fetch()
                 .size();

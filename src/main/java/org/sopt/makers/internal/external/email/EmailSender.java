@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.domain;
+package org.sopt.makers.internal.external.email;
 
 import lombok.AllArgsConstructor;
 import lombok.val;

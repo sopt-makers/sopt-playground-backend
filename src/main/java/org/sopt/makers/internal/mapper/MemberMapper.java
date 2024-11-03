@@ -26,7 +26,7 @@ import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
 public interface MemberMapper {
     MemberResponse toResponse(Member member);
     InternalMemberResponse toInternalResponse(Member member, Integer latestGeneration);
-    MemberProfileResponse toProfileResponse (Member member);
+    MemberProfileResponse toProfileResponse (Member member, Boolean isCoffeeChatActivate);
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
     WordChainGameGenerateResponse.UserResponse toUserResponse (Member member);
     WordChainGameRoomResponse.WordResponse.UserResponse toAllGameRoomResponse (Member member);
