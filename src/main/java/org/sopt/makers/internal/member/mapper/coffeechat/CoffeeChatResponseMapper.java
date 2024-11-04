@@ -7,6 +7,7 @@ import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatSection;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatTopicType;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
@@ -54,6 +55,7 @@ public class CoffeeChatResponseMapper {
                 member.getIsPhoneBlind() ? null : member.getPhone(),
                 member.getEmail(),
                 coffeeChat.getIntroduction(),
+                coffeeChat.getSection().stream().map(CoffeeChatSection::getTitle).toList(),
                 coffeeChat.getCoffeeChatTopicType().stream().map(CoffeeChatTopicType::getTitle).toList(),
                 coffeeChat.getTopic(),
                 coffeeChat.getMeetingType().getTitle(),

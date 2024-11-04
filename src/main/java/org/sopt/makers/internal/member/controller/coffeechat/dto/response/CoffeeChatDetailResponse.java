@@ -24,6 +24,8 @@ public record CoffeeChatDetailResponse(
 
         String introduction,
 
+        List<String> sections,
+
         List<String> topicTypeList,
 
         String topic,
