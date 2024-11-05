@@ -36,9 +36,9 @@ public class CoffeeChatRetriever {
         return coffeeChatRepository.existsCoffeeChatByMember(member);
     }
 
-    public CoffeeChat findCoffeeChatAndCheckIsActivated(Member member) {
+    public CoffeeChat findCoffeeChatAndCheckIsActivated(Member member, Boolean isMine) {
         return coffeeChatRepository.findCoffeeChatByMember(member)
-                .filter(coffeeChat -> coffeeChat.getIsCoffeeChatActivate() || coffeeChat.getMember().equals(member))
+                .filter(coffeeChat -> coffeeChat.getIsCoffeeChatActivate() || isMine)
                 .orElseThrow(() -> new NotFoundDBEntityException("커피챗 정보를 확인할 수 없는 유저입니다. member id: " + member.getId()));
     }
 
