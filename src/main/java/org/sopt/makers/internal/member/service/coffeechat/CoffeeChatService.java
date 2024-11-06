@@ -89,6 +89,12 @@ public class CoffeeChatService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public Boolean isCoffeeChatExist (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        return coffeeChatRetriever.existsCoffeeChat(member);
+    }
+
     @Transactional
     public void updateCoffeeChatOpen(Long memberId, CoffeeChatOpenRequest request) {
         Member member = memberRetriever.findMemberById(memberId);

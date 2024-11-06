@@ -1,7 +1,5 @@
 package org.sopt.makers.internal.member.controller.dto.response;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 public record MemberInfoResponse(
 
         Long id,
@@ -16,6 +14,6 @@ public record MemberInfoResponse(
 
         Boolean editActivitiesAble,
 
-        Boolean isCoffeeChatActivate
+        Boolean hasCoffeeChat
 ) {
 }
