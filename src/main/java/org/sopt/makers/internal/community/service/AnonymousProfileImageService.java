@@ -16,6 +16,7 @@ import java.util.Map;
 public class AnonymousProfileImageService {
 
     private final AnonymousProfileImageRepository anonymousProfileImageRepository;
+    private final static Long MAKERS_LOGO_IMAGE_ID = 6L;
 
     public AnonymousProfileImageService(AnonymousProfileImageRepository anonymousProfileImageRepository) {
         this.anonymousProfileImageRepository = anonymousProfileImageRepository;
@@ -47,7 +48,9 @@ public class AnonymousProfileImageService {
     private void initializeProfileImageMap() {
         List<AnonymousProfileImage> anonymousProfileImages = anonymousProfileImageRepository.findAll();
         for (AnonymousProfileImage image : anonymousProfileImages) {
-            profileImageMap.put(image.getId(), image);
+            if (!image.getId().equals(MAKERS_LOGO_IMAGE_ID)) {
+                profileImageMap.put(image.getId(), image);
+            }
         }
     }
 }
