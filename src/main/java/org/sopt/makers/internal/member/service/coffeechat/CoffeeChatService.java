@@ -72,7 +72,7 @@ public class CoffeeChatService {
         memberRetriever.checkExistsMemberById(memberId);
 
         Member member = memberRetriever.findMemberById(detailMemberId);
-        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatAndCheckIsActivated(member);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatAndCheckIsActivated(member, memberId.equals(detailMemberId));
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(detailMemberId);
         Boolean isMine = Objects.equals(memberId, detailMemberId);
         return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);
@@ -87,6 +87,12 @@ public class CoffeeChatService {
         } catch (NotFoundDBEntityException ex) {
             return false;
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean isCoffeeChatExist (Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        return coffeeChatRetriever.existsCoffeeChat(member);
     }
 
     @Transactional

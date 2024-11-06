@@ -79,7 +79,7 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val member = memberService.getMemberById(memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        val isCoffeeChatActivate = coffeeChatService.isCoffeeChatExist(member.getId());
         val response = memberResponseMapper.toMemberInfoResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
