@@ -7,6 +7,8 @@ import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class SmsChatSender implements MessageSender {
@@ -20,7 +22,7 @@ public class SmsChatSender implements MessageSender {
 				"연결을 원하신다면 멤버의 전화번호로 직접 연락해 주세요.\n\n" +
 				"- 이름: " + sender.getName() + "\n" +
 				"- 연락처: " + replyInfo + "\n" +
-				"- 파트: " + memberRetriever.concatPartAndGeneration(sender.getId()) + "\n" +
+				"- 파트: " + String.join(", ", memberRetriever.concatPartAndGeneration(sender.getId())) + "\n" +
 				"- 멤버 프로필 링크: https://playground.sopt.org/members/" + sender.getId() + "\n\n" +
 				"- 이런 내용이 궁금해요\n" +
 				content;

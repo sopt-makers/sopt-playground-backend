@@ -43,7 +43,7 @@ public record CoffeeChatDetailsRequest(
 
 			@Schema(required = true)
 			@NotBlank(message = "커피챗 주제는 필수 입력 값입니다.")
-			@Size(max = 200, message = "커피챗 주제는 200자를 초과할 수 없습니다.")
+			@Size(max = 1000, message = "커피챗 주제는 1000자를 초과할 수 없습니다.")
 			String topic,
 
 			@Schema(required = true)

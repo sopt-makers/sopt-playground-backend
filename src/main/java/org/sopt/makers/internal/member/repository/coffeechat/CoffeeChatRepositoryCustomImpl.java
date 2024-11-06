@@ -32,7 +32,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
         return queryFactory
                 .select(Projections.constructor(
                         RecentCoffeeChatInfoDto.class,
-                        coffeeChat.member.id,
+                        member.id,
                         coffeeChat.coffeeChatBio,
                         coffeeChat.coffeeChatTopicType,
                         member.profileImage,
@@ -41,9 +41,20 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         member.university,
                         coffeeChatHistory.createdAt
                 ))
-                .from(coffeeChat)
-                .leftJoin(member).on(coffeeChat.member.id.eq(member.id))
-                .join(coffeeChatHistory).on(coffeeChat.member.id.eq(coffeeChatHistory.receiver.id))
+                .from(coffeeChatHistory)
+                .join(coffeeChat).on(
+                        coffeeChatHistory.receiver.id.eq(coffeeChat.member.id)
+                                .and(coffeeChat.isCoffeeChatActivate.eq(true))
+                )
+                .join(member).on(coffeeChat.member.id.eq(member.id))
+                .where(
+                        coffeeChatHistory.createdAt.eq(
+                                JPAExpressions
+                                        .select(coffeeChatHistory.createdAt.max())
+                                        .from(coffeeChatHistory)
+                                        .where(coffeeChatHistory.receiver.id.eq(member.id))
+                        )
+                )
                 .orderBy(coffeeChatHistory.createdAt.desc())
                 .limit(6)
                 .fetch();
