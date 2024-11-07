@@ -20,8 +20,8 @@ public record MemberPropertiesResponse(
 
         CoffeeChatStatus coffeeChatStatus,
 
-        Integer receivedCoffeeChatCount,
+        Long receivedCoffeeChatCount,
 
-        Integer sentCoffeeChatCount
+        Long sentCoffeeChatCount
 ) {
 }
