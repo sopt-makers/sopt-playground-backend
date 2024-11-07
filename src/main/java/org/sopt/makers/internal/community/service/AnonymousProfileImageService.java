@@ -18,7 +18,6 @@ public class AnonymousProfileImageService {
     public AnonymousProfileImageService(AnonymousProfileImageRepository anonymousProfileImageRepository) {
         this.anonymousProfileImageRepository = anonymousProfileImageRepository;
         initializeProfileImageMap();
-        System.out.println(profileImageMap);
     }
 
     private static final Map<Long, AnonymousProfileImage> profileImageMap = new HashMap<>();
