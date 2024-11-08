@@ -164,9 +164,10 @@ public class MemberController {
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
         val response = MemberProfileSpecificResponse.checkIsBlindPhone(
             memberMapper.toProfileSpecificResponse(
-                member, true, memberProfileProjects, activityResponses, soptActivityResponse
+                member, true, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
             ),
             isMine);
         sortProfileCareer(response);
@@ -193,8 +194,9 @@ public class MemberController {
                 memberProfileProjects
         );
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
         val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);

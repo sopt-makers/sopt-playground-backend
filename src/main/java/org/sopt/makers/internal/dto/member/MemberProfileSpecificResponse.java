@@ -34,7 +34,6 @@ public record MemberProfileSpecificResponse(
         List<MemberCareerResponse> careers,
         Boolean allowOfficial,
         Boolean isCoffeeChatActivate,
-        String coffeeChatBio,
         @Schema(required = true)
         Boolean isMine
 ) {
@@ -116,7 +115,6 @@ public record MemberProfileSpecificResponse(
             response.careers(),
             response.allowOfficial(),
             response.isCoffeeChatActivate(),
-            response.coffeeChatBio(),
             isMine
         );
     }
