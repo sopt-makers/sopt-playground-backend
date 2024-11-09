@@ -28,6 +28,9 @@ import org.sopt.makers.internal.dto.member.MemberResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
+import org.sopt.makers.internal.member.controller.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.controller.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -60,6 +63,7 @@ public class MemberController {
     private final MemberService memberService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
+    private final MemberResponseMapper memberResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
     private final MakersCrewClient makersCrewClient;
     @Operation(summary = "유저 id로 조회 API")
@@ -72,11 +76,12 @@ public class MemberController {
 
     @Operation(summary = "자신의 토큰으로 조회 API")
     @GetMapping("/me")
-    public ResponseEntity<MemberResponse> getMyInformation (
+    public ResponseEntity<MemberInfoResponse> getMyInformation (
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
         val member = memberService.getMemberById(memberDetails.getId());
-        val response = memberMapper.toResponse(member);
+        val isCoffeeChatActivate = coffeeChatService.isCoffeeChatExist(member.getId());
+        val response = memberResponseMapper.toMemberInfoResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -317,6 +322,14 @@ public class MemberController {
     ) {
         memberService.reportUser(memberDetails.getId(), request.reportMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 신고 성공", true));
+    }
+
+    @Operation(summary = "Amplitude 를 위한 user properties 반환 API ")
+    @GetMapping("/property")
+    public ResponseEntity<MemberPropertiesResponse> getUserProperty (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberProperties(memberDetails.getId()));
     }
 
     private void sortProfileCareer (MemberProfileSpecificResponse response) {
