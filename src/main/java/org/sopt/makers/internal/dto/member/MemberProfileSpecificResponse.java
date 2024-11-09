@@ -88,7 +88,7 @@ public record MemberProfileSpecificResponse(
             Boolean isCurrent
     ){}
 
-    public static MemberProfileSpecificResponse checkIsBlindPhone(MemberProfileSpecificResponse response, Boolean isMine) {
+    public static MemberProfileSpecificResponse checkIsBlindPhone(MemberProfileSpecificResponse response, Boolean isMine, Boolean isCoffeeChatActivate) {
         return new MemberProfileSpecificResponse(
             response.name(),
             response.profileImage(),
@@ -114,7 +114,7 @@ public record MemberProfileSpecificResponse(
             response.projects(),
             response.careers(),
             response.allowOfficial(),
-            response.isCoffeeChatActivate(),
+            isCoffeeChatActivate,
             isMine
         );
     }

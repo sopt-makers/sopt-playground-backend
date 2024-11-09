@@ -169,7 +169,7 @@ public class MemberController {
             memberMapper.toProfileSpecificResponse(
                 member, true, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
             ),
-            isMine);
+            isMine, isCoffeeChatActivate);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
