@@ -6,6 +6,7 @@ import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.member.controller.dto.response.MemberInfoResponse;
 import org.sopt.makers.internal.member.controller.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.service.coffeechat.dto.MemberCoffeeChatPropertyDto;
+import org.sopt.makers.internal.member.util.MemberUtil;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,14 +34,8 @@ public class MemberResponseMapper {
             MemberCoffeeChatPropertyDto coffeeChatProperty,
             List<String> activitiesAndGeneration
     ) {
-        List<Integer> generations = activitiesAndGeneration.stream()
-                .map(item -> Integer.parseInt(item.split(" ")[0].replaceAll("[^0-9]", ""))
-                )
-                .toList();
-
-        List<String> activities = activitiesAndGeneration.stream()
-                .map(item -> item.split(" ")[1])
-                .toList();
+        List<Integer> generations = MemberUtil.extractGenerations(activitiesAndGeneration);
+        List<String> activities = MemberUtil.extractActivities(activitiesAndGeneration);
 
         return new MemberPropertiesResponse(
                 member.getId(),
