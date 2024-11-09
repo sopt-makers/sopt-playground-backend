@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -26,8 +25,14 @@ import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
+import org.sopt.makers.internal.member.controller.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
+import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
+import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatRetriever;
+import org.sopt.makers.internal.member.service.coffeechat.dto.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.repository.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
@@ -46,6 +51,10 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Service
 public class MemberService {
+    private final MemberRetriever memberRetriever;
+    private final CoffeeChatRetriever coffeeChatRetriever;
+    private final MemberCareerRetriever memberCareerRetriever;
+    private final MemberResponseMapper memberResponseMapper;
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final MemberRepository memberRepository;
@@ -448,6 +457,16 @@ public class MemberService {
                 .reporter(reporter)
                 .reportedMember(reportedMember).build()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public MemberPropertiesResponse getMemberProperties(Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(memberId);
+        MemberCoffeeChatPropertyDto coffeeChatProperty = coffeeChatRetriever.getMemberCoffeeChatProperty(member);
+        List<String> activitiesAndGeneration = memberRetriever.concatPartAndGeneration(memberId);
+
+        return memberResponseMapper.toMemberPropertiesResponse(member, memberCareer, coffeeChatProperty, activitiesAndGeneration);
     }
 
     private void sendReportToSlack(Member reporter, Member reportedMember) {
