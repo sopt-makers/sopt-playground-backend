@@ -41,7 +41,8 @@ public interface MemberMapper {
         boolean isMine,
         List<MemberProfileProjectDao> projects,
         List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
-        List<MemberProfileProjectVo> soptActivities
+        List<MemberProfileProjectVo> soptActivities,
+        Boolean isCoffeeChatActivate
     );
 
     @Mapping(target = "activities", source = "activities")
@@ -49,7 +50,8 @@ public interface MemberMapper {
             Member member,
             boolean isMine,
             List<MemberProfileProjectDao> projects,
-            List<MemberProfileSpecificResponse.MemberActivityResponse> activities
+            List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
+            Boolean isCoffeeChatActivate
     );
 
     @Mapping(target = "activities", source = "activities")
