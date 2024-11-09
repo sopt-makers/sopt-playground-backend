@@ -13,13 +13,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByAuthUserId(String authId);
 
-    Optional<Member> findByIdAndHasProfileTrue(Long id);
-
     List<Member> findAllByNameContaining(String name);
-
-    List<Member> findAllByHasProfileTrue();
-
-    List<Member> findAllByIsCoffeeChatActivateTrue();
 
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
     Long countByIdIn(Set<Long> memberIds);
