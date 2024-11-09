@@ -6,7 +6,6 @@ import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,17 +134,6 @@ public class Member {
     @Column(nullable = false)
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
-
-    @Builder.Default
-    @Column(nullable = false)
-    @ColumnDefault("false")
-    private Boolean isCoffeeChatActivate = false;
-
-    @Column(name = "coffee_chat_bio")
-    private String coffeeChatBio;
-
-    @Column(name = "coffee_chat_updated_at")
-    private LocalDateTime coffeeChatUpdatedAt;
 
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
