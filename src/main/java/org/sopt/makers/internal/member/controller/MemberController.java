@@ -170,7 +170,7 @@ public class MemberController {
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = MemberProfileSpecificResponse.applyIsPhoneBlind(
+        val response = MemberProfileSpecificResponse.applyPhoneMasking(
             memberMapper.toProfileSpecificResponse(
                 member, true, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
             ),

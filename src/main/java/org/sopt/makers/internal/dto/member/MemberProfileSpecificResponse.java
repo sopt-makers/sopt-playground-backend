@@ -88,7 +88,7 @@ public record MemberProfileSpecificResponse(
             Boolean isCurrent
     ){}
 
-    public static MemberProfileSpecificResponse applyIsPhoneBlind(MemberProfileSpecificResponse response, Boolean isMine, Boolean isCoffeeChatActivate) {
+    public static MemberProfileSpecificResponse applyPhoneMasking(MemberProfileSpecificResponse response, Boolean isMine, Boolean isCoffeeChatActivate) {
         return new MemberProfileSpecificResponse(
             response.name(),
             response.profileImage(),
