@@ -34,7 +34,6 @@ public record MemberProfileSpecificResponse(
         List<MemberCareerResponse> careers,
         Boolean allowOfficial,
         Boolean isCoffeeChatActivate,
-        String coffeeChatBio,
         @Schema(required = true)
         Boolean isMine
 ) {
@@ -89,7 +88,7 @@ public record MemberProfileSpecificResponse(
             Boolean isCurrent
     ){}
 
-    public static MemberProfileSpecificResponse checkIsBlindPhone(MemberProfileSpecificResponse response, Boolean isMine) {
+    public static MemberProfileSpecificResponse applyPhoneMasking(MemberProfileSpecificResponse response, Boolean isMine, Boolean isCoffeeChatActivate) {
         return new MemberProfileSpecificResponse(
             response.name(),
             response.profileImage(),
@@ -115,8 +114,7 @@ public record MemberProfileSpecificResponse(
             response.projects(),
             response.careers(),
             response.allowOfficial(),
-            response.isCoffeeChatActivate(),
-            response.coffeeChatBio(),
+            isCoffeeChatActivate,
             isMine
         );
     }

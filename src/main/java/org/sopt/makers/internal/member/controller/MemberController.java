@@ -29,6 +29,7 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.member.controller.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.controller.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.MemberService;
@@ -168,11 +169,12 @@ public class MemberController {
                 new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
                 ).collect(Collectors.toList());
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val response = MemberProfileSpecificResponse.checkIsBlindPhone(
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        val response = MemberProfileSpecificResponse.applyPhoneMasking(
             memberMapper.toProfileSpecificResponse(
-                member, true, memberProfileProjects, activityResponses, soptActivityResponse
+                member, true, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
             ),
-            isMine);
+            isMine, isCoffeeChatActivate);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -197,8 +199,9 @@ public class MemberController {
                 memberProfileProjects
         );
         val isMine = Objects.equals(member.getId(), memberDetails.getId());
+        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
         val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
         );
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -319,6 +322,14 @@ public class MemberController {
     ) {
         memberService.reportUser(memberDetails.getId(), request.reportMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 신고 성공", true));
+    }
+
+    @Operation(summary = "Amplitude 를 위한 user properties 반환 API ")
+    @GetMapping("/property")
+    public ResponseEntity<MemberPropertiesResponse> getUserProperty (
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberProperties(memberDetails.getId()));
     }
 
     private void sortProfileCareer (MemberProfileSpecificResponse response) {
