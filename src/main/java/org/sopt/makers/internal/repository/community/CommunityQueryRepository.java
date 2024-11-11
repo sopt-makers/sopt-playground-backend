@@ -136,7 +136,7 @@ public class CommunityQueryRepository {
             .fetchFirst();
     }
 
-    public PostCategoryDao findRecentPost() {
+    public PostCategoryDao findRecentPost(String categoryName) {
         QCommunityPost posts = QCommunityPost.communityPost;
         QCategory category = QCategory.category;
 
@@ -144,6 +144,7 @@ public class CommunityQueryRepository {
                 .select(new QPostCategoryDao(posts, category))
                 .from(posts)
                 .innerJoin(category).on(posts.categoryId.eq(category.id))
+                .where(category.name.eq(categoryName))
                 .orderBy(posts.id.desc())
                 .fetchFirst();
     }

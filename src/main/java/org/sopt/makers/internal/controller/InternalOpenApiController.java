@@ -20,6 +20,7 @@ import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.InternalCoffeeChatMemberResponse;
+import org.sopt.makers.internal.member.controller.dto.response.InternalMemberInfoResponse;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.service.InternalApiService;
@@ -147,6 +148,15 @@ public class InternalOpenApiController {
             request.getValueByKey(SearchContent.MBTI));
         val response = new InternalRecommendMemberListResponse(memberIds);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "회원 프로필 및 활동 정보 조회 API")
+    @GetMapping("members/{memberId}/project")
+    public ResponseEntity<InternalMemberInfoResponse> getMemberProject(
+            @RequestParam Long memberId
+    ) {
+        Member member = memberService.getMemberProfileProjects(memberId);
+
     }
 
     @Operation(
@@ -292,10 +302,19 @@ public class InternalOpenApiController {
         }
     }
 
-    @Operation(summary = "최근 Community Post 조회 API")
-    @GetMapping("/community/post/recent")
-    public ResponseEntity<InternalCommunityPost> getRecentPost () {
-        PostCategoryDao recentPost = communityPostService.getRecentPost();
+    @Operation(
+            summary = "최근 Community Post 조회 API",
+            description= """
+                    요청 category별 가장 최근의 게시물을 반환하는 API입니다.
+                    
+                    [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
+                    * 각 대분류의 소분류로도 조회 가능합니다. 
+            """)
+    @GetMapping("/community/post/{category}/recent")
+    public ResponseEntity<InternalCommunityPost> getRecentPost (
+            @RequestParam String category
+    ) {
+        PostCategoryDao recentPost = communityPostService.getRecentPost(category);
         InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
