@@ -1,7 +1,9 @@
 package org.sopt.makers.internal.mapper;
 
 import lombok.val;
+import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.dto.internal.InternalMemberProjectResponse;
 import org.sopt.makers.internal.dto.internal.InternalProjectDetailResponse;
 import org.sopt.makers.internal.dto.internal.InternalProjectResponse;
 import org.sopt.makers.internal.dto.project.ProjectDetailResponse;
@@ -146,6 +148,10 @@ public class ProjectResponseMapper {
 
     public InternalProjectDetailResponse.ProjectLinkResponse toInternalProjectDetailLinkResponse (ProjectLinkDao project) {
         return new InternalProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    }
+
+    public InternalMemberProjectResponse toInternalMemberProjectResponse (Member member, int count) {
+        return new InternalMemberProjectResponse(member.getId(), member.getProfileImage(), count);
     }
 
     private String truncateString(String str) {

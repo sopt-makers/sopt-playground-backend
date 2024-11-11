@@ -20,11 +20,12 @@ import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.InternalCoffeeChatMemberResponse;
-import org.sopt.makers.internal.member.controller.dto.response.InternalMemberInfoResponse;
+import org.sopt.makers.internal.dto.internal.InternalMemberProjectResponse;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.service.InternalApiService;
 import org.sopt.makers.internal.service.MemberService;
+import org.sopt.makers.internal.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,16 +49,19 @@ public class InternalOpenApiController {
 
     private final InternalApiService internalApiService;
     private final MemberService memberService;
-    private final ProjectResponseMapper projectMapper;
     private final MemberMapper memberMapper;
+    private final CoffeeChatResponseMapper coffeeChatResponseMapper;
+
+    private final ProjectService projectService;
+    private final ProjectResponseMapper projectMapper;
+
+    private final CommunityPostService communityPostService;
     private final CommunityResponseMapper communityMapper;
 
     private final AuthConfig authConfig;
     private final List<String> organizerPartName = List.of(
             "운영 팀장", "미디어 팀장", "총무", "회장", "부회장", "웹 파트장", "기획 파트장",
             "서버 파트장", "디자인 파트장", "안드로이드 파트장", "iOS 파트장", "메이커스 리드");
-    private final CommunityPostService communityPostService;
-    private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/projects/{id}")
@@ -152,11 +156,13 @@ public class InternalOpenApiController {
 
     @Operation(summary = "회원 프로필 및 활동 정보 조회 API")
     @GetMapping("members/{memberId}/project")
-    public ResponseEntity<InternalMemberInfoResponse> getMemberProject(
+    public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
             @RequestParam Long memberId
     ) {
-        Member member = memberService.getMemberProfileProjects(memberId);
-
+        Member member = memberService.getMemberById(memberId);
+        int count = projectService.getProjectCountByMemberId(memberId);
+        InternalMemberProjectResponse response = projectMapper.toInternalMemberProjectResponse(member,count);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(
