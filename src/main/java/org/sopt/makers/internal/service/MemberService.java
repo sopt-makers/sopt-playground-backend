@@ -28,6 +28,7 @@ import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.member.controller.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
@@ -207,6 +208,14 @@ public class MemberService {
         val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
         if (isNullResult) return null;
         else return team;
+    }
+
+    @Transactional(readOnly = true)
+    public List<InternalCoffeeChatMemberDto> getCoffeeChatActivateMembers() {
+        List<Member> members = memberProfileQueryRepository.findAllMembersByCoffeeChatActivate();
+        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
+                member, memberRetriever.concatPartAndGeneration(member.getId())
+        )).toList();
     }
 
     @Transactional

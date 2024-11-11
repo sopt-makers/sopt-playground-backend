@@ -19,6 +19,9 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.InternalCoffeeChatMemberResponse;
+import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.service.InternalApiService;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -53,6 +56,7 @@ public class InternalOpenApiController {
             "운영 팀장", "미디어 팀장", "총무", "회장", "부회장", "웹 파트장", "기획 파트장",
             "서버 파트장", "디자인 파트장", "안드로이드 파트장", "iOS 파트장", "메이커스 리드");
     private final CommunityPostService communityPostService;
+    private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/projects/{id}")
@@ -293,6 +297,14 @@ public class InternalOpenApiController {
     public ResponseEntity<InternalCommunityPost> getRecentPost () {
         PostCategoryDao recentPost = communityPostService.getRecentPost();
         InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커피챗 오픈 유저 리스트 조회 API")
+    @GetMapping("/members/coffeechat")
+    public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
+        List<InternalCoffeeChatMemberDto> members = memberService.getCoffeeChatActivateMembers();
+        List<InternalCoffeeChatMemberResponse> response = coffeeChatResponseMapper.toInternalCoffeeChatMemberResponse(members);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
