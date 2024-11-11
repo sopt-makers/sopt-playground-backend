@@ -281,6 +281,11 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
+    public PostCategoryDao getRecentPost() {
+        return communityQueryRepository.findRecentPost();
+    }
+
+    @Transactional(readOnly = true)
     public CommunityPost findTodayHotPost(List<CommunityPost> posts) {
         return posts.stream()
             .map(this::createPostWithPoints)

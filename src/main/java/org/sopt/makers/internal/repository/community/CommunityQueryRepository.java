@@ -9,10 +9,7 @@ import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.domain.member.QMemberBlock;
-import org.sopt.makers.internal.dto.community.CategoryPostMemberDao;
-import org.sopt.makers.internal.dto.community.CommentDao;
-import org.sopt.makers.internal.dto.community.QCategoryPostMemberDao;
-import org.sopt.makers.internal.dto.community.QCommentDao;
+import org.sopt.makers.internal.dto.community.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -137,6 +134,18 @@ public class CommunityQueryRepository {
             .where(post.isHot.eq(true))
             .orderBy(post.id.desc())
             .fetchFirst();
+    }
+
+    public PostCategoryDao findRecentPost() {
+        QCommunityPost posts = QCommunityPost.communityPost;
+        QCategory category = QCategory.category;
+
+        return queryFactory
+                .select(new QPostCategoryDao(posts, category))
+                .from(posts)
+                .innerJoin(category).on(posts.categoryId.eq(category.id))
+                .orderBy(posts.id.desc())
+                .fetchFirst();
     }
 
     public void updateHitsByPostId(List<Long> postIdList) {

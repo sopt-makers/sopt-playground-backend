@@ -7,12 +7,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
+import org.sopt.makers.internal.dto.community.InternalCommunityPost;
+import org.sopt.makers.internal.dto.community.PostCategoryDao;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.service.InternalApiService;
@@ -42,11 +46,13 @@ public class InternalOpenApiController {
     private final MemberService memberService;
     private final ProjectResponseMapper projectMapper;
     private final MemberMapper memberMapper;
+    private final CommunityResponseMapper communityMapper;
 
     private final AuthConfig authConfig;
     private final List<String> organizerPartName = List.of(
             "운영 팀장", "미디어 팀장", "총무", "회장", "부회장", "웹 파트장", "기획 파트장",
             "서버 파트장", "디자인 파트장", "안드로이드 파트장", "iOS 파트장", "메이커스 리드");
+    private final CommunityPostService communityPostService;
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/projects/{id}")
@@ -280,5 +286,13 @@ public class InternalOpenApiController {
             response.careers().add(0, currentCareer);
             response.careers().remove(index+1);
         }
+    }
+
+    @Operation(summary = "최근 Community Post 조회 API")
+    @GetMapping("/community/post/recent")
+    public ResponseEntity<InternalCommunityPost> getRecentPost () {
+        PostCategoryDao recentPost = communityPostService.getRecentPost();
+        InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
