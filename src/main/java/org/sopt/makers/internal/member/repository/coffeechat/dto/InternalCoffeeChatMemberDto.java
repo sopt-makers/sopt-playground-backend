@@ -6,13 +6,13 @@ import java.util.List;
 
 public record InternalCoffeeChatMemberDto(
 		Long id,
-		List<String> parts,
 		String name,
+		List<String> parts,
 		String profileImage
 ) {
 	public static InternalCoffeeChatMemberDto of(Member member, List<String> parts) {
 		return new InternalCoffeeChatMemberDto(
-				member.getId(), parts, member.getName(), member.getProfileImage()
+				member.getId(), member.getName(), parts, member.getProfileImage()
 		);
 	}
 }

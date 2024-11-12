@@ -158,7 +158,7 @@ public class InternalOpenApiController {
     @Operation(summary = "회원 프로필 및 활동 정보 조회 API")
     @GetMapping("members/{memberId}/project")
     public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
-            @RequestParam Long memberId
+            @PathVariable Long memberId
     ) {
         Member member = memberService.getMemberById(memberId);
         int count = projectService.getProjectCountByMemberId(memberId);
@@ -317,7 +317,7 @@ public class InternalOpenApiController {
                     [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
                     * 각 대분류의 소분류로도 조회 가능합니다. 
             """)
-    @GetMapping("/community/post/{category}/recent")
+    @GetMapping("/community/post/recent")
     public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
             @RequestParam String category
     ) {

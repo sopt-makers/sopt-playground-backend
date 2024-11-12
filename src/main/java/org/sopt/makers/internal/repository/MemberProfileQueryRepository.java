@@ -369,8 +369,8 @@ public class MemberProfileQueryRepository {
 
         return queryFactory
                 .selectFrom(member)
-                .join(coffeeChat.member, member)
-                .where(coffeeChat.isCoffeeChatActivate.eq(true))
+                .innerJoin(coffeeChat).on(coffeeChat.member.eq(member))
+                .where(coffeeChat.isCoffeeChatActivate.isTrue())
                 .fetch();
     }
 }
