@@ -317,10 +317,10 @@ public class InternalOpenApiController {
                     * 각 대분류의 소분류로도 조회 가능합니다. 
             """)
     @GetMapping("/community/post/{category}/recent")
-    public ResponseEntity<InternalCommunityPost> getRecentPost (
+    public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
             @RequestParam String category
     ) {
-        PostCategoryDao recentPost = communityPostService.getRecentPost(category);
+        PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
         InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

@@ -281,8 +281,8 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public PostCategoryDao getRecentPost(String category) {
-        return communityQueryRepository.findRecentPost(category);
+    public PostCategoryDao getRecentPostByCategory(String category) {
+        return communityQueryRepository.findRecentPostByCategory(category);
     }
 
     @Transactional(readOnly = true)

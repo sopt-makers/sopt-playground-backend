@@ -136,7 +136,7 @@ public class CommunityQueryRepository {
             .fetchFirst();
     }
 
-    public PostCategoryDao findRecentPost(String categoryName) {
+    public PostCategoryDao findRecentPostByCategory(String categoryName) {
         QCommunityPost posts = QCommunityPost.communityPost;
         QCategory category = QCategory.category;
 
