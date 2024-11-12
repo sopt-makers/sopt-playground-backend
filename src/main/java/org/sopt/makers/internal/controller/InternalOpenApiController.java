@@ -7,16 +7,25 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.*;
+import org.sopt.makers.internal.dto.community.InternalCommunityPost;
+import org.sopt.makers.internal.dto.community.PostCategoryDao;
 import org.sopt.makers.internal.dto.internal.*;
 import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.project.ProjectLinkDao;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.mapper.ProjectResponseMapper;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.InternalCoffeeChatMemberResponse;
+import org.sopt.makers.internal.dto.internal.InternalMemberProjectResponse;
+import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.service.InternalApiService;
 import org.sopt.makers.internal.service.MemberService;
+import org.sopt.makers.internal.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,8 +49,15 @@ public class InternalOpenApiController {
 
     private final InternalApiService internalApiService;
     private final MemberService memberService;
-    private final ProjectResponseMapper projectMapper;
     private final MemberMapper memberMapper;
+
+    private final CoffeeChatResponseMapper coffeeChatResponseMapper;
+
+    private final ProjectService projectService;
+    private final ProjectResponseMapper projectMapper;
+
+    private final CommunityPostService communityPostService;
+    private final CommunityResponseMapper communityMapper;
 
     private final AuthConfig authConfig;
     private final List<String> organizerPartName = List.of(
@@ -136,6 +152,17 @@ public class InternalOpenApiController {
             request.getValueByKey(SearchContent.UNIVERSITY),
             request.getValueByKey(SearchContent.MBTI));
         val response = new InternalRecommendMemberListResponse(memberIds);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "회원 프로필 및 활동 정보 조회 API")
+    @GetMapping("members/{memberId}/project")
+    public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
+            @PathVariable Long memberId
+    ) {
+        Member member = memberService.getMemberById(memberId);
+        int count = projectService.getProjectCountByMemberId(memberId);
+        InternalMemberProjectResponse response = projectMapper.toInternalMemberProjectResponse(member,count);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -280,5 +307,30 @@ public class InternalOpenApiController {
             response.careers().add(0, currentCareer);
             response.careers().remove(index+1);
         }
+    }
+
+    @Operation(
+            summary = "최근 Community Post 조회 API",
+            description= """
+                    요청 category별 가장 최근의 게시물을 반환하는 API입니다. (default는 전체 중 최근 게시물을 반환)
+                    
+                    [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
+                    * 각 대분류의 소분류로도 조회 가능합니다. 
+            """)
+    @GetMapping("/community/post/recent")
+    public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
+            @RequestParam(required = false) String category
+    ) {
+        PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
+        InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커피챗 오픈 유저 리스트 조회 API")
+    @GetMapping("/members/coffeechat")
+    public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
+        List<InternalCoffeeChatMemberDto> members = memberService.getAllMemberByCoffeeChatActivate();
+        List<InternalCoffeeChatMemberResponse> response = coffeeChatResponseMapper.toInternalCoffeeChatMemberResponse(members);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

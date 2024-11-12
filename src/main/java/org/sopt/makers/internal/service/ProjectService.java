@@ -186,6 +186,11 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
+    public int getProjectCountByMemberId(Long memberId) {
+        return projectQueryRepository.countProjectsExcludeSopkathon(memberId);
+    }
+
+    @Transactional(readOnly = true)
     public Long getAllCount() {
         return projectRepository.count();
     }

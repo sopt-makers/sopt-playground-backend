@@ -9,10 +9,7 @@ import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.domain.*;
 import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.domain.member.QMemberBlock;
-import org.sopt.makers.internal.dto.community.CategoryPostMemberDao;
-import org.sopt.makers.internal.dto.community.CommentDao;
-import org.sopt.makers.internal.dto.community.QCategoryPostMemberDao;
-import org.sopt.makers.internal.dto.community.QCommentDao;
+import org.sopt.makers.internal.dto.community.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

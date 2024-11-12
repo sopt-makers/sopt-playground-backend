@@ -16,6 +16,7 @@ import org.sopt.makers.internal.domain.QMemberSoptActivity;
 import org.sopt.makers.internal.domain.QProject;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
+import org.sopt.makers.internal.member.domain.coffeechat.QCoffeeChat;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
@@ -360,5 +361,16 @@ public class MemberProfileQueryRepository {
                 .groupBy(member.id)
                 .fetch()
                 .size();
+    }
+
+    public List<Member> findAllMembersByCoffeeChatActivate() {
+        QMember member = QMember.member;
+        QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
+
+        return queryFactory
+                .selectFrom(member)
+                .innerJoin(coffeeChat).on(coffeeChat.member.eq(member))
+                .where(coffeeChat.isCoffeeChatActivate.isTrue())
+                .fetch();
     }
 }
