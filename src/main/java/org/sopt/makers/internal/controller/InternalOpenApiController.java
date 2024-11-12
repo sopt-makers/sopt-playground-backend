@@ -23,7 +23,6 @@ import org.sopt.makers.internal.member.controller.coffeechat.dto.response.Intern
 import org.sopt.makers.internal.dto.internal.InternalMemberProjectResponse;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
-import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.sopt.makers.internal.service.InternalApiService;
 import org.sopt.makers.internal.service.MemberService;
 import org.sopt.makers.internal.service.ProjectService;
@@ -52,7 +51,6 @@ public class InternalOpenApiController {
     private final MemberService memberService;
     private final MemberMapper memberMapper;
 
-    private final CoffeeChatService coffeeChatService;
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
     private final ProjectService projectService;
@@ -331,7 +329,7 @@ public class InternalOpenApiController {
     @Operation(summary = "커피챗 오픈 유저 리스트 조회 API")
     @GetMapping("/members/coffeechat")
     public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
-        List<InternalCoffeeChatMemberDto> members = coffeeChatService.getCoffeeChatActivateMembers();
+        List<InternalCoffeeChatMemberDto> members = memberService.getAllMemberByCoffeeChatActivate();
         List<InternalCoffeeChatMemberResponse> response = coffeeChatResponseMapper.toInternalCoffeeChatMemberResponse(members);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

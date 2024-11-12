@@ -91,14 +91,6 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<InternalCoffeeChatMemberDto> getCoffeeChatActivateMembers() {
-        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
-        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
-                member, memberRetriever.concatPartAndGeneration(member.getId())
-        )).toList();
-    }
-
-    @Transactional(readOnly = true)
     public Boolean isCoffeeChatExist (Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
         return coffeeChatRetriever.existsCoffeeChat(member);

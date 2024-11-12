@@ -210,6 +210,14 @@ public class MemberService {
         else return team;
     }
 
+    @Transactional(readOnly = true)
+    public List<InternalCoffeeChatMemberDto> getAllMemberByCoffeeChatActivate() {
+        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
+        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
+                member, memberRetriever.concatPartAndGeneration(member.getId())
+        )).toList();
+    }
+
     @Transactional
     public Member saveMemberProfile(Long id, MemberProfileSaveRequest request) {
         val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
