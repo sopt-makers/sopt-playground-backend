@@ -15,6 +15,7 @@ import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeC
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
+import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
@@ -87,6 +88,14 @@ public class CoffeeChatService {
         } catch (NotFoundDBEntityException ex) {
             return false;
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<InternalCoffeeChatMemberDto> getCoffeeChatActivateMembers() {
+        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
+        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
+                member, memberRetriever.concatPartAndGeneration(member.getId())
+        )).toList();
     }
 
     @Transactional(readOnly = true)
