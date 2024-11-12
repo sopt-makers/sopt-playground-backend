@@ -312,14 +312,14 @@ public class InternalOpenApiController {
     @Operation(
             summary = "최근 Community Post 조회 API",
             description= """
-                    요청 category별 가장 최근의 게시물을 반환하는 API입니다.
+                    요청 category별 가장 최근의 게시물을 반환하는 API입니다. (default는 전체 중 최근 게시물을 반환)
                     
                     [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
                     * 각 대분류의 소분류로도 조회 가능합니다. 
             """)
     @GetMapping("/community/post/recent")
     public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
-            @RequestParam String category
+            @RequestParam(required = false) String category
     ) {
         PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
         InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);

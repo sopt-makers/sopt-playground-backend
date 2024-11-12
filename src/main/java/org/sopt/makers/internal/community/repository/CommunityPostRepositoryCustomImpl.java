@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.community.repository;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.category.QCategory;
@@ -12,6 +13,11 @@ public class CommunityPostRepositoryCustomImpl implements CommunityPostRepositor
 
 	private final JPAQueryFactory queryFactory;
 
+	private BooleanExpression checkCategoryEqualsName(String categoryName) {
+		if (categoryName == null) return null;
+		return QCategory.category.name.eq(categoryName);
+	}
+
 	@Override
 	public PostCategoryDao findRecentPostByCategory(String categoryName) {
 		QCommunityPost posts = QCommunityPost.communityPost;
@@ -21,7 +27,7 @@ public class CommunityPostRepositoryCustomImpl implements CommunityPostRepositor
 				.select(new QPostCategoryDao(posts, category))
 				.from(posts)
 				.innerJoin(category).on(posts.categoryId.eq(category.id))
-				.where(category.name.eq(categoryName))
+				.where(checkCategoryEqualsName(categoryName))
 				.orderBy(posts.id.desc())
 				.fetchFirst();
 	}
