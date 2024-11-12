@@ -136,19 +136,6 @@ public class CommunityQueryRepository {
             .fetchFirst();
     }
 
-    public PostCategoryDao findRecentPostByCategory(String categoryName) {
-        QCommunityPost posts = QCommunityPost.communityPost;
-        QCategory category = QCategory.category;
-
-        return queryFactory
-                .select(new QPostCategoryDao(posts, category))
-                .from(posts)
-                .innerJoin(category).on(posts.categoryId.eq(category.id))
-                .where(category.name.eq(categoryName))
-                .orderBy(posts.id.desc())
-                .fetchFirst();
-    }
-
     public void updateHitsByPostId(List<Long> postIdList) {
         val post = QCommunityPost.communityPost;
 

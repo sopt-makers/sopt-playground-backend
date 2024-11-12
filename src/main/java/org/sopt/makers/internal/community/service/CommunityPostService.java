@@ -42,28 +42,33 @@ import java.util.stream.Collectors;
 @Service
 public class CommunityPostService {
 
-    private final AnonymousProfileImageService anonymousProfileImageService;
-
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
     private final CommunityCommentRepository communityCommentRepository;
-    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
-    private final AnonymousNicknameRepository anonymousNicknameRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
-    private final MemberRepository memberRepository;
-    private final CategoryRepository categoryRepository;
-    private final PostRepository postRepository;
-    private final ReportPostRepository reportPostRepository;
     private final CommunityPostRepository communityPostRepository;
+
+    private final CommunityQueryRepository communityQueryRepository;
+
     private final DeletedCommunityPostRepository deletedCommunityPostRepository;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
-    private final CommunityMapper communityMapper;
-    private final CommunityQueryRepository communityQueryRepository;
+
+    private final ReportPostRepository reportPostRepository;
+    private final PostRepository postRepository;
+    private final CategoryRepository categoryRepository;
+    private final MemberRepository memberRepository;
     private final MemberBlockRepository memberBlockRepository;
+
+    private final AnonymousProfileImageService anonymousProfileImageService;
+    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final AnonymousNicknameRepository anonymousNicknameRepository;
+
+    private final CommunityMapper communityMapper;
     private final CommunityResponseMapper communityResponseMapper;
+
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
 
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
@@ -282,7 +287,7 @@ public class CommunityPostService {
 
     @Transactional(readOnly = true)
     public PostCategoryDao getRecentPostByCategory(String category) {
-        return communityQueryRepository.findRecentPostByCategory(category);
+        return communityPostRepository.findRecentPostByCategory(category);
     }
 
     @Transactional(readOnly = true)
