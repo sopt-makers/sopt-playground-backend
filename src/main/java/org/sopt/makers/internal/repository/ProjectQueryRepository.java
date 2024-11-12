@@ -147,4 +147,20 @@ public class ProjectQueryRepository {
                 .fetch()
                 .size();
     }
+
+    public int countProjectsExcludeSopkathon(Long memberId) {
+        QMember member = QMember.member;
+        QProject project = QProject.project;
+        QMemberProjectRelation relation = QMemberProjectRelation.memberProjectRelation;
+
+        return queryFactory.select(project.id)
+                .from(project)
+                .innerJoin(relation).on(relation.projectId.eq(project.id))
+                .innerJoin(member).on(relation.userId.eq(member.id))
+                .where(
+                    member.id.eq(memberId)
+                    .and(project.category.ne("SOPKATHON")))
+                .fetch()
+                .size();
+    }
 }

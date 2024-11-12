@@ -90,4 +90,8 @@ public class CommunityResponseMapper {
     public AnonymousProfileVo toAnonymousCommentProfileVo(AnonymousCommentProfile profile) {
         return new AnonymousProfileVo(profile.getNickname().getNickname(), profile.getProfileImg().getImageUrl());
     }
+
+    public InternalCommunityPost toInternalCommunityPostResponse(PostCategoryDao dao) {
+        return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot());
+    }
 }
