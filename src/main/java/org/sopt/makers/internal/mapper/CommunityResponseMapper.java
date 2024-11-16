@@ -92,6 +92,6 @@ public class CommunityResponseMapper {
     }
 
     public InternalCommunityPost toInternalCommunityPostResponse(PostCategoryDao dao) {
-        return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot());
+        return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
     }
 }
