@@ -5,5 +5,6 @@ public record InternalCommunityPost(
 		String title,
 		String category,
 		String[] images,
-		Boolean isHotPost
+		Boolean isHotPost,
+		String content
 ) { }
