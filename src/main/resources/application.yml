@@ -115,6 +115,5 @@ gabia:
 
 management:
   endpoints:
-    enabled-by-default: false
     web:
       base-path: test

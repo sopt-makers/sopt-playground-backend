@@ -109,3 +109,8 @@ gabia:
   sms-id: test
   api-key: test
   send-number: test
+
+management:
+  endpoints:
+    web:
+      base-path: test
