@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.controller.filter.JwtAuthenticationFilter;
 import org.sopt.makers.internal.controller.filter.JwtExceptionFilter;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,12 +23,13 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final WebEndpointProperties webEndpointProperties;
 
-    @Value("${management.endpoints.web.base-path}")
-    private String actuatorEndpoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        String actuatorEndpoint = webEndpointProperties.getBasePath();
+
         return http.antMatcher("/**")
                 .httpBasic().disable()
                 .formLogin().disable()

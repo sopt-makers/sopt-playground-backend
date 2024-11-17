@@ -100,7 +100,7 @@ push-notification:
   action: test
   x-api-key: test
   service: test
-  
+
 crew:
   server-url: test
 
@@ -112,8 +112,3 @@ gabia:
   sms-id: test
   api-key: test
   send-number: test
-
-management:
-  endpoints:
-    web:
-      base-path: test
