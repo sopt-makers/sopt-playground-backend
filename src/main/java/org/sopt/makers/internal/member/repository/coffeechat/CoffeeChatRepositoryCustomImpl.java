@@ -96,6 +96,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .leftJoin(member).on(coffeeChat.member.id.eq(member.id))
                 .leftJoin(memberCareer).on(coffeeChat.member.id.eq(memberCareer.memberId))
                 .where(builder)
+                .orderBy(coffeeChat.createdAt.desc())
                 .fetch();
     }
 
