@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;

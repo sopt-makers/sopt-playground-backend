@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.community.*;
@@ -97,7 +98,7 @@ public class CommunityController {
     @PostMapping("/posts")
     public ResponseEntity<PostSaveResponse> createPost(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-            @RequestBody PostSaveRequest request
+            @RequestBody @Valid PostSaveRequest request
     ) {
         val response = communityPostService.createPost(memberDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
