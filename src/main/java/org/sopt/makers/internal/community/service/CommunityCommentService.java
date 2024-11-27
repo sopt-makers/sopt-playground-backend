@@ -23,7 +23,7 @@ import org.sopt.makers.internal.repository.community.AnonymousCommentProfileRepo
 import org.sopt.makers.internal.repository.community.AnonymousNicknameRepository;
 import org.sopt.makers.internal.repository.community.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
-import org.sopt.makers.internal.repository.community.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
 import org.sopt.makers.internal.repository.community.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.repository.community.ReportCommentRepository;

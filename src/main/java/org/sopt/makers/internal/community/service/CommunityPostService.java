@@ -10,6 +10,7 @@ import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest
 import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
+import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.category.CategoryRepository;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.community.*;

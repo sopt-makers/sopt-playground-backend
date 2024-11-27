@@ -1,10 +1,9 @@
-package org.sopt.makers.internal.repository.community;
+package org.sopt.makers.internal.community.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.sopt.makers.internal.community.repository.CommunityPostRepositoryCustom;
 import org.sopt.makers.internal.domain.community.CommunityPost;
 import org.springframework.data.jpa.repository.JpaRepository;
 
