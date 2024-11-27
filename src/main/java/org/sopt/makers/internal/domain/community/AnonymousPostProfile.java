@@ -12,6 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
 import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 

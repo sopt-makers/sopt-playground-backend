@@ -1,7 +1,7 @@
 package org.sopt.makers.internal.community.service;
 
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
-import org.sopt.makers.internal.domain.community.CommunityPost;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 

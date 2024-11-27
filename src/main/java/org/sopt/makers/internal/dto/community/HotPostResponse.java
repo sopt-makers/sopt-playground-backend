@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.dto.community;
 
-import org.sopt.makers.internal.domain.community.CommunityPost;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 
 public record HotPostResponse(
 	Long id,
