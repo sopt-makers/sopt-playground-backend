@@ -7,12 +7,17 @@ import lombok.val;
 import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
-import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.anonymous.AnonymousNicknameRepository;
+import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.community.repository.category.CategoryRepository;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileModifier;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
@@ -21,6 +26,7 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.repository.community.*;
@@ -34,7 +40,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +49,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class CommunityPostService {
+
+    private final AnonymousPostProfileService anonymousPostProfileService;
+
+    private final CommunityPostModifier communityPostModifier;
+
+    private final AnonymousPostProfileModifier anonymousPostProfileModifier;
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
+    private final AnonymousNicknameRetriever anonymousNicknameRetriever;
+
+    private final MemberRetriever memberRetriever;
 
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
@@ -107,38 +122,11 @@ public class CommunityPostService {
 
     @Transactional
     public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
-        Member member = MemberServiceUtil.findMemberById(memberRepository, writerId);
-        CommunityPost post = communityPostRepository.save(CommunityPost.builder()
-                .member(member)
-                .categoryId(request.categoryId())
-                .title(request.title())
-                .content(request.content())
-                .hits(0)
-                .images(request.images())
-                .isQuestion(request.isQuestion())
-                .isBlindWriter(request.isBlindWriter())
-                .comments(new ArrayList<>())
-                .build());
+        Member member = memberRetriever.findMemberById(writerId);
+        CommunityPost post = communityPostModifier.createCommunityPost(member, request);
+        anonymousPostProfileService.createAnonymousPostProfile(request.isBlindWriter(), member, post);
 
-        if (request.isBlindWriter()) {
-            List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRepository.findTop4ByOrderByCreatedAtDesc();
-            List<AnonymousPostProfile> lastFiftyAnonymousNickname = anonymousPostProfileRepository.findTop50ByOrderByCreatedAtDesc();
-            List<Long> usedAnonymousProfileImages = lastFourAnonymousPostProfiles.stream()
-                    .map(anonymousProfile -> anonymousProfile.getProfileImg().getId()).toList();
-            List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousNickname.stream()
-                    .map(AnonymousPostProfile::getNickname).toList();
-
-            AnonymousProfileImage anonymousProfileImg = anonymousProfileImageService.getRandomProfileImage(usedAnonymousProfileImages);
-            AnonymousNickname anonymousNickname = AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, usedAnonymousNicknames);
-            anonymousPostProfileRepository.save(AnonymousPostProfile.builder()
-                    .member(member)
-                    .nickname(anonymousNickname)
-                    .profileImg(anonymousProfileImg)
-                    .communityPost(post)
-                    .build()
-            );
-        }
-
+        // 비메이커스가 글 작성시 슬랙 발송
         if (!MakersMemberId.getMakersMember().contains(member.getId()) && Objects.equals(activeProfile, "prod")) {
             val slackRequest = createPostSlackRequest(post.getId());
             slackClient.postNotMakersMessage(slackRequest.toString());
