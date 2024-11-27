@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.repository.community;
+package org.sopt.makers.internal.community.repository.anonymous;
 
 import java.util.List;
 import java.util.Optional;
