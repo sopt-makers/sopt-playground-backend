@@ -100,8 +100,10 @@ public class CommunityController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody @Valid PostSaveRequest request
     ) {
-        val response = communityPostService.createPost(memberDetails.getId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                communityPostService.createPost(memberDetails.getId(), request)
+        );
     }
 
     @Operation(summary = "커뮤니티 글 수정")
