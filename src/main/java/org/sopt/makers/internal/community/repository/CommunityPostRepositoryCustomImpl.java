@@ -3,8 +3,8 @@ package org.sopt.makers.internal.community.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.community.domain.QCommunityPost;
 import org.sopt.makers.internal.community.domain.category.QCategory;
-import org.sopt.makers.internal.domain.community.QCommunityPost;
 import org.sopt.makers.internal.dto.community.PostCategoryDao;
 import org.sopt.makers.internal.dto.community.QPostCategoryDao;
 
