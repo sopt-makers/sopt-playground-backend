@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.community.repository.anonymous;
 
-import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

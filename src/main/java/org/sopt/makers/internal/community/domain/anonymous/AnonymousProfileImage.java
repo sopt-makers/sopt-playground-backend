@@ -1,11 +1,14 @@
-package org.sopt.makers.internal.community.domain;
+package org.sopt.makers.internal.community.domain.anonymous;
 
-import lombok.Getter;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class AnonymousProfileImage {
 
     @Id

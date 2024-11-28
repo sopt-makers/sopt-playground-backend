@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.community.service;
 
-import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousProfileImageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

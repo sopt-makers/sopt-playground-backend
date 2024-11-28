@@ -1,10 +1,9 @@
 package org.sopt.makers.internal.community.repository.anonymous;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.community.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.springframework.data.jpa.repository.JpaRepository;
 

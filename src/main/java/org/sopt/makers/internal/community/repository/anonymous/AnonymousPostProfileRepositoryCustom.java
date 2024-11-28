@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.community.repository.anonymous;
 
-import org.sopt.makers.internal.domain.community.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 
 import java.util.List;
 

@@ -9,6 +9,7 @@ import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousNicknameRepository;

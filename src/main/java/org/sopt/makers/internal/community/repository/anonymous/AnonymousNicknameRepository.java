@@ -2,7 +2,7 @@ package org.sopt.makers.internal.community.repository.anonymous;
 
 import java.util.List;
 
-import org.sopt.makers.internal.domain.community.AnonymousNickname;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

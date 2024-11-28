@@ -4,7 +4,7 @@ import lombok.val;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
-import org.sopt.makers.internal.domain.community.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.dto.community.*;

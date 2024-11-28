@@ -2,7 +2,7 @@ package org.sopt.makers.internal.community.repository.anonymous;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.domain.community.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.domain.community.QAnonymousPostProfile;
 
 import java.util.List;
