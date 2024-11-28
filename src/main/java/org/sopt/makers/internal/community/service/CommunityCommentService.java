@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
@@ -45,6 +46,7 @@ import lombok.val;
 @Slf4j
 public class CommunityCommentService {
 
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
@@ -59,7 +61,6 @@ public class CommunityCommentService {
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
     private final AnonymousNicknameRepository anonymousNicknameRepository;
     private final InternalApiService internalApiService;
-    private final AnonymousProfileImageService anonymousProfileImageService;
     private final PushNotificationService pushNotificationService;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
@@ -97,7 +98,7 @@ public class CommunityCommentService {
         if (request.isBlindWriter() && anonymousCommentProfile.isEmpty()) {
             anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
                 .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNickname))
-                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : anonymousProfileImageService.getRandomProfileImage(excludeImgList))
+                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : anonymousProfileImageRetriever.getAnonymousProfileImage(excludeImgList))
                 .member(member)
                 .communityComment(comment)
                 .build());

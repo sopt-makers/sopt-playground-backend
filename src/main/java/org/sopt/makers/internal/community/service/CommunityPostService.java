@@ -15,10 +15,7 @@ import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousNicknameRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.community.repository.category.CategoryRepository;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileModifier;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
+import org.sopt.makers.internal.community.service.anonymous.*;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
@@ -76,7 +73,6 @@ public class CommunityPostService {
     private final MemberRepository memberRepository;
     private final MemberBlockRepository memberBlockRepository;
 
-    private final AnonymousProfileImageService anonymousProfileImageService;
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
     private final AnonymousNicknameRepository anonymousNicknameRepository;
 
