@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.service.community.anonymous;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,7 +48,7 @@ public class AnonymousProfileImageRetrieverTest {
         verify(anonymousProfileImageRepository, times(1)).findAllByIdNot(MAKERS_LOGO_IMAGE_ID);
     }
 
-    @Test
+    @RepeatedTest(10)
     @DisplayName("recentUsedAnonymousProfileImageIds가 비어있을 때 랜덤 이미지를 반환한다.")
     void getAnonymousProfileImage_randomSelection() {
         // Given
