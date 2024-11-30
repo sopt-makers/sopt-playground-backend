@@ -6,11 +6,11 @@ import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class AnonymousPostProfileService {
 
