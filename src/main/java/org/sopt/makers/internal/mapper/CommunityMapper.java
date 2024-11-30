@@ -2,7 +2,7 @@ package org.sopt.makers.internal.mapper;
 
 import org.mapstruct.Mapper;
 import org.sopt.makers.internal.domain.community.CommunityComment;
-import org.sopt.makers.internal.domain.community.CommunityPost;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.domain.community.DeletedCommunityComment;
 import org.sopt.makers.internal.domain.community.DeletedCommunityPost;
 

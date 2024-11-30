@@ -3,8 +3,6 @@ package org.sopt.makers.internal.domain.community;
 import javax.persistence.Column;
 import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,7 +11,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 

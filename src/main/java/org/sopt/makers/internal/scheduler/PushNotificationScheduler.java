@@ -7,7 +7,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.PessimisticLockException;
 
 import org.sopt.makers.internal.community.service.CommunityPostService;
-import org.sopt.makers.internal.domain.community.CommunityPost;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
 import org.sopt.makers.internal.service.PushNotificationService;
 import org.springframework.dao.PessimisticLockingFailureException;
