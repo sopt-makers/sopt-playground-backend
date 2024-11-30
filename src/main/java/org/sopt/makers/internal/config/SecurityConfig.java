@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.controller.filter.JwtAuthenticationFilter;
 import org.sopt.makers.internal.controller.filter.JwtExceptionFilter;
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,9 +23,13 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final WebEndpointProperties webEndpointProperties;
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        String actuatorEndpoint = webEndpointProperties.getBasePath();
+
         return http.antMatcher("/**")
                 .httpBasic().disable()
                 .formLogin().disable()
@@ -34,7 +39,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                     .authorizeHttpRequests()
-                    .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/webjars/swagger-ui/**", "/swagger-ui/**", "/makers/**").permitAll()
+                    .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/webjars/swagger-ui/**", "/swagger-ui/**", "/makers/**", actuatorEndpoint+"/prometheus", actuatorEndpoint+"/metrics").permitAll()
                 .and()
                     .authorizeHttpRequests()
                         .antMatchers("/internal/api/v1/projects/**", "/internal/api/v1/members/**", "/internal/api/v1/sopticles/**", "/internal/api/v1/profile",
