@@ -10,11 +10,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousProfileImageRepository;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
+import org.sopt.makers.internal.exception.BusinessLogicException;
 
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,5 +69,49 @@ public class AnonymousProfileImageRetrieverTest {
 
         // Then
         assertThat(randomImage.getId()).isBetween(1L, 5L);
+    }
+
+    @Test
+    @DisplayName("recentUsedAnonymousProfileImageIds에 포함되지 않은 이미지를 반환한다.")
+    void getAnonymousProfileImage_excludeRecentIds() {
+        // Given
+        List<AnonymousProfileImage> dummyImages = List.of(
+                AnonymousProfileImage.builder().id(1L).imageUrl("Image1").build(),
+                AnonymousProfileImage.builder().id(2L).imageUrl("Image2").build(),
+                AnonymousProfileImage.builder().id(3L).imageUrl("Image3").build(),
+                AnonymousProfileImage.builder().id(4L).imageUrl("Image4").build(),
+                AnonymousProfileImage.builder().id(5L).imageUrl("Image5").build()
+        );
+        when(anonymousProfileImageRepository.findAllByIdNot(6L)).thenReturn(dummyImages);
+        anonymousProfileImageRetriever.initializeProfileImageMap();
+        List<Long> recentIds = List.of(1L, 2L, 3L, 4L);
+
+        // When
+        AnonymousProfileImage image = anonymousProfileImageRetriever.getAnonymousProfileImage(recentIds);
+
+        // Then
+        assertThat(image.getId()).isIn(5L);
+        assertThat(image.getId()).isNotIn(recentIds);
+    }
+
+    @Test
+    @DisplayName("모든 이미지 ID가 recentUsedAnonymousProfileImageIds에 포함되었을 때 예외를 던진다.")
+    void getAnonymousProfileImage_allIdsExcluded() {
+        // Given
+        List<AnonymousProfileImage> dummyImages = List.of(
+                AnonymousProfileImage.builder().id(1L).imageUrl("Image1").build(),
+                AnonymousProfileImage.builder().id(2L).imageUrl("Image2").build(),
+                AnonymousProfileImage.builder().id(3L).imageUrl("Image3").build(),
+                AnonymousProfileImage.builder().id(4L).imageUrl("Image4").build(),
+                AnonymousProfileImage.builder().id(5L).imageUrl("Image5").build()
+        );
+        when(anonymousProfileImageRepository.findAllByIdNot(6L)).thenReturn(dummyImages);
+        anonymousProfileImageRetriever.initializeProfileImageMap();
+        List<Long> recentIds = List.of(1L, 2L, 3L, 4L, 5L);
+
+        // When & Then
+        assertThatThrownBy(() -> anonymousProfileImageRetriever.getAnonymousProfileImage(recentIds))
+                .isInstanceOf(BusinessLogicException.class)
+                .hasMessage("존재하지 않는 익명 프로필 ID 입니다.");
     }
 }
