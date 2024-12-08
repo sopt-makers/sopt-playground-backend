@@ -80,8 +80,8 @@ jobs:
 
       - name: 'Docker Image Build & Push'
         run: |
-          docker buildx build --platform linux/arm64 -f Dockerfile -t ${{ secrets.ECR_REPO }} .
-          docker push ${{ secrets.ECR_REPO }}
+          docker buildx build --platform linux/arm64 -f Dockerfile -t $ECR_REPO .
+          docker push $ECR_REPO
 
       - name: 'Send docker-compose.yml to EC2 Instance'
         uses: appleboy/scp-action@master
