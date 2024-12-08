@@ -23,8 +23,8 @@ env:
   SPRING_PROFILES_ACTIVE: dev
   ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-$SPRING_PROFILES_ACTIVE
   ECR_REPO: ${{ secrets.ECR_HOST }}/$ECR_APP_NAME
-  GREEN_SERVER_IMAGE: $ECR_REPO:amd64
-  BLUE_SERVER_IMAGE: $ECR_REPO:amd64
+  GREEN_SERVER_IMAGE: $ECR_REPO
+  BLUE_SERVER_IMAGE: $ECR_REPO
 
 jobs:
   build:
@@ -80,7 +80,7 @@ jobs:
 
       - name: 'Docker Image Build & Push'
         run: |
-          docker buildx build --platform linux/arm64 -f Dockerfile -t ${{ secrets.ECR_REPO }}:arm64 .
+          docker buildx build --platform linux/arm64 -f Dockerfile -t ${{ secrets.ECR_REPO }} .
           docker push ${{ secrets.ECR_REPO }}
 
       - name: 'Send docker-compose.yml to EC2 Instance'
