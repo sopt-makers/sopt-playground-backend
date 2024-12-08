@@ -21,10 +21,10 @@ on:
 
 env:
   SPRING_PROFILES_ACTIVE: dev
-  ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-$SPRING_PROFILES_ACTIVE
-  ECR_REPO: ${{ secrets.ECR_HOST }}/$ECR_APP_NAME
-  GREEN_SERVER_IMAGE: $ECR_REPO
-  BLUE_SERVER_IMAGE: $ECR_REPO
+  ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-${{ env.SPRING_PROFILES_ACTIVE }}
+  ECR_REPO: ${{ secrets.ECR_HOST }}/${{ env.ECR_APP_NAME }}
+  GREEN_SERVER_IMAGE: ${{ env.ECR_REPO }}
+  BLUE_SERVER_IMAGE: ${{ env.ECR_REPO }}
 
 jobs:
   build:
