@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  playground:
+    container_name: ${ECR_APP_NAME}
+    image: ${BLUE_SERVER_IMAGE}
+    expose:
+      - 8080
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Asia/Seoul
+
+#  green-server:
+#    container_name: green-server
+#    image: ${GREEN_SERVER_IMAGE}
+#    expose:
+#      - 8080
+#    ports:
+#      - "8082:8080"
+#    environment:
+#      - TZ=Asia/Seoul
