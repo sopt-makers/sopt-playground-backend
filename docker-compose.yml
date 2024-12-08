@@ -2,7 +2,7 @@ version: '3.8'
 services:
   playground:
     container_name: ${ECR_APP_NAME}
-    image: ${BLUE_SERVER_IMAGE}
+    image: ${ECR_REPO}
     expose:
       - 8080
     ports:
