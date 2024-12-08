@@ -1,4 +1,4 @@
-FROM amd64/amazoncorretto:17
+FROM amazoncorretto:17
 WORKDIR /app
 COPY ./build/libs/internal-0.0.1-SNAPSHOT.jar /app/APPLICATION.jar
 
