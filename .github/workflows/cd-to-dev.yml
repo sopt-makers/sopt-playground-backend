@@ -16,12 +16,15 @@ on:
     types: [deploy-to-test-event]
   push:
     branches: [ develop ]
+  pull_request:
+    types: [ edited ]
 
 env:
-  ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-dev
+  SPRING_PROFILES_ACTIVE: dev
+  ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-$SPRING_PROFILES_ACTIVE
   ECR_REPO: ${{ secrets.ECR_HOST }}/$ECR_APP_NAME
-  GREEN_SERVER_IMAGE: $ECR_REPO
-  BLUE_SERVER_IMAGE: ${ECR_REPO}:amd64
+  GREEN_SERVER_IMAGE: $ECR_REPO:amd64
+  BLUE_SERVER_IMAGE: $ECR_REPO:amd64
 
 jobs:
   build:
@@ -41,12 +44,13 @@ jobs:
       - name: 'Check Java Version'
         run: |
           java --version
+          echo 'ecr repo is $ECR_REPO'
 
-      - name: Configure AWS credentials
+      - name: 'Configure AWS credentials'
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID__TEAM_PLAYGROUND }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY__TEAM_PLAYGROUND }}
           aws-region: ap-northeast-2
 
       - name: 'Get application.yml from AWS S3'
