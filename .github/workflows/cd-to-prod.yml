@@ -1,4 +1,4 @@
-name: Deploy to Test Instance
+name: Deploy to Production Instance
 
 on:
   workflow_dispatch:
