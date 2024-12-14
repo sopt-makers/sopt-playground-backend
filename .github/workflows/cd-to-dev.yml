@@ -117,6 +117,5 @@ jobs:
             cd ~
             sudo docker pull $ECR_REPO
             sudo chmod +x ./app/scripts/deploy.sh
-            cd ./app/scripts/deploy,sh
-            ./deploy.sh
+            ./app/scripts/deploy.sh
             docker image prune -f
