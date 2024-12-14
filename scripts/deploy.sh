@@ -31,6 +31,7 @@ if [ $RUNNING_SERVER_PORT == 8080 ]; then
 
   for retry_count in {1..15}; do
     echo "Green Health Check ..."
+    sleep 3
 
     RESPONSE=$(curl -s http://localhost:${CURRENT_SERVER_PORT}${HEALTH_CHECK_URL})
     UP_COUNT=$(echo $RESPONSE | grep 'UP' | wc -l)
@@ -108,9 +109,8 @@ else
 fi
 
 
-
 # Nginx를 통해서 서버에 접근 가능한지 확인
-RESPONSE=$(curl -s http://localhost:${CURRENT_SERVER_PORT}${WEB_HEALTH_CHECK_URL})
+RESPONSE=$(curl -s http://localhost:${CURRENT_SERVER_PORT}${HEALTH_CHECK_URL})
 UP_COUNT=$(echo $RESPONSE | grep 'UP' | wc -l)
 echo "[$NOW_TIME] Health check 응답: ${RESPONSE}"
 
