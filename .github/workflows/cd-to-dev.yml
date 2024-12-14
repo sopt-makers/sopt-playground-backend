@@ -75,11 +75,12 @@ jobs:
 
       - name: 'Login to ECR'
         run: |
-          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_HOST
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_HOST
 
       - name: 'Docker Image Build & Push'
         run: |
-          docker buildx build --platform linux/arm64 -f Dockerfile -t $ECR_REPO .
+          docker build -t $ECR_APP_NAME
+          docker tag $ECR_APP_NAME:latest $ECR_REPO
           docker push $ECR_REPO
 
       - name: 'Send docker-compose.yml to EC2 Instance'
@@ -116,7 +117,7 @@ jobs:
           key: ${{ secrets.DEV_RELEASE_SERVER_KEY }}
           script: | 
             cd ~
-            sudo docker pull ${{ secrets.ECR_REPO }}
+            sudo docker pull $ECR_REPO
             sudo chmod +x ./deploy.sh
             cp ./app/scripts/deploy,sh
             ./deploy.sh
