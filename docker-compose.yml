@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-  playground:
+  playground-blue:
     image: ${ECR_REPO}
     expose:
       - 8080
@@ -10,12 +10,12 @@ services:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 
-#  green-server:
-#    container_name: green-server
-#    image: ${GREEN_SERVER_IMAGE}
-#    expose:
-#      - 8080
-#    ports:
-#      - "8082:8080"
-#    environment:
-#      - TZ=Asia/Seoul
+  playground-green:
+    image: ${ECR_REPO}
+    expose:
+      - 8080
+    ports:
+      - "8082:8080"
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
