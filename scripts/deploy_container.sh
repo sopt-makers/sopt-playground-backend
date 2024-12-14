@@ -5,7 +5,7 @@ deploy_container() {
     local CONTAINER_NAME=$1
     local PORT=$2
 
-    echo "Switching to ${CONTAINER_NAME} at Port ${PORT} ..."
+    echo "▶️ Switching to ${CONTAINER_NAME} at Port ${PORT} ..."
     echo "docker-compose pull & up ..."
 
     docker-compose pull ${CONTAINER_NAME}

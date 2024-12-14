@@ -2,13 +2,12 @@
 cd /home/ec2-user/app
 
 # Source the external scripts to load their functions
-source ./health_check.sh
-source ./deploy_container.sh
-source ./nginx_reload.sh
-source ./stop_container.sh
+source /home/ec2-user/app/scripts/health_check.sh
+source /home/ec2-user/app/scripts/deploy_container.sh
+source /home/ec2-user/app/scripts/nginx_reload.sh
+source /home/ec2-user/app/scripts/stop_container.sh
 
 ALL_PORTS=("8080","8081")
-HEALTH_CHECK_URL=/actuator/health
 
 # Check the running container name
 AVAILABLE_PORT=()
@@ -45,7 +44,7 @@ get_available_ports
 
 # If no available ports, exit the script
 if [ ${#AVAILABLE_PORT[@]} -eq 0 ]; then
-    echo "실행 가능한 포트가 없습니다."
+    echo "Not exists available ports."
     exit 1
 fi
 
@@ -57,8 +56,8 @@ if [ "${RUNNING_SERVER_PORT}" == "8080" ]; then
   # function call (container name, current port)
   deploy_container "playground-green" ${CURRENT_SERVER_PORT}
 
-  if ! health_check "playground-green"; then
-    echo "❌Health Check failed ..."
+  if ! health_check ${CURRENT_SERVER_PORT}; then
+    echo "❌ Health Check failed ..."
     stop_container "playground-green"
     exit 1
   fi
@@ -71,8 +70,8 @@ else
 
   deploy_container "playground-blue" ${CURRENT_SERVER_PORT}
 
-  if ! health_check "playground-blue"; then
-    echo "❌Health Check failed ..."
+  if ! health_check ${CURRENT_SERVER_PORT}; then
+    echo "❌ Health Check failed ..."
     stop_container "playground-blue"
     exit 1
   fi
@@ -81,12 +80,11 @@ else
 fi
 
 
-
 # Final health check through Nginx to confirm the server change
-echo "Final health check applied nginx port switching ..."
+echo "▶️ Final health check applied nginx port switching ..."
 if ! health_check ${CURRENT_SERVER_PORT}; then
-  echo "❌Server change failed ..."
+  echo "❌ Server change failed ..."
   exit 1
 fi
 
-echo "✅Server change successful 👍"
+echo "✅ Server change successful 👍"

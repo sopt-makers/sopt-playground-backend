@@ -1,11 +1,12 @@
 #!/bin/bash
 
+HEALTH_CHECK_URL=/actuator/health
+
 # Health check to verify if the server is up
 health_check() {
   local PORT=$1
-  local RETRIES=15
 
-  echo "Start health check after 15 seconds"
+  echo "▶️ Start health check after 15 seconds"
   sleep 15
 
   for retry_count in $(seq 1 $RETRIES); do
@@ -17,7 +18,7 @@ health_check() {
     echo "Health Check Response: ${RESPONSE}"
 
     if [ $UP_COUNT -ge 1 ]; then
-      echo "✅Success Health check!"
+      echo "✅ Success Health check!"
       break;
     else
       echo "Health check response is empty or not status 'UP'"
