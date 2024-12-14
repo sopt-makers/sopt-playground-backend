@@ -95,7 +95,7 @@ jobs:
           host: ${{ secrets.DEV_RELEASE_SERVER_IP }}
           username: ${{ secrets.RELEASE_SERVER_USER }}
           key: ${{ secrets.DEV_RELEASE_SERVER_KEY }}
-          source: "./scripts/deploy.sh"
+          source: "./scripts/"
           target: "/home/ec2-user/app/"
 
       - name: 'Get current time'
@@ -115,6 +115,6 @@ jobs:
           script: | 
             cd ~
             sudo docker pull $ECR_REPO
-            sudo chmod +x ./app/scripts/deploy.sh
+            sudo chmod +x ./app/scripts/*.sh
             ./app/scripts/deploy.sh
             docker image prune -f
