@@ -17,6 +17,12 @@ on:
   push:
     branches: [ main ]
 
+env:
+  SPRING_PROFILES_ACTIVE: prod
+  ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-prod
+  ECR_REPO: ${{ secrets.ECR_HOST }}/${{ secrets.ECR_APP_NAME }}-prod
+  ECR_HOST: ${{ secrets.ECR_HOST }}
+
 jobs:
   build:
     name: CD Pipeline
@@ -36,11 +42,11 @@ jobs:
         run: |
           java --version
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: 'Configure AWS credentials'
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID__TEAM_PLAYGROUND }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY__TEAM_PLAYGROUND }}
           aws-region: ap-northeast-2
 
       - name: 'Get application.yml from AWS S3'
@@ -55,36 +61,57 @@ jobs:
             --region ap-northeast-2 \
             s3://sopt-makers-internal/prod/deploy/${{ secrets.APPLE_KEY }} src/main/resources/static/${{ secrets.APPLE_KEY }}
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+      - name: 'Build with Gradle'
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
         shell: bash
 
-      - name: Build with Gradle
-        run: ./gradlew clean build -x test
-        shell: bash
+      - name: 'Login to ECR'
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_HOST
 
-      - name: Get current time
+      - name: 'Docker Image Build & Push'
+        run: |
+          docker build -t $ECR_APP_NAME .
+          docker tag $ECR_APP_NAME:latest $ECR_REPO
+          docker push $ECR_REPO
+
+      - name: 'Send docker-compose.yml to EC2 Instance'
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.PROD_RELEASE_SERVER_IP }}
+          username: ${{ secrets.RELEASE_SERVER_USER }}
+          key: ${{ secrets.PROD_RELEASE_SERVER_KEY }}
+          source: "./docker-compose.yml"
+          target: "/home/ec2-user/app/"
+
+      - name: 'Send deploy script to EC2 Instance'
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.PROD_RELEASE_SERVER_IP }}
+          username: ${{ secrets.RELEASE_SERVER_USER }}
+          key: ${{ secrets.PROD_RELEASE_SERVER_KEY }}
+          source: "./scripts/"
+          target: "/home/ec2-user/app/"
+
+      - name: 'Get current time'
         uses: 1466587594/get-current-time@v2
         id: current-time
         with:
           format: YYYY-MM-DDTHH-mm-ss
           utcOffset: "+09:00"
 
-      - name: Spring Boot env setting
-        run: sudo sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=prod/g' ./aws/start.sh
+      - name: 'Docker Container Run'
+        uses: appleboy/ssh-action@master
 
-      - name: Check env profile
-        run: cat ./aws/start.sh
-
-      - name: Make zip file
-        run: zip -qq -r ./$GITHUB_SHA.zip .
-        shell: bash
-
-      - name: Upload to S3
-        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://sopt-makers-internal/prod/deploy/jar/$GITHUB_SHA.zip
-
-      - name: Code Deploy
-        run: aws deploy create-deployment --application-name internal
-          --deployment-config-name CodeDeployDefault.OneAtATime
-          --deployment-group-name prod
-          --s3-location bucket=sopt-makers-internal,bundleType=zip,key=prod/deploy/jar/$GITHUB_SHA.zip
+        with:
+          host: ${{ secrets.PROD_RELEASE_SERVER_IP }}
+          username: ${{ secrets.RELEASE_SERVER_USER }}
+          key: ${{ secrets.PROD_RELEASE_SERVER_KEY }}
+          script: |
+            cd ~
+            sudo docker pull $ECR_REPO
+            sudo chmod +x ./app/scripts/*.sh
+            ./app/scripts/deploy.sh
+            docker image prune -f
