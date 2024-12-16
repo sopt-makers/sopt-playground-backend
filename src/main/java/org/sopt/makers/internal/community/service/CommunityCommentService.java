@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.domain.community.AnonymousCommentProfile;
 import org.sopt.makers.internal.domain.community.CommunityComment;
 import org.sopt.makers.internal.domain.community.ReportComment;
@@ -20,10 +22,10 @@ import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.community.AnonymousCommentProfileRepository;
-import org.sopt.makers.internal.repository.community.AnonymousNicknameRepository;
-import org.sopt.makers.internal.repository.community.AnonymousPostProfileRepository;
+import org.sopt.makers.internal.community.repository.anonymous.AnonymousNicknameRepository;
+import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
-import org.sopt.makers.internal.repository.community.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.repository.community.CommunityQueryRepository;
 import org.sopt.makers.internal.repository.community.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.repository.community.ReportCommentRepository;
@@ -44,9 +46,11 @@ import lombok.val;
 @Slf4j
 public class CommunityCommentService {
 
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
     @Value("${spring.profiles.active}")
     private String activeProfile;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
+    private final AnonymousNicknameRetriever anonymousNicknameRetriever;
     private final CommunityMapper communityMapper;
     private final MemberRepository memberRepository;
     private final CommunityPostRepository communityPostRepository;
@@ -57,7 +61,6 @@ public class CommunityCommentService {
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
     private final AnonymousNicknameRepository anonymousNicknameRepository;
     private final InternalApiService internalApiService;
-    private final AnonymousProfileImageService anonymousProfileImageService;
     private final PushNotificationService pushNotificationService;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
@@ -94,8 +97,8 @@ public class CommunityCommentService {
 
         if (request.isBlindWriter() && anonymousCommentProfile.isEmpty()) {
             anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
-                .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : AnonymousNicknameServiceUtil.getRandomNickname(anonymousNicknameRepository, excludeNickname))
-                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : anonymousProfileImageService.getRandomProfileImage(excludeImgList))
+                .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNickname))
+                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : anonymousProfileImageRetriever.getAnonymousProfileImage(excludeImgList))
                 .member(member)
                 .communityComment(comment)
                 .build());
