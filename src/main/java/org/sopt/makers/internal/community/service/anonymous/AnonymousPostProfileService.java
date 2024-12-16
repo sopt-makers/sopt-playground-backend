@@ -7,6 +7,7 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class AnonymousPostProfileService {
     private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
     private final AnonymousNicknameRetriever anonymousNicknameRetriever;
 
+    @Transactional
     public void createAnonymousPostProfile(Member member, CommunityPost post) {
         List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(RECENT_IMAGE_LIMIT);
         List<AnonymousPostProfile> lastFiftyAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(RECENT_NICKNAME_LIMIT);
