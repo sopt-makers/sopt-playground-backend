@@ -52,10 +52,6 @@ public class CommunityPostService {
 
     private final CommunityPostModifier communityPostModifier;
 
-    private final AnonymousPostProfileModifier anonymousPostProfileModifier;
-    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
-    private final AnonymousNicknameRetriever anonymousNicknameRetriever;
-
     private final MemberRetriever memberRetriever;
 
     private final CommunityCommentRepository communityCommentRepository;
@@ -74,7 +70,6 @@ public class CommunityPostService {
     private final MemberBlockRepository memberBlockRepository;
 
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
-    private final AnonymousNicknameRepository anonymousNicknameRepository;
 
     private final CommunityMapper communityMapper;
     private final CommunityResponseMapper communityResponseMapper;
@@ -121,7 +116,9 @@ public class CommunityPostService {
     public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = communityPostModifier.createCommunityPost(member, request);
-        anonymousPostProfileService.createAnonymousPostProfile(request.isBlindWriter(), member, post);
+        if (request.isBlindWriter()) {
+            anonymousPostProfileService.createAnonymousPostProfile(member, post);
+        }
 
         // 비메이커스가 글 작성시 슬랙 발송
         if (!MakersMemberId.getMakersMember().contains(member.getId()) && Objects.equals(activeProfile, "prod")) {

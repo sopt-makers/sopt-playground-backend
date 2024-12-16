@@ -19,18 +19,16 @@ public class AnonymousPostProfileService {
     private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
     private final AnonymousNicknameRetriever anonymousNicknameRetriever;
 
-    public void createAnonymousPostProfile(Boolean isBlindWriter, Member member, CommunityPost post) {
-        if (isBlindWriter) {
-            List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(4);
-            List<AnonymousPostProfile> lastFiftyAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(50);
-            List<Long> usedAnonymousProfileImageIds = lastFourAnonymousPostProfiles.stream()
-                    .map(anonymousProfile -> anonymousProfile.getProfileImg().getId()).toList();
-            List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousPostProfiles.stream()
-                    .map(AnonymousPostProfile::getNickname).toList();
+    public void createAnonymousPostProfile(Member member, CommunityPost post) {
+        List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(4);
+        List<AnonymousPostProfile> lastFiftyAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(50);
+        List<Long> usedAnonymousProfileImageIds = lastFourAnonymousPostProfiles.stream()
+                .map(anonymousProfile -> anonymousProfile.getProfileImg().getId()).toList();
+        List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousPostProfiles.stream()
+                .map(AnonymousPostProfile::getNickname).toList();
 
-            AnonymousNickname anonymousNickname = anonymousNicknameRetriever.findRandomAnonymousNickname(usedAnonymousNicknames);
-            AnonymousProfileImage anonymousProfileImage = anonymousProfileImageRetriever.getAnonymousProfileImage(usedAnonymousProfileImageIds);
-            anonymousPostProfileModifier.createAnonymousPostProfile(member, anonymousNickname, anonymousProfileImage, post);
-        }
+        AnonymousNickname anonymousNickname = anonymousNicknameRetriever.findRandomAnonymousNickname(usedAnonymousNicknames);
+        AnonymousProfileImage anonymousProfileImage = anonymousProfileImageRetriever.getAnonymousProfileImage(usedAnonymousProfileImageIds);
+        anonymousPostProfileModifier.createAnonymousPostProfile(member, anonymousNickname, anonymousProfileImage, post);
     }
 }
