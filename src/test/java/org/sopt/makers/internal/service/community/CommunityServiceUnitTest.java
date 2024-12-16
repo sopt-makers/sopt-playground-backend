@@ -83,7 +83,7 @@ public class CommunityServiceUnitTest {
 
         when(memberRetriever.findMemberById(writerId)).thenReturn(mockMember);
         when(communityPostModifier.createCommunityPost(mockMember, request)).thenReturn(mockPost);
-        doNothing().when(anonymousPostProfileService).createAnonymousPostProfile(true, mockMember, mockPost);
+        doNothing().when(anonymousPostProfileService).createAnonymousPostProfile(mockMember, mockPost);
         when(communityResponseMapper.toPostSaveResponse(mockPost)).thenReturn(mockResponse);
 
         // When
@@ -92,7 +92,7 @@ public class CommunityServiceUnitTest {
         // Then
         verify(memberRetriever).findMemberById(writerId);
         verify(communityPostModifier).createCommunityPost(mockMember, request);
-        verify(anonymousPostProfileService).createAnonymousPostProfile(true, mockMember, mockPost);
+        verify(anonymousPostProfileService).createAnonymousPostProfile(mockMember, mockPost);
         verify(communityResponseMapper).toPostSaveResponse(mockPost);
 
         assertNotNull(response);
