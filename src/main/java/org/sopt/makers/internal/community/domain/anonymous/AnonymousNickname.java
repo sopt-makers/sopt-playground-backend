@@ -10,9 +10,7 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class AnonymousNickname {
 
 	@Id
@@ -22,4 +20,10 @@ public class AnonymousNickname {
 
 	@Column(nullable = false)
 	String nickname;
+
+	@Builder
+	private AnonymousNickname(Long id, String nickname) {
+		this.id = id;
+		this.nickname = nickname;
+	}
 }

@@ -6,9 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class AnonymousProfileImage {
 
     @Id
@@ -17,4 +15,10 @@ public class AnonymousProfileImage {
 
     @Column(nullable = false)
     private String imageUrl;
+
+    @Builder
+    private AnonymousProfileImage(Long id, String imageUrl) {
+        this.id = id;
+        this.imageUrl = imageUrl;
+    }
 }
