@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   playground-blue:
-    image: ${ECR_REPO}
+    image: ${PLAYGROUND_ECR_REPO}
     expose:
       - 8080
     ports:
@@ -11,7 +11,7 @@ services:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 
   playground-green:
-    image: ${ECR_REPO}
+    image: ${PLAYGROUND_ECR_REPO}
     expose:
       - 8080
     ports:
