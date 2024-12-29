@@ -178,11 +178,11 @@ public class CommunityPostService {
     @Transactional
     public void increaseHit(List<Long> postIdLists) {
         for (Long id : postIdLists) {
-            val post = postRepository.findById(id)
+            CommunityPost post = postRepository.findByIdForIncreaseViewCount(id)
                     .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
-        }
 
-        communityQueryRepository.updateHitsByPostId(postIdLists);
+            post.incrementHits();
+        }
     }
 
     @Transactional
