@@ -16,9 +16,6 @@ on:
     types: [deploy-to-prod-event]
   push:
     branches: [ main ]
-  pull_request:
-    types:
-      - edited
 
 env:
   SPRING_PROFILES_ACTIVE: prod
