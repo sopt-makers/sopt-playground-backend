@@ -16,9 +16,6 @@ on:
     types: [deploy-to-test-event]
   push:
     branches: [ develop ]
-  pull_request:
-    types:
-      - edited
 
 env:
   SPRING_PROFILES_ACTIVE: dev
