@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/ec2-user/app
+cd /home/ec2-user/playground
 
 # Source the external scripts to load their functions
 source /home/ec2-user/playground/scripts/health_check.sh
