@@ -33,7 +33,7 @@ public class CoffeeChat extends AuditingTimeEntity {
     @Enumerated(EnumType.STRING)
     private Career career;
 
-    @Column(nullable = false, length = 200)
+    @Column(length = 200)
     private String introduction;
 
     @Convert(converter = CoffeeChatSectionConverter.class)
