@@ -35,7 +35,6 @@ public class CommunityController {
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
-    private final Bucket bucket;
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
@@ -87,9 +86,7 @@ public class CommunityController {
     public ResponseEntity<Map<String, Boolean>> upPostHit(
             @RequestBody CommunityHitRequest request
     ) {
-        if (bucket.tryConsume(1)) {
-            communityPostService.increaseHit(request.postIdList());
-        }
+        communityPostService.increaseHit(request.postIdList());
 
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
@@ -160,7 +157,7 @@ public class CommunityController {
         val comments = communityCommentService.getPostCommentList(postId, memberDetails.getId(), isBlockOn);
         val response = comments.stream().
                 map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId(),
-                    communityCommentService.getAnonymousCommentProfile(comment.comment()))).toList();
+                        communityCommentService.getAnonymousCommentProfile(comment.comment()))).toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
