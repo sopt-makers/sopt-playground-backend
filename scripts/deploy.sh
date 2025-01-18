@@ -1,11 +1,11 @@
 #!/bin/bash
-cd /home/ec2-user/app
+cd /home/ec2-user/playground
 
 # Source the external scripts to load their functions
-source /home/ec2-user/app/scripts/health_check.sh
-source /home/ec2-user/app/scripts/deploy_container.sh
-source /home/ec2-user/app/scripts/nginx_reload.sh
-source /home/ec2-user/app/scripts/stop_container.sh
+source /home/ec2-user/playground/scripts/health_check.sh
+source /home/ec2-user/playground/scripts/deploy_container.sh
+source /home/ec2-user/playground/scripts/nginx_reload.sh
+source /home/ec2-user/playground/scripts/stop_container.sh
 
 ALL_PORTS=("8080","8081")
 

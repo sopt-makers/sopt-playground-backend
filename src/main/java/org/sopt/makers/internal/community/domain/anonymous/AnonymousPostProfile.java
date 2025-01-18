@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.domain.community;
+package org.sopt.makers.internal.community.domain.anonymous;
 
 import javax.persistence.Column;
 import javax.persistence.ConstraintMode;
@@ -11,7 +11,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import org.sopt.makers.internal.community.domain.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 

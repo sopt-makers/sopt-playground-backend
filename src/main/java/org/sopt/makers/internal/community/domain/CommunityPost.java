@@ -1,12 +1,12 @@
-package org.sopt.makers.internal.domain.community;
+package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
+import org.sopt.makers.internal.domain.community.CommunityComment;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,51 +20,52 @@ public class CommunityPost extends AuditingTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer_id")
     private Member member;
 
-    @Column
+    @Column(nullable = false)
     private Long categoryId;
 
     @Column
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     @Builder.Default
-    @Column
+    @Column(nullable = false)
     private Integer hits = 0;
 
     @Type(type = "string-array")
     @Column(name = "images", columnDefinition = "text[]")
     private String[] images;
 
-    @Builder.Default
-    @Column
-    private Boolean isQuestion = false;
+    @Column(nullable = false)
+    private Boolean isQuestion;
+
+    @Column(nullable = false)
+    private Boolean isBlindWriter;
 
     @Builder.Default
-    @Column
-    private Boolean isBlindWriter = false;
-
-    @Builder.Default
-    @Column
+    @Column(nullable = false)
     private Boolean isReported = false;
 
     @Builder.Default
-    @Column
+    @Column(nullable = false)
     private Boolean isHot = false;
 
     @Builder.Default
     @OneToMany(
-            cascade = CascadeType.ALL,
+            cascade = CascadeType.REMOVE,
             orphanRemoval = true
     )
     @JoinColumn(name = "postId")
     private List<CommunityComment> comments = new ArrayList<>();
+
+    public void incrementHits() {
+        this.hits++;
+    }
 }

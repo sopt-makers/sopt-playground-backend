@@ -21,8 +21,7 @@ public record CoffeeChatDetailsRequest(
 			@Schema(required = true)
 			Career career,
 
-			@Schema(required = true)
-			@NotBlank(message = "자기소개는 필수 입력 값입니다.")
+			@Schema
 			@Size(max = 200, message = "자기소개는 200자를 초과할 수 없습니다.")
 			String introduction
 	) { }

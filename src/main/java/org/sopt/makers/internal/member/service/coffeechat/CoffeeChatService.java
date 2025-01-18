@@ -48,7 +48,7 @@ public class CoffeeChatService {
 
         String replyInfo = getReplyInfo(request, sender);
 
-        MessageSender senderStrategy = messageSenderFactory.getSender(request.category());
+        MessageSender senderStrategy = messageSenderFactory.getSender(request.senderEmail(), request.senderPhone());
         senderStrategy.sendMessage(sender, receiver, request.content(), replyInfo, request.category());
 
         createHistoryByCategory(request, sender, receiver);

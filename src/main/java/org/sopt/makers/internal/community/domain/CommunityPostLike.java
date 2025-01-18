@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
-import org.sopt.makers.internal.domain.community.CommunityPost;
 
 import javax.persistence.*;
 
