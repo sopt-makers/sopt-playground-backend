@@ -114,7 +114,8 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                                 coffeeChat.id,
                                 coffeeChat.coffeeChatBio,
                                 coffeeChat.member.name,
-                                coffeeChat.career
+                                coffeeChat.career,
+                                coffeeChat.coffeeChatTopicType
                         )
                 )
                 .from(coffeeChat)

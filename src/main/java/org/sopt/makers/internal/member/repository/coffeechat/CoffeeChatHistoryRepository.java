@@ -11,6 +11,7 @@ public interface CoffeeChatHistoryRepository extends JpaRepository<CoffeeChatHis
     // READ
     Long countBySender(Member sender);
     Long countByReceiver(Member receiver);
+    Boolean existsByReceiverAndSender(Member receiver, Member sender);
 
     // UPDATE
 
