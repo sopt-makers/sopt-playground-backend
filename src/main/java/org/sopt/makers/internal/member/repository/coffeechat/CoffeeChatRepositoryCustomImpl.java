@@ -112,7 +112,9 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         Projections.constructor(
                                 CoffeeChatHistoryResponse.class,
                                 coffeeChat.id,
-                                coffeeChat.coffeeChatBio
+                                coffeeChat.coffeeChatBio,
+                                coffeeChat.member.name,
+                                coffeeChat.career
                         )
                 )
                 .from(coffeeChat)

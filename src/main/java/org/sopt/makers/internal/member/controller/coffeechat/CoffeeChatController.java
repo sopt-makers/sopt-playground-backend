@@ -123,6 +123,6 @@ public class CoffeeChatController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
     ) {
 
-        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatHistoryTitleResponse(coffeeChatService.getCoffeeChatHistories(memberDetails.getId())));
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatHistoryTitleResponse(coffeeChatService.getCoffeeChatHistories(208L)));
     }
 }
