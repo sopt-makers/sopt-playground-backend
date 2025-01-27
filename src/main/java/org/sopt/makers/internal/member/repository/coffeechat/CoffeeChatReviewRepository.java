@@ -10,5 +10,6 @@ import java.util.List;
 public interface CoffeeChatReviewRepository extends JpaRepository<CoffeeChatReview, Long> {
 
     List<CoffeeChatReview> findTop4ByOrderByIdDesc();
+    List<CoffeeChatReview> findTop6ByOrderByIdDesc();
     Boolean existsByReviewerAndCoffeeChat(Member member, CoffeeChat coffeeChat);
 }
