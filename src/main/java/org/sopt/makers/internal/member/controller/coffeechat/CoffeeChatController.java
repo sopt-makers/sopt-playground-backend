@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatHistoryTitleResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
@@ -114,5 +115,14 @@ public class CoffeeChatController {
         coffeeChatService.deleteCoffeeChatDetails(memberDetails.getId());
         CommonResponse response = new CommonResponse(true, "커피챗 정보 삭제에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "진행한 커피챗 타이틀 조회 API")
+    @GetMapping("/history")
+    public ResponseEntity<CoffeeChatHistoryTitleResponse> getCoffeeChatHistoryTitle(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatHistoryTitleResponse(coffeeChatService.getCoffeeChatHistories(memberDetails.getId())));
     }
 }
