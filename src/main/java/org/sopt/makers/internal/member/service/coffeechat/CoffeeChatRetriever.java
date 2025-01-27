@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.member.domain.coffeechat.*;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatHistoryRepository;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
@@ -64,5 +65,9 @@ public class CoffeeChatRetriever {
         }
 
         return new MemberCoffeeChatPropertyDto(coffeeChatStatus, receivedCoffeeChatCount, sentCoffeeChatCount);
+    }
+
+    public List<CoffeeChatHistoryResponse> getCoffeeChatHistoryTitles(Long memberId) {
+        return coffeeChatRepository.getCoffeeChatHistoryTitles(memberId);
     }
 }
