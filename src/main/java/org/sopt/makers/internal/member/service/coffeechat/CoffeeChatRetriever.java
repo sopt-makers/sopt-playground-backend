@@ -99,4 +99,9 @@ public class CoffeeChatRetriever {
             throw new ClientBadRequestException("이미 리뷰를 등록한 커피챗입니다.");
         }
     }
+
+    public List<CoffeeChatReview> getRecentSixCoffeeChatReviews() {
+
+        return coffeeChatReviewRepository.findTop6ByOrderByIdDesc();
+    }
 }
