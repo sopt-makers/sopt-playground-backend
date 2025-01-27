@@ -16,6 +16,7 @@ import org.sopt.makers.internal.member.controller.coffeechat.dto.response.Coffee
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatReviewResponse;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -136,5 +137,12 @@ public class CoffeeChatController {
     ) {
         coffeeChatService.createCoffeeChatReview(memberDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+    }
+
+    @Operation(summary = "커피챗 리뷰 조회 API")
+    @GetMapping("/review")
+    public ResponseEntity<CoffeeChatReviewResponse> getCoffeeChatReview() {
+
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatReviewResponse(coffeeChatService.getRecentCoffeeChatReviews()));
     }
 }
