@@ -1,12 +1,15 @@
 package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChat;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatHistory;
+import org.sopt.makers.internal.member.domain.coffeechat.CoffeeChatReview;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatHistoryRepository;
 import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatRepository;
+import org.sopt.makers.internal.member.repository.coffeechat.CoffeeChatReviewRepository;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +18,7 @@ public class CoffeeChatModifier {
 
     private final CoffeeChatRepository coffeeChatRepository;
     private final CoffeeChatHistoryRepository coffeeChatHistoryRepository;
+    private final CoffeeChatReviewRepository coffeeChatReviewRepository;
 
     // CREATE
 
@@ -39,7 +43,20 @@ public class CoffeeChatModifier {
                 .sender(sender)
                 .receiver(receiver)
                 .requestContent(content)
-                .build());
+                .build()
+        );
+    }
+
+    public void createCoffeeChatReview(Member reviewer, CoffeeChat coffeeChat, AnonymousProfileImage anonymousProfileImage, String nickname, String content) {
+
+        coffeeChatReviewRepository.save(CoffeeChatReview.builder()
+                .reviewer(reviewer)
+                .coffeeChat(coffeeChat)
+                .anonymousProfileImage(anonymousProfileImage)
+                .nickname(nickname)
+                .content(content)
+                .build()
+        );
     }
 
     // UPDATE

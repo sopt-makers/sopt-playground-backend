@@ -2,11 +2,14 @@ package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatReviewRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
@@ -38,6 +41,8 @@ public class CoffeeChatService {
 
     private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
+
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
@@ -179,5 +184,16 @@ public class CoffeeChatService {
 
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
         coffeeChatModifier.deleteCoffeeChatDetails(coffeeChat);
+    }
+
+    @Transactional
+    public void createCoffeeChatReview(Long memberId, CoffeeChatReviewRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatById(request.coffeeChatId());
+        coffeeChatRetriever.checkParticipateCoffeeChat(member, coffeeChat);
+        coffeeChatRetriever.checkAlreadyEnrollReview(member, coffeeChat);
+        List<Long> recentUsedAnonymousProfileImageIds = coffeeChatRetriever.getRecentUsedAnonymousProfileImageIdsInCoffeeChatReview();
+        AnonymousProfileImage image = anonymousProfileImageRetriever.getAnonymousProfileImage(recentUsedAnonymousProfileImageIds);
+        coffeeChatModifier.createCoffeeChatReview(member, coffeeChat, image, request.nickname(), request.content());
     }
 }
