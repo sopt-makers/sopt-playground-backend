@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.QMember;
 import org.sopt.makers.internal.domain.QMemberCareer;
 import org.sopt.makers.internal.domain.QMemberSoptActivity;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.member.domain.coffeechat.*;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
@@ -100,6 +101,29 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .fetch();
     }
 
+    @Override
+    public List<CoffeeChatHistoryResponse> getCoffeeChatHistoryTitles(Long memberId) {
+
+        QCoffeeChatHistory coffeeChatHistory = QCoffeeChatHistory.coffeeChatHistory;
+        QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                CoffeeChatHistoryResponse.class,
+                                coffeeChat.id,
+                                coffeeChat.coffeeChatBio
+                        )
+                )
+                .from(coffeeChat)
+                .where(coffeeChat.member.id.in(
+                        JPAExpressions.selectDistinct(coffeeChatHistory.receiver.id)
+                                .from(coffeeChatHistory)
+                                .where(coffeeChatHistory.sender.id.eq(memberId))
+                ))
+                .fetch();
+    }
+
     private BooleanExpression isInSection(CoffeeChatSection section) {
         if (section == null) {
             return null;
@@ -143,4 +167,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 )
                 .exists();
     }
+
+
 }
