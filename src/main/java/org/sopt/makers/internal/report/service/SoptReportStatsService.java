@@ -44,7 +44,7 @@ public class SoptReportStatsService {
 
 	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
 	public Map<String, Object> getSoptReportStats(String category) {
-		System.out.println("왜 아무것도 안 나오?");
+
 		return soptReportStatsRepository.findByCategory(category).stream().collect(
 			Collectors.toMap(
 				SoptReportStats::getTemplateKey,
@@ -95,7 +95,6 @@ public class SoptReportStatsService {
 	private PlaygroundType calculatePlaygroundType(Long memberId, int likeCount, int wordChainGamePlayCount) {
 		// Playground Visit Count (Amplitude)
 		Map<String, Long> events = amplitudeService.getUserEventData(memberId);
-		System.out.println("events: " + events);
 		long totalVisitCount = 100;
 
 		int postCount = communityPostRepository.countAllByMemberIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);

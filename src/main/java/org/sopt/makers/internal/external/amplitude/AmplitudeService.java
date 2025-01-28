@@ -32,7 +32,6 @@ public class AmplitudeService {
 	public Map<String, Long> getUserEventData(Long userId) {
 		String authHeader = "Basic " + encodeBasicAuth(username, password);
 		AmplitudeUserResponse response = amplitudeClient.getAmplitudeUserId(userId, authHeader);
-		System.out.println("✅ 앰플 ID" + response.matches() + response.matches().get(0).amplitudeId());
 		Long amplitudeUserId = response.matches().get(0).amplitudeId();
 		List<AmplitudeEventResponse.EventDto> events = amplitudeClient.getUserProperty(amplitudeUserId, authHeader).events();
 
