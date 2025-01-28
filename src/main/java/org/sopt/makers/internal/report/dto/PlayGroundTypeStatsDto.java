@@ -6,16 +6,16 @@ import java.util.List;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
 
 public record PlayGroundTypeStatsDto(
-	Integer community,
-	Integer member,
-	Integer project,
-	Integer wordChainGame,
-	Integer coffeeChat,
-	Integer crew
+	Long community,
+	Long member,
+	Long project,
+	Long wordChainGame,
+	Long coffeeChat,
+	Long crew
 ) {
 	public PlaygroundType getTopStats() {
-		List<Integer> values = Arrays.asList(community, member, project, wordChainGame, coffeeChat, crew);
-		int max = values.stream().max(Integer::compareTo).orElse(0);
+		List<Long> values = Arrays.asList(community, member, project, wordChainGame, coffeeChat, crew);
+		long max = values.stream().max(Long::compareTo).orElse(0L);
 
 		if (max == community) {
 			return PlaygroundType.COMMUNITY;

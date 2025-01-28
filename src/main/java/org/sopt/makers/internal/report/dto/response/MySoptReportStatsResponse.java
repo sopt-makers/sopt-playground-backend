@@ -4,8 +4,8 @@ import java.util.List;
 
 public record MySoptReportStatsResponse(
 	String myType,
-	Integer totalDurationTime,
-	Integer totalVisitCount,
+	Long totalDurationTime,
+	Long totalVisitCount,
 	CommunityStatsDto myCommunityStats,
 	ProfileStatsDto myProfileStats,
 	CrewStatsDto myCrewStats,
@@ -16,7 +16,7 @@ public record MySoptReportStatsResponse(
 	) {}
 
 	public record ProfileStatsDto(
-		Integer viewCount
+		Long viewCount
 	) {}
 
 	public record CrewStatsDto(
