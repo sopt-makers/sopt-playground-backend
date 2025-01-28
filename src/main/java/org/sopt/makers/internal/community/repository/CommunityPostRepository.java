@@ -11,4 +11,6 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
     Optional<CommunityPost> findById(Long id);
 
     List<CommunityPost> findAllByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    Integer countAllByMemberIdAndCreatedAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
 }
