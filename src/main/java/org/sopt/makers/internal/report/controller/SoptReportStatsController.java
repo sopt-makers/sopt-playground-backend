@@ -18,7 +18,7 @@ public class SoptReportStatsController {
 
 	@GetMapping
 	public Map<String, Object> getReportStats(
-		@RequestParam(required = false) String category
+		@RequestParam(required = false, defaultValue = "SOPT") String category
 	) {
 		return soptReportStatsService.getSoptReportStats(category);
 	}
