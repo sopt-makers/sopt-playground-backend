@@ -2,6 +2,7 @@ package org.sopt.makers.internal.report.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
 import static org.sopt.makers.internal.common.JsonDataSerializer.*;
+import static org.sopt.makers.internal.config.cache.CacheConstant.*;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import org.sopt.makers.internal.report.repository.SoptReportStatsRepository;
 import org.sopt.makers.internal.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.repository.WordRepository;
 import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -40,7 +42,9 @@ public class SoptReportStatsService {
 	private final CommunityPostRepository communityPostRepository;
 	private final CommunityCommentRepository communityCommentRepository;
 
+	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
 	public Map<String, Object> getSoptReportStats(String category) {
+		System.out.println("왜 아무것도 안 나오?");
 		return soptReportStatsRepository.findByCategory(category).stream().collect(
 			Collectors.toMap(
 				SoptReportStats::getTemplateKey,
@@ -49,6 +53,7 @@ public class SoptReportStatsService {
 		);
 	}
 
+	@Cacheable(cacheNames = TYPE_MY_SOPT_REPORT_STATS, key = "#memberId")
 	public MySoptReportStatsResponse getMySoptReportStats(Long memberId) {
 		// Community
 		int likeCount = communityPostLikeRepository.countAllByMemberIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);
@@ -110,5 +115,4 @@ public class SoptReportStatsService {
 			(crewVisitCount / totalVisitCount) * 100
 		).getTopStats();
 	}
-
 }
