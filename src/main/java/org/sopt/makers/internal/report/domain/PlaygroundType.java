@@ -11,7 +11,7 @@ public enum PlaygroundType {
 	PROJECT("서비스 익솝플로러"),
 	WORD_CHAIN_GAME("우리말 솝고수"),
 	COFFEE_CHAT("얼죽솝"),
-	GROUP("솝만추");
+	CREW("솝만추");
 
 	private final String title;
 }

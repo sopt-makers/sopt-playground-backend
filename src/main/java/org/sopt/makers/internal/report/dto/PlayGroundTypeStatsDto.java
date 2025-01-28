@@ -11,10 +11,10 @@ public record PlayGroundTypeStatsDto(
 	Integer project,
 	Integer wordChainGame,
 	Integer coffeeChat,
-	Integer group
+	Integer crew
 ) {
 	public PlaygroundType getTopStats() {
-		List<Integer> values = Arrays.asList(community, member, project, wordChainGame, coffeeChat, group);
+		List<Integer> values = Arrays.asList(community, member, project, wordChainGame, coffeeChat, crew);
 		int max = values.stream().max(Integer::compareTo).orElse(0);
 
 		if (max == community) {
@@ -28,7 +28,7 @@ public record PlayGroundTypeStatsDto(
 		} else if (max == coffeeChat) {
 			return PlaygroundType.COFFEE_CHAT;
 		} else {
-			return PlaygroundType.GROUP;
+			return PlaygroundType.CREW;
 		}
 	}
 }

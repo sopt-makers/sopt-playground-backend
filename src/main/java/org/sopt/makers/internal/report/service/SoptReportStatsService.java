@@ -71,7 +71,7 @@ public class SoptReportStatsService {
 			new MySoptReportStatsResponse.ProfileStatsDto(
 				viewCount // TODO Amplitude
 			),
-			new MySoptReportStatsResponse.GroupStatsDto(
+			new MySoptReportStatsResponse.CrewStatsDto(
 				topFastestJoinedGroupList  // TODO Crew API 응답 활용
 			),
 			new MySoptReportStatsResponse.WordChainGameStatsDto(
@@ -107,8 +107,8 @@ public class SoptReportStatsService {
 		// CoffeeChat
 		int coffeeChatVisitCount = 100; // TODO Ampl
 
-		// Group
-		int groupVisitCount = 100; // TODO AMpl
+		// Crew
+		int crewVisitCount = 100; // TODO AMpl
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,
@@ -116,7 +116,7 @@ public class SoptReportStatsService {
 			(projectVisitCount / totalVisitCount) * 100,
 			(wordChainGameVisitCount / totalVisitCount) * 100,
 			(coffeeChatVisitCount / totalVisitCount) * 100,
-			(groupVisitCount / totalVisitCount) * 100
+			(crewVisitCount / totalVisitCount) * 100
 		).getTopStats();
 	}
 

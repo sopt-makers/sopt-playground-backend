@@ -8,7 +8,7 @@ public record MySoptReportStatsResponse(
 	Integer totalVisitCount,
 	CommunityStatsDto myCommunityStats,
 	ProfileStatsDto myProfileStats,
-	GroupStatsDto myGroupStats,
+	CrewStatsDto myCrewStats,
 	WordChainGameStatsDto myWordChainGameStats
 ) {
 	public record CommunityStatsDto(
@@ -19,7 +19,7 @@ public record MySoptReportStatsResponse(
 		Integer viewCount
 	) {}
 
-	public record GroupStatsDto(
+	public record CrewStatsDto(
 		List<String> topFastestJoinedGroupList
 	) {}
 
