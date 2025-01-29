@@ -106,7 +106,7 @@ public class SoptReportStatsService {
 		long memberVisitCount = events.get(generateEventKey(MEMBER_TAB_VISIT_COUNT));
 		long projectVisitCount = events.get(generateEventKey(PROJECT_TAB_VISIT_COUNT));
 		long coffeeChatVisitCount = events.get(generateEventKey(COFFEE_CHAT_TAB_VISIT_COUNT));
-		long crewVisitCount = 100; // TODO AMpl
+		long crewVisitCount = 1; // TODO AMpl
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,
