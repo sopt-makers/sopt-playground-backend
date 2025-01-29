@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.domain.SoptReportStats;
 import org.sopt.makers.internal.report.repository.SoptReportStatsRepository;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,8 @@ import lombok.RequiredArgsConstructor;
 public class SoptReportStatsService {
 	private final SoptReportStatsRepository soptReportStatsRepository;
 
-	public Map<String, Object> getSoptReportStats(String category) {
-		return soptReportStatsRepository.findByCategory(category).stream().collect(
+	public Map<String, Object> getSoptReportStats(SoptReportCategory category) {
+		return soptReportStatsRepository.findByCategory(category.name()).stream().collect(
 			Collectors.toMap(
 				SoptReportStats::getTemplateKey,
 				stats -> Objects.requireNonNull(serialize(stats.getData()))

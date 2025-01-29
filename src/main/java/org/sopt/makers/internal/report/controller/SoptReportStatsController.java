@@ -2,6 +2,7 @@ package org.sopt.makers.internal.report.controller;
 
 import java.util.Map;
 
+import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.service.SoptReportStatsService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ public class SoptReportStatsController {
 
 	@GetMapping
 	public Map<String, Object> getReportStats(
-		@RequestParam(required = false, defaultValue = "SOPT") String category
+		@RequestParam(required = false, defaultValue = "SOPT") SoptReportCategory category
 	) {
 		return soptReportStatsService.getSoptReportStats(category);
 	}
