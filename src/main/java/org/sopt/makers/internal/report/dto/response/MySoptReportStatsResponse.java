@@ -4,7 +4,6 @@ import java.util.List;
 
 public record MySoptReportStatsResponse(
 	String myType,
-	Long totalDurationTime,
 	Long totalVisitCount,
 	CommunityStatsDto myCommunityStats,
 	ProfileStatsDto myProfileStats,

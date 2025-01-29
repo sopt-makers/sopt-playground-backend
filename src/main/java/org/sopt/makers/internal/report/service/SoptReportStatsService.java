@@ -74,7 +74,6 @@ public class SoptReportStatsService {
 
 		return new MySoptReportStatsResponse(
 			calculatePlaygroundType(memberId, events, likeCount, playCount).getTitle(),
-			100L, // TODO Amplitude
 			totalVisitCount,
 			new MySoptReportStatsResponse.CommunityStatsDto(
 				likeCount
