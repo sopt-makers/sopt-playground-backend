@@ -17,6 +17,7 @@ import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.domain.Word;
 import org.sopt.makers.internal.external.amplitude.AmplitudeService;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
+import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.domain.SoptReportStats;
 import org.sopt.makers.internal.report.dto.PlayGroundTypeStatsDto;
 import org.sopt.makers.internal.report.dto.response.MySoptReportStatsResponse;
@@ -43,9 +44,8 @@ public class SoptReportStatsService {
 	private final CommunityCommentRepository communityCommentRepository;
 
 	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
-	public Map<String, Object> getSoptReportStats(String category) {
-
-		return soptReportStatsRepository.findByCategory(category).stream().collect(
+	public Map<String, Object> getSoptReportStats(SoptReportCategory category) {
+		return soptReportStatsRepository.findByCategory(category.name()).stream().collect(
 			Collectors.toMap(
 				SoptReportStats::getTemplateKey,
 				stats -> Objects.requireNonNull(serialize(stats.getData()))
