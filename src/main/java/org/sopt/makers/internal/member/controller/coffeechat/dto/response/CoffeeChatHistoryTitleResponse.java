@@ -14,7 +14,7 @@ public record CoffeeChatHistoryTitleResponse(
 
             Long id,
 
-            String title,
+            String coffeeChatBio,
 
             String name,
 

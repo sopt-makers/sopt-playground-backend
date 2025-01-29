@@ -140,7 +140,7 @@ public class CoffeeChatController {
     }
 
     @Operation(summary = "커피챗 리뷰 조회 API")
-    @GetMapping("/review")
+    @GetMapping("/reviews")
     public ResponseEntity<CoffeeChatReviewResponse> getCoffeeChatReview() {
 
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatReviewResponse(coffeeChatService.getRecentCoffeeChatReviews()));
