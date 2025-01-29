@@ -17,6 +17,19 @@ public record AmplitudeEventResponse(
 		@JsonProperty("client_event_time")
 		String clientEventTime,
 		@JsonProperty("event_time")
-		String eventTime
+		String eventTime,
+		@JsonProperty("event_properties")
+		EventPropertyDto eventProperties
+	) {}
+
+	public record EventPropertyDto(
+		@JsonProperty("[Amplitude] Page URL")
+		String pageUrl,
+		@JsonProperty("[Amplitude] Page Path")
+		String pagePath,
+		@JsonProperty("[Amplitude] Page Title")
+		String pageTitle,
+		@JsonProperty("[Amplitude] Page Location")
+		String pageLocation
 	) {}
 }
