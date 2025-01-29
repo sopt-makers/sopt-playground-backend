@@ -27,6 +27,7 @@ import org.sopt.makers.internal.repository.WordRepository;
 import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,6 +45,7 @@ public class SoptReportStatsService {
 	private final CommunityCommentRepository communityCommentRepository;
 
 	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
+	@Transactional(readOnly = true)
 	public Map<String, Object> getSoptReportStats(SoptReportCategory category) {
 		return soptReportStatsRepository.findByCategory(category.name()).stream().collect(
 			Collectors.toMap(
@@ -54,6 +56,7 @@ public class SoptReportStatsService {
 	}
 
 	@Cacheable(cacheNames = TYPE_MY_SOPT_REPORT_STATS, key = "#memberId")
+	@Transactional(readOnly = true)
 	public MySoptReportStatsResponse getMySoptReportStats(Long memberId) {
 		Map<String, Long> events = amplitudeService.getUserEventData(memberId);
 
@@ -99,6 +102,9 @@ public class SoptReportStatsService {
 	private PlaygroundType calculatePlaygroundType(Long memberId, Map<String, Long> events, int likeCount, int wordChainGamePlayCount) {
 		// Playground Visit Count (Amplitude)
 		long totalVisitCount = events.get(generateEventKey(TOTAL_VISIT_COUNT));
+		if (totalVisitCount == 0) {
+			return PlaygroundType.MEMBER;
+		}
 
 		int postCount = communityPostRepository.countAllByMemberIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);
 		int commentCount = communityCommentRepository.countAllByWriterIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);

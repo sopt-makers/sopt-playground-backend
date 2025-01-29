@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -83,13 +84,14 @@ public class WordChainGameQueryRepository {
         QWordChainGameRoom gameRoom = QWordChainGameRoom.wordChainGameRoom;
 
 
-        return queryFactory.select(winner.count())
+        return Optional.ofNullable(queryFactory.select(winner.count())
             .from(winner)
             .innerJoin(gameRoom).on(winner.roomId.eq(gameRoom.id))
             .where(
                 winner.userId.eq(userId)
                     .and(gameRoom.createdAt.between(startDate, endDate))
             )
-            .fetchOne();
+            .fetchOne()
+        ).orElse(0L);
     }
 }
