@@ -103,7 +103,7 @@ public class SoptReportStatsService {
 		// Playground Visit Count (Amplitude)
 		long totalVisitCount = events.get(generateEventKey(TOTAL_VISIT_COUNT));
 		if (totalVisitCount == 0) {
-			return PlaygroundType.MEMBER;
+			return PlaygroundType.DEFAULT;
 		}
 
 		int postCount = communityPostRepository.countAllByMemberIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);

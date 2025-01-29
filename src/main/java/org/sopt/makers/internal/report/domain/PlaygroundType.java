@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PlaygroundType {
+	DEFAULT("새로 오솝군요!"),
 	COMMUNITY("솝플루언서"),
 	MEMBER("인간 솝크드인"),
 	PROJECT("서비스 익솝플로러"),
