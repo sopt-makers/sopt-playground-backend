@@ -2,20 +2,24 @@ package org.sopt.makers.internal.member.service.coffeechat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.MessageSender;
 import org.sopt.makers.internal.external.MessageSenderFactory;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatReviewRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatReviewResponse.CoffeeChatReviewInfo;
 import org.sopt.makers.internal.member.domain.coffeechat.*;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.mapper.coffeechat.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.CoffeeChatInfoDto;
-import org.sopt.makers.internal.member.repository.coffeechat.dto.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.member.repository.coffeechat.dto.RecentCoffeeChatInfoDto;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
@@ -39,11 +43,13 @@ public class CoffeeChatService {
     private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
 
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
+
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
     @Transactional
-    public void sendCoffeeChatRequest (CoffeeChatRequest request, Long senderId) {
-        Member receiver  = memberRetriever.findMemberById(request.receiverId());
+    public void sendCoffeeChatRequest(CoffeeChatRequest request, Long senderId) {
+        Member receiver = memberRetriever.findMemberById(request.receiverId());
         Member sender = memberRetriever.findMemberById(senderId);
 
         String replyInfo = getReplyInfo(request, sender);
@@ -69,7 +75,7 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public CoffeeChatDetailResponse getCoffeeChatDetail (Long memberId, Long detailMemberId) {
+    public CoffeeChatDetailResponse getCoffeeChatDetail(Long memberId, Long detailMemberId) {
         memberRetriever.checkExistsMemberById(memberId);
 
         Member member = memberRetriever.findMemberById(detailMemberId);
@@ -80,7 +86,7 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public Boolean getCoffeeChatActivate (Long memberId) {
+    public Boolean getCoffeeChatActivate(Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
         try {
             CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
@@ -91,7 +97,7 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public Boolean isCoffeeChatExist (Long memberId) {
+    public Boolean isCoffeeChatExist(Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
         return coffeeChatRetriever.existsCoffeeChat(member);
     }
@@ -116,7 +122,7 @@ public class CoffeeChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<CoffeeChatVo> getSearchCoffeeChatList (Long memberId, String section, String topicType, String career, String part, String search) {
+    public List<CoffeeChatVo> getSearchCoffeeChatList(Long memberId, String section, String topicType, String career, String part, String search) {
 
         CoffeeChatSection coffeeChatSection = section != null ? CoffeeChatSection.fromTitle(section) : null;
         CoffeeChatTopicType coffeeChatTopicType = topicType != null ? CoffeeChatTopicType.fromTitle(topicType) : null;
@@ -127,6 +133,11 @@ public class CoffeeChatService {
             List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
             return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
         }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CoffeeChatHistoryResponse> getCoffeeChatHistories(Long memberId) {
+        return coffeeChatRetriever.getCoffeeChatHistoryTitles(memberId);
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {
@@ -144,7 +155,7 @@ public class CoffeeChatService {
     }
 
     @Transactional
-    public void createCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
+    public void createCoffeeChatDetails(Long memberId, CoffeeChatDetailsRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
 
         coffeeChatRetriever.checkAlreadyExistCoffeeChat(member);
@@ -152,7 +163,7 @@ public class CoffeeChatService {
     }
 
     @Transactional
-    public void updateCoffeeChatDetails (Long memberId, CoffeeChatDetailsRequest request) {
+    public void updateCoffeeChatDetails(Long memberId, CoffeeChatDetailsRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
 
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
@@ -169,10 +180,37 @@ public class CoffeeChatService {
     }
 
     @Transactional
-    public void deleteCoffeeChatDetails (Long memberId) {
+    public void deleteCoffeeChatDetails(Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
 
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
         coffeeChatModifier.deleteCoffeeChatDetails(coffeeChat);
+    }
+
+    @Transactional
+    public void createCoffeeChatReview(Long memberId, CoffeeChatReviewRequest request) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatById(request.coffeeChatId());
+        coffeeChatRetriever.checkParticipateCoffeeChat(member, coffeeChat);
+        coffeeChatRetriever.checkAlreadyEnrollReview(member, coffeeChat);
+        List<Long> recentUsedAnonymousProfileImageIds = coffeeChatRetriever.getRecentUsedAnonymousProfileImageIdsInCoffeeChatReview();
+        AnonymousProfileImage image = anonymousProfileImageRetriever.getAnonymousProfileImage(recentUsedAnonymousProfileImageIds);
+        coffeeChatModifier.createCoffeeChatReview(member, coffeeChat, image, request.nickname(), request.content());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CoffeeChatReviewInfo> getRecentCoffeeChatReviews() {
+        List<CoffeeChatReview> reviews = coffeeChatRetriever.getRecentSixCoffeeChatReviews();
+        return reviews.stream().map(r -> {
+            Member reviewer = r.getReviewer();
+            CoffeeChat coffeeChat = r.getCoffeeChat();
+            return new CoffeeChatReviewInfo(
+                    r.getAnonymousProfileImage().getImageUrl(),
+                    r.getNickname(),
+                    memberRetriever.concatPartAndGeneration(reviewer.getId()),
+                    coffeeChat.getCoffeeChatTopicType(),
+                    r.getContent()
+            );
+        }).toList();
     }
 }
