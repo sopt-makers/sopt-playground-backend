@@ -81,6 +81,9 @@ coffeechat:
 slack:
   url: test
   playground-error-channel: test
+amplitude:
+  api-key: test
+  secret-key: test
 internal:
   official:
     url: test
