@@ -15,10 +15,12 @@ import java.util.stream.Collectors;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.domain.Word;
+import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.external.amplitude.AmplitudeService;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
 import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.domain.SoptReportStats;
+import org.sopt.makers.internal.report.dto.CrewFastestJoinedGroupResponse;
 import org.sopt.makers.internal.report.dto.PlayGroundTypeStatsDto;
 import org.sopt.makers.internal.report.dto.response.MySoptReportStatsResponse;
 import org.sopt.makers.internal.report.repository.SoptReportStatsRepository;
@@ -43,6 +45,10 @@ public class SoptReportStatsService {
 
 	private final CommunityPostRepository communityPostRepository;
 	private final CommunityCommentRepository communityCommentRepository;
+
+	private final MakersCrewClient makersCrewClient;
+
+	private final Integer CREW_TOP_FASTEST_JOINED_GROUP_LIMIT = 3;
 
 	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
 	@Transactional(readOnly = true)
@@ -73,7 +79,10 @@ public class SoptReportStatsService {
 
 		// Profile
 		long viewCount = events.get(generateEventKey(MEMBER_PROFILE_CARD_VIEW_COUNT));
-		List<String> topFastestJoinedGroupList = Arrays.asList("모임1","모임2");
+
+		// Crew
+		List<String> topFastestJoinedGroupList = makersCrewClient.getFastestAppliedGroups(memberId, CREW_TOP_FASTEST_JOINED_GROUP_LIMIT).topFastestAppliedMeetings().stream().map(
+			CrewFastestJoinedGroupResponse.CrewGroupDto::title).toList();
 
 		return new MySoptReportStatsResponse(
 			calculatePlaygroundType(memberId, events, likeCount, playCount).getTitle(),
@@ -85,7 +94,7 @@ public class SoptReportStatsService {
 				viewCount
 			),
 			new MySoptReportStatsResponse.CrewStatsDto(
-				topFastestJoinedGroupList  // TODO Crew API 응답 활용
+				topFastestJoinedGroupList
 			),
 			new MySoptReportStatsResponse.WordChainGameStatsDto(
 				playCount, winCount, wordList
