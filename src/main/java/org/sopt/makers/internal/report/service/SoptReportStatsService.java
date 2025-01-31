@@ -64,7 +64,7 @@ public class SoptReportStatsService {
 	@Cacheable(cacheNames = TYPE_MY_SOPT_REPORT_STATS, key = "#memberId")
 	@Transactional(readOnly = true)
 	public MySoptReportStatsResponse getMySoptReportStats(Long memberId) {
-		Map<String, Long> events = amplitudeService.getUserEventData(memberId);
+		Map<String, Long> events = amplitudeService.getAllUserEventData(memberId);
 
 		long totalVisitCount = events.get(generateEventKey(TOTAL_VISIT_COUNT));
 
@@ -121,7 +121,7 @@ public class SoptReportStatsService {
 		long memberVisitCount = events.get(generateEventKey(MEMBER_TAB_VISIT_COUNT));
 		long projectVisitCount = events.get(generateEventKey(PROJECT_TAB_VISIT_COUNT));
 		long coffeeChatVisitCount = events.get(generateEventKey(COFFEE_CHAT_TAB_VISIT_COUNT));
-		long crewVisitCount = 1; // TODO AMpl
+		long crewVisitCount = events.get(generateEventKey(CREW_TAB_VISIT_COUNT));
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,

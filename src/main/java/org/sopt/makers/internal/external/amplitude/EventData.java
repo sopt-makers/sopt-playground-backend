@@ -15,12 +15,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum EventData {
-	// TOTAL_DURATION_TIME(),
 	TOTAL_VISIT_COUNT("[Amplitude] Start Session", ""),
 	MEMBER_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/members"),
 	PROJECT_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/projects"),
 	COFFEE_CHAT_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/coffeechat"),
-	// CREW_TAB_VISIT_COUNT(),
+	CREW_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/group/"),
 	MEMBER_PROFILE_CARD_VIEW_COUNT("Click-memberCard", ""),
 	;
 

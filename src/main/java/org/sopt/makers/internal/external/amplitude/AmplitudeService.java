@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +21,9 @@ import org.springframework.stereotype.Service;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AmplitudeService {
@@ -33,9 +36,30 @@ public class AmplitudeService {
 	@Value("${amplitude.secret-key}")
 	private String password;
 
+	@Value("${amplitude.crew-api-key}")
+	private String crewUsername;
+
+	@Value("${amplitude.crew-secret-key}")
+	private String crewPassword;
+
 	public Map<String, Long> getUserEventData(Long userId) {
+		return fetchUserEventData(userId, username, password);
+	}
+
+	public Map<String, Long> getCrewUserEventData(Long userId) {
+		return fetchUserEventData(userId, crewUsername, crewPassword);
+	}
+
+	public Map<String, Long> getAllUserEventData(Long userId) {
+		Map<String, Long> userEvents = getUserEventData(userId);
+		Map<String, Long> crewEvents = getCrewUserEventData(userId);
+
+		return mergeEventCounts(userEvents, crewEvents);
+	}
+
+	private Map<String, Long> fetchUserEventData(Long userId, String apiKey, String secretKey) {
 		try {
-			String authHeader = "Basic " + encodeBasicAuth(username, password);
+			String authHeader = "Basic " + encodeBasicAuth(apiKey, secretKey);
 			AmplitudeUserResponse response = amplitudeClient.getAmplitudeUserId(userId, authHeader);
 			Long amplitudeUserId = response.matches().get(0).amplitudeId();
 			List<AmplitudeEventResponse.EventDto> events = amplitudeClient.getUserProperty(amplitudeUserId, authHeader)
@@ -50,6 +74,12 @@ public class AmplitudeService {
 	private String encodeBasicAuth(String username, String password) {
 		String auth = username + ":" + password;
 		return Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+	}
+
+	private Map<String, Long> mergeEventCounts(Map<String, Long> map1, Map<String, Long> map2) {
+		Map<String, Long> merged = new HashMap<>(map1);
+		map2.forEach((key, value) -> merged.merge(key, value, Long::sum));
+		return merged;
 	}
 
 	private Map<String, Long> countEventTypes(List<AmplitudeEventResponse.EventDto> events) {
