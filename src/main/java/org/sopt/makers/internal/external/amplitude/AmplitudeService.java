@@ -31,23 +31,23 @@ public class AmplitudeService {
 	private final AmplitudeClient amplitudeClient;
 
 	@Value("${amplitude.api-key}")
-	private String username;
+	private String apiKey;
 
 	@Value("${amplitude.secret-key}")
-	private String password;
+	private String secretKey;
 
 	@Value("${amplitude.crew-api-key}")
-	private String crewUsername;
+	private String crewApiKey;
 
 	@Value("${amplitude.crew-secret-key}")
-	private String crewPassword;
+	private String crewSecretKey;
 
 	public Map<String, Long> getUserEventData(Long userId) {
-		return fetchUserEventData(userId, username, password);
+		return fetchUserEventData(userId, apiKey, secretKey);
 	}
 
 	public Map<String, Long> getCrewUserEventData(Long userId) {
-		return fetchUserEventData(userId, crewUsername, crewPassword);
+		return fetchUserEventData(userId, crewApiKey, crewSecretKey);
 	}
 
 	public Map<String, Long> getAllUserEventData(Long userId) {
@@ -57,9 +57,9 @@ public class AmplitudeService {
 		return mergeEventCounts(userEvents, crewEvents);
 	}
 
-	private Map<String, Long> fetchUserEventData(Long userId, String apiKey, String secretKey) {
+	private Map<String, Long> fetchUserEventData(Long userId, String username, String password) {
 		try {
-			String authHeader = "Basic " + encodeBasicAuth(apiKey, secretKey);
+			String authHeader = "Basic " + encodeBasicAuth(username, password);
 			AmplitudeUserResponse response = amplitudeClient.getAmplitudeUserId(userId, authHeader);
 			Long amplitudeUserId = response.matches().get(0).amplitudeId();
 			List<AmplitudeEventResponse.EventDto> events = amplitudeClient.getUserProperty(amplitudeUserId, authHeader)

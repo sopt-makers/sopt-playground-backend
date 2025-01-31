@@ -12,9 +12,9 @@ public interface MakersCrewClient {
 
     @GetMapping("/meeting/v2/org-user")
     MemberCrewResponse getUserAllCrew(
-        @RequestParam("page") Integer page,
-        @RequestParam("take") Integer take,
-        @RequestParam("orgUserId") Long orgUserId
+            @RequestParam("page") Integer page,
+            @RequestParam("take") Integer take,
+            @RequestParam("orgUserId") Long orgUserId
     );
 
     @GetMapping("/internal/meeting/stats/fastest-applied/{orgId}")
