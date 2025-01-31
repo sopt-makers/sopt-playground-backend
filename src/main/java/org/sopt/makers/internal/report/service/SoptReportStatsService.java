@@ -31,6 +31,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -81,8 +82,14 @@ public class SoptReportStatsService {
 		long viewCount = events.get(generateEventKey(MEMBER_PROFILE_CARD_VIEW_COUNT));
 
 		// Crew
-		List<String> topFastestJoinedGroupList = makersCrewClient.getFastestAppliedGroups(memberId, CREW_TOP_FASTEST_JOINED_GROUP_LIMIT).topFastestAppliedMeetings().stream().map(
-			CrewFastestJoinedGroupResponse.CrewGroupDto::title).toList();
+		List<String> topFastestJoinedGroupList;
+		try {
+			topFastestJoinedGroupList = makersCrewClient.getFastestAppliedGroups(memberId,
+				CREW_TOP_FASTEST_JOINED_GROUP_LIMIT).topFastestAppliedMeetings().stream().map(
+				CrewFastestJoinedGroupResponse.CrewGroupDto::title).toList();
+		} catch (FeignException ex) {
+			topFastestJoinedGroupList = Collections.emptyList();
+		}
 
 		return new MySoptReportStatsResponse(
 			calculatePlaygroundType(memberId, events, likeCount, playCount).getTitle(),
