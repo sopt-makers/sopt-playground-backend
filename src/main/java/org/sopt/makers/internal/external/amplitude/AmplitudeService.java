@@ -76,10 +76,10 @@ public class AmplitudeService {
 		return Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 	}
 
-	private Map<String, Long> mergeEventCounts(Map<String, Long> map1, Map<String, Long> map2) {
-		Map<String, Long> merged = new HashMap<>(map1);
-		map2.forEach((key, value) -> merged.merge(key, value, Long::sum));
-		return merged;
+	private Map<String, Long> mergeEventCounts(Map<String, Long> userEvents, Map<String, Long> crewEvents) {
+		Map<String, Long> allEvents = new HashMap<>(userEvents);
+		crewEvents.forEach((key, value) -> allEvents.merge(key, value, Long::sum));
+		return allEvents;
 	}
 
 	private Map<String, Long> countEventTypes(List<AmplitudeEventResponse.EventDto> events) {
