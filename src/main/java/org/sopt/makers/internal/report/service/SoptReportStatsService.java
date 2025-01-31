@@ -84,8 +84,11 @@ public class SoptReportStatsService {
 		// Crew
 		List<String> topFastestJoinedGroupList;
 		try {
-			topFastestJoinedGroupList = makersCrewClient.getFastestAppliedGroups(memberId,
-				CREW_TOP_FASTEST_JOINED_GROUP_LIMIT).topFastestAppliedMeetings().stream().map(
+			topFastestJoinedGroupList = makersCrewClient.getFastestAppliedGroups(
+				memberId,
+				CREW_TOP_FASTEST_JOINED_GROUP_LIMIT,
+				REPORT_FILTER_YEAR
+			).topFastestAppliedMeetings().stream().map(
 				CrewFastestJoinedGroupResponse.CrewGroupDto::title).toList();
 		} catch (FeignException ex) {
 			topFastestJoinedGroupList = Collections.emptyList();

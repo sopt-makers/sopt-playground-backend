@@ -20,6 +20,7 @@ public interface MakersCrewClient {
     @GetMapping("/internal/meeting/stats/fastest-applied/{orgId}")
     CrewFastestJoinedGroupResponse getFastestAppliedGroups(
             @PathVariable("orgId") Long orgUserId,
-            @RequestParam("query-count") Integer queryCount
+            @RequestParam("query-count") Integer queryCount,
+            @RequestParam("query-year") Integer queryYear
     );
 }
