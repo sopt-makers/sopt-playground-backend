@@ -84,6 +84,8 @@ slack:
 amplitude:
   api-key: test
   secret-key: test
+  crew-api-key: test
+  crew-secret-key: test
 internal:
   official:
     url: test

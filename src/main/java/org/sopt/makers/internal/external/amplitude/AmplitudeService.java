@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +21,9 @@ import org.springframework.stereotype.Service;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AmplitudeService {
@@ -28,12 +31,33 @@ public class AmplitudeService {
 	private final AmplitudeClient amplitudeClient;
 
 	@Value("${amplitude.api-key}")
-	private String username;
+	private String apiKey;
 
 	@Value("${amplitude.secret-key}")
-	private String password;
+	private String secretKey;
+
+	@Value("${amplitude.crew-api-key}")
+	private String crewApiKey;
+
+	@Value("${amplitude.crew-secret-key}")
+	private String crewSecretKey;
 
 	public Map<String, Long> getUserEventData(Long userId) {
+		return fetchUserEventData(userId, apiKey, secretKey);
+	}
+
+	public Map<String, Long> getCrewUserEventData(Long userId) {
+		return fetchUserEventData(userId, crewApiKey, crewSecretKey);
+	}
+
+	public Map<String, Long> getAllUserEventData(Long userId) {
+		Map<String, Long> userEvents = getUserEventData(userId);
+		Map<String, Long> crewEvents = getCrewUserEventData(userId);
+
+		return mergeEventCounts(userEvents, crewEvents);
+	}
+
+	private Map<String, Long> fetchUserEventData(Long userId, String username, String password) {
 		try {
 			String authHeader = "Basic " + encodeBasicAuth(username, password);
 			AmplitudeUserResponse response = amplitudeClient.getAmplitudeUserId(userId, authHeader);
@@ -50,6 +74,12 @@ public class AmplitudeService {
 	private String encodeBasicAuth(String username, String password) {
 		String auth = username + ":" + password;
 		return Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+	}
+
+	private Map<String, Long> mergeEventCounts(Map<String, Long> userEvents, Map<String, Long> crewEvents) {
+		Map<String, Long> allEvents = new HashMap<>(userEvents);
+		crewEvents.forEach((key, value) -> allEvents.merge(key, value, Long::sum));
+		return allEvents;
 	}
 
 	private Map<String, Long> countEventTypes(List<AmplitudeEventResponse.EventDto> events) {

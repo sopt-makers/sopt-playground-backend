@@ -15,10 +15,12 @@ import java.util.stream.Collectors;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.domain.Word;
+import org.sopt.makers.internal.external.MakersCrewClient;
 import org.sopt.makers.internal.external.amplitude.AmplitudeService;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
 import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.domain.SoptReportStats;
+import org.sopt.makers.internal.report.dto.CrewFastestJoinedGroupResponse;
 import org.sopt.makers.internal.report.dto.PlayGroundTypeStatsDto;
 import org.sopt.makers.internal.report.dto.response.MySoptReportStatsResponse;
 import org.sopt.makers.internal.report.repository.SoptReportStatsRepository;
@@ -29,6 +31,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -44,6 +47,10 @@ public class SoptReportStatsService {
 	private final CommunityPostRepository communityPostRepository;
 	private final CommunityCommentRepository communityCommentRepository;
 
+	private final MakersCrewClient makersCrewClient;
+
+	private final Integer CREW_TOP_FASTEST_JOINED_GROUP_LIMIT = 3;
+
 	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
 	@Transactional(readOnly = true)
 	public Map<String, Object> getSoptReportStats(SoptReportCategory category) {
@@ -58,7 +65,7 @@ public class SoptReportStatsService {
 	@Cacheable(cacheNames = TYPE_MY_SOPT_REPORT_STATS, key = "#memberId")
 	@Transactional(readOnly = true)
 	public MySoptReportStatsResponse getMySoptReportStats(Long memberId) {
-		Map<String, Long> events = amplitudeService.getUserEventData(memberId);
+		Map<String, Long> events = amplitudeService.getAllUserEventData(memberId);
 
 		long totalVisitCount = events.get(generateEventKey(TOTAL_VISIT_COUNT));
 
@@ -73,7 +80,19 @@ public class SoptReportStatsService {
 
 		// Profile
 		long viewCount = events.get(generateEventKey(MEMBER_PROFILE_CARD_VIEW_COUNT));
-		List<String> topFastestJoinedGroupList = Arrays.asList("모임1","모임2");
+
+		// Crew
+		List<String> topFastestJoinedGroupList;
+		try {
+			topFastestJoinedGroupList = makersCrewClient.getFastestAppliedGroups(
+				memberId,
+				CREW_TOP_FASTEST_JOINED_GROUP_LIMIT,
+				REPORT_FILTER_YEAR
+			).topFastestAppliedMeetings().stream().map(
+				CrewFastestJoinedGroupResponse.CrewGroupDto::title).toList();
+		} catch (FeignException ex) {
+			topFastestJoinedGroupList = Collections.emptyList();
+		}
 
 		return new MySoptReportStatsResponse(
 			calculatePlaygroundType(memberId, events, likeCount, playCount).getTitle(),
@@ -85,7 +104,7 @@ public class SoptReportStatsService {
 				viewCount
 			),
 			new MySoptReportStatsResponse.CrewStatsDto(
-				topFastestJoinedGroupList  // TODO Crew API 응답 활용
+				topFastestJoinedGroupList
 			),
 			new MySoptReportStatsResponse.WordChainGameStatsDto(
 				playCount, winCount, wordList
@@ -112,7 +131,7 @@ public class SoptReportStatsService {
 		long memberVisitCount = events.get(generateEventKey(MEMBER_TAB_VISIT_COUNT));
 		long projectVisitCount = events.get(generateEventKey(PROJECT_TAB_VISIT_COUNT));
 		long coffeeChatVisitCount = events.get(generateEventKey(COFFEE_CHAT_TAB_VISIT_COUNT));
-		long crewVisitCount = 1; // TODO AMpl
+		long crewVisitCount = events.get(generateEventKey(CREW_TAB_VISIT_COUNT));
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,
