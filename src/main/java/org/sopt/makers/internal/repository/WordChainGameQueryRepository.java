@@ -9,7 +9,9 @@ import org.sopt.makers.internal.dto.wordChainGame.QWinnerDao;
 import org.sopt.makers.internal.dto.wordChainGame.WinnerDao;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -75,5 +77,21 @@ public class WordChainGameQueryRepository {
         val room = QWordChainGameRoom.wordChainGameRoom;
         if(gameRoomId == null || gameRoomId == 0) return null;
         return room.id.lt(gameRoomId);
+    }
+
+    public long countByUserIdAndCreatedAtBetween(Long userId, LocalDateTime startDate, LocalDateTime endDate) {
+        QWordChainGameWinner winner = QWordChainGameWinner.wordChainGameWinner;
+        QWordChainGameRoom gameRoom = QWordChainGameRoom.wordChainGameRoom;
+
+
+        return Optional.ofNullable(queryFactory.select(winner.count())
+            .from(winner)
+            .innerJoin(gameRoom).on(winner.roomId.eq(gameRoom.id))
+            .where(
+                winner.userId.eq(userId)
+                    .and(gameRoom.createdAt.between(startDate, endDate))
+            )
+            .fetchOne()
+        ).orElse(0L);
     }
 }

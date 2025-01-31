@@ -1,18 +1,22 @@
 package org.sopt.makers.internal.member.controller.coffeechat;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
 import org.sopt.makers.internal.dto.CommonResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatReviewRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatDetailResponse;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatHistoryTitleResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatOpenRequest;
 import org.sopt.makers.internal.member.controller.coffeechat.dto.request.CoffeeChatRequest;
+import org.sopt.makers.internal.member.controller.coffeechat.dto.response.CoffeeChatReviewResponse;
 import org.sopt.makers.internal.member.service.coffeechat.CoffeeChatService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -114,5 +118,31 @@ public class CoffeeChatController {
         coffeeChatService.deleteCoffeeChatDetails(memberDetails.getId());
         CommonResponse response = new CommonResponse(true, "커피챗 정보 삭제에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "진행한 커피챗 타이틀 조회 API")
+    @GetMapping("/history")
+    public ResponseEntity<CoffeeChatHistoryTitleResponse> getCoffeeChatHistoryTitle(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatHistoryTitleResponse(coffeeChatService.getCoffeeChatHistories(memberDetails.getId())));
+    }
+
+    @Operation(summary = "진행한 커피챗 리뷰 생성 API")
+    @PostMapping("/review")
+    public ResponseEntity<Map<String, Boolean>> reviewCoffeeChat(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @RequestBody @Valid CoffeeChatReviewRequest request
+    ) {
+        coffeeChatService.createCoffeeChatReview(memberDetails.getId(), request);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
+    }
+
+    @Operation(summary = "커피챗 리뷰 조회 API")
+    @GetMapping("/reviews")
+    public ResponseEntity<CoffeeChatReviewResponse> getCoffeeChatReview() {
+
+        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatReviewResponse(coffeeChatService.getRecentCoffeeChatReviews()));
     }
 }

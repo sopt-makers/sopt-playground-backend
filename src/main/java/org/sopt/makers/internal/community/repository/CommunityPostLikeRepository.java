@@ -3,6 +3,7 @@ package org.sopt.makers.internal.community.repository;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface CommunityPostLikeRepository extends JpaRepository<CommunityPostLike, Long> {
@@ -15,6 +16,8 @@ public interface CommunityPostLikeRepository extends JpaRepository<CommunityPost
     Optional<CommunityPostLike> findCommunityPostLikeByMemberIdAndPostId(Long memberId, Long postId);
 
     Integer countAllByPostId(Long postId);
+
+    Integer countAllByMemberIdAndCreatedAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
 
     // UPDATE
 
