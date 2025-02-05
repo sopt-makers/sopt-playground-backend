@@ -16,7 +16,6 @@ public record PlayGroundTypeStatsDto(
 	public PlaygroundType getTopStats() {
 		List<Double> values = Arrays.asList(community, member, project, wordChainGame, coffeeChat, crew);
 		double max = values.stream().max(Double::compareTo).orElse(0.0);
-		System.out.println(values);
 
 		if (max == community) {
 			return PlaygroundType.COMMUNITY;
