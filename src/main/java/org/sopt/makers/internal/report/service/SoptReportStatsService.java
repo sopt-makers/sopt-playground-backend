@@ -133,20 +133,20 @@ public class SoptReportStatsService {
 
 		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long totalVisitCountForCoffeeChat = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventTimeBetween(memberId.toString(), TOTAL_VISIT_COUNT.getProperty(), COFFEE_CHAT_QUERY_START_DATE, COFFEE_CHAT_QUERY_END_DATE);
-		long coffeeChatStats;
+		double coffeeChatStats;
 		if (totalVisitCountForCoffeeChat == 0) {
 			coffeeChatStats = 0;
 		} else {
-			coffeeChatStats = (coffeeChatVisitCount / totalVisitCountForCoffeeChat) * 100;
+			coffeeChatStats = ((double) coffeeChatVisitCount / totalVisitCountForCoffeeChat) * 100;
 		}
 
 		return new PlayGroundTypeStatsDto(
-			((postCount + commentCount + likeCount) / totalVisitCount) * 100,
-			(memberVisitCount / totalVisitCount) * 100,
-			(projectVisitCount / totalVisitCount) * 100,
-			(wordChainGamePlayCount / totalVisitCount) * 100,
-			coffeeChatStats,
-			(crewVisitCount / totalVisitCount) * 100
+			((double) postCount / totalVisitCount) * 100,
+			((double) memberVisitCount / totalVisitCount) * 100,
+		    ((double) projectVisitCount / totalVisitCount) * 100,
+            ((double) wordChainGamePlayCount / totalVisitCount) * 100,
+				coffeeChatStats,
+			((double) crewVisitCount / totalVisitCount) * 100
 		).getTopStats();
 	}
 }
