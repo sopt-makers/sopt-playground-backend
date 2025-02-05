@@ -11,7 +11,9 @@ import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Immutable;
 
+@Immutable
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

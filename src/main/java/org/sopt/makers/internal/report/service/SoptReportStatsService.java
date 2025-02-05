@@ -23,6 +23,7 @@ import org.sopt.makers.internal.report.domain.SoptReportStats;
 import org.sopt.makers.internal.report.dto.CrewFastestJoinedGroupResponse;
 import org.sopt.makers.internal.report.dto.PlayGroundTypeStatsDto;
 import org.sopt.makers.internal.report.dto.response.MySoptReportStatsResponse;
+import org.sopt.makers.internal.report.repository.AmplitudeEventRawDataRepository;
 import org.sopt.makers.internal.report.repository.SoptReportStatsRepository;
 import org.sopt.makers.internal.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.repository.WordRepository;
@@ -37,7 +38,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class SoptReportStatsService {
-	private final AmplitudeService amplitudeService;
+	private final AmplitudeEventRawDataRepository amplitudeEventRawDataRepository;
 
 	private final SoptReportStatsRepository soptReportStatsRepository;
 	private final CommunityPostLikeRepository communityPostLikeRepository;
@@ -65,9 +66,7 @@ public class SoptReportStatsService {
 	@Cacheable(cacheNames = TYPE_MY_SOPT_REPORT_STATS, key = "#memberId")
 	@Transactional(readOnly = true)
 	public MySoptReportStatsResponse getMySoptReportStats(Long memberId) {
-		Map<String, Long> events = amplitudeService.getAllUserEventData(memberId);
-
-		long totalVisitCount = events.get(generateEventKey(TOTAL_VISIT_COUNT));
+		long totalVisitCount = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventTimeContains(memberId.toString(), TOTAL_VISIT_COUNT.getProperty(), REPORT_FILTER_YEAR.toString());
 
 		// Community
 		int likeCount = communityPostLikeRepository.countAllByMemberIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);
@@ -79,8 +78,9 @@ public class SoptReportStatsService {
 		int winCount = (int) wordChainGameWinnerRepository.countByUserIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);
 
 		// Profile
-		long viewCount = events.get(generateEventKey(MEMBER_PROFILE_CARD_VIEW_COUNT));
+		long viewCount = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventTimeContains(memberId.toString(), MEMBER_PROFILE_CARD_VIEW_COUNT.getProperty(), REPORT_FILTER_YEAR.toString());
 
+		System.out.println("totalVisitCount: " + totalVisitCount + " viewCount: " + viewCount);
 		// Crew
 		List<String> topFastestJoinedGroupList;
 		try {
@@ -95,7 +95,7 @@ public class SoptReportStatsService {
 		}
 
 		return new MySoptReportStatsResponse(
-			calculatePlaygroundType(memberId, events, likeCount, playCount).getTitle(),
+			calculatePlaygroundType(memberId, totalVisitCount, likeCount, playCount).getTitle(),
 			totalVisitCount,
 			new MySoptReportStatsResponse.CommunityStatsDto(
 				likeCount
@@ -118,9 +118,7 @@ public class SoptReportStatsService {
 		return wordList.size() > 6 ? wordList.subList(0, 6) : wordList;
 	}
 
-	private PlaygroundType calculatePlaygroundType(Long memberId, Map<String, Long> events, int likeCount, int wordChainGamePlayCount) {
-		// Playground Visit Count (Amplitude)
-		long totalVisitCount = events.get(generateEventKey(TOTAL_VISIT_COUNT));
+	private PlaygroundType calculatePlaygroundType(Long memberId, long totalVisitCount, int likeCount, int wordChainGamePlayCount) {
 		if (totalVisitCount == 0) {
 			return PlaygroundType.DEFAULT;
 		}
@@ -128,10 +126,11 @@ public class SoptReportStatsService {
 		int postCount = communityPostRepository.countAllByMemberIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);
 		int commentCount = communityCommentRepository.countAllByWriterIdAndCreatedAtBetween(memberId, START_DATE_OF_YEAR, END_DATE_OF_YEAR);
 
-		long memberVisitCount = events.get(generateEventKey(MEMBER_TAB_VISIT_COUNT));
-		long projectVisitCount = events.get(generateEventKey(PROJECT_TAB_VISIT_COUNT));
-		long coffeeChatVisitCount = events.get(generateEventKey(COFFEE_CHAT_TAB_VISIT_COUNT));
-		long crewVisitCount = events.get(generateEventKey(CREW_TAB_VISIT_COUNT));
+		long memberVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), MEMBER_TAB_VISIT_COUNT.getProperty(), MEMBER_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+		long projectVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), PROJECT_TAB_VISIT_COUNT.getProperty(), PROJECT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+//		long crewVisitCount = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTimeContains(memberId.toString(), CREW_TAB_VISIT_COUNT.getProperty(), CREW_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+		System.out.println("TabVisitCount: member - " + memberVisitCount + " project - " + projectVisitCount + "coffeecht - " + coffeeChatVisitCount);
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,
@@ -139,7 +138,7 @@ public class SoptReportStatsService {
 			(projectVisitCount / totalVisitCount) * 100,
 			(wordChainGamePlayCount / totalVisitCount) * 100,
 			(coffeeChatVisitCount / totalVisitCount) * 100,
-			(crewVisitCount / totalVisitCount) * 100
+			(1 / totalVisitCount) * 100  // TODO Crew Data 수정 필요
 		).getTopStats();
 	}
 }

@@ -15,7 +15,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum EventData {
-	TOTAL_VISIT_COUNT("[Amplitude] Start Session", ""),
+	TOTAL_VISIT_COUNT("session_start", ""),
 	MEMBER_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/members"),
 	PROJECT_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/projects"),
 	COFFEE_CHAT_TAB_VISIT_COUNT("[Amplitude] Page Viewed", "/coffeechat"),
