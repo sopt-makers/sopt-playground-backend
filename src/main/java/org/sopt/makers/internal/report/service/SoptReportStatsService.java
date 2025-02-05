@@ -78,7 +78,6 @@ public class SoptReportStatsService {
 		// Profile
 		long viewCount = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventTimeContains(memberId.toString(), MEMBER_PROFILE_CARD_VIEW_COUNT.getProperty(), REPORT_FILTER_YEAR.toString());
 
-		System.out.println("totalVisitCount: " + totalVisitCount + " viewCount: " + viewCount);
 		// Crew
 		List<String> topFastestJoinedGroupList;
 		try {
@@ -128,7 +127,6 @@ public class SoptReportStatsService {
 		long projectVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), PROJECT_TAB_VISIT_COUNT.getProperty(), PROJECT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 //		long crewVisitCount = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTimeContains(memberId.toString(), CREW_TAB_VISIT_COUNT.getProperty(), CREW_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
-		System.out.println("TabVisitCount: member - " + memberVisitCount + " project - " + projectVisitCount + "coffeecht - " + coffeeChatVisitCount);
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,
