@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 public interface AmplitudeEventRawDataRepository extends JpaRepository<AmplitudeEventRawData, String> {
 
 	int countAllByUserIdAndEventTypeAndEventTimeContains(String userId, String eventType, String eventTime);
+	int countAllByUserIdAndEventTypeAndEventTimeBetween(String userId, String eventType, String startEventTime, String endEventTime);
 
 	@Query(value = "SELECT COUNT(*) FROM internal_dev.amplitude_event_raw_data " +
 			"WHERE user_id = :userId " +

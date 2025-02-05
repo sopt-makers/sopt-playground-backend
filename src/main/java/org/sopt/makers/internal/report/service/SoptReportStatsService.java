@@ -48,7 +48,11 @@ public class SoptReportStatsService {
 
 	private final MakersCrewClient makersCrewClient;
 
-	private final Integer CREW_TOP_FASTEST_JOINED_GROUP_LIMIT = 3;
+	private static final Integer CREW_TOP_FASTEST_JOINED_GROUP_LIMIT = 3;
+	private static final int MAX_WORD_LIST_SIZE = 6;
+	private static final String COFFEE_CHAT_QUERY_START_DATE = "2024-11-07";
+	private static final String COFFEE_CHAT_QUERY_END_DATE = "2024-12-31";
+
 
 	@Cacheable(cacheNames = TYPE_COMMON_SOPT_REPORT_STATS, key = "#category")
 	@Transactional(readOnly = true)
@@ -92,7 +96,7 @@ public class SoptReportStatsService {
 		}
 
 		return new MySoptReportStatsResponse(
-			calculatePlaygroundType(memberId, totalVisitCount, likeCount, playCount).getTitle(),
+			determinePlaygroundType(memberId, totalVisitCount, likeCount, playCount).getTitle(),
 			totalVisitCount,
 			new MySoptReportStatsResponse.CommunityStatsDto(
 				likeCount
@@ -112,10 +116,10 @@ public class SoptReportStatsService {
 	private List<String> getShuffledWordList(List<Word> memberWords) {
 		List<String> wordList = memberWords.stream().map(Word::getWord).collect(Collectors.toList());
 		Collections.shuffle(wordList);
-		return wordList.size() > 6 ? wordList.subList(0, 6) : wordList;
+		return wordList.size() > MAX_WORD_LIST_SIZE ? wordList.subList(0, MAX_WORD_LIST_SIZE) : wordList;
 	}
 
-	private PlaygroundType calculatePlaygroundType(Long memberId, long totalVisitCount, int likeCount, int wordChainGamePlayCount) {
+	private PlaygroundType determinePlaygroundType(Long memberId, long totalVisitCount, int likeCount, int wordChainGamePlayCount) {
 		if (totalVisitCount == 0) {
 			return PlaygroundType.DEFAULT;
 		}
@@ -125,15 +129,23 @@ public class SoptReportStatsService {
 
 		long memberVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), MEMBER_TAB_VISIT_COUNT.getProperty(), MEMBER_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long projectVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), PROJECT_TAB_VISIT_COUNT.getProperty(), PROJECT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
-		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long crewVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), CREW_TAB_VISIT_COUNT.getProperty(), CREW_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 
+		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+		long totalVisitCountForCoffeeChat = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventTimeBetween(memberId.toString(), TOTAL_VISIT_COUNT.getProperty(), COFFEE_CHAT_QUERY_START_DATE, COFFEE_CHAT_QUERY_END_DATE);
+		long coffeeChatStats;
+		if (totalVisitCountForCoffeeChat == 0) {
+			coffeeChatStats = 0;
+		} else {
+			coffeeChatStats = (coffeeChatVisitCount / totalVisitCountForCoffeeChat) * 100;
+		}
+
 		return new PlayGroundTypeStatsDto(
-			((postCount + commentCount + likeCount) / totalVisitCount) *100,
+			((postCount + commentCount + likeCount) / totalVisitCount) * 100,
 			(memberVisitCount / totalVisitCount) * 100,
 			(projectVisitCount / totalVisitCount) * 100,
 			(wordChainGamePlayCount / totalVisitCount) * 100,
-			(coffeeChatVisitCount / totalVisitCount) * 100,
+			coffeeChatStats,
 			(crewVisitCount / totalVisitCount) * 100
 		).getTopStats();
 	}
