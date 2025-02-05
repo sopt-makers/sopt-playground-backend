@@ -10,6 +10,7 @@ public interface AmplitudeEventRawDataRepository extends JpaRepository<Amplitude
 	int countAllByUserIdAndEventTypeAndEventTimeContains(String userId, String eventType, String eventTime);
 	int countAllByUserIdAndEventTypeAndEventTimeBetween(String userId, String eventType, String startEventTime, String endEventTime);
 
+	// 컬럼명에 특수문자, 공백이 포함되어 Native Query로 작성합니다.
 	@Query(value = "SELECT COUNT(*) FROM internal_dev.amplitude_event_raw_data " +
 			"WHERE user_id = :userId " +
 			"AND event_type = :eventType " +
