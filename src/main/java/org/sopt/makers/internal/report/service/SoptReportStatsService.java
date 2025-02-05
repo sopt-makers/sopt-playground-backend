@@ -3,9 +3,8 @@ package org.sopt.makers.internal.report.service;
 import static org.sopt.makers.internal.common.Constant.*;
 import static org.sopt.makers.internal.common.JsonDataSerializer.*;
 import static org.sopt.makers.internal.config.cache.CacheConstant.*;
-import static org.sopt.makers.internal.external.amplitude.EventData.*;
+import static org.sopt.makers.internal.report.domain.EventData.*;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +15,6 @@ import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.domain.Word;
 import org.sopt.makers.internal.external.MakersCrewClient;
-import org.sopt.makers.internal.external.amplitude.AmplitudeService;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
 import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.domain.SoptReportStats;
