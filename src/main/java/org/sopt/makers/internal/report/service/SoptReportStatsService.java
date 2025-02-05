@@ -126,7 +126,7 @@ public class SoptReportStatsService {
 		long memberVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), MEMBER_TAB_VISIT_COUNT.getProperty(), MEMBER_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long projectVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), PROJECT_TAB_VISIT_COUNT.getProperty(), PROJECT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
-//		long crewVisitCount = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTimeContains(memberId.toString(), CREW_TAB_VISIT_COUNT.getProperty(), CREW_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+		long crewVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), CREW_TAB_VISIT_COUNT.getProperty(), CREW_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 
 		return new PlayGroundTypeStatsDto(
 			((postCount + commentCount + likeCount) / totalVisitCount) *100,
@@ -134,7 +134,7 @@ public class SoptReportStatsService {
 			(projectVisitCount / totalVisitCount) * 100,
 			(wordChainGamePlayCount / totalVisitCount) * 100,
 			(coffeeChatVisitCount / totalVisitCount) * 100,
-			(1 / totalVisitCount) * 100  // TODO Crew Data 수정 필요
+			(crewVisitCount / totalVisitCount) * 100
 		).getTopStats();
 	}
 }
