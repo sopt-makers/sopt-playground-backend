@@ -50,7 +50,7 @@ public class SoptReportStatsService {
 
 	private static final Integer CREW_TOP_FASTEST_JOINED_GROUP_LIMIT = 3;
 	private static final int MAX_WORD_LIST_SIZE = 6;
-	private static final String COFFEE_CHAT_QUERY_START_DATE = "2024-11-07";
+	private static final String COFFEE_CHAT_QUERY_START_DATE = "2024-11-03";
 	private static final String COFFEE_CHAT_QUERY_END_DATE = "2024-12-31";
 
 
@@ -131,8 +131,9 @@ public class SoptReportStatsService {
 		long projectVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), PROJECT_TAB_VISIT_COUNT.getProperty(), PROJECT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 		long crewVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), CREW_TAB_VISIT_COUNT.getProperty(), CREW_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
 
-		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTime(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), REPORT_FILTER_YEAR.toString());
+		long coffeeChatVisitCount = amplitudeEventRawDataRepository.countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTimeBetween(memberId.toString(), COFFEE_CHAT_TAB_VISIT_COUNT.getProperty(), COFFEE_CHAT_TAB_VISIT_COUNT.getPagePath(), COFFEE_CHAT_QUERY_START_DATE, COFFEE_CHAT_QUERY_END_DATE);
 		long totalVisitCountForCoffeeChat = amplitudeEventRawDataRepository.countAllByUserIdAndEventTypeAndEventTimeBetween(memberId.toString(), TOTAL_VISIT_COUNT.getProperty(), COFFEE_CHAT_QUERY_START_DATE, COFFEE_CHAT_QUERY_END_DATE);
+
 		double coffeeChatStats;
 		if (totalVisitCountForCoffeeChat == 0) {
 			coffeeChatStats = 0;
@@ -141,7 +142,7 @@ public class SoptReportStatsService {
 		}
 
 		return new PlayGroundTypeStatsDto(
-			((double) postCount / totalVisitCount) * 100,
+			((double) (postCount + commentCount + likeCount) / totalVisitCount) * 100,
 			((double) memberVisitCount / totalVisitCount) * 100,
 		    ((double) projectVisitCount / totalVisitCount) * 100,
             ((double) wordChainGamePlayCount / totalVisitCount) * 100,

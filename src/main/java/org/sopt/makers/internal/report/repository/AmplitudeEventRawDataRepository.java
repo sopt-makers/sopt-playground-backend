@@ -22,4 +22,17 @@ public interface AmplitudeEventRawDataRepository extends JpaRepository<Amplitude
 			@Param("eventType") String eventType,
 			@Param("eventPropertiesPagePath") String eventPropertiesPagePath,
 			@Param("eventTime") String eventTime);
+
+	@Query(value = "SELECT COUNT(*) FROM internal_dev.amplitude_event_raw_data " +
+			"WHERE user_id = :userId " +
+			"AND event_type = :eventType " +
+			"AND \"event_properties_[Amplitude] Page Path\" = :eventPropertiesPagePath " +
+			"AND event_time BETWEEN :startEventTime AND :endEventTime",
+			nativeQuery = true)
+	int countByUserIdAndEventTypeAndEventPropertiesPagePathAndEventTimeBetween(
+			@Param("userId") String userId,
+			@Param("eventType") String eventType,
+			@Param("eventPropertiesPagePath") String eventPropertiesPagePath,
+			@Param("startEventTime") String startEventTime,
+			@Param("endEventTime") String endEventTime);
 }
