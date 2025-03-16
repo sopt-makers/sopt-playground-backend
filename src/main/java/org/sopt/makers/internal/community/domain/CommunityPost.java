@@ -65,6 +65,9 @@ public class CommunityPost extends AuditingTimeEntity {
     @JoinColumn(name = "postId")
     private List<CommunityComment> comments = new ArrayList<>();
 
+    @Version
+    private Integer version;
+
     public void incrementHits() {
         this.hits++;
     }
