@@ -6,8 +6,6 @@ import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.resolution.domain.ResolutionTag;
-import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
@@ -48,14 +46,28 @@ public class UserResolutionService {
 
 	@Transactional
 	public void createResolution(Long writerId, ResolutionSaveRequest request) {
-		val member = getMemberById(writerId);
+		Member member = validateMember(writerId);
+		validateGeneration(member);
+		validateExistingResolution(member);
+
+	}
+
+	private Member validateMember(Long writerId) {
+		Member member = getMemberById(writerId);
 		if (member.getGeneration() == null) {
 			throw new ClientBadRequestException("Not exists profile info");
 		}
-		if (!member.getGeneration().equals(CURRENT_GENERATION)) {  // 기수 갱신 시 조건 변경
+		return member;
+	}
+
+	private void validateGeneration(Member member) {
+		if (!member.getGeneration().equals(CURRENT_GENERATION)) {
 			throw new ClientBadRequestException("Only new generation can enroll resolution");
 		}
-		if (existsCurrentResolution(member)) {  // TODO 기수마다 1개씩 가능하도록 수정
+	}
+
+	private void validateExistingResolution(Member member) {
+		if (existsCurrentResolution(member)) {
 			throw new ClientBadRequestException("Already exist user resolution message");
 		}
 		UserResolution userResolution = UserResolution.builder()
