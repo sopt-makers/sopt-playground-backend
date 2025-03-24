@@ -59,7 +59,7 @@ public class UserResolutionController {
 			@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
 	){
 		userResolutionService.deleteResolution(memberDetails.getId());
-		return ResponseEntity.status(HttpStatus.OK).build();
+		return ResponseEntity.noContent().build();
 	}
 
 }
