@@ -18,6 +18,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import javax.validation.Valid;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/resolution")
@@ -37,12 +39,12 @@ public class UserResolutionController {
 
 	@Operation(summary = "다짐 메세지 생성")
 	@PostMapping
-	public ResponseEntity<Map<String, Boolean>> createResolution(
+	public ResponseEntity<Void> createResolution(
 		@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
-		@RequestBody ResolutionSaveRequest request
+		@Valid @RequestBody ResolutionSaveRequest request
 	) {
 		userResolutionService.createResolution(memberDetails.getId(), request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("다짐 메시지 생성 성공", true));
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
 	@Operation(summary = "다짐 메세지 유효성 검사")
