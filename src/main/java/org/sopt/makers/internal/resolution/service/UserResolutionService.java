@@ -66,6 +66,37 @@ public class UserResolutionService {
 		userResolutionRepository.save(userResolution);
 	}
 
+	@Transactional
+	public void deleteResolution(Long memberId){
+		Member member = validateMember(memberId);
+		validateGeneration(member);
+		validateNoExistingResolution(member);
+
+		UserResolution resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
+
+		userResolutionRepository.delete(resolution);
+	}
+
+	private Member validateMember(Long memberId){
+		Member member = getMemberById(memberId);
+		if (member.getGeneration() == null) {
+			throw new ClientBadRequestException("Not exists profile info");
+		}
+		return member;
+	}
+
+	private void validateGeneration(Member member){
+		if(!member.getGeneration().equals(CURRENT_GENERATION)){
+			throw new ClientBadRequestException("Only new generation can enroll resolution");
+		}
+	}
+
+	private void validateNoExistingResolution(Member member){
+		if(!existsCurrentResolution(member)){
+			throw new ClientBadRequestException("No exist user resolution message");
+		}
+	}
+
 	private boolean existsCurrentResolution(Member member) {
 		return userResolutionRepository.existsByMemberAndGeneration(member, CURRENT_GENERATION);
 	}
