@@ -2,6 +2,8 @@ package org.sopt.makers.internal.resolution.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
 
+import java.util.List;
+import java.util.Optional;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -32,9 +34,16 @@ public class UserResolutionService {
 
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
-		val member = getMemberById(memberId);
-		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
-		val tags = ResolutionTag.getTagNames(resolution.getTagIds());
+		Member member = getMemberById(memberId);
+		Optional<UserResolution> resolutionOptional = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION);
+
+		if(resolutionOptional.isEmpty()){
+			return userResolutionResponseMapper.toResolutionResponse(member, null, null);
+		}
+
+		UserResolution resolution = resolutionOptional.get();
+		List<String> tags = getTagNamesOrNull(resolution.getTagIds());
+
 		return userResolutionResponseMapper.toResolutionResponse(member, tags, resolution.getContent());
 	}
 
@@ -104,5 +113,10 @@ public class UserResolutionService {
 	private Member getMemberById(Long userId) {
 		return memberRepository.findById(userId).orElseThrow(
 			() -> new NotFoundDBEntityException("Is not a Member"));
+	}
+
+	private List<String> getTagNamesOrNull(String tagIds) {
+		if(tagIds == null || tagIds.isEmpty()) return null;
+		return ResolutionTag.getTagNames(tagIds);
 	}
 }
