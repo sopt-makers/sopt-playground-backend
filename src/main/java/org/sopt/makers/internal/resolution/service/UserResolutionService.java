@@ -30,8 +30,6 @@ public class UserResolutionService {
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 
-	private final static String DEFAULT_PROFILE_IMAGE = "";
-
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
 		Member member = getMemberById(memberId);
