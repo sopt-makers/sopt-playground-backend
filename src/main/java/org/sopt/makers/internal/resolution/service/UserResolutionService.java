@@ -74,32 +74,24 @@ public class UserResolutionService {
 	}
 
 	@Transactional
-	public void deleteResolution(Long memberId){
-		Member member = validateMember(memberId);
-		validateGeneration(member);
-		validateNoExistingResolution(member);
+	public void deleteResolution(Long memberId) {
+		Member member = getMemberById(memberId);
+		validateResolutionDeletion(member);
 
-		UserResolution resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
+		UserResolution resolution = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
+				.orElseThrow(() -> new NotFoundDBEntityException("Not exists resolution message"));
 
 		userResolutionRepository.delete(resolution);
 	}
 
-	private Member validateMember(Long memberId){
-		Member member = getMemberById(memberId);
+	private void validateResolutionDeletion(Member member) {
 		if (member.getGeneration() == null) {
 			throw new ClientBadRequestException("Not exists profile info");
 		}
-		return member;
-	}
-
-	private void validateGeneration(Member member){
-		if(!member.getGeneration().equals(CURRENT_GENERATION)){
+		if (!member.getGeneration().equals(CURRENT_GENERATION)) {
 			throw new ClientBadRequestException("Only new generation can enroll resolution");
 		}
-	}
-
-	private void validateNoExistingResolution(Member member){
-		if(!existsCurrentResolution(member)){
+		if (!userResolutionRepository.existsByMemberAndGeneration(member, CURRENT_GENERATION)) {
 			throw new ClientBadRequestException("No exist user resolution message");
 		}
 	}
