@@ -50,6 +50,7 @@ public class UserResolutionService {
 		validateGeneration(member);
 		validateExistingResolution(member);
 
+		userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
 	}
 
 	private Member validateMember(Long writerId) {
@@ -70,12 +71,6 @@ public class UserResolutionService {
 		if (existsCurrentResolution(member)) {
 			throw new ClientBadRequestException("Already exist user resolution message");
 		}
-		UserResolution userResolution = UserResolution.builder()
-			.member(member)
-			.tagIds(ResolutionTag.getTagIds(request.tags()))
-			.content(request.content())
-			.generation(CURRENT_GENERATION).build();
-		userResolutionRepository.save(userResolution);
 	}
 
 	private boolean existsCurrentResolution(Member member) {
