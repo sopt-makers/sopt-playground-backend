@@ -19,16 +19,18 @@ public enum ResolutionTag {
 
 	private final String description;
 
+	@JsonCreator
+	public static ResolutionTag fromString(String value) {
+		try {
+			return ResolutionTag.valueOf(value);
+		} catch (IllegalArgumentException e) {
+			throw new ClientBadRequestException("Unknown Timecapsop Tag Name: " + value);
 		}
-		return value;
 	}
 
-	public static List<String> getTagNames(String tagIds) {
-		List<String> indexList = Arrays.asList(tagIds.split(","));
-
-		return Arrays.stream(ResolutionTag.values())
-				.filter(tag -> indexList.contains(String.valueOf(tag.index)))
-				.map(tag -> tag.value)
-				.collect(Collectors.toList());
+	public static List<ResolutionTag> fromStringArray(List<String> values) {
+		return values.stream()
+				.map(ResolutionTag::fromString)
+				.toList();
 	}
 }
