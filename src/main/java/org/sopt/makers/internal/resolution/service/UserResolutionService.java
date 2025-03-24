@@ -32,8 +32,7 @@ public class UserResolutionService {
 	public ResolutionResponse getResolution(Long memberId) {
 		val member = getMemberById(memberId);
 		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
-		val tags = ResolutionTag.getTagNames(resolution.getTagIds());
-		return userResolutionResponseMapper.toResolutionResponse(member, tags, resolution.getContent());
+		return userResolutionResponseMapper.toResolutionResponse(member, resolution.getResolutionTags(), resolution.getContent());
 	}
 
 	@Transactional(readOnly = true)
