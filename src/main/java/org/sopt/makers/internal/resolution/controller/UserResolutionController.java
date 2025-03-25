@@ -53,4 +53,13 @@ public class UserResolutionController {
 		return ResponseEntity.status(HttpStatus.OK).body(userResolutionService.validation(memberDetails.getId()));
 	}
 
+	@Operation(summary = "다짐 메세지 삭제")
+	@DeleteMapping
+	public ResponseEntity<Void> deleteResolution(
+			@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+	){
+		userResolutionService.deleteResolution(memberDetails.getId());
+		return ResponseEntity.noContent().build();
+	}
+
 }

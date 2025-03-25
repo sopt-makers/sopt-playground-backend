@@ -2,6 +2,8 @@ package org.sopt.makers.internal.resolution.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
 
+import java.util.List;
+import java.util.Optional;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -28,13 +30,18 @@ public class UserResolutionService {
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 
-	private final static String DEFAULT_PROFILE_IMAGE = "";
-
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
-		val member = getMemberById(memberId);
-		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
-		val tags = ResolutionTag.getTagNames(resolution.getTagIds());
+		Member member = getMemberById(memberId);
+		Optional<UserResolution> resolutionOptional = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION);
+
+		if(resolutionOptional.isEmpty()){
+			return userResolutionResponseMapper.toResolutionResponse(member, null, null);
+		}
+
+		UserResolution resolution = resolutionOptional.get();
+		List<String> tags = getTagNamesOrNull(resolution.getTagIds());
+
 		return userResolutionResponseMapper.toResolutionResponse(member, tags, resolution.getContent());
 	}
 
@@ -66,6 +73,29 @@ public class UserResolutionService {
 		userResolutionRepository.save(userResolution);
 	}
 
+	@Transactional
+	public void deleteResolution(Long memberId) {
+		Member member = getMemberById(memberId);
+		validateResolutionDeletion(member);
+
+		UserResolution resolution = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
+				.orElseThrow(() -> new NotFoundDBEntityException("Not exists resolution message"));
+
+		userResolutionRepository.delete(resolution);
+	}
+
+	private void validateResolutionDeletion(Member member) {
+		if (member.getGeneration() == null) {
+			throw new ClientBadRequestException("Not exists profile info");
+		}
+		if (!member.getGeneration().equals(CURRENT_GENERATION)) {
+			throw new ClientBadRequestException("Only new generation can enroll resolution");
+		}
+		if (!userResolutionRepository.existsByMemberAndGeneration(member, CURRENT_GENERATION)) {
+			throw new ClientBadRequestException("No exist user resolution message");
+		}
+	}
+
 	private boolean existsCurrentResolution(Member member) {
 		return userResolutionRepository.existsByMemberAndGeneration(member, CURRENT_GENERATION);
 	}
@@ -73,5 +103,10 @@ public class UserResolutionService {
 	private Member getMemberById(Long userId) {
 		return memberRepository.findById(userId).orElseThrow(
 			() -> new NotFoundDBEntityException("Is not a Member"));
+	}
+
+	private List<String> getTagNamesOrNull(String tagIds) {
+		if(tagIds == null || tagIds.isEmpty()) return null;
+		return ResolutionTag.getTagNames(tagIds);
 	}
 }
