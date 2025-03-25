@@ -2,10 +2,13 @@ package org.sopt.makers.internal.resolution.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
 
+import java.util.List;
+import java.util.Optional;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
@@ -26,12 +29,17 @@ public class UserResolutionService {
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 
-	private final static String DEFAULT_PROFILE_IMAGE = "";
-
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
-		val member = getMemberById(memberId);
-		val resolution = UserResolutionServiceUtil.findUserResolutionByMember(member, userResolutionRepository);
+		Member member = getMemberById(memberId);
+		Optional<UserResolution> resolutionOptional = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION);
+
+		if (resolutionOptional.isEmpty()){
+			return userResolutionResponseMapper.toResolutionResponse(member, null, null);
+		}
+
+		UserResolution resolution = resolutionOptional.get();
+
 		return userResolutionResponseMapper.toResolutionResponse(member, resolution.getResolutionTags(), resolution.getContent());
 	}
 
@@ -45,19 +53,30 @@ public class UserResolutionService {
 
 	@Transactional
 	public void createResolution(Long writerId, ResolutionSaveRequest request) {
-		Member member = validateMember(writerId);
+		Member member = getMemberById(writerId);
+		validateMemberHasGeneration(member);
 		validateGeneration(member);
 		validateExistingResolution(member);
 
 		userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
 	}
 
-	private Member validateMember(Long writerId) {
-		Member member = getMemberById(writerId);
+	@Transactional
+	public void deleteResolution(Long memberId) {
+		Member member = getMemberById(memberId);
+		validateMemberHasGeneration(member);
+		validateGeneration(member);
+
+		UserResolution resolution = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
+				.orElseThrow(() -> new NotFoundDBEntityException("Not exists resolution message"));
+
+		userResolutionRepository.delete(resolution);
+	}
+
+	private void validateMemberHasGeneration(Member member) {
 		if (member.getGeneration() == null) {
 			throw new ClientBadRequestException("Not exists profile info");
 		}
-		return member;
 	}
 
 	private void validateGeneration(Member member) {
