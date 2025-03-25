@@ -2,7 +2,6 @@ package org.sopt.makers.internal.resolution.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
 
-import java.util.List;
 import java.util.Optional;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 
 @Service
 @RequiredArgsConstructor
@@ -45,10 +43,8 @@ public class UserResolutionService {
 
 	@Transactional(readOnly = true)
 	public ResolutionValidResponse validation(Long memberId) {
-		val member = getMemberById(memberId);
-		val isRegistration = existsCurrentResolution(member);
-
-		return userResolutionResponseMapper.toResolutionValidResponse(isRegistration);
+		Member member = getMemberById(memberId);
+		return userResolutionResponseMapper.toResolutionValidResponse(existsCurrentResolution(member));
 	}
 
 	@Transactional
