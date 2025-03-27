@@ -1,12 +1,18 @@
 package org.sopt.makers.internal.resolution.service;
 
-import static org.sopt.makers.internal.common.Constant.*;
-
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.common.GoogleSheetsService;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
@@ -18,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
+import static org.sopt.makers.internal.common.Constant.CURRENT_GENERATION;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserResolutionService {
@@ -26,6 +35,7 @@ public class UserResolutionService {
 	private final MemberRepository memberRepository;
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
+    private final GoogleSheetsService googleSheetsService;
 
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
@@ -54,7 +64,8 @@ public class UserResolutionService {
 		validateGeneration(member);
 		validateExistingResolution(member);
 
-		userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
+		UserResolution resolution = userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
+        writeToGoogleSheets(writerId, resolution);
 	}
 
 	@Transactional
@@ -95,4 +106,21 @@ public class UserResolutionService {
 		return memberRepository.findById(userId).orElseThrow(
 			() -> new NotFoundDBEntityException("Is not a Member"));
 	}
+
+    private void writeToGoogleSheets(Long writerId, UserResolution resolution) {
+        List<Object> rowData = List.of(
+                writerId,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                resolution.getResolutionTags().stream()
+                        .map(ResolutionTag::getDescription)
+                        .collect(Collectors.joining(", ")),
+                resolution.getContent()
+        );
+
+        try {
+            googleSheetsService.writeSheetData(List.of(rowData));
+        } catch (Exception e) {
+            log.error("❌ 구글 스프레드 시트 연동 타임캡솝 작성 실패 - writerId={}, 이유: {}", writerId, e.getMessage(), e);
+        }
+    }
 }
