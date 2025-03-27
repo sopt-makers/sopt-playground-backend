@@ -29,7 +29,7 @@ public class GoogleSheetsService {
     public Sheets getSheetsService() throws IOException {
         InputStream serviceAccountStream = GoogleSheetsService.class
                 .getClassLoader()
-                .getResourceAsStream("service_account.json");
+                .getResourceAsStream("google_spreadsheet_account.json");
 
         GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccountStream)
                 .createScoped(Collections.singleton(SheetsScopes.SPREADSHEETS));
