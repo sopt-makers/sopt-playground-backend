@@ -1,10 +1,12 @@
 package org.sopt.makers.internal.resolution.domain;
 
 import lombok.*;
+import org.sopt.makers.internal.common.GenericEnumListConverter;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Getter
@@ -27,6 +29,13 @@ public class UserResolution extends AuditingTimeEntity {
     @Column(nullable = false)
     private Integer generation;
 
-    @Column
-    private String tagIds;
+    @Convert(converter = ResolutionTagConverter.class)
+    private List<ResolutionTag> resolutionTags;
+
+    @Converter(autoApply = true)
+    public static class ResolutionTagConverter extends GenericEnumListConverter<ResolutionTag> {
+        public ResolutionTagConverter() {
+            super(ResolutionTag.class);
+        }
+    }
 }

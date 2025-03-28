@@ -12,7 +12,6 @@ import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousNicknameRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.community.repository.category.CategoryRepository;
 import org.sopt.makers.internal.community.service.anonymous.*;
@@ -26,7 +25,6 @@ import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.repository.MemberRepository;
-import org.sopt.makers.internal.repository.PostRepository;
 import org.sopt.makers.internal.repository.community.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.service.member.MemberServiceUtil;
@@ -64,7 +62,6 @@ public class CommunityPostService {
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
 
     private final ReportPostRepository reportPostRepository;
-    private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
     private final MemberBlockRepository memberBlockRepository;
@@ -133,7 +130,7 @@ public class CommunityPostService {
     public PostUpdateResponse updatePost(Long writerId, PostUpdateRequest request) {
         val member = memberRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val post = postRepository.findById(request.postId()).orElseThrow(
+        val post = communityPostRepository.findById(request.postId()).orElseThrow(
                 () -> new NotFoundDBEntityException("Is not a exist postId"));
         val category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
@@ -175,13 +172,9 @@ public class CommunityPostService {
         communityPostRepository.delete(post);
     }
 
-    @Transactional
-    public void increaseHit(List<Long> postIdLists) {
-        for (Long id : postIdLists) {
-            CommunityPost post = postRepository.findByIdForIncreaseViewCount(id)
-                    .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
-
-            post.incrementHits();
+    public void increaseHit(List<Long> postIdList) {
+        for (Long postId : postIdList) {
+            communityPostModifier.increaseHitTransactional(postId);
         }
     }
 
@@ -189,7 +182,7 @@ public class CommunityPostService {
     public void reportPost(Long memberId, Long postId) {
         val member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val post = postRepository.findById(postId)
+        val post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
 
         try {
@@ -278,12 +271,12 @@ public class CommunityPostService {
     @Transactional(readOnly = true)
     public CommunityPost findTodayHotPost(List<CommunityPost> posts) {
         return posts.stream()
-            .map(this::createPostWithPoints)
-            .filter(post -> post.points() >= MIN_POINTS_FOR_HOT_POST)
-            .max(Comparator.comparingInt(PostWithPoints::points)
-                .thenComparingInt(PostWithPoints::hits))
-            .map(PostWithPoints::post)
-            .orElse(null);
+                .map(this::createPostWithPoints)
+                .filter(post -> post.points() >= MIN_POINTS_FOR_HOT_POST)
+                .max(Comparator.comparingInt(PostWithPoints::points)
+                        .thenComparingInt(PostWithPoints::hits))
+                .map(PostWithPoints::post)
+                .orElse(null);
     }
 
     @Transactional
@@ -342,5 +335,6 @@ public class CommunityPostService {
         return rootNode;
     }
 
-    private record PostWithPoints(CommunityPost post, int points, int hits) {}
+    private record PostWithPoints(CommunityPost post, int points, int hits) {
+    }
 }

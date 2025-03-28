@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class Constant {
 
-	public final static int CURRENT_GENERATION = 35;
+	public final static int CURRENT_GENERATION = 36;
 
 	public final static Integer REPORT_FILTER_YEAR = 2024;
 	public final static LocalDateTime START_DATE_OF_YEAR = LocalDateTime.of(REPORT_FILTER_YEAR, 1, 1, 0, 0);

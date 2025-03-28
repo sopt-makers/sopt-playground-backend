@@ -1,16 +1,24 @@
 package org.sopt.makers.internal.resolution.service;
 
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.resolution.domain.UserResolution;
-import org.sopt.makers.internal.resolution.repository.UserResolutionRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.common.GoogleSheetsService;
+import org.springframework.stereotype.Component;
 
-import static org.sopt.makers.internal.common.Constant.CURRENT_GENERATION;
+import java.util.List;
 
+@Slf4j
+@RequiredArgsConstructor
+@Component
 public class UserResolutionServiceUtil {
 
-    public static UserResolution findUserResolutionByMember(Member member, UserResolutionRepository userResolutionRepository) {
-        return userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
-                .orElseThrow(() -> new NotFoundDBEntityException("Non-exists resolution message"));
+    private final GoogleSheetsService googleSheetsService;
+
+    public void safeWriteToSheets(Long writerId, List<List<Object>> rowData) {
+        try {
+            googleSheetsService.writeSheetData(rowData);
+        } catch (Exception e) {
+            log.error("❌ 구글 스프레드 시트 연동 타임캡슐 작성 실패 - writerId={}, 이유: {}", writerId, e.getMessage(), e);
+        }
     }
 }
