@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 
 import static org.sopt.makers.internal.common.Constant.CURRENT_GENERATION;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserResolutionService {
@@ -35,7 +34,7 @@ public class UserResolutionService {
 	private final MemberRepository memberRepository;
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
-    private final GoogleSheetsService googleSheetsService;
+	private final UserResolutionServiceUtil userResolutionServiceUtil;
 
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
@@ -117,10 +116,6 @@ public class UserResolutionService {
                 resolution.getContent()
         );
 
-        try {
-            googleSheetsService.writeSheetData(List.of(rowData));
-        } catch (Exception e) {
-            log.error("❌ 구글 스프레드 시트 연동 타임캡솝 작성 실패 - writerId={}, 이유: {}", writerId, e.getMessage(), e);
-        }
+		userResolutionServiceUtil.safeWriteToSheets(writerId, List.of(rowData));
     }
 }
