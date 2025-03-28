@@ -1,7 +1,5 @@
 package org.sopt.makers.internal.common;
 
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.*;
@@ -11,8 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,17 +25,20 @@ public class GoogleSheetsService {
     @Value("${google.spread-sheet.id}")
     private String spreadsheetId;
 
-    public Sheets getSheetsService() throws IOException {
-        InputStream serviceAccountStream = GoogleSheetsService.class
-                .getClassLoader()
-                .getResourceAsStream("google_spreadsheet_account.json");
+    @Value("${google.spread-sheet.credentials}")
+    private String googleCredentialsJson;
 
-        GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccountStream)
+    public Sheets getSheetsService() throws IOException {
+        ByteArrayInputStream credentialsStream = new ByteArrayInputStream(googleCredentialsJson.getBytes(StandardCharsets.UTF_8));
+
+        GoogleCredentials credentials = GoogleCredentials.fromStream(credentialsStream)
                 .createScoped(Collections.singleton(SheetsScopes.SPREADSHEETS));
 
-        return new Sheets.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), new HttpCredentialsAdapter(credentials))
-                .setApplicationName(applicationName)
-                .build();
+        return new Sheets.Builder(
+                new com.google.api.client.http.javanet.NetHttpTransport(),
+                com.google.api.client.json.jackson2.JacksonFactory.getDefaultInstance(),
+                new HttpCredentialsAdapter(credentials)
+        ).setApplicationName(applicationName).build();
     }
 
     public void writeSheetData(List<List<Object>> values) throws IOException {
