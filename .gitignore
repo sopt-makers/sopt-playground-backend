@@ -41,5 +41,8 @@ out/
 ### config yml ###
 application-**.yml
 
+### google service account ##
+google_spreadsheet_account.json
+
 ### Mac OS .DS_Store ###
 .DS_Store
