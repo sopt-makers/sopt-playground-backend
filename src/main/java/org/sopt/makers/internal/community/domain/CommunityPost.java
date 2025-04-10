@@ -61,7 +61,6 @@ public class CommunityPost extends AuditingTimeEntity {
     @Column(nullable = false)
     private Boolean isSopticle = false;
 
-    @Column
     private String sopticleUrl;
 
     @Builder.Default
