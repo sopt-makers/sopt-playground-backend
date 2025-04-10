@@ -68,7 +68,7 @@ public class CommunityResponseMapper {
 
     public CommunityPostVo toPostVo(CommunityPost post) {
         return new CommunityPostVo(post.getId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getHits(),
-                post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt());
+                post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getSopticleUrl(), post.getIsSopticle(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt());
     }
 
     public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId, AnonymousPostProfile anonymousPostProfile, Boolean isLiked, Integer likes) {
@@ -80,7 +80,7 @@ public class CommunityResponseMapper {
         val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(Collectors.toList());
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         return new PostResponse(post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), anonymousProfile, post.createdAt(), comments);
+                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.isSopticle(), post.sopticleUrl(), anonymousProfile, post.createdAt(), comments);
     }
 
     private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
