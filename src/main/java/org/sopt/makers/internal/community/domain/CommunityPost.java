@@ -58,6 +58,12 @@ public class CommunityPost extends AuditingTimeEntity {
     private Boolean isHot = false;
 
     @Builder.Default
+    @Column(nullable = false)
+    private Boolean isSopticle = false;
+
+    private String sopticleUrl;
+
+    @Builder.Default
     @OneToMany(
             cascade = CascadeType.REMOVE,
             orphanRemoval = true
