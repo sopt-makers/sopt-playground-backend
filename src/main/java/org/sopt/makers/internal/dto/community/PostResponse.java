@@ -22,7 +22,6 @@ public record PostResponse(
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
-        Boolean isSopticle,
         String sopticleUrl,
         AnonymousProfileVo anonymousProfile,
         LocalDateTime createdAt,

@@ -12,7 +12,6 @@ public record CommunityPostVo(
         Boolean isQuestion,
         Boolean isBlindWriter,
         String sopticleUrl,
-        Boolean isSopticle,
         Boolean isReported,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
