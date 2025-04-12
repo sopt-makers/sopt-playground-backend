@@ -21,6 +21,6 @@ public class CategoryService {
         return categories.stream()
                 .filter(category -> category.getParent() == null)
                 .map(CommunityCategoryResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
