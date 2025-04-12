@@ -5,6 +5,7 @@ import org.sopt.makers.internal.community.controller.dto.response.CommunityCateg
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ public class CategoryService {
         return categories.stream()
                 .filter(category -> category.getParent() == null)
                 .map(CommunityCategoryResponse::from)
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing((CommunityCategoryResponse c) -> c.id() != 21))
+                .toList();
     }
 }
