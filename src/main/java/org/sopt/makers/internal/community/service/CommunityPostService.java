@@ -7,6 +7,7 @@ import lombok.val;
 import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
 import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.community.controller.dto.response.SopticleScrapedResponse;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
@@ -20,6 +21,7 @@ import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.OfficialHomeClient;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
@@ -47,6 +49,7 @@ import java.util.stream.Collectors;
 public class CommunityPostService {
 
     private final AnonymousPostProfileService anonymousPostProfileService;
+    private final SopticleService sopticleService;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -55,17 +58,13 @@ public class CommunityPostService {
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostRepository communityPostRepository;
-
     private final CommunityQueryRepository communityQueryRepository;
-
     private final DeletedCommunityPostRepository deletedCommunityPostRepository;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
-
     private final ReportPostRepository reportPostRepository;
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
     private final MemberBlockRepository memberBlockRepository;
-
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
 
     private final CommunityMapper communityMapper;
@@ -73,6 +72,8 @@ public class CommunityPostService {
 
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
+
+    private final OfficialHomeClient officialHomeClient;
 
     @Value("${spring.profiles.active}")
     private String activeProfile;
@@ -112,16 +113,10 @@ public class CommunityPostService {
     @Transactional
     public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
         Member member = memberRetriever.findMemberById(writerId);
-        CommunityPost post = communityPostModifier.createCommunityPost(member, request);
-        if (request.isBlindWriter()) {
-            anonymousPostProfileService.createAnonymousPostProfile(member, post);
-        }
+        CommunityPost post = createCommunityPostBasedOnCategory(member, request);
 
-        // 비메이커스가 글 작성시 슬랙 발송
-        if (!MakersMemberId.getMakersMember().contains(member.getId()) && Objects.equals(activeProfile, "prod")) {
-            val slackRequest = createPostSlackRequest(post.getId());
-            slackClient.postNotMakersMessage(slackRequest.toString());
-        }
+        handleBlindWriter(request, member, post);
+        sendSlackNotificationForNonMakers(member, post);
 
         return communityResponseMapper.toPostSaveResponse(post);
     }
@@ -336,5 +331,36 @@ public class CommunityPostService {
     }
 
     private record PostWithPoints(CommunityPost post, int points, int hits) {
+    }
+
+    private void handleBlindWriter(PostSaveRequest request, Member member, CommunityPost post) {
+        if (request.isBlindWriter()) {
+            anonymousPostProfileService.createAnonymousPostProfile(member, post);
+        }
+    }
+
+    private void sendSlackNotificationForNonMakers(Member member, CommunityPost post) {
+        if (Objects.equals(activeProfile, "prod") && !MakersMemberId.getMakersMember().contains(member.getId())) {
+            val slackRequest = createPostSlackRequest(post.getId());
+            slackClient.postNotMakersMessage(slackRequest.toString());
+        }
+    }
+
+    private CommunityPost createCommunityPostBasedOnCategory(Member member, PostSaveRequest request) {
+        if (request.categoryId() == 21) {
+            SopticleScrapedResponse scrapedResponse = sopticleService.createSopticle(request.content(), member);
+            PostSaveRequest enrichedRequest = PostSaveRequest.builder()
+                    .categoryId(request.categoryId())
+                    .content(scrapedResponse.description())
+                    .images(new String[] { scrapedResponse.thumbnailUrl() })
+                    .sopticleUrl(scrapedResponse.sopticleUrl())
+                    .title(scrapedResponse.title())
+                    .isBlindWriter(false)
+                    .isQuestion(false)
+                    .build();
+            return communityPostModifier.createCommunityPost(member, enrichedRequest);
+        } else {
+            return communityPostModifier.createCommunityPost(member, request);
+        }
     }
 }
