@@ -11,4 +11,5 @@ public interface MemberSoptActivityRepository extends JpaRepository<MemberSoptAc
     Optional<MemberSoptActivity> findByIdAndMemberId(Long id, Long memberId);
     List<MemberSoptActivity> findAllByMemberId(Long memberId);
     List<MemberSoptActivity> findAllByMemberIdIn(List<Long> memberIds);
+    MemberSoptActivity findTop1ByMemberIdOrderByGenerationDesc(Long memberId);
 }
