@@ -140,7 +140,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(SopticleException.class)
-    public ResponseEntity<SopticleResponse> duplicateSopticleWriterException (SopticleException ex) {
+    public ResponseEntity<SopticleResponse> SopticleException (SopticleException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
