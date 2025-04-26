@@ -51,7 +51,8 @@ public class CommunityServiceUnitTest {
                 "Sample Content",
                 true,
                 true,
-                new String[]{"image1.png", "image2.png"}
+                new String[]{"image1.png", "image2.png"},
+                "Sample Url"
         );
 
         Member mockMember = Member.builder()
