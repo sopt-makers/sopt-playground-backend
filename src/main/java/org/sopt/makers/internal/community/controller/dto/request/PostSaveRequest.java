@@ -1,10 +1,12 @@
 package org.sopt.makers.internal.community.controller.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+@Builder
 public record PostSaveRequest(
         @Schema(required = true)
         @NotNull(message = "카테고리 id는 필수 입력값입니다.")
@@ -26,6 +28,8 @@ public record PostSaveRequest(
 
         @Schema(required = true)
         @NotNull(message = "이미지 필드는 필수 필드입니다.")
-        String[] images
+        String[] images,
+
+        String sopticleUrl
 ) {
 }
