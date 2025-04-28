@@ -45,7 +45,7 @@ public class SopticleService {
                 writer.getName(),
                 writer.getProfileImage(),
                 writer.getGeneration(),
-                convertToPart(activity.getPart()).getKey()
+                Part.fromTitle(activity.getPart()).getKey()
         );
         return new SopticleVo(sopticleUrl, userVo);
     }
@@ -55,17 +55,5 @@ public class SopticleService {
             log.error("[SopticleException] statusCode: {}, body: {}", response.getStatusCode(), response.getBody());
             throw new SopticleException("Sopticle 생성 실패: status=" + response.getStatusCode());
         }
-    }
-
-    private Part convertToPart(String partTitle) {
-        return switch (partTitle) {
-            case "웹" -> Part.WEB;
-            case "기획" -> Part.PLAN;
-            case "디자인" -> Part.DESIGN;
-            case "iOS" -> Part.IOS;
-            case "서버" -> Part.SERVER;
-            case "안드로이드" -> Part.ANDROID;
-            default -> throw new IllegalArgumentException("Unknown part title: " + partTitle);
-        };
     }
 }
