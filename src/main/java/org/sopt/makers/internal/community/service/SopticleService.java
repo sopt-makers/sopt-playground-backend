@@ -27,7 +27,7 @@ public class SopticleService {
     public SopticleScrapedResponse createSopticle(String sopticleUrl, Member writer) {
         MemberSoptActivity activity = getLatestActivity(writer.getId());
         SopticleVo sopticleVo = buildSopticleVo(sopticleUrl, writer, activity);
-
+        System.out.println(sopticleVo);
         ResponseEntity<SopticleScrapedResponse> response = officialHomeClient.createSopticle(authConfig.getOfficialSopticleApiSecretKey(), sopticleVo);
         validateInternalApiResponse(response);
 
@@ -44,7 +44,7 @@ public class SopticleService {
                 writer.getName(),
                 writer.getProfileImage(),
                 writer.getGeneration(),
-                Part.fromTitle(activity.getPart()).getKey()
+                activity.getPart()
         );
         return new SopticleVo(sopticleUrl, userVo);
     }

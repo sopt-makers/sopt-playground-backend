@@ -20,13 +20,4 @@ public enum Part {
     public String getKey() {
         return name();
     }
-
-    public static Part fromTitle(String partTitle) {
-        for (Part part : Part.values()) {
-            if (part.getTitle().equals(partTitle)) {
-                return part;
-            }
-        }
-        throw new IllegalArgumentException("Unknown part title: " + partTitle);
-    }
 }
