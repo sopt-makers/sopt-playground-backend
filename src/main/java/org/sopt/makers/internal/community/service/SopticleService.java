@@ -24,7 +24,6 @@ public class SopticleService {
     private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final OfficialHomeClient officialHomeClient;
 
-    @Transactional
     public SopticleScrapedResponse createSopticle(String sopticleUrl, Member writer) {
         MemberSoptActivity activity = getLatestActivity(writer.getId());
         SopticleVo sopticleVo = buildSopticleVo(sopticleUrl, writer, activity);
