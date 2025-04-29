@@ -32,7 +32,9 @@ public class MemberResponseMapper {
             Member member,
             MemberCareer memberCareer,
             MemberCoffeeChatPropertyDto coffeeChatProperty,
-            List<String> activitiesAndGeneration
+            List<String> activitiesAndGeneration,
+            Long uploadSopticleCount,
+            Long uploadReviewCount
     ) {
         List<Integer> generations = MemberUtil.extractGenerations(activitiesAndGeneration);
         List<String> activities = MemberUtil.extractActivities(activitiesAndGeneration);
@@ -46,7 +48,9 @@ public class MemberResponseMapper {
                 generations,
                 coffeeChatProperty.coffeeChatStatus(),
                 coffeeChatProperty.receivedCoffeeChatCount(),
-                coffeeChatProperty.sentCoffeeChatCount()
+                coffeeChatProperty.sentCoffeeChatCount(),
+                uploadSopticleCount,
+                uploadReviewCount
         );
     }
 }
