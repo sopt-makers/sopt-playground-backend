@@ -247,7 +247,6 @@ public class CommunityPostService {
         communityQueryRepository.updateIsHotByPostId(post.getId());
     }
 
-
     private PostWithPoints createPostWithPoints(CommunityPost post) {
         int commentCount = communityCommentRepository.countAllByPostId(post.getId());
         int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
@@ -255,11 +254,9 @@ public class CommunityPostService {
         return new PostWithPoints(post, points, post.getHits());
     }
 
-
     private int calculatePoints(int commentCount, int likeCount) {
         return commentCount * 2 + likeCount;
     }
-
 
     private JsonNode createReportSlackRequest(Long id, String name) {
         val rootNode = slackMessageUtil.getObjectNode();
