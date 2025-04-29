@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.community.repository.CommunityPostRepository;
+import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
@@ -61,6 +63,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final CommunityPostRepository communityPostRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberReportRepository memberReportRepository;
@@ -68,6 +71,7 @@ public class MemberService {
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
     private final SlackMessageUtil slackMessageUtil;
+    private final ReviewService reviewService;
 
     @Transactional(readOnly = true)
     public Member getMemberById(Long id) {
@@ -475,7 +479,12 @@ public class MemberService {
         MemberCoffeeChatPropertyDto coffeeChatProperty = coffeeChatRetriever.getMemberCoffeeChatProperty(member);
         List<String> activitiesAndGeneration = memberRetriever.concatPartAndGeneration(memberId);
 
-        return memberResponseMapper.toMemberPropertiesResponse(member, memberCareer, coffeeChatProperty, activitiesAndGeneration);
+        long uploadSopticleCount = communityPostRepository.countSopticleByMemberId(memberId);
+        long uploadReviewCount = reviewService.fetchReviewCountByUsername(member.getName());
+
+        return memberResponseMapper.toMemberPropertiesResponse(
+                member, memberCareer, coffeeChatProperty,
+                activitiesAndGeneration, uploadSopticleCount, uploadReviewCount);
     }
 
     private void sendReportToSlack(Member reporter, Member reportedMember) {
