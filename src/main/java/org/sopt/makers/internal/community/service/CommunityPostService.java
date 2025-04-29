@@ -70,8 +70,6 @@ public class CommunityPostService {
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
 
-    private final OfficialHomeClient officialHomeClient;
-
     @Value("${spring.profiles.active}")
     private String activeProfile;
 
@@ -124,20 +122,16 @@ public class CommunityPostService {
         categoryRetriever.checkExistsCategoryById(request.categoryId());
         validatePostOwner(member.getId(), post.getMember().getId());
 
+        if (isSopticleCategory(request.categoryId())) {
+            SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.content());
+            post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), new String[] { scrapedResponse.thumbnailUrl() },
+                            request.isQuestion(), request.isBlindWriter(), scrapedResponse.sopticleUrl());
+        } else {
+            post.updatePost(request.categoryId(), request.title(), request.content(), request.images(),
+                            request.isQuestion(), request.isBlindWriter(), "");
         }
 
-        communityPostRepository.save(CommunityPost.builder()
-                .id(request.postId())
-                .member(member)
-                .categoryId(request.categoryId())
-                .title(request.title())
-                .content(request.content())
-                .hits(post.getHits())
-                .images(request.images())
-                .isQuestion(request.isQuestion())
-                .isBlindWriter(request.isBlindWriter())
-                .comments(communityCommentRepository.findAllByPostId(request.postId()))
-                .build());
+        communityPostRepository.save(post);
         return communityResponseMapper.toPostUpdateResponse(post);
     }
 
@@ -335,6 +329,16 @@ public class CommunityPostService {
             return communityPostModifier.createCommunityPost(member, enrichedRequest);
         } else {
             return communityPostModifier.createCommunityPost(member, request);
+        }
+    }
+
+    private boolean isSopticleCategory(Long categoryId) {
+        return categoryId == 21;
+    }
+
+    private void validatePostOwner(Long memberId, Long postWriterId) {
+        if (!Objects.equals(memberId, postWriterId)) {
+            throw new ClientBadRequestException("수정/삭제 권한이 없는 유저입니다.");
         }
     }
 }
