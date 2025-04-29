@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 public class CommunityPostService {
 
     private final AnonymousPostProfileService anonymousPostProfileService;
-    private final SopticleService sopticleService;
+    private final SopticleScrapedService sopticleScrapedService;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -315,8 +315,8 @@ public class CommunityPostService {
     }
 
     private CommunityPost createCommunityPostBasedOnCategory(Member member, PostSaveRequest request) {
-        if (request.categoryId() == 21) {
-            SopticleScrapedResponse scrapedResponse = sopticleService.createSopticle(request.content(), member);
+        if (isSopticleCategory(request.categoryId())) {
+            SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.content());
             PostSaveRequest enrichedRequest = PostSaveRequest.builder()
                     .categoryId(request.categoryId())
                     .content(scrapedResponse.description())

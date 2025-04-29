@@ -159,7 +159,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> feignClientException(FeignException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body("Invalid external api request");
+                .body("Invalid external api request" + ex.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)
