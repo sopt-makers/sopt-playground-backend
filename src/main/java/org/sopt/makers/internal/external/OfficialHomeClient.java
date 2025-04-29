@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @FeignClient(value = "officialHome", url = "${internal.official.url}")
 public interface OfficialHomeClient {
     @PostMapping(value = "/sopticle")
-    ResponseEntity<SopticleScrapedResponse> createSopticle(
+    ResponseEntity<SopticleScrapedResponse> getSopticleScrapedData(
             @RequestHeader(name = "api-key") String apiKey,
             @RequestBody SopticleVo sopticleRequest
     );

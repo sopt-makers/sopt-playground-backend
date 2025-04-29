@@ -23,7 +23,7 @@ public class CommunityPost extends AuditingTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id")
+    @JoinColumn(name = "writer_id", nullable = false)
     private Member member;
 
     @Column(nullable = false)
@@ -66,4 +66,15 @@ public class CommunityPost extends AuditingTimeEntity {
     )
     @JoinColumn(name = "postId")
     private List<CommunityComment> comments = new ArrayList<>();
+
+    public void updatePost(Long categoryId, String title, String content,
+                           String[] images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
+        this.categoryId = categoryId;
+        this.title = title;
+        this.content = content;
+        this.images = images;
+        this.isQuestion = isQuestion;
+        this.isBlindWriter = isBlindWriter;
+        this.sopticleUrl = sopticleUrl;
+    }
 }

@@ -1,10 +1,9 @@
 package org.sopt.makers.internal.review.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
-import static org.sopt.makers.internal.service.member.MemberServiceUtil.*;
 
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.review.domain.ActivityReview;
 import org.sopt.makers.internal.review.dto.request.CreateActivityReviewRequest;
 import org.sopt.makers.internal.review.dto.response.ActivityReviewResponse;
@@ -25,11 +24,11 @@ import java.util.List;
 public class ActivityReviewService {
 
     private final ActivityReviewRepository activityReviewRepository;
-    private final MemberRepository memberRepository;
+    private final MemberRetriever memberRetriever;
 
     @Transactional
     public void createActivityReview(CreateActivityReviewRequest request, Long memberId) {
-        val member = findMemberById(memberRepository, memberId);
+        val member = memberRetriever.findMemberById(memberId);
         if (!member.getGeneration().equals(CURRENT_GENERATION)) {
             throw new ClientBadRequestException("Only current generation can write activity reviews");
         }
