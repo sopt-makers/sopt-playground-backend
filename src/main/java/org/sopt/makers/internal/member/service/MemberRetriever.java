@@ -2,10 +2,13 @@ package org.sopt.makers.internal.member.service;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.domain.member.MemberBlock;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
+import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,6 +20,7 @@ public class MemberRetriever {
     private final MemberRepository memberRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final MemberBlockRepository memberBlockRepository;
 
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
@@ -38,5 +42,13 @@ public class MemberRetriever {
 
     public List<Member> findAllMembersByCoffeeChatActivate() {
         return memberProfileQueryRepository.findAllMembersByCoffeeChatActivate();
+    }
+
+    public void checkBlockedMember(Member blocker, Member blockedMember) {
+        MemberBlock memberBlock = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember)
+                .orElseThrow(() -> new NotFoundDBEntityException("차단되지 않은 사용자입니다."));
+        if (Boolean.TRUE.equals(memberBlock.getIsBlocked())) {
+            throw new ClientBadRequestException("차단한 사용자의 게시글은 조회할 수 없습니다.");
+        }
     }
 }

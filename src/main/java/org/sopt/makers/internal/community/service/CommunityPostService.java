@@ -14,22 +14,19 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
-import org.sopt.makers.internal.community.repository.category.CategoryRepository;
 import org.sopt.makers.internal.community.service.anonymous.*;
+import org.sopt.makers.internal.community.service.category.CategoryRetriever;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.community.*;
 import org.sopt.makers.internal.dto.community.*;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.OfficialHomeClient;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.mapper.CommunityMapper;
 import org.sopt.makers.internal.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
-import org.sopt.makers.internal.repository.MemberRepository;
 import org.sopt.makers.internal.repository.community.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
-import org.sopt.makers.internal.service.member.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +51,8 @@ public class CommunityPostService {
     private final CommunityPostModifier communityPostModifier;
 
     private final MemberRetriever memberRetriever;
+    private final CategoryRetriever categoryRetriever;
+    private final CommunityPostRetriever communityPostRetriever;
 
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
@@ -62,8 +61,6 @@ public class CommunityPostService {
     private final DeletedCommunityPostRepository deletedCommunityPostRepository;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final ReportPostRepository reportPostRepository;
-    private final CategoryRepository categoryRepository;
-    private final MemberRepository memberRepository;
     private final MemberBlockRepository memberBlockRepository;
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
 
@@ -88,8 +85,7 @@ public class CommunityPostService {
             val posts = communityQueryRepository.findAllPostByCursor(limit, cursor, memberId, isBlockedOn);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {
-            categoryRepository.findById(categoryId).orElseThrow(
-                    () -> new ClientBadRequestException("존재하지 않는 categoryId입니다."));
+            categoryRetriever.checkExistsCategoryById(categoryId);
             val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         }
@@ -100,11 +96,11 @@ public class CommunityPostService {
         val postDao = communityQueryRepository.getPostById(postId);
         if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
 
-        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, postDao.member().getId());
+        val blocker = memberRetriever.findMemberById(memberId);
+        val blockedMember = memberRetriever.findMemberById(postDao.member().getId());
 
         if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
-            MemberServiceUtil.checkBlockedMember(memberBlockRepository, blocker, blockedMember);
+            memberRetriever.checkBlockedMember(blocker, blockedMember);
         }
 
         return communityResponseMapper.toCommunityVo(postDao);
@@ -123,15 +119,11 @@ public class CommunityPostService {
 
     @Transactional
     public PostUpdateResponse updatePost(Long writerId, PostUpdateRequest request) {
-        val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val post = communityPostRepository.findById(request.postId()).orElseThrow(
-                () -> new NotFoundDBEntityException("Is not a exist postId"));
-        val category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
+        Member member = memberRetriever.findMemberById(writerId);
+        CommunityPost post = communityPostRetriever.findCommunityPostById(request.postId());
+        categoryRetriever.checkExistsCategoryById(request.categoryId());
+        validatePostOwner(member.getId(), post.getMember().getId());
 
-        if (!Objects.equals(member.getId(), post.getMember().getId())) {
-            throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
 
         communityPostRepository.save(CommunityPost.builder()
@@ -150,15 +142,10 @@ public class CommunityPostService {
     }
 
     @Transactional
-    public void deletePost(Long postId, Long writerId) {
-        val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val post = communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a categoryId"));
-
-        if (!Objects.equals(member.getId(), post.getMember().getId())) {
-            throw new ClientBadRequestException("삭제 권한이 없는 유저입니다.");
-        }
+    public void deletePost(Long postId, Long memberId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
+        validatePostOwner(member.getId(), post.getMember().getId());
 
         val deletedPost = communityMapper.toDeleteCommunityPost(post);
         deletedCommunityPostRepository.save(deletedPost);
@@ -175,10 +162,8 @@ public class CommunityPostService {
 
     @Transactional
     public void reportPost(Long memberId, Long postId) {
-        val member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val post = communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist post id"));
+        Member member = memberRetriever.findMemberById(memberId);
+        CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -198,45 +183,34 @@ public class CommunityPostService {
 
     @Transactional
     public void likePost(Long memberId, Long postId) {
+        Member member = memberRetriever.findMemberById(memberId);
+        CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 
-        Member member = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        CommunityPost post = CommunityPostServiceUtil.findCommunityPostById(communityPostRepository, postId);
-
-        if (CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId)) {
-            throw new ClientBadRequestException("이미 좋아요를 누른 게시물입니다.");
-        }
+        communityPostRetriever.checkAlreadyLikedPost(memberId, postId);
 
         communityPostLikeRepository.save(CommunityPostLike.builder().member(member).post(post).build());
     }
 
     @Transactional
     public void unlikePost(Long memberId, Long postId) {
-
-        MemberServiceUtil.checkExistsMemberById(memberRepository, memberId);
-        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
-
-        if (!CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId)) {
-            throw new ClientBadRequestException("좋아요를 누른적이 없는 게시물입니다.");
-        }
-
-        CommunityPostLike communityPostLike = communityPostLikeRepository.findCommunityPostLikeByMemberIdAndPostId(memberId, postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("좋아요를 누른적이 없는 게시물입니다"));
+        memberRetriever.checkExistsMemberById(memberId);
+        CommunityPostLike communityPostLike = communityPostRetriever.findCommunityPostLike(memberId, postId);
 
         communityPostLikeRepository.delete(communityPostLike);
     }
 
     @Transactional(readOnly = true)
     public Boolean isLiked(Long memberId, Long postId) {
+        memberRetriever.checkExistsMemberById(memberId);
+        communityPostRetriever.checkExistsCommunityPostById(postId);
 
-        MemberServiceUtil.checkExistsMemberById(memberRepository, memberId);
-        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
-
-        return CommunityPostServiceUtil.isAlreadyLikePost(communityPostLikeRepository, memberId, postId);
+        return communityPostLikeRepository.existsByMemberIdAndPostId(memberId, postId);
     }
 
     @Transactional(readOnly = true)
     public Integer getLikes(Long postId) {
-        CommunityPostServiceUtil.checkExistsCommunityPostById(communityPostRepository, postId);
+        communityPostRetriever.checkExistsCommunityPostById(postId);
+
         return communityPostLikeRepository.countAllByPostId(postId);
     }
 

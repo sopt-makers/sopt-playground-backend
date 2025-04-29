@@ -37,7 +37,6 @@ import org.sopt.makers.internal.member.service.coffeechat.dto.MemberCoffeeChatPr
 import org.sopt.makers.internal.repository.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
-import org.sopt.makers.internal.service.member.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -428,8 +427,8 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
-        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockedMemberId);
+        val blocker = memberRetriever.findMemberById(memberId);
+        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
         val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         return blockHistory.map(memberBlock ->
@@ -438,9 +437,9 @@ public class MemberService {
     }
 
     @Transactional
-    public void blockUser(Long memberId, Long blockMemberId) {
-        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockMemberId);
+    public void blockUser(Long memberId, Long blockedMemberId) {
+        val blocker = memberRetriever.findMemberById(memberId);
+        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
         val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         if (blockHistory.isPresent()) {
@@ -456,9 +455,9 @@ public class MemberService {
     }
 
     @Transactional
-    public void reportUser(Long memberId, Long reportMemberId) {
-        val reporter = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val reportedMember = MemberServiceUtil.findMemberById(memberRepository, reportMemberId);
+    public void reportUser(Long memberId, Long reportedMemberId) {
+        val reporter = memberRetriever.findMemberById(memberId);
+        val reportedMember = memberRetriever.findMemberById(reportedMemberId);
 
         sendReportToSlack(reporter, reportedMember);
 
