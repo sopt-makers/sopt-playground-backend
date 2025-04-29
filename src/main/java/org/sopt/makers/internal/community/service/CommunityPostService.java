@@ -123,7 +123,7 @@ public class CommunityPostService {
         validatePostOwner(member.getId(), post.getMember().getId());
 
         if (isSopticleCategory(request.categoryId())) {
-            SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.content());
+            SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.link());
             post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), new String[] { scrapedResponse.thumbnailUrl() },
                             request.isQuestion(), request.isBlindWriter(), scrapedResponse.sopticleUrl());
         } else {
@@ -313,12 +313,12 @@ public class CommunityPostService {
 
     private CommunityPost createCommunityPostBasedOnCategory(Member member, PostSaveRequest request) {
         if (isSopticleCategory(request.categoryId())) {
-            SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.content());
+            SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.link());
             PostSaveRequest enrichedRequest = PostSaveRequest.builder()
                     .categoryId(request.categoryId())
                     .content(scrapedResponse.description())
                     .images(new String[] { scrapedResponse.thumbnailUrl() })
-                    .sopticleUrl(scrapedResponse.sopticleUrl())
+                    .link(scrapedResponse.sopticleUrl())
                     .title(scrapedResponse.title())
                     .isBlindWriter(false)
                     .isQuestion(false)
