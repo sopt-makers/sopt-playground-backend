@@ -30,6 +30,6 @@ public record PostSaveRequest(
         @NotNull(message = "이미지 필드는 필수 필드입니다.")
         String[] images,
 
-        String sopticleUrl
+        String link
 ) {
 }
