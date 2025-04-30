@@ -39,7 +39,7 @@ public class CommunityQueryRepository {
                 .where(ltPostId(cursor))
                 .limit(limit)
                 .distinct()
-                .orderBy(posts.id.desc());
+                .orderBy(posts.createdAt.desc());
 
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
@@ -70,7 +70,7 @@ public class CommunityQueryRepository {
                 .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
                 .limit(limit)
                 .distinct()
-                .orderBy(posts.id.desc());
+                .orderBy(posts.createdAt.desc());
 
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
@@ -134,7 +134,7 @@ public class CommunityQueryRepository {
         return queryFactory
             .selectFrom(post)
             .where(post.isHot.eq(true))
-            .orderBy(post.id.desc())
+            .orderBy(post.createdAt.desc())
             .fetchFirst();
     }
 
