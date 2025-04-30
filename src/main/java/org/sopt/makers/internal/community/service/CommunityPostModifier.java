@@ -29,6 +29,7 @@ public class CommunityPostModifier {
                 .images(request.images())
                 .isQuestion(request.isQuestion())
                 .isBlindWriter(request.isBlindWriter())
+                .sopticleUrl(request.link())
                 .comments(new ArrayList<>())
                 .build());
     }

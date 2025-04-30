@@ -20,4 +20,11 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
     @Modifying
     @Query("UPDATE CommunityPost p SET p.hits = p.hits + 1 WHERE p.id = :postId")
     void increaseHitsDirect(@Param("postId") Long postId);
+
+    @Query(value =
+            "SELECT COUNT(*) " +
+            "FROM CommunityPost p " +
+            "WHERE p.categoryId = 21 AND p.member.id = :memberId"
+            )
+    long countSopticleByMemberId(@Param("memberId") Long memberId);
 }

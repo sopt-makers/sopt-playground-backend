@@ -11,6 +11,7 @@ public record CommunityPostVo(
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
+        String sopticleUrl,
         Boolean isReported,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

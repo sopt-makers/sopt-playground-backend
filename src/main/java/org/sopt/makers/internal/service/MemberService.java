@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.common.MakersMemberId;
 import org.sopt.makers.internal.common.SlackMessageUtil;
+import org.sopt.makers.internal.community.repository.CommunityPostRepository;
+import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.domain.MemberCareer;
 import org.sopt.makers.internal.domain.MemberLink;
@@ -37,7 +39,6 @@ import org.sopt.makers.internal.member.service.coffeechat.dto.MemberCoffeeChatPr
 import org.sopt.makers.internal.repository.*;
 import org.sopt.makers.internal.repository.member.MemberBlockRepository;
 import org.sopt.makers.internal.repository.member.MemberReportRepository;
-import org.sopt.makers.internal.service.member.MemberServiceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final CommunityPostRepository communityPostRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberReportRepository memberReportRepository;
@@ -68,6 +70,7 @@ public class MemberService {
     private final MemberMapper memberMapper;
     private final SlackClient slackClient;
     private final SlackMessageUtil slackMessageUtil;
+    private final ReviewService reviewService;
 
     @Transactional(readOnly = true)
     public Member getMemberById(Long id) {
@@ -428,8 +431,8 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
-        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockedMemberId);
+        val blocker = memberRetriever.findMemberById(memberId);
+        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
         val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         return blockHistory.map(memberBlock ->
@@ -438,9 +441,9 @@ public class MemberService {
     }
 
     @Transactional
-    public void blockUser(Long memberId, Long blockMemberId) {
-        val blocker = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val blockedMember = MemberServiceUtil.findMemberById(memberRepository, blockMemberId);
+    public void blockUser(Long memberId, Long blockedMemberId) {
+        val blocker = memberRetriever.findMemberById(memberId);
+        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
         val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         if (blockHistory.isPresent()) {
@@ -456,9 +459,9 @@ public class MemberService {
     }
 
     @Transactional
-    public void reportUser(Long memberId, Long reportMemberId) {
-        val reporter = MemberServiceUtil.findMemberById(memberRepository, memberId);
-        val reportedMember = MemberServiceUtil.findMemberById(memberRepository, reportMemberId);
+    public void reportUser(Long memberId, Long reportedMemberId) {
+        val reporter = memberRetriever.findMemberById(memberId);
+        val reportedMember = memberRetriever.findMemberById(reportedMemberId);
 
         sendReportToSlack(reporter, reportedMember);
 
@@ -475,7 +478,12 @@ public class MemberService {
         MemberCoffeeChatPropertyDto coffeeChatProperty = coffeeChatRetriever.getMemberCoffeeChatProperty(member);
         List<String> activitiesAndGeneration = memberRetriever.concatPartAndGeneration(memberId);
 
-        return memberResponseMapper.toMemberPropertiesResponse(member, memberCareer, coffeeChatProperty, activitiesAndGeneration);
+        long uploadSopticleCount = communityPostRepository.countSopticleByMemberId(memberId);
+        long uploadReviewCount = reviewService.fetchReviewCountByUsername(member.getName());
+
+        return memberResponseMapper.toMemberPropertiesResponse(
+                member, memberCareer, coffeeChatProperty,
+                activitiesAndGeneration, uploadSopticleCount, uploadReviewCount);
     }
 
     private void sendReportToSlack(Member reporter, Member reportedMember) {

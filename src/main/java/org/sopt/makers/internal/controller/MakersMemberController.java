@@ -4,21 +4,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.dto.member.MakersMemberProfileResponse;
-import org.sopt.makers.internal.dto.member.MemberProfileResponse;
-import org.sopt.makers.internal.exception.WrongSecretHeaderException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
