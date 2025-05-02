@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.wordChainGame;
+package org.sopt.makers.internal.wordchaingame.dto.response;
 
 public record WinnerVo(
         Long roomId,

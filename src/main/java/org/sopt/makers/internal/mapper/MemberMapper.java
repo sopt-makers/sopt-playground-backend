@@ -19,8 +19,8 @@ import org.sopt.makers.internal.dto.member.MemberProfileResponse;
 import org.sopt.makers.internal.dto.member.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.dto.member.MemberProjectVo;
 import org.sopt.makers.internal.dto.member.MemberResponse;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateResponse;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameRoomResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {

@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.wordChainGame;
+package org.sopt.makers.internal.wordchaingame.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

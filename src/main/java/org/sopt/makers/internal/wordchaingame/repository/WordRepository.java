@@ -1,6 +1,6 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.wordchaingame.repository;
 
-import org.sopt.makers.internal.domain.Word;
+import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;

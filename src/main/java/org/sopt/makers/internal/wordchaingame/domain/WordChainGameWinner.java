@@ -1,31 +1,27 @@
-package org.sopt.makers.internal.domain;
+package org.sopt.makers.internal.wordchaingame.domain;
 
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-@Table(name = "word")
-public class Word{
+@Table
+public class WordChainGameWinner {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "user_id")
-    private Long memberId;
+    private Long userId;
 
     @Column
-    private String word;
+    private Integer score;
 
-    @Column(name = "room_id")
+    @Column
     private Long roomId;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 }

@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.wordChainGame;
+package org.sopt.makers.internal.wordchaingame.dto.response;
 
 import com.querydsl.core.annotations.QueryProjection;
 

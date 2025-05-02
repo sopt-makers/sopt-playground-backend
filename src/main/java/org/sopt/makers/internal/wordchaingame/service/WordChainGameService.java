@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.wordchaingame.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,17 +9,17 @@ import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
 import org.sopt.makers.internal.config.AuthConfig;
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.Word;
-import org.sopt.makers.internal.domain.WordChainGameRoom;
-import org.sopt.makers.internal.domain.WordChainGameWinner;
-import org.sopt.makers.internal.dto.wordChainGame.WinnerDao;
-import org.sopt.makers.internal.dto.wordChainGame.WinnerVo;
-import org.sopt.makers.internal.dto.wordChainGame.WordChainGameGenerateRequest;
+import org.sopt.makers.internal.wordchaingame.domain.Word;
+import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
+import org.sopt.makers.internal.wordchaingame.domain.WordChainGameWinner;
+import org.sopt.makers.internal.wordchaingame.dto.response.WinnerDao;
+import org.sopt.makers.internal.wordchaingame.dto.response.WinnerVo;
+import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
-import org.sopt.makers.internal.repository.WordChainGameQueryRepository;
-import org.sopt.makers.internal.repository.WordChainGameRepository;
-import org.sopt.makers.internal.repository.WordChainGameWinnerRepository;
-import org.sopt.makers.internal.repository.WordRepository;
+import org.sopt.makers.internal.wordchaingame.repository.WordChainGameQueryRepository;
+import org.sopt.makers.internal.wordchaingame.repository.WordChainGameRepository;
+import org.sopt.makers.internal.wordchaingame.repository.WordChainGameWinnerRepository;
+import org.sopt.makers.internal.wordchaingame.repository.WordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

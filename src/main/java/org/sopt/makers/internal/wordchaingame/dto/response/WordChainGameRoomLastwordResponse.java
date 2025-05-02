@@ -1,6 +1,4 @@
-package org.sopt.makers.internal.dto.wordChainGame;
-
-import java.util.List;
+package org.sopt.makers.internal.wordchaingame.dto.response;
 
 public record WordChainGameRoomLastwordResponse(
         Long roomId,

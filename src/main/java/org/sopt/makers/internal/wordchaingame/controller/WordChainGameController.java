@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.controller;
+package org.sopt.makers.internal.wordchaingame.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -6,13 +6,17 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameAllResponse;
+import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameWinnerAllResponse;
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.wordChainGame.*;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.mapper.MemberMapper;
 import org.sopt.makers.internal.service.MemberService;
-import org.sopt.makers.internal.service.WordChainGameService;
+import org.sopt.makers.internal.wordchaingame.service.WordChainGameService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
