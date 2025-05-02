@@ -16,7 +16,7 @@ import org.sopt.makers.internal.domain.QMemberSoptActivity;
 import org.sopt.makers.internal.project.domain.QProject;
 import org.sopt.makers.internal.dto.member.MemberProfileProjectDao;
 import org.sopt.makers.internal.dto.member.QMemberProfileProjectDao;
-import org.sopt.makers.internal.member.domain.coffeechat.QCoffeeChat;
+import org.sopt.makers.internal.coffeechat.domain.QCoffeeChat;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 

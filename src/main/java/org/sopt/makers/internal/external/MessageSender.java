@@ -1,7 +1,7 @@
 package org.sopt.makers.internal.external;
 
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
+import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 
 public interface MessageSender {
 
