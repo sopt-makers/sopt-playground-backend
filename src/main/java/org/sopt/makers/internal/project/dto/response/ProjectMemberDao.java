@@ -1,10 +1,11 @@
-package org.sopt.makers.internal.dto.project;
+package org.sopt.makers.internal.project.dto.response;
+
+import com.querydsl.core.annotations.QueryProjection;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-public record ProjectMemberVo(
+public record ProjectMemberDao (
         Long id,
         String name,
         Long writerId,
@@ -25,7 +26,7 @@ public record ProjectMemberVo(
 
         Long memberId,
         String memberName,
-        List<Integer> memberGenerations,
+        Integer memberGeneration,
         String memberProfileImage,
         Boolean memberHasProfile,
 
@@ -33,4 +34,6 @@ public record ProjectMemberVo(
         String memberDesc,
         Boolean isTeamMember
 ) {
+    @QueryProjection
+    public ProjectMemberDao {}
 }

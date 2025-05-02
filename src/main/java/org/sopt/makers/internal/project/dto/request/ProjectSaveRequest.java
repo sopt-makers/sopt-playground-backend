@@ -1,18 +1,22 @@
-package org.sopt.makers.internal.dto.project;
+package org.sopt.makers.internal.project.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
 import java.util.List;
 
-public record ProjectResponse(
-        @Schema(required = true)
-        Long id,
+public record ProjectSaveRequest(
         @Schema(required = true)
         String name,
+        @Schema(required = true)
+        Long writerId,
         @Schema(required = true)
         Integer generation,
         @Schema(required = true)
         String category,
+        @Schema(required = true)
+        LocalDate startAt,
+        LocalDate endAt,
         @Schema(required = true)
         String[] serviceType,
         Boolean isAvailable,
@@ -25,16 +29,18 @@ public record ProjectResponse(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
-        List<ProjectMemberResponse> members,
-        List<ProjectLinkResponse> links
+        String[] images,
+        List<ProjectMemberSaveRequest> members,
+        List<ProjectLinkSaveRequest> links
 ) {
-    public record ProjectMemberResponse(
+    public record ProjectMemberSaveRequest(
             Long memberId,
-            String memberName,
-            String memberProfileImage
+            String memberRole,
+            String memberDescription,
+            Boolean isTeamMember
     ){}
-    public record ProjectLinkResponse(
-            Long linkId,
+
+    public record ProjectLinkSaveRequest(
             String linkTitle,
             String linkUrl
     ){}

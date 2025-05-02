@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.dto.project;
+package org.sopt.makers.internal.project.dto.response;
 
 import com.querydsl.core.annotations.QueryProjection;
 

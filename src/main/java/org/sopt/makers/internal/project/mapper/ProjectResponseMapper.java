@@ -1,15 +1,15 @@
-package org.sopt.makers.internal.mapper;
+package org.sopt.makers.internal.project.mapper;
 
 import lombok.val;
 import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.dto.internal.InternalMemberProjectResponse;
 import org.sopt.makers.internal.dto.internal.InternalProjectDetailResponse;
 import org.sopt.makers.internal.dto.internal.InternalProjectResponse;
-import org.sopt.makers.internal.dto.project.ProjectDetailResponse;
-import org.sopt.makers.internal.dto.project.ProjectLinkDao;
-import org.sopt.makers.internal.dto.project.ProjectMemberVo;
-import org.sopt.makers.internal.dto.project.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.ProjectDetailResponse;
+import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
+import org.sopt.makers.internal.project.dto.response.ProjectResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

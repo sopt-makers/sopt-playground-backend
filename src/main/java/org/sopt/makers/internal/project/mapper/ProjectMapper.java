@@ -1,8 +1,8 @@
-package org.sopt.makers.internal.mapper;
+package org.sopt.makers.internal.project.mapper;
 
 import org.mapstruct.Mapper;
-import org.sopt.makers.internal.dto.project.ProjectMemberDao;
-import org.sopt.makers.internal.dto.project.ProjectMemberVo;
+import org.sopt.makers.internal.project.dto.response.ProjectMemberDao;
+import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
 
 import java.util.List;
 

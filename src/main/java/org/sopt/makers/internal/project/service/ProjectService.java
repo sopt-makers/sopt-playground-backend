@@ -1,17 +1,24 @@
-package org.sopt.makers.internal.service;
+package org.sopt.makers.internal.project.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.domain.MemberSoptActivity;
-import org.sopt.makers.internal.domain.ProjectLink;
-import org.sopt.makers.internal.domain.MemberProjectRelation;
-import org.sopt.makers.internal.domain.Project;
-import org.sopt.makers.internal.dto.project.*;
+import org.sopt.makers.internal.project.domain.ProjectLink;
+import org.sopt.makers.internal.project.domain.MemberProjectRelation;
+import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.mapper.ProjectMapper;
+import org.sopt.makers.internal.project.mapper.ProjectMapper;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
-import org.sopt.makers.internal.repository.*;
+import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
+import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
+import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.response.ProjectMemberDao;
+import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
+import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
+import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
+import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
+import org.sopt.makers.internal.project.repository.ProjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

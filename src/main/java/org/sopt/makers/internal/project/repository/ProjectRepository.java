@@ -1,6 +1,6 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.project.repository;
 
-import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.project.domain.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

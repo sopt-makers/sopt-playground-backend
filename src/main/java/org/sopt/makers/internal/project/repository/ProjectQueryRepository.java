@@ -1,17 +1,17 @@
-package org.sopt.makers.internal.repository;
+package org.sopt.makers.internal.project.repository;
 
 import java.util.List;
 import java.util.Objects;
 
-import org.sopt.makers.internal.domain.Project;
+import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.domain.QMember;
-import org.sopt.makers.internal.domain.QMemberProjectRelation;
-import org.sopt.makers.internal.domain.QProject;
-import org.sopt.makers.internal.domain.QProjectLink;
-import org.sopt.makers.internal.dto.project.ProjectLinkDao;
-import org.sopt.makers.internal.dto.project.ProjectMemberDao;
-import org.sopt.makers.internal.dto.project.QProjectLinkDao;
-import org.sopt.makers.internal.dto.project.QProjectMemberDao;
+import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
+import org.sopt.makers.internal.project.domain.QProject;
+import org.sopt.makers.internal.project.domain.QProjectLink;
+import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.response.ProjectMemberDao;
+import org.sopt.makers.internal.project.dto.response.QProjectLinkDao;
+import org.sopt.makers.internal.project.dto.response.QProjectMemberDao;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;

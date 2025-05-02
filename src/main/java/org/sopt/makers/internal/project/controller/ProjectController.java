@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.controller;
+package org.sopt.makers.internal.project.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,11 +8,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.InfiniteScrollUtil;
 import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.domain.Project;
-import org.sopt.makers.internal.dto.project.*;
+import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.exception.WrongImageInputException;
-import org.sopt.makers.internal.mapper.ProjectResponseMapper;
-import org.sopt.makers.internal.service.ProjectService;
+import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
+import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
+import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
+import org.sopt.makers.internal.project.dto.response.ProjectAllResponse;
+import org.sopt.makers.internal.project.dto.response.ProjectDetailResponse;
+import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
+import org.sopt.makers.internal.project.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

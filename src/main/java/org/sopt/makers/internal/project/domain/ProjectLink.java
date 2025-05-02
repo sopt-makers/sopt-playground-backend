@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.domain;
+package org.sopt.makers.internal.project.domain;
 
 import lombok.*;
 
