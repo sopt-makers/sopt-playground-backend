@@ -7,7 +7,7 @@ import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatStatus;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;

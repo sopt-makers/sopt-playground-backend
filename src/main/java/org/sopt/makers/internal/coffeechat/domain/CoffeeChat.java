@@ -10,9 +10,9 @@ import org.sopt.makers.internal.coffeechat.domain.enums.Career;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 import org.sopt.makers.internal.coffeechat.domain.enums.MeetingType;
-import org.sopt.makers.internal.common.GenericEnumListConverter;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
+import org.sopt.makers.internal.common.util.GenericEnumListConverter;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.common.AuditingTimeEntity;
 
 import javax.persistence.*;
 import java.util.List;

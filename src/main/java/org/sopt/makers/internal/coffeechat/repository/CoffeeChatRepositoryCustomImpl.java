@@ -13,12 +13,12 @@ import org.sopt.makers.internal.coffeechat.domain.QCoffeeChatHistory;
 import org.sopt.makers.internal.coffeechat.domain.enums.Career;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
-import org.sopt.makers.internal.domain.QMember;
-import org.sopt.makers.internal.domain.QMemberCareer;
-import org.sopt.makers.internal.domain.QMemberSoptActivity;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.member.domain.QMember;
+import org.sopt.makers.internal.member.domain.QMemberCareer;
+import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 
 import java.util.List;
 

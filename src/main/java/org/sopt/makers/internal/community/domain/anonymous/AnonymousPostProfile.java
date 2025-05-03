@@ -12,8 +12,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
 import org.sopt.makers.internal.community.domain.CommunityPost;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.common.AuditingTimeEntity;
 
 import lombok.AccessLevel;
 import lombok.Builder;

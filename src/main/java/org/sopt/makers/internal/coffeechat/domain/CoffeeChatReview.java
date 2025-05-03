@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 
 import javax.persistence.*;
 

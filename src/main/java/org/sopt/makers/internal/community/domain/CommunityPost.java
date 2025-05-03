@@ -2,9 +2,9 @@ package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
-import org.sopt.makers.internal.domain.community.CommunityComment;
+import org.sopt.makers.internal.community.domain.comment.CommunityComment;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.common.AuditingTimeEntity;
 
 import javax.persistence.*;
 import java.util.ArrayList;

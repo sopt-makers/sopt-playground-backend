@@ -3,8 +3,8 @@ package org.sopt.makers.internal.project.repository;
 import java.util.List;
 import java.util.Objects;
 
+import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.domain.QMember;
 import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.project.domain.QProject;
 import org.sopt.makers.internal.project.domain.QProjectLink;

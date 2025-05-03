@@ -1,11 +1,11 @@
 package org.sopt.makers.internal.project.mapper;
 
 import lombok.val;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.dto.internal.InternalMemberProjectResponse;
-import org.sopt.makers.internal.dto.internal.InternalProjectDetailResponse;
-import org.sopt.makers.internal.dto.internal.InternalProjectResponse;
+import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
+import org.sopt.makers.internal.internal.dto.InternalProjectDetailResponse;
+import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.project.dto.response.ProjectDetailResponse;
 import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;

@@ -1,8 +1,9 @@
 package org.sopt.makers.internal.report.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
-import static org.sopt.makers.internal.common.JsonDataSerializer.*;
-import static org.sopt.makers.internal.config.cache.CacheConstant.*;
+import static org.sopt.makers.internal.common.cache.CacheConstant.TYPE_COMMON_SOPT_REPORT_STATS;
+import static org.sopt.makers.internal.common.cache.CacheConstant.TYPE_MY_SOPT_REPORT_STATS;
+import static org.sopt.makers.internal.common.util.JsonDataSerializer.*;
 import static org.sopt.makers.internal.report.domain.EventData.*;
 
 import java.util.Collections;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.CommunityPostRepository;
 import org.sopt.makers.internal.wordchaingame.domain.Word;
-import org.sopt.makers.internal.external.MakersCrewClient;
+import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
 import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.domain.SoptReportStats;
@@ -25,7 +26,7 @@ import org.sopt.makers.internal.report.repository.AmplitudeEventRawDataRepositor
 import org.sopt.makers.internal.report.repository.SoptReportStatsRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordRepository;
-import org.sopt.makers.internal.repository.community.CommunityCommentRepository;
+import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -2,7 +2,7 @@ package org.sopt.makers.internal.report.controller;
 
 import java.util.Map;
 
-import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.report.dto.response.MySoptReportStatsResponse;
 import org.sopt.makers.internal.report.domain.SoptReportCategory;
 import org.sopt.makers.internal.report.service.SoptReportStatsService;

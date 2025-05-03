@@ -5,8 +5,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.QCommunityPost;
 import org.sopt.makers.internal.community.domain.category.QCategory;
-import org.sopt.makers.internal.dto.community.PostCategoryDao;
-import org.sopt.makers.internal.dto.community.QPostCategoryDao;
+import org.sopt.makers.internal.community.dto.PostCategoryDao;
+import org.sopt.makers.internal.community.dto.QPostCategoryDao;
 
 @RequiredArgsConstructor
 public class CommunityPostRepositoryCustomImpl implements CommunityPostRepositoryCustom {
