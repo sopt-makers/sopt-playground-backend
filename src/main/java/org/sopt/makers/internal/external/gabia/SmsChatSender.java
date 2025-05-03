@@ -3,11 +3,9 @@ package org.sopt.makers.internal.external.gabia;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.external.MessageSender;
-import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
+import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.springframework.stereotype.Service;
-
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

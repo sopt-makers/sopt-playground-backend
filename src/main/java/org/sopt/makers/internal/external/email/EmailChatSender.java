@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.domain.Member;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.external.MessageSender;
-import org.sopt.makers.internal.member.domain.coffeechat.ChatCategory;
+import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
