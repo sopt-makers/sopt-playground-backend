@@ -11,11 +11,11 @@ import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateR
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameWinnerAllResponse;
-import org.sopt.makers.internal.common.InfiniteScrollUtil;
-import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
-import org.sopt.makers.internal.mapper.MemberMapper;
-import org.sopt.makers.internal.service.MemberService;
+import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.wordchaingame.service.WordChainGameService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

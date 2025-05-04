@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.coffeechat.dto.request;
 
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 
 import java.util.List;
 

@@ -6,14 +6,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.service.CommunityPostModifier;
 import org.sopt.makers.internal.community.service.CommunityPostService;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.dto.community.PostSaveResponse;
-import org.sopt.makers.internal.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
+import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 
 import java.time.LocalDateTime;

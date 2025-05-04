@@ -4,12 +4,12 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.wordchaingame.domain.QWordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.domain.QWordChainGameWinner;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.dto.response.QWinnerDao;
 import org.sopt.makers.internal.wordchaingame.dto.response.WinnerDao;
-import org.sopt.makers.internal.domain.QMember;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;

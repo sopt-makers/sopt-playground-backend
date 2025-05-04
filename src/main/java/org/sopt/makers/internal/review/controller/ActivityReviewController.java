@@ -1,13 +1,11 @@
 package org.sopt.makers.internal.review.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
 
-import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.review.dto.request.CreateActivityReviewRequest;
-import org.sopt.makers.internal.review.dto.response.ActivityReviewResponse;
 import org.sopt.makers.internal.review.dto.response.PagedActivityReviewResponse;
 import org.sopt.makers.internal.review.service.ActivityReviewService;
 import org.springframework.data.domain.PageRequest;

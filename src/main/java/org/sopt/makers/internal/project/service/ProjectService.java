@@ -2,7 +2,7 @@ package org.sopt.makers.internal.project.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.domain.MemberSoptActivity;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.project.domain.ProjectLink;
 import org.sopt.makers.internal.project.domain.MemberProjectRelation;
 import org.sopt.makers.internal.project.domain.Project;

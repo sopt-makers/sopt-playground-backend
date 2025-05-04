@@ -1,8 +1,8 @@
 package org.sopt.makers.internal.coffeechat.mapper;
 
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.MemberCareer;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;

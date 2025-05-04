@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.community.repository;
 
-import org.sopt.makers.internal.dto.community.PostCategoryDao;
+import org.sopt.makers.internal.community.dto.PostCategoryDao;
 
 public interface CommunityPostRepositoryCustom {
 

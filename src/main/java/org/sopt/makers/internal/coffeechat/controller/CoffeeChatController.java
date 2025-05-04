@@ -6,8 +6,8 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.CommonResponse;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
+import org.sopt.makers.internal.common.CommonResponse;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatReviewRequest;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse;

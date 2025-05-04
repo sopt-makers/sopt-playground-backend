@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.member.repository.soptactivity;
 
-import org.sopt.makers.internal.domain.MemberSoptActivity;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

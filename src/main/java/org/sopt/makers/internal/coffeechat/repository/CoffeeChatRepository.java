@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.coffeechat.repository;
 
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,18 +1,20 @@
 package org.sopt.makers.internal.community.controller;
 
-import io.github.bucket4j.Bucket;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.common.InfiniteScrollUtil;
-import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
+import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
+import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.service.CommunityPostService;
-import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.community.*;
-import org.sopt.makers.internal.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
+import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -5,8 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.common.AuditingTimeEntity;
 
 import javax.persistence.*;
 

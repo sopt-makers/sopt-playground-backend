@@ -3,9 +3,9 @@ package org.sopt.makers.internal.community.service;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.community.controller.dto.response.ReviewCountResponse;
-import org.sopt.makers.internal.config.AuthConfig;
-import org.sopt.makers.internal.external.OfficialHomeClient;
+import org.sopt.makers.internal.community.dto.response.ReviewCountResponse;
+import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.external.makers.OfficialHomeClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 

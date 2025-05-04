@@ -2,7 +2,7 @@ package org.sopt.makers.internal.coffeechat.service;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatDetailsRequest;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChatHistory;

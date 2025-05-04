@@ -2,8 +2,8 @@ package org.sopt.makers.internal.member.repository.career;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.domain.MemberCareer;
-import org.sopt.makers.internal.domain.QMemberCareer;
+import org.sopt.makers.internal.member.domain.MemberCareer;
+import org.sopt.makers.internal.member.domain.QMemberCareer;
 
 import java.util.Optional;
 

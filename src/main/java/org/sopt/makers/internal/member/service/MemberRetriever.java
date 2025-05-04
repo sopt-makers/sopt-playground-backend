@@ -1,14 +1,14 @@
 package org.sopt.makers.internal.member.service;
 
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.domain.Member;
-import org.sopt.makers.internal.domain.member.MemberBlock;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.repository.MemberProfileQueryRepository;
-import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
+import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
-import org.sopt.makers.internal.repository.member.MemberBlockRepository;
+import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

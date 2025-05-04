@@ -2,11 +2,11 @@ package org.sopt.makers.internal.community.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.community.controller.dto.response.SopticleScrapedResponse;
-import org.sopt.makers.internal.config.AuthConfig;
-import org.sopt.makers.internal.dto.sopticle.SopticleVo;
+import org.sopt.makers.internal.community.dto.response.SopticleScrapedResponse;
+import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.community.dto.SopticleVo;
 import org.sopt.makers.internal.exception.SopticleException;
-import org.sopt.makers.internal.external.OfficialHomeClient;
+import org.sopt.makers.internal.external.makers.OfficialHomeClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
