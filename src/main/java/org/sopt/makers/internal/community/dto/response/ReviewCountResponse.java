@@ -14,7 +14,7 @@ public record ReviewCountResponse(
             int generation,
             String description,
             String part,
-            String subject,
+            List<String> subject,
             String thumbnailUrl,
             String platform,
             String url
