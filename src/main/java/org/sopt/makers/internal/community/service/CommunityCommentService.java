@@ -177,6 +177,32 @@ public class CommunityCommentService {
         return rootNode;
     }
 
+    private void saveAnonymousProfile(Member member, CommunityPost post, CommunityComment comment) {
+        List<AnonymousNickname> excludeNicknames = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId()).stream()
+                .map(AnonymousCommentProfile::getNickname)
+                .toList();
+        List<Long> excludeImgIds = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId()).stream()
+                .map(p -> p.getProfileImg().getId())
+                .toList();
+        Optional<AnonymousPostProfile> anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
+
+        AnonymousNickname nickname = anonymousPostProfile.isPresent()
+                ? anonymousPostProfile.get().getNickname()
+                : anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNicknames);
+        AnonymousProfileImage profileImg = anonymousPostProfile.isPresent()
+                ? anonymousPostProfile.get().getProfileImg()
+                : anonymousProfileImageRetriever.getAnonymousProfileImage(excludeImgIds);
+
+        anonymousCommentProfileRepository.save(
+                AnonymousCommentProfile.builder()
+                        .nickname(nickname)
+                        .profileImg(profileImg)
+                        .member(member)
+                        .communityComment(comment)
+                        .build()
+        );
+    }
+
     private void sendPushNotification(CommunityPost post, CommentSaveRequest request) {
         try {
             String title = StringUtils.defaultIfBlank(post.getTitle(),
