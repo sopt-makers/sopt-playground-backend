@@ -78,8 +78,6 @@ public class CommunityCommentService {
 
     @Transactional
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
-        if (request.isChildComment() && !communityCommentsRepository.existsById(request.parentCommentId())) {
-            throw new NotFoundDBEntityException("CommunityComment");
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
         CommunityComment comment = communityCommentModifier.createCommunityComment(postId, member.getId(), request);
