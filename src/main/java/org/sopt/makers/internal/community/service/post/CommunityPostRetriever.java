@@ -16,7 +16,6 @@ public class CommunityPostRetriever {
 
     private final CommunityPostRepository communityPostRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
-    private final CommunityCommentRepository communityCommentRepository;
 
     public CommunityPost findCommunityPostById(Long postId) {
         return communityPostRepository.findById(postId)

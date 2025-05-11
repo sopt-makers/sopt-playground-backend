@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentModifier;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentsRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
@@ -20,22 +22,18 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfi
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.ReportComment;
 import org.sopt.makers.internal.community.dto.CommentDao;
-import org.sopt.makers.internal.community.dto.response.CommentListResponse;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousCommentProfileRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
-import org.sopt.makers.internal.internal.InternalApiService;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,22 +51,26 @@ import lombok.val;
 @Slf4j
 public class CommunityCommentService {
 
-    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
     @Value("${spring.profiles.active}")
     private String activeProfile;
+
+    private final AnonymousCommentProfileRepository anonymousCommentProfileRepository;
+    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
-    private final AnonymousNicknameRetriever anonymousNicknameRetriever;
-    private final CommunityMapper communityMapper;
-    private final MemberRepository memberRepository;
-    private final MemberRetriever memberRetriever;
-    private final CommunityCommentModifier communityCommentModifier;
-    private final CommunityPostRetriever communityPostRetriever;
     private final CommunityCommentRepository communityCommentsRepository;
     private final ReportCommentRepository reportCommentRepository;
     private final CommunityQueryRepository communityQueryRepository;
-    private final AnonymousCommentProfileRepository anonymousCommentProfileRepository;
-    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
-    private final InternalApiService internalApiService;
+
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
+    private final AnonymousNicknameRetriever anonymousNicknameRetriever;
+    private final CommunityPostRetriever communityPostRetriever;
+    private final CommunityCommentsRetriever communityCommentsRetriever;
+    private final MemberRetriever memberRetriever;
+
+    private final CommunityCommentModifier communityCommentModifier;
+
+    private final CommunityMapper communityMapper;
+
     private final PushNotificationService pushNotificationService;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackClient slackClient;
@@ -120,10 +122,8 @@ public class CommunityCommentService {
 
     @Transactional
     public void deleteComment(Long commentId, Long writerId) {
-        val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        val comment = communityCommentsRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundDBEntityException("CommunityComment"));
+        Member member = memberRetriever.findMemberById(writerId);
+        CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
 
         if (!Objects.equals(member.getId(), comment.getWriterId())) {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
@@ -135,10 +135,8 @@ public class CommunityCommentService {
     }
 
     public void reportComment(Long memberId, Long commentId) {
-        val member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not a Member"));
-        val comment = communityCommentsRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Is not an exist comment id"));
+        Member member = memberRetriever.findMemberById(memberId);
+        CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -177,12 +175,13 @@ public class CommunityCommentService {
     }
 
     private void saveAnonymousProfile(Member member, CommunityPost post, CommunityComment comment) {
-        List<AnonymousNickname> excludeNicknames = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId()).stream()
-                .map(AnonymousCommentProfile::getNickname)
-                .toList();
-        List<Long> excludeImgIds = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId()).stream()
-                .map(p -> p.getProfileImg().getId())
-                .toList();
+        List<AnonymousNickname> excludeNicknames = new ArrayList<>();
+        List<Long> excludeImgIds = new ArrayList<>();
+        for (AnonymousCommentProfile profile : anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId())) {
+            excludeNicknames.add(profile.getNickname());
+            excludeImgIds.add(profile.getProfileImg().getId());
+        }
+
         Optional<AnonymousPostProfile> anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
 
         AnonymousNickname nickname = anonymousPostProfile.isPresent()
