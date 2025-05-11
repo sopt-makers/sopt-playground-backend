@@ -78,72 +78,28 @@ public class CommunityCommentService {
 
     @Transactional
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
-        val member = memberRepository.findById(writerId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member"));
-
-        val post = communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Community Post"));
-
         if (request.isChildComment() && !communityCommentsRepository.existsById(request.parentCommentId())) {
             throw new NotFoundDBEntityException("CommunityComment");
-        }
+        Member member = memberRetriever.findMemberById(writerId);
+        CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
+        CommunityComment comment = communityCommentModifier.createCommunityComment(postId, member.getId(), request);
 
-        val excludeImgList = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
-            .map(p -> p.getProfileImg().getId()).toList();
-        val excludeNickname = anonymousCommentProfileRepository.findAllByCommunityCommentPostId(postId).stream()
-            .map(AnonymousCommentProfile::getNickname).toList();
-        val anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
-        val anonymousCommentProfile = anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(writerId, postId);
-
-        CommunityComment comment = CommunityComment.builder()
-            .content(request.content())
-            .postId(postId)
-            .writerId(member.getId())
-            .parentCommentId(request.parentCommentId())
-            .isBlindWriter(request.isBlindWriter())
-            .build();
-        communityCommentsRepository.save(comment);
-
-        if (request.isBlindWriter() && anonymousCommentProfile.isEmpty()) {
-            anonymousCommentProfileRepository.save(AnonymousCommentProfile.builder()
-                .nickname(member.equals(post.getMember()) ? anonymousPostProfile.get().getNickname() : anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNickname))
-                .profileImg(member.equals(post.getMember()) ? anonymousPostProfile.get().getProfileImg() : anonymousProfileImageRetriever.getAnonymousProfileImage(excludeImgList))
-                .member(member)
-                .communityComment(comment)
-                .build());
-        }
-
-        // 본인 게시글의 본인 댓글에는 알림이 가지 않음
-        if (post.getMember().getId().equals(writerId)) return;
-
-        try {
-            String title = post.getTitle();
-            String content = post.getContent();
-
-            if (StringUtils.isBlank(title)) {
-                title = StringUtils.abbreviate(content, 20) + "...";
+        if (request.isBlindWriter()) {
+            Optional<AnonymousCommentProfile> existingCommentProfile =
+                    anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(member.getId(), post.getId());
+            if (existingCommentProfile.isEmpty() ) {
+                saveAnonymousProfile(member, post, comment);
             }
-            String pushNotificationContent = "\"" + title + "\"" + " 글에 댓글이 달렸어요.";
+        }
 
-            PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
-                    .title("")
-                    .content(pushNotificationContent)
-                    .category("NEWS")
-                    .webLink(request.webLink())
-                    .userIds(new String[]{post.getMember().getId().toString()})
-                    .build();
-
-            pushNotificationService.sendPushNotification(pushNotificationRequest);
-        } catch (Exception error) {
-            log.error(error.getMessage());
+        if (!post.getMember().getId().equals(writerId)) {
+            sendPushNotification(post, request);
         }
     }
 
     @Transactional(readOnly = true)
     public List<CommentDao> getPostCommentList(Long postId, Long memberId, Boolean isBlockedOn) {
-        val post = communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 postId입니다."));
-
+        communityPostRetriever.checkExistsCommunityPostById(postId);
         return communityQueryRepository.findCommentByPostId(postId, memberId, isBlockedOn);
     }
 
@@ -221,5 +177,25 @@ public class CommunityCommentService {
         blocks.add(contentNode);
         rootNode.set("blocks", blocks);
         return rootNode;
+    }
+
+    private void sendPushNotification(CommunityPost post, CommentSaveRequest request) {
+        try {
+            String title = StringUtils.defaultIfBlank(post.getTitle(),
+                    StringUtils.abbreviate(post.getContent(), 20) + "...");
+            String message = "\"" + title + "\"" + " 글에 댓글이 달렸어요.";
+
+            PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
+                    .title("")
+                    .content(message)
+                    .category("NEWS")
+                    .webLink(request.webLink())
+                    .userIds(new String[]{post.getMember().getId().toString()})
+                    .build();
+
+            pushNotificationService.sendPushNotification(pushNotificationRequest);
+        } catch (Exception error) {
+            log.error("Push 알림 실패: {}", error.getMessage());
+        }
     }
 }
