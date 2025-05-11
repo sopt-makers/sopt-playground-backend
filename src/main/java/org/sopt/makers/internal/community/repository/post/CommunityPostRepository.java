@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.community.repository;
+package org.sopt.makers.internal.community.repository.post;
 
 import java.time.LocalDateTime;
 import java.util.List;

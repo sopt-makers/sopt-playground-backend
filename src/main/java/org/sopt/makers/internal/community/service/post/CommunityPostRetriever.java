@@ -1,12 +1,13 @@
-package org.sopt.makers.internal.community.service;
+package org.sopt.makers.internal.community.service.post;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
-import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.community.repository.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,14 +16,15 @@ public class CommunityPostRetriever {
 
     private final CommunityPostRepository communityPostRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
+    private final CommunityCommentRepository communityCommentRepository;
 
     public CommunityPost findCommunityPostById(Long postId) {
         return communityPostRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 게시글의 id값 입니다."));
     }
 
-    public void checkExistsCommunityPostById(Long memberId) {
-        if (!communityPostRepository.existsById(memberId)) {
+    public void checkExistsCommunityPostById(Long postId) {
+        if (!communityPostRepository.existsById(postId)) {
             throw new NotFoundDBEntityException("존재하지 않는 게시글의 id값 입니다.");
         }
     }

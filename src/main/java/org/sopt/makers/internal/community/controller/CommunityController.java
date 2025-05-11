@@ -12,7 +12,7 @@ import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
 import org.sopt.makers.internal.community.dto.response.*;
-import org.sopt.makers.internal.community.service.CommunityPostService;
+import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.CommunityCommentService;

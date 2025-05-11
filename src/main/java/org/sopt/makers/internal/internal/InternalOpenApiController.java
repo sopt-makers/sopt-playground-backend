@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.community.service.CommunityPostService;
+import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.common.auth.AuthConfig;
 import org.sopt.makers.internal.community.dto.InternalCommunityPost;
 import org.sopt.makers.internal.community.dto.PostCategoryDao;
