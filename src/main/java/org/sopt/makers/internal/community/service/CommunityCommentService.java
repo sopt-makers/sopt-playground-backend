@@ -107,19 +107,6 @@ public class CommunityCommentService {
         return anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(comment.getWriterId(), comment.getPostId()).orElse(null);
     }
 
-    @Transactional(readOnly = true)
-    public List<CommentListResponse> getCommentList(Long postId) {
-        return communityCommentsRepository.findAllByPostId(postId).stream()
-                .map(comment -> CommentListResponse.builder()
-                        .content(comment.getContent())
-                        .parentCommentId(comment.getParentCommentId())
-                        .isBlindWriter(comment.getIsBlindWriter())
-                        .generation(internalApiService.getMemberLatestActivityGeneration(comment.getWriterId()))
-                        .part(internalApiService.getMemberLatestActivityPart(comment.getWriterId()))
-                        .createdAt(comment.getCreatedAt())
-                        .build()).toList();
-    }
-
     @Transactional
     public void deleteComment(Long commentId, Long writerId) {
         Member member = memberRetriever.findMemberById(writerId);
