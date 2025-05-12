@@ -1,9 +1,13 @@
-package org.sopt.makers.internal.community.service;
+package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
+import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;

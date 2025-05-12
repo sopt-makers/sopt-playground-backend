@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.community.repository;
+package org.sopt.makers.internal.community.repository.post;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;

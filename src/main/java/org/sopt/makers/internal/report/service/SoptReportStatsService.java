@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.sopt.makers.internal.community.repository.CommunityPostLikeRepository;
-import org.sopt.makers.internal.community.repository.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.report.domain.PlaygroundType;
