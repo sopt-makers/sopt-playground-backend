@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -204,6 +205,12 @@ public class CommunityController {
 
         communityPostService.unlikePost(memberDetails.getId(), postId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 게시글 좋아요 취소 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 홈 인기글 조회 API")
+    @GetMapping("/posts/popular")
+    public ResponseEntity<List<PopularPostResponse>> getPopularPost() {
+        return ResponseEntity.ok(communityPostService.getPopularPosts());
     }
 
     @Operation(summary = "핫 게시물 조회 API")
