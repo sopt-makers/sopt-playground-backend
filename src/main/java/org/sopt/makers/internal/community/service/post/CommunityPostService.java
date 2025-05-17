@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.QuestionPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
@@ -272,9 +273,23 @@ public class CommunityPostService {
 
     @Transactional(readOnly = true)
     public List<SopticlePostResponse> getRecentSopticlePosts() {
-        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(21L);
+        Long SOPTICLE_CATEGORY_ID = 21L;
+        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
         return posts.stream()
                 .map(communityResponseMapper::toSopticlePostResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuestionPostResponse> getRecentQuestionPosts() {
+        Long QUESTION_CATEGORY_ID = 22L;
+        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(QUESTION_CATEGORY_ID);
+        return posts.stream()
+                .map(post -> {
+                    int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
+                    int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+                    return communityResponseMapper.toQuestionPostResponse(post, likeCount, commentCount);
+                })
                 .toList();
     }
 
