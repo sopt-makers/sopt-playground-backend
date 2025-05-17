@@ -214,14 +214,14 @@ public class CommunityController {
     }
 
     @Operation(summary = "커뮤니티 홈 최근 솝티클 목록 조회 API")
-    @GetMapping("/posts/sopticle/preview")
+    @GetMapping("/posts/sopticle")
     public ResponseEntity<List<SopticlePostResponse>> getRecentSopticlePost() {
         List<SopticlePostResponse> sopticlePosts = communityPostService.getRecentSopticlePosts();
         return ResponseEntity.status(HttpStatus.OK).body(sopticlePosts);
     }
 
     @Operation(summary = "커뮤니티 홈 답변 대기 질문 목록 조회 API")
-    @GetMapping("/posts/question/preview")
+    @GetMapping("/posts/question")
     public ResponseEntity<List<QuestionPostResponse>> getRecentQuestionPost() {
         List<QuestionPostResponse> questionPosts = communityPostService.getRecentQuestionPosts();
         return ResponseEntity.status(HttpStatus.OK).body(questionPosts);
