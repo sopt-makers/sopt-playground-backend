@@ -77,6 +77,17 @@ public class CommunityResponseMapper {
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, post.createdAt(), comments);
     }
 
+    public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {
+        return new SopticlePostResponse(
+                post.getId(),
+                MemberVo.of(post.getMember()),
+                post.getCreatedAt(),
+                post.getTitle(),
+                post.getContent(),
+                post.getSopticleUrl()
+        );
+    }
+
     private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
         return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getImageUrl());
     }
