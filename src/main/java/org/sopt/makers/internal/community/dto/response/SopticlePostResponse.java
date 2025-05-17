@@ -6,7 +6,7 @@ import org.sopt.makers.internal.community.dto.MemberVo;
 public record SopticlePostResponse(
         Long id,
         MemberVo member,
-        LocalDateTime createdAt,
+        String createdAt,
         String title,
         String content,
         String sopticleUrl
