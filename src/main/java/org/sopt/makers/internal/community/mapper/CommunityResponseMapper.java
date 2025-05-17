@@ -90,6 +90,18 @@ public class CommunityResponseMapper {
         );
     }
 
+    public QuestionPostResponse toQuestionPostResponse(CommunityPost post, int likeCount, int commentCount) {
+        return new QuestionPostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                getRelativeTime(post.getCreatedAt()),
+                likeCount,
+                commentCount,
+                commentCount > 0
+        );
+    }
+
     private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
         return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getImageUrl());
     }
