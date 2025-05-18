@@ -17,6 +17,8 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
 
     Integer countAllByMemberIdAndCreatedAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
 
+    List<CommunityPost> findTop3ByCreatedAtAfterOrderByHitsDesc(LocalDateTime oneMonthAgo);
+
     @Modifying
     @Query("UPDATE CommunityPost p SET p.hits = p.hits + 1 WHERE p.id = :postId")
     void increaseHitsDirect(@Param("postId") Long postId);

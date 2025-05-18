@@ -3,6 +3,7 @@ package org.sopt.makers.internal.community.mapper;
 import lombok.val;
 import org.sopt.makers.internal.community.dto.*;
 import org.sopt.makers.internal.community.dto.response.*;
+import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 @Component
 public class CommunityResponseMapper {
     public CommentResponse toCommentResponse(CommentDao dao, Long memberId, AnonymousCommentProfile profile) {
-        val member = dao.comment().getIsBlindWriter() ? null : toMemberResponse(dao.member());
+        val member = dao.comment().getIsBlindWriter() ? null : MemberVo.of(dao.member());
         val comment = dao.comment();
         val anonymousProfile = dao.comment().getIsBlindWriter() && profile != null? toAnonymousCommentProfileVo(profile) : null;
         val isMine = Objects.equals(dao.member().getId(), memberId);
@@ -27,7 +28,7 @@ public class CommunityResponseMapper {
     }
 
     public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao) {
-        val member = toMemberResponse(dao.member());
+        val member = MemberVo.of(dao.member());
         val category = toCategoryResponse(dao.category());
         val post = toPostVo(dao.posts());
         return new CommunityPostMemberVo(member, post, category);
@@ -50,15 +51,6 @@ public class CommunityResponseMapper {
         val isMine = Objects.equals(post.member().id(), memberId);
         val anonymousProfile = post.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         return new PostDetailResponse(member, post.post(), post.category(), isMine, isLiked, likes, anonymousProfile);
-    }
-
-    public MemberVo toMemberResponse(Member member) {
-        if(member == null) return null;
-        val career = (member.getCareers() == null || member.getCareers().stream().noneMatch(MemberCareer::getIsCurrent)) ?
-                null : member.getCareers().stream().filter(MemberCareer::getIsCurrent).toList().get(0);
-        member.getActivities().sort((act1, act2) -> (act2.getGeneration() - act1.getGeneration()));
-        return new MemberVo(member.getId(),member.getName(), member.getProfileImage(),
-                member.getActivities().get(0), career);
     }
 
     public CategoryVo toCategoryResponse(Category category) {

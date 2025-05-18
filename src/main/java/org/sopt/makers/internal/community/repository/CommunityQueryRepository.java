@@ -105,6 +105,16 @@ public class CommunityQueryRepository {
                 .where(posts.id.eq(postId)).distinct().fetchOne();
     }
 
+    public String getCategoryNameById(Long categoryId) {
+        QCategory category = QCategory.category;
+
+        return queryFactory
+                .select(category.name)
+                .from(category)
+                .where(category.id.eq(categoryId))
+                .fetchOne();
+    }
+
     public List<CommentDao> findCommentByPostId(Long postId, Long memberId, boolean isBlockedOn) {
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
