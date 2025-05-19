@@ -90,6 +90,18 @@ public class CommunityResponseMapper {
         );
     }
 
+    public QuestionPostResponse toQuestionPostResponse(CommunityPost post, int likeCount, int commentCount) {
+        return new QuestionPostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                getRelativeTime(post.getCreatedAt()),
+                likeCount,
+                commentCount,
+                commentCount > 0
+        );
+    }
+
     private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
         return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getImageUrl());
     }
@@ -106,7 +118,7 @@ public class CommunityResponseMapper {
         Duration duration = Duration.between(createdAt, LocalDateTime.now());
 
         long seconds = duration.getSeconds();
-        if(seconds < 60) return "방금 전";
+        if(seconds < 60) return "몇초 전";
 
         long minutes = seconds / 60;
         if(minutes < 60) return minutes + "분 전";
@@ -114,13 +126,16 @@ public class CommunityResponseMapper {
         long hours = minutes / 60;
         if(hours < 24) return hours + "시간 전";
 
-        long days = hours / 60;
+        long days = hours / 24;
         if(days < 7) return days + "일 전";
 
-        long weeks = days / 60;
+        long weeks = days / 7;
         if(weeks < 5) return weeks + "주 전";
 
-        long month = days / 30;
-        return month + "개월 전";
+        long months = days / 30;
+        if(months < 12) return months + "개월 전";
+
+        long years = months / 12;
+        return years + "년 전";
     }
 }
