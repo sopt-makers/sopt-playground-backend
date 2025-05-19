@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.community.mapper;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import lombok.val;
 import org.sopt.makers.internal.community.dto.*;
 import org.sopt.makers.internal.community.dto.response.*;
@@ -77,6 +79,17 @@ public class CommunityResponseMapper {
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, post.createdAt(), comments);
     }
 
+    public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {
+        return new SopticlePostResponse(
+                post.getId(),
+                MemberVo.of(post.getMember()),
+                getRelativeTime(post.getCreatedAt()),
+                post.getTitle(),
+                post.getContent(),
+                post.getSopticleUrl()
+        );
+    }
+
     private AnonymousProfileVo toAnonymousPostProfileVo(AnonymousPostProfile anonymousPostProfile) {
         return new AnonymousProfileVo(anonymousPostProfile.getNickname().getNickname(), anonymousPostProfile.getProfileImg().getImageUrl());
     }
@@ -87,5 +100,27 @@ public class CommunityResponseMapper {
 
     public InternalCommunityPost toInternalCommunityPostResponse(PostCategoryDao dao) {
         return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
+    }
+
+    private String getRelativeTime(LocalDateTime createdAt) {
+        Duration duration = Duration.between(createdAt, LocalDateTime.now());
+
+        long seconds = duration.getSeconds();
+        if(seconds < 60) return "방금 전";
+
+        long minutes = seconds / 60;
+        if(minutes < 60) return minutes + "분 전";
+
+        long hours = minutes / 60;
+        if(hours < 24) return hours + "시간 전";
+
+        long days = hours / 60;
+        if(days < 7) return days + "일 전";
+
+        long weeks = days / 60;
+        if(weeks < 5) return weeks + "주 전";
+
+        long month = days / 30;
+        return month + "개월 전";
     }
 }

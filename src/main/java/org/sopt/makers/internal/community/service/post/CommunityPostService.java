@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
@@ -267,6 +268,14 @@ public class CommunityPostService {
     @Transactional
     public void saveHotPost(CommunityPost post) {
         communityQueryRepository.updateIsHotByPostId(post.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SopticlePostResponse> getRecentSopticlePosts() {
+        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(21L);
+        return posts.stream()
+                .map(communityResponseMapper::toSopticlePostResponse)
+                .toList();
     }
 
     private PostWithPoints createPostWithPoints(CommunityPost post) {
