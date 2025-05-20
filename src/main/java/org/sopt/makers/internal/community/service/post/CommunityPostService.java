@@ -47,6 +47,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -248,8 +249,14 @@ public class CommunityPostService {
             throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
         }
 
+        List<Long> categoryIds = posts.stream()
+                .map(CommunityPost::getCategoryId)
+                .distinct()
+                .toList();
+        Map<Long, String> categoryNames = communityQueryRepository.getCategoryNamesByIds(categoryIds);
+
         return posts.stream()
-                .map(post -> PopularPostResponse.of(post, communityQueryRepository.getCategoryNameById(post.getCategoryId())))
+                .map(post -> PopularPostResponse.of(post, categoryNames.get(post.getCategoryId())))
                 .toList();
     }
 

@@ -20,7 +20,10 @@ import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -104,6 +107,25 @@ public class CommunityQueryRepository {
                 .leftJoin(member.careers, careers)
                 .innerJoin(category).on(posts.categoryId.eq(category.id))
                 .where(posts.id.eq(postId)).distinct().fetchOne();
+    }
+
+    public Map<Long, String> getCategoryNamesByIds(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        QCategory category = QCategory.category;
+
+        return queryFactory
+                .select(category.id, category.name)
+                .from(category)
+                .where(category.id.in(categoryIds))
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(category.id),
+                        tuple -> tuple.get(category.name) // category.name은 NOT NULL 보장
+                ));
     }
 
     public String getCategoryNameById(Long categoryId) {
