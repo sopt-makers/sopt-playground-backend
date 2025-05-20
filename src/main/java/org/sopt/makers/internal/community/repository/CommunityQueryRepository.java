@@ -19,6 +19,7 @@ import org.sopt.makers.internal.member.domain.QMemberCareer;
 import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -171,6 +172,21 @@ public class CommunityQueryRepository {
             .execute();
     }
 
+    public List<CommunityPost> findPopularPosts() {
+        QCommunityPost communityPost = QCommunityPost.communityPost;
+        QMember member = QMember.member;
+
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+
+        return queryFactory
+                .selectFrom(communityPost)
+                .leftJoin(communityPost.member, member).fetchJoin()
+                .where(communityPost.createdAt.after(oneMonthAgo))
+                .orderBy(communityPost.hits.desc())
+                .limit(3)
+                .fetch();
+    }
+    
     private BooleanExpression ltPostId(Long cursor) {
         val posts = QCommunityPost.communityPost;
         if(cursor == null || cursor == 0) return null;

@@ -242,9 +242,7 @@ public class CommunityPostService {
     }
 
     public List<PopularPostResponse> getPopularPosts() {
-        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
-        List<CommunityPost> posts = communityPostRepository
-                .findTop3ByCreatedAtAfterOrderByHitsDesc(oneMonthAgo);
+        List<CommunityPost> posts = communityQueryRepository.findPopularPosts();
 
         if (posts.isEmpty()) {
             throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
