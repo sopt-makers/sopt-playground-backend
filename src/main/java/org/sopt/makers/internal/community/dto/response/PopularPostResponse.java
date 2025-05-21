@@ -11,12 +11,10 @@ public record PopularPostResponse(
         Integer hits
 ) {
     public static PopularPostResponse of(CommunityPost post, String categoryName) {
-        String title = post.getTitle().isEmpty() ? post.getContent() : post.getTitle();
-
         return new PopularPostResponse(
                 post.getId(),
                 categoryName,
-                title,
+                post.getTitle(),
                 MemberNameAndProfileImageResponse.from(post.getMember()),
                 post.getHits()
         );
