@@ -194,7 +194,7 @@ public class CommunityQueryRepository {
             .execute();
     }
 
-    public List<CommunityPost> findPopularPosts() {
+    public List<CommunityPost> findPopularPosts(int limitCount) {
         QCommunityPost communityPost = QCommunityPost.communityPost;
         QMember member = QMember.member;
 
@@ -205,7 +205,7 @@ public class CommunityQueryRepository {
                 .leftJoin(communityPost.member, member).fetchJoin()
                 .where(communityPost.createdAt.after(oneMonthAgo))
                 .orderBy(communityPost.hits.desc())
-                .limit(3)
+                .limit(limitCount)
                 .fetch();
     }
     
