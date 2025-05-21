@@ -5,9 +5,6 @@ import java.time.LocalDateTime;
 import lombok.val;
 import org.sopt.makers.internal.community.dto.*;
 import org.sopt.makers.internal.community.dto.response.*;
-import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
@@ -86,6 +83,7 @@ public class CommunityResponseMapper {
                 getRelativeTime(post.getCreatedAt()),
                 post.getTitle(),
                 post.getContent(),
+                post.getImages(),
                 post.getSopticleUrl()
         );
     }
