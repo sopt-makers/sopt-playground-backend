@@ -209,8 +209,10 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 홈 인기글 조회 API")
     @GetMapping("/posts/popular")
-    public ResponseEntity<List<PopularPostResponse>> getPopularPost() {
-        return ResponseEntity.ok(communityPostService.getPopularPosts());
+    public ResponseEntity<List<PopularPostResponse>> getPopularPost(
+            @Parameter(description = "조회할 인기글 개수 (기본값: 3)")
+            @RequestParam(defaultValue = "3") int limit) {
+        return ResponseEntity.ok(communityPostService.getPopularPosts(limit));
     }
 
     @Operation(summary = "커뮤니티 홈 최근 솝티클 목록 조회 API")

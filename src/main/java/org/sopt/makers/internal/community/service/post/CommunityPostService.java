@@ -242,8 +242,8 @@ public class CommunityPostService {
         return communityPostRepository.findRecentPostByCategory(category);
     }
 
-    public List<PopularPostResponse> getPopularPosts() {
-        List<CommunityPost> posts = communityQueryRepository.findPopularPosts();
+    public List<PopularPostResponse> getPopularPosts(int limitCount) {
+        List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
 
         if (posts.isEmpty()) {
             throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
