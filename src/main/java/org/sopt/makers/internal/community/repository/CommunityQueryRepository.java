@@ -19,7 +19,11 @@ import org.sopt.makers.internal.member.domain.QMemberCareer;
 import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -105,6 +109,25 @@ public class CommunityQueryRepository {
                 .where(posts.id.eq(postId)).distinct().fetchOne();
     }
 
+    public Map<Long, String> getCategoryNamesByIds(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        QCategory category = QCategory.category;
+
+        return queryFactory
+                .select(category.id, category.name)
+                .from(category)
+                .where(category.id.in(categoryIds))
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(category.id),
+                        tuple -> tuple.get(category.name) // category.name은 NOT NULL 보장
+                ));
+    }
+
     public String getCategoryNameById(Long categoryId) {
         QCategory category = QCategory.category;
 
@@ -171,6 +194,21 @@ public class CommunityQueryRepository {
             .execute();
     }
 
+    public List<CommunityPost> findPopularPosts(int limitCount) {
+        QCommunityPost communityPost = QCommunityPost.communityPost;
+        QMember member = QMember.member;
+
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+
+        return queryFactory
+                .selectFrom(communityPost)
+                .leftJoin(communityPost.member, member).fetchJoin()
+                .where(communityPost.createdAt.after(oneMonthAgo))
+                .orderBy(communityPost.hits.desc())
+                .limit(limitCount)
+                .fetch();
+    }
+    
     private BooleanExpression ltPostId(Long cursor) {
         val posts = QCommunityPost.communityPost;
         if(cursor == null || cursor == 0) return null;

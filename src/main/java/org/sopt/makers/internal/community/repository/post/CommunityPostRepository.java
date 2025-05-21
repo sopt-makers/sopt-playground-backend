@@ -17,8 +17,6 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
 
     Integer countAllByMemberIdAndCreatedAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
 
-    List<CommunityPost> findTop3ByCreatedAtAfterOrderByHitsDesc(LocalDateTime oneMonthAgo);
-
     List<CommunityPost> findTop5ByCategoryIdOrderByCreatedAtDesc(Long categoryId);
 
     @Modifying

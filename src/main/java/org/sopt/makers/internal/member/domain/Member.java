@@ -60,9 +60,9 @@ public class Member {
 
     @Builder.Default
     @OneToMany(
-        cascade = CascadeType.ALL,
-        orphanRemoval = true,
-        fetch = FetchType.EAGER
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
     @JoinColumn(name = "user_id")
     private List<MemberSoptActivity> activities = new ArrayList<>();
