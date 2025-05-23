@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.community.dto.response;
 
-import java.time.LocalDateTime;
 import org.sopt.makers.internal.community.dto.MemberVo;
 
 public record SopticlePostResponse(
@@ -9,6 +8,7 @@ public record SopticlePostResponse(
         String createdAt,
         String title,
         String content,
+        String[] images,
         String sopticleUrl
 ) {
 
