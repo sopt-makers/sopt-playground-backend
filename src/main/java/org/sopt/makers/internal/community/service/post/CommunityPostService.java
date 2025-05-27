@@ -136,7 +136,7 @@ public class CommunityPostService {
         if (isSopticleCategory(request.categoryId())) {
             SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.link());
             post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), new String[] { scrapedResponse.thumbnailUrl() },
-                            request.isQuestion(), request.isBlindWriter(), scrapedResponse.sopticleUrl());
+                            request.isQuestion(), request.isBlindWriter(), scrapedResponse.url());
         } else {
             post.updatePost(request.categoryId(), request.title(), request.content(), request.images(),
                             request.isQuestion(), request.isBlindWriter(), "");
@@ -369,7 +369,7 @@ public class CommunityPostService {
                     .categoryId(request.categoryId())
                     .content(scrapedResponse.description())
                     .images(new String[] { scrapedResponse.thumbnailUrl() })
-                    .link(scrapedResponse.sopticleUrl())
+                    .link(scrapedResponse.url())
                     .title(scrapedResponse.title())
                     .isBlindWriter(false)
                     .isQuestion(false)

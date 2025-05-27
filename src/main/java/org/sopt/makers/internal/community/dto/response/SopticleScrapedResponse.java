@@ -11,7 +11,7 @@ public record SopticleScrapedResponse(
         String author,
         String authorProfileImageUrl,
         long id,
-        String sopticleUrl,
+        String url,
         LocalDateTime uploadedAt
 ) {
 }
