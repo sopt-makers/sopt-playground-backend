@@ -9,6 +9,7 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfi
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -110,6 +111,28 @@ public class CommunityResponseMapper {
 
     public InternalCommunityPost toInternalCommunityPostResponse(PostCategoryDao dao) {
         return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
+    }
+
+    public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName) {
+        MemberNameAndProfileImageResponse memberResponse;
+
+        if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
+            memberResponse = new MemberNameAndProfileImageResponse(
+                    anonymousPostProfile.getId(),
+                    anonymousPostProfile.getNickname().getNickname(),
+                    anonymousPostProfile.getProfileImg().getImageUrl()
+            );
+        } else {
+            memberResponse = MemberNameAndProfileImageResponse.from(post.getMember());
+        }
+
+        return new PopularPostResponse(
+                post.getId(),
+                categoryName,
+                post.getTitle(),
+                memberResponse,
+                post.getHits()
+        );
     }
 
     private String getRelativeTime(LocalDateTime createdAt) {
