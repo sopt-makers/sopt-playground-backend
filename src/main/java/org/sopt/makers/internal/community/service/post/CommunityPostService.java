@@ -220,8 +220,8 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public AnonymousPostProfile getAnonymousPostProfile(Long memberId, Long postId) {
-        return anonymousPostProfileRepository.findAnonymousPostProfileByMemberIdAndCommunityPostId(memberId, postId).orElse(null);
+    public AnonymousPostProfile getAnonymousPostProfile(Long postId) {
+        return anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(postId).orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -242,6 +242,7 @@ public class CommunityPostService {
         return communityPostRepository.findRecentPostByCategory(category);
     }
 
+    @Transactional(readOnly = true)
     public List<PopularPostResponse> getPopularPosts(int limitCount) {
         List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
 
@@ -249,14 +250,15 @@ public class CommunityPostService {
             throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
         }
 
-        List<Long> categoryIds = posts.stream()
-                .map(CommunityPost::getCategoryId)
-                .distinct()
-                .toList();
-        Map<Long, String> categoryNames = communityQueryRepository.getCategoryNamesByIds(categoryIds);
+        Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
+        Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
         return posts.stream()
-                .map(post -> PopularPostResponse.of(post, categoryNames.get(post.getCategoryId())))
+                .map(post -> communityResponseMapper.toPopularPostResponse(
+                        post,
+                        anonymousProfileMap.get(post.getId()),
+                        categoryNameMap.get(post.getCategoryId())
+                ))
                 .toList();
     }
 
@@ -388,5 +390,21 @@ public class CommunityPostService {
         if (!Objects.equals(memberId, postWriterId)) {
             throw new ClientBadRequestException("수정/삭제 권한이 없는 유저입니다.");
         }
+    }
+
+    private Map<Long, String> getCategoryNameMap(List<CommunityPost> posts) {
+        List<Long> categoryIds = posts.stream()
+                .map(CommunityPost::getCategoryId)
+                .distinct()
+                .toList();
+        return communityQueryRepository.getCategoryNamesByIds(categoryIds);
+    }
+
+    private Map<Long, AnonymousPostProfile> getAnonymousProfileMap(List<CommunityPost> posts) {
+        List<Long> postIds = posts.stream()
+                .map(CommunityPost::getId)
+                .distinct()
+                .toList();
+        return communityQueryRepository.getAnonymousPostProfilesByPostId(postIds);
     }
 }
