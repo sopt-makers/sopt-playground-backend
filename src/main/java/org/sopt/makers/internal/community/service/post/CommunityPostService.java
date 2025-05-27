@@ -242,6 +242,7 @@ public class CommunityPostService {
         return communityPostRepository.findRecentPostByCategory(category);
     }
 
+    @Transactional(readOnly = true)
     public List<PopularPostResponse> getPopularPosts(int limitCount) {
         List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
 
@@ -253,10 +254,20 @@ public class CommunityPostService {
                 .map(CommunityPost::getCategoryId)
                 .distinct()
                 .toList();
-        Map<Long, String> categoryNames = communityQueryRepository.getCategoryNamesByIds(categoryIds);
+        Map<Long, String> categoryNameMap = communityQueryRepository.getCategoryNamesByIds(categoryIds);
+
+        List<Long> postIds = posts.stream()
+                .map(CommunityPost::getId)
+                .distinct()
+                .toList();
+        Map<Long, AnonymousPostProfile> anonymousProfileMap = communityQueryRepository.getAnonymousPostProfilesByPostId(postIds);
 
         return posts.stream()
-                .map(post -> PopularPostResponse.of(post, categoryNames.get(post.getCategoryId())))
+                .map(post -> communityResponseMapper.toPopularPostResponse(
+                        post,
+                        anonymousProfileMap.get(post.getId()),
+                        categoryNameMap.get(post.getCategoryId())
+                ))
                 .toList();
     }
 
