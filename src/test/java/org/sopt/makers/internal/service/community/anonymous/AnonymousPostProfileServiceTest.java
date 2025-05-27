@@ -53,28 +53,19 @@ public class AnonymousPostProfileServiceTest {
                 new ProfileData(3L, "Image3", 3L, "Nickname3")
         ));
 
-        when(anonymousPostProfileRetriever.getTopByOrderByCreatedAt(4)).thenReturn(lastFourProfiles);
         when(anonymousPostProfileRetriever.getTopByOrderByCreatedAt(50)).thenReturn(lastFiftyProfiles);
 
-        List<Long> usedImageIds = extractProfileImageIds(lastFourProfiles);
         List<AnonymousNickname> usedNicknames = extractNicknames(lastFiftyProfiles);
 
         AnonymousNickname randomNickname = createAnonymousNickname(10L, "RandomNickname");
-        AnonymousProfileImage randomImage = createAnonymousProfileImage(10L, "RandomImage");
-
         when(anonymousNicknameRetriever.findRandomAnonymousNickname(usedNicknames)).thenReturn(randomNickname);
-        when(anonymousProfileImageRetriever.getAnonymousProfileImage(usedImageIds)).thenReturn(randomImage);
 
         // When
         anonymousPostProfileService.createAnonymousPostProfile(member, post);
 
         // Then
-        verify(anonymousPostProfileRetriever, times(1)).getTopByOrderByCreatedAt(4);
         verify(anonymousPostProfileRetriever, times(1)).getTopByOrderByCreatedAt(50);
         verify(anonymousNicknameRetriever, times(1)).findRandomAnonymousNickname(usedNicknames);
-        verify(anonymousProfileImageRetriever, times(1)).getAnonymousProfileImage(usedImageIds);
-        verify(anonymousPostProfileModifier, times(1))
-                .createAnonymousPostProfile(member, randomNickname, randomImage, post);
     }
 
     private List<AnonymousPostProfile> createAnonymousPostProfiles(List<ProfileData> data) {

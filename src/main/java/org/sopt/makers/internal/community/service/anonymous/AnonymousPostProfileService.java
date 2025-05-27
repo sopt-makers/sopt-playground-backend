@@ -15,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AnonymousPostProfileService {
 
-    private static final int RECENT_IMAGE_LIMIT = 4;
     private static final int RECENT_NICKNAME_LIMIT = 50;
 
     private final AnonymousPostProfileModifier anonymousPostProfileModifier;
@@ -25,15 +24,12 @@ public class AnonymousPostProfileService {
 
     @Transactional
     public void createAnonymousPostProfile(Member member, CommunityPost post) {
-        List<AnonymousPostProfile> lastFourAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(RECENT_IMAGE_LIMIT);
         List<AnonymousPostProfile> lastFiftyAnonymousPostProfiles = anonymousPostProfileRetriever.getTopByOrderByCreatedAt(RECENT_NICKNAME_LIMIT);
-        List<Long> usedAnonymousProfileImageIds = lastFourAnonymousPostProfiles.stream()
-                .map(anonymousProfile -> anonymousProfile.getProfileImg().getId()).toList();
         List<AnonymousNickname> usedAnonymousNicknames = lastFiftyAnonymousPostProfiles.stream()
                 .map(AnonymousPostProfile::getNickname).toList();
 
         AnonymousNickname anonymousNickname = anonymousNicknameRetriever.findRandomAnonymousNickname(usedAnonymousNicknames);
-        AnonymousProfileImage anonymousProfileImage = anonymousProfileImageRetriever.getAnonymousProfileImage(usedAnonymousProfileImageIds);
+        AnonymousProfileImage anonymousProfileImage = anonymousProfileImageRetriever.getAnonymousProfileImage();
         anonymousPostProfileModifier.createAnonymousPostProfile(member, anonymousNickname, anonymousProfileImage, post);
     }
 }

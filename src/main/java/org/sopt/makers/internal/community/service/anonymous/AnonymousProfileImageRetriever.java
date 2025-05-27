@@ -3,13 +3,13 @@ package org.sopt.makers.internal.community.service.anonymous;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousProfileImageRepository;
-import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @RequiredArgsConstructor
@@ -28,16 +28,8 @@ public class AnonymousProfileImageRetriever {
         }
     }
 
-    public AnonymousProfileImage getAnonymousProfileImage(List<Long> recentUsedAnonymousProfileImageIds) {
-        if (recentUsedAnonymousProfileImageIds.isEmpty()) {
-            long randomImageNumber = (long) ((Math.random() * 5) + 1);
-            return profileImageMap.get(randomImageNumber);
-        }
-
-        return profileImageMap.keySet().stream()
-                .filter(id -> !recentUsedAnonymousProfileImageIds.contains(id))
-                .findFirst()
-                .map(profileImageMap::get)
-                .orElseThrow(() -> new BusinessLogicException("존재하지 않는 익명 프로필 ID 입니다."));
+    public AnonymousProfileImage getAnonymousProfileImage() {
+        long randomImageNumber = ThreadLocalRandom.current().nextLong(1, 6);
+        return profileImageMap.get(randomImageNumber);
     }
 }

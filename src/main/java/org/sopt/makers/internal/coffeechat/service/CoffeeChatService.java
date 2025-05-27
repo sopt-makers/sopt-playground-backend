@@ -197,10 +197,11 @@ public class CoffeeChatService {
     public void createCoffeeChatReview(Long memberId, CoffeeChatReviewRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatById(request.coffeeChatId());
+
         coffeeChatRetriever.checkParticipateCoffeeChat(member, coffeeChat);
         coffeeChatRetriever.checkAlreadyEnrollReview(member, coffeeChat);
-        List<Long> recentUsedAnonymousProfileImageIds = coffeeChatRetriever.getRecentUsedAnonymousProfileImageIdsInCoffeeChatReview();
-        AnonymousProfileImage image = anonymousProfileImageRetriever.getAnonymousProfileImage(recentUsedAnonymousProfileImageIds);
+
+        AnonymousProfileImage image = anonymousProfileImageRetriever.getAnonymousProfileImage();
         coffeeChatModifier.createCoffeeChatReview(member, coffeeChat, image, request.nickname(), request.content());
     }
 

@@ -20,7 +20,6 @@ import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyD
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -89,13 +88,6 @@ public class CoffeeChatRetriever {
         if (!coffeeChatHistoryRepository.existsByReceiverAndSender(coffeeChat.getMember(), member)) {
             throw new ClientBadRequestException("해당 커피챗을 신청한 적 없는 유저입니다. " + "member id: " + member.getId());
         }
-    }
-    public List<Long> getRecentUsedAnonymousProfileImageIdsInCoffeeChatReview() {
-
-        return coffeeChatReviewRepository.findTop4ByOrderByIdDesc()
-                .stream()
-                .map(review -> review.getAnonymousProfileImage().getId())
-                .collect(Collectors.toList());
     }
 
     public void checkAlreadyEnrollReview(Member member, CoffeeChat coffeeChat) {

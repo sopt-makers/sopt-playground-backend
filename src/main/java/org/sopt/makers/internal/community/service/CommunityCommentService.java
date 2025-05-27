@@ -163,10 +163,8 @@ public class CommunityCommentService {
 
     private void saveAnonymousProfile(Member member, CommunityPost post, CommunityComment comment) {
         List<AnonymousNickname> excludeNicknames = new ArrayList<>();
-        List<Long> excludeImgIds = new ArrayList<>();
         for (AnonymousCommentProfile profile : anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId())) {
             excludeNicknames.add(profile.getNickname());
-            excludeImgIds.add(profile.getProfileImg().getId());
         }
 
         Optional<AnonymousPostProfile> anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
@@ -176,7 +174,7 @@ public class CommunityCommentService {
                 : anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNicknames);
         AnonymousProfileImage profileImg = anonymousPostProfile.isPresent()
                 ? anonymousPostProfile.get().getProfileImg()
-                : anonymousProfileImageRetriever.getAnonymousProfileImage(excludeImgIds);
+                : anonymousProfileImageRetriever.getAnonymousProfileImage();
 
         anonymousCommentProfileRepository.save(
                 AnonymousCommentProfile.builder()
