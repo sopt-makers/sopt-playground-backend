@@ -49,7 +49,7 @@ public class CommunityController {
         val post = communityPostService.getPostById(memberDetails.getId(), postId, isBlockOn);
         val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
         val likes = communityPostService.getLikes(post.post().id());
-        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.post().id());
         val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes, anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -75,7 +75,7 @@ public class CommunityController {
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id(), memberDetails.getId(), isBlockOn);
-            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
             val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
             return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked, likes);

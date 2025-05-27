@@ -12,7 +12,7 @@ public interface AnonymousPostProfileRepository extends JpaRepository<AnonymousP
 	// CREATE
 
 	// READ
-	Optional<AnonymousPostProfile> findAnonymousPostProfileByMemberIdAndCommunityPostId(Long memberId, Long communityPostId);
+	Optional<AnonymousPostProfile> findAnonymousPostProfileByCommunityPostId(Long communityPostId);
 	Optional<AnonymousPostProfile> findByMemberAndCommunityPost(Member member, CommunityPost post);
 
 	// UPDATE
