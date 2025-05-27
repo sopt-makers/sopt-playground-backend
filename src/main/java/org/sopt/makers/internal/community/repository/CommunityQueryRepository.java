@@ -94,7 +94,6 @@ public class CommunityQueryRepository {
     }
 
     public CategoryPostMemberDao getPostById(Long postId) {
-        val careers = QMemberCareer.memberCareer;
         val activities = QMemberSoptActivity.memberSoptActivity;
         val posts = QCommunityPost.communityPost;
         val category = QCategory.category;
@@ -104,7 +103,6 @@ public class CommunityQueryRepository {
                 .from(posts)
                 .innerJoin(posts.member, member)
                 .leftJoin(member.activities, activities)
-                .leftJoin(member.careers, careers)
                 .innerJoin(category).on(posts.categoryId.eq(category.id))
                 .where(posts.id.eq(postId)).distinct().fetchOne();
     }
@@ -128,14 +126,8 @@ public class CommunityQueryRepository {
                 ));
     }
 
-    public String getCategoryNameById(Long categoryId) {
-        QCategory category = QCategory.category;
 
         return queryFactory
-                .select(category.name)
-                .from(category)
-                .where(category.id.eq(categoryId))
-                .fetchOne();
     }
 
     public List<CommentDao> findCommentByPostId(Long postId, Long memberId, boolean isBlockedOn) {
@@ -174,15 +166,6 @@ public class CommunityQueryRepository {
             .where(post.isHot.eq(true))
             .orderBy(post.createdAt.desc())
             .fetchFirst();
-    }
-
-    public void updateHitsByPostId(List<Long> postIdList) {
-        val post = QCommunityPost.communityPost;
-
-        queryFactory.update(post)
-                .set(post.hits, post.hits.add(1))
-                .where(post.id.in(postIdList))
-                .execute();
     }
 
     public void updateIsHotByPostId(Long postId) {
