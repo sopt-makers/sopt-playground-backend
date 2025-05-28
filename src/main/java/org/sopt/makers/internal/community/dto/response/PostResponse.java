@@ -27,6 +27,6 @@ public record PostResponse(
         Boolean isBlindWriter,
         String sopticleUrl,
         AnonymousProfileVo anonymousProfile,
-        LocalDateTime createdAt,
+        String createdAt,
         List<CommentResponse> comments
 ) {}
