@@ -37,6 +37,9 @@ public class Category {
     @OneToMany(mappedBy = "parent")
     private List<Category> children = new ArrayList<>();
 
+    @Column
+    private Integer displayOrder;
+
     @Builder
     private Category(Long id, String name, String content, Boolean hasAll, Boolean hasBlind, Boolean hasQuestion, Category parent, List<Category> children) {
         this.id = id;
@@ -47,5 +50,6 @@ public class Category {
         this.hasQuestion = hasQuestion;
         this.parent = parent;
         this.children = children;
+        this.displayOrder = null;
     }
 }
