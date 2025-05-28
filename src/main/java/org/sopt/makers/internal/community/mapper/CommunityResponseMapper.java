@@ -73,8 +73,9 @@ public class CommunityResponseMapper {
         val isMine = Objects.equals(dao.member().id(), memberId);
         val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(Collectors.toList());
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
+        val createdAt = getRelativeTime(dao.post().createdAt());
         return new PostResponse(post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, post.createdAt(), comments);
+                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, createdAt, comments);
     }
 
     public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {
