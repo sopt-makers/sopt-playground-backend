@@ -25,6 +25,7 @@ public class CommunityCategoryController {
     @GetMapping("")
     public ResponseEntity<List<CommunityCategoryResponse>> getAllCategories() {
 
-        return ResponseEntity.status(HttpStatus.OK).body(categoryService.getAllCategoriesWithChildren());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(categoryService.getAllCategoriesWithChildren());
     }
 }
