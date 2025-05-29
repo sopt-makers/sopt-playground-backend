@@ -41,6 +41,7 @@ public class CategoryServiceUnitTest {
                 .hasQuestion(true)
                 .parent(null)
                 .children(new ArrayList<>())
+                .displayOrder(1)
                 .build();
 
         Category parentTwoCategory = Category.builder()
@@ -52,6 +53,7 @@ public class CategoryServiceUnitTest {
                 .hasQuestion(true)
                 .parent(null)
                 .children(new ArrayList<>())
+                .displayOrder(2)
                 .build();
 
         Category childrenCategory = Category.builder()
@@ -63,6 +65,7 @@ public class CategoryServiceUnitTest {
                 .hasQuestion(true)
                 .parent(parentOneCategory)
                 .children(new ArrayList<>())
+                .displayOrder(3)
                 .build();
 
         parentOneCategory.getChildren().add(childrenCategory);

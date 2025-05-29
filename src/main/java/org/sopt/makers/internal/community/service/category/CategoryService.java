@@ -20,8 +20,8 @@ public class CategoryService {
 
         return categories.stream()
                 .filter(category -> category.getParent() == null)
+                .sorted(Comparator.comparing(Category::getDisplayOrder))
                 .map(CommunityCategoryResponse::from)
-                .sorted(Comparator.comparing((CommunityCategoryResponse c) -> c.id() != 21))
                 .toList();
     }
 }
