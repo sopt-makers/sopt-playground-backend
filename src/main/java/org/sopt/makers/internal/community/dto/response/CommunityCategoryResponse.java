@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.community.dto.response;
 
+import java.util.Comparator;
 import org.sopt.makers.internal.community.domain.category.Category;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public record CommunityCategoryResponse(
 
     public static CommunityCategoryResponse from(Category category) {
         List<CommunityCategoryResponse> children = category.getChildren().stream()
+                .sorted(Comparator.comparing(Category::getDisplayOrder))
                 .map(CommunityCategoryResponse::from)
                 .toList();
 
