@@ -90,14 +90,11 @@ public class CommunityPostService {
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
         if (limit == null || limit >= 50) limit = 50;
-        if (categoryId == null) {
-            val posts = communityQueryRepository.findAllPostByCursor(limit, cursor, memberId, isBlockedOn);
-            return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
-        } else {
-            categoryRetriever.checkExistsCategoryById(categoryId);
-            val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
-            return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
-        }
+
+        categoryRetriever.checkExistsCategoryById(categoryId);
+        val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
+
+        return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
