@@ -86,13 +86,11 @@ public class CommunityPostService {
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
-    private static final int CATEGORY_PARTTALK = 2;
-    private static final int CATEGORY_PROMOTION = 5;
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
         if (limit == null || limit >= 50) limit = 50;
-        if (categoryId == null || categoryId == CATEGORY_PARTTALK || categoryId == CATEGORY_PROMOTION) {
+        if (categoryId == null) {
             val posts = communityQueryRepository.findAllPostByCursor(limit, cursor, memberId, isBlockedOn);
             return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
         } else {

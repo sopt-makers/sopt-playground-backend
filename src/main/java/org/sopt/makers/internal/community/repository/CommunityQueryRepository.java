@@ -33,6 +33,9 @@ public class CommunityQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    private static final long CATEGORY_PART_TALK = 2L;
+    private static final long CATEGORY_PROMOTION = 5L;
+
     public List<CategoryPostMemberDao> findAllPostByCursor(Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
         val posts = QCommunityPost.communityPost;
         val member = QMember.member;
@@ -72,16 +75,31 @@ public class CommunityQueryRepository {
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
 
-        JPAQuery<CategoryPostMemberDao> query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
-                .from(posts)
-                .innerJoin(posts.member, member)
-                .innerJoin(member.activities, activities)
-                .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
-                .innerJoin(category).on(posts.categoryId.eq(category.id))
-                .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
-                .limit(limit)
-                .distinct()
-                .orderBy(category.displayOrder.asc(), posts.createdAt.desc());
+        JPAQuery<CategoryPostMemberDao> query;
+        if (categoryId == CATEGORY_PART_TALK || categoryId == CATEGORY_PROMOTION) {
+            query = queryFactory.select(
+                            new QCategoryPostMemberDao(posts, member, category))
+                    .from(posts)
+                    .innerJoin(posts.member, member)
+                    .innerJoin(member.activities, activities)
+                    .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
+                    .innerJoin(category).on(posts.categoryId.eq(category.id))
+                    .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
+                    .limit(limit)
+                    .distinct()
+                    .orderBy(posts.createdAt.desc());
+        } else {
+            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+                    .from(posts)
+                    .innerJoin(posts.member, member)
+                    .innerJoin(member.activities, activities)
+                    .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
+                    .innerJoin(category).on(posts.categoryId.eq(category.id))
+                    .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
+                    .limit(limit)
+                    .distinct()
+                    .orderBy(category.displayOrder.asc(), posts.createdAt.desc());
+        }
 
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
