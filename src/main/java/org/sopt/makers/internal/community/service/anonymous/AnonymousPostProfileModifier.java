@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.springframework.stereotype.Component;

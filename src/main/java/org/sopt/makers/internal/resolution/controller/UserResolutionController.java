@@ -1,8 +1,6 @@
 package org.sopt.makers.internal.resolution.controller;
 
-import java.util.Map;
-
-import org.sopt.makers.internal.domain.InternalMemberDetails;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;

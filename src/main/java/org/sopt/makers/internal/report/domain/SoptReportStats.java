@@ -6,7 +6,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-import org.sopt.makers.internal.domain.common.AuditingTimeEntity;
+import org.sopt.makers.internal.common.AuditingTimeEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;

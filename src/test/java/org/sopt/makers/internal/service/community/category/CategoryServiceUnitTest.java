@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.sopt.makers.internal.community.controller.dto.response.CommunityCategoryResponse;
+import org.sopt.makers.internal.community.dto.response.CommunityCategoryResponse;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
 import org.sopt.makers.internal.community.service.category.CategoryService;
@@ -41,6 +41,7 @@ public class CategoryServiceUnitTest {
                 .hasQuestion(true)
                 .parent(null)
                 .children(new ArrayList<>())
+                .displayOrder(1)
                 .build();
 
         Category parentTwoCategory = Category.builder()
@@ -52,6 +53,7 @@ public class CategoryServiceUnitTest {
                 .hasQuestion(true)
                 .parent(null)
                 .children(new ArrayList<>())
+                .displayOrder(2)
                 .build();
 
         Category childrenCategory = Category.builder()
@@ -63,6 +65,7 @@ public class CategoryServiceUnitTest {
                 .hasQuestion(true)
                 .parent(parentOneCategory)
                 .children(new ArrayList<>())
+                .displayOrder(3)
                 .build();
 
         parentOneCategory.getChildren().add(childrenCategory);

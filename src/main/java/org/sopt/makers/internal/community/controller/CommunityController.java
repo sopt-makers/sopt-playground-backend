@@ -1,18 +1,21 @@
 package org.sopt.makers.internal.community.controller;
 
-import io.github.bucket4j.Bucket;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.common.InfiniteScrollUtil;
-import org.sopt.makers.internal.community.controller.dto.request.PostSaveRequest;
-import org.sopt.makers.internal.community.service.CommunityPostService;
-import org.sopt.makers.internal.domain.InternalMemberDetails;
-import org.sopt.makers.internal.dto.community.*;
-import org.sopt.makers.internal.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
+import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
+import org.sopt.makers.internal.community.dto.response.*;
+import org.sopt.makers.internal.community.service.post.CommunityPostService;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
+import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +49,7 @@ public class CommunityController {
         val post = communityPostService.getPostById(memberDetails.getId(), postId, isBlockOn);
         val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
         val likes = communityPostService.getLikes(post.post().id());
-        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.post().id());
         val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes, anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -72,7 +75,7 @@ public class CommunityController {
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
             val comments = communityCommentService.getPostCommentList(post.post().id(), memberDetails.getId(), isBlockOn);
-            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.member().id(), post.post().id());
+            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
             val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
             return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked, likes);
@@ -202,6 +205,28 @@ public class CommunityController {
 
         communityPostService.unlikePost(memberDetails.getId(), postId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 게시글 좋아요 취소 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 홈 인기글 조회 API")
+    @GetMapping("/posts/popular")
+    public ResponseEntity<List<PopularPostResponse>> getPopularPost(
+            @Parameter(description = "조회할 인기글 개수 (기본값: 3)")
+            @RequestParam(defaultValue = "3") int limit) {
+        return ResponseEntity.ok(communityPostService.getPopularPosts(limit));
+    }
+
+    @Operation(summary = "커뮤니티 홈 최근 솝티클 목록 조회 API")
+    @GetMapping("/posts/sopticle")
+    public ResponseEntity<List<SopticlePostResponse>> getRecentSopticlePost() {
+        List<SopticlePostResponse> sopticlePosts = communityPostService.getRecentSopticlePosts();
+        return ResponseEntity.ok().body(sopticlePosts);
+    }
+
+    @Operation(summary = "커뮤니티 홈 답변 대기 질문 목록 조회 API")
+    @GetMapping("/posts/question")
+    public ResponseEntity<List<QuestionPostResponse>> getRecentQuestionPost() {
+        List<QuestionPostResponse> questionPosts = communityPostService.getRecentQuestionPosts();
+        return ResponseEntity.ok().body(questionPosts);
     }
 
     @Operation(summary = "핫 게시물 조회 API")

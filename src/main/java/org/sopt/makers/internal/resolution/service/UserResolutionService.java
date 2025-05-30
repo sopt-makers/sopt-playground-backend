@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.common.GoogleSheetsService;
-import org.sopt.makers.internal.domain.Member;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.repository.MemberRepository;
+import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;

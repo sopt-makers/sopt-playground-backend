@@ -1,13 +1,12 @@
 package org.sopt.makers.internal.community.service.category;
 
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.community.controller.dto.response.CommunityCategoryResponse;
+import org.sopt.makers.internal.community.dto.response.CommunityCategoryResponse;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,8 +20,8 @@ public class CategoryService {
 
         return categories.stream()
                 .filter(category -> category.getParent() == null)
+                .sorted(Comparator.comparing(Category::getDisplayOrder))
                 .map(CommunityCategoryResponse::from)
-                .sorted(Comparator.comparing((CommunityCategoryResponse c) -> c.id() != 21))
                 .toList();
     }
 }

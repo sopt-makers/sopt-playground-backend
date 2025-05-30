@@ -6,10 +6,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PessimisticLockException;
 
-import org.sopt.makers.internal.community.service.CommunityPostService;
+import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.community.domain.CommunityPost;
-import org.sopt.makers.internal.dto.pushNotification.PushNotificationRequest;
-import org.sopt.makers.internal.service.PushNotificationService;
+import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

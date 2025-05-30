@@ -2,7 +2,7 @@ package org.sopt.makers.internal.resolution.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.common.GoogleSheetsService;
+import org.sopt.makers.internal.external.GoogleSheetsService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
