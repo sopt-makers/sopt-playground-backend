@@ -81,7 +81,7 @@ public class CommunityQueryRepository {
                 .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
                 .limit(limit)
                 .distinct()
-                .orderBy(category.displayOrder.asc(), posts.createdAt.desc());
+                .orderBy(posts.createdAt.desc());
 
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
