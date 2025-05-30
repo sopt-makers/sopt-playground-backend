@@ -34,7 +34,7 @@ public class CommunityQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     private static final long CATEGORY_PART_TALK = 2L;
-    private static final long CATEGORY_PROMOTION = 5L;
+    private static final long CATEGORY_PROMOTION = 4L;
 
     public List<CategoryPostMemberDao> findAllPostByCursor(Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
         val posts = QCommunityPost.communityPost;
