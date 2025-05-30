@@ -33,36 +33,8 @@ public class CommunityQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<CategoryPostMemberDao> findAllPostByCursor(Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
-        val posts = QCommunityPost.communityPost;
-        val member = QMember.member;
-        val category = QCategory.category;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        val careers = QMemberCareer.memberCareer;
-        val memberBlock = QMemberBlock.memberBlock;
-
-        JPAQuery<CategoryPostMemberDao> query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
-                .from(posts)
-                .innerJoin(posts.member, member)
-                .leftJoin(member.activities, activities)
-                .leftJoin(member.careers, careers)
-                .innerJoin(category).on(posts.categoryId.eq(category.id))
-                .where(ltPostId(cursor))
-                .limit(limit)
-                .distinct()
-                .orderBy(posts.createdAt.desc());
-
-        if (filterBlockedUsers) {
-            query.leftJoin(memberBlock).on(
-                            memberBlock.blocker.id.eq(memberId)
-                                    .and(memberBlock.blockedMember.id.eq(member.id))
-                                    .and(memberBlock.isBlocked.isTrue())
-                    )
-                    .where(memberBlock.isNull());
-        }
-
-        return query.fetch();
-    }
+    private static final long CATEGORY_PART_TALK = 2L;
+    private static final long CATEGORY_PROMOTION = 4L;
 
     public List<CategoryPostMemberDao> findAllParentCategoryPostByCursor(Long categoryId, Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
         val posts = QCommunityPost.communityPost;
@@ -72,16 +44,30 @@ public class CommunityQueryRepository {
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
 
-        JPAQuery<CategoryPostMemberDao> query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
-                .from(posts)
-                .innerJoin(posts.member, member)
-                .innerJoin(member.activities, activities)
-                .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
-                .innerJoin(category).on(posts.categoryId.eq(category.id))
-                .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
-                .limit(limit)
-                .distinct()
-                .orderBy(category.displayOrder.asc(), posts.createdAt.desc());
+        JPAQuery<CategoryPostMemberDao> query;
+        if (categoryId == CATEGORY_PART_TALK || categoryId == CATEGORY_PROMOTION) {
+            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+                    .from(posts)
+                    .innerJoin(posts.member, member)
+                    .innerJoin(member.activities, activities)
+                    .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
+                    .innerJoin(category).on(posts.categoryId.eq(category.id))
+                    .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
+                    .limit(limit)
+                    .distinct()
+                    .orderBy(posts.createdAt.desc());
+        } else {
+            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+                    .from(posts)
+                    .innerJoin(posts.member, member)
+                    .innerJoin(member.activities, activities)
+                    .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
+                    .innerJoin(category).on(posts.categoryId.eq(category.id))
+                    .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
+                    .limit(limit)
+                    .distinct()
+                    .orderBy(category.displayOrder.asc(), posts.createdAt.desc());
+        }
 
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
