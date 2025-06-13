@@ -77,7 +77,6 @@ public class ProjectController {
     @Operation(summary = "Project 생성 API")
     @PostMapping("")
     public ResponseEntity<Map<String, Boolean>> createProject (@RequestBody ProjectSaveRequest request) {
-        if (request.images().length > 10) throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");
         projectService.createProject(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
     }
@@ -89,8 +88,7 @@ public class ProjectController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody ProjectUpdateRequest request
     ) {
-        val writerId = memberDetails.getId();
-        if (request.images().length > 10) throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");
+        Long writerId = memberDetails.getId();
         projectService.updateProject(writerId, projectId, request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
