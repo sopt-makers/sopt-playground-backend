@@ -80,6 +80,7 @@ public class Project {
             LocalDate endAt,
             String[] serviceType,
             Boolean isAvailable,
+            Boolean isFounding,
             String summary,
             String detail,
             String logoImage,
@@ -90,9 +91,10 @@ public class Project {
         this.generation = generation == null ? this.generation : generation;
         this.category = category == null ? this.category : category;
         this.startAt = startAt == null ? this.startAt : startAt;
-        this.endAt = endAt == null ? this.endAt : endAt;
+        this.endAt = endAt;
         this.serviceType = serviceType == null ? this.serviceType : serviceType;
         this.isAvailable = isAvailable == null ? this.isAvailable : isAvailable;
+        this.isFounding = isFounding == null ? this.isFounding : isFounding;
         this.summary = summary == null ? this.summary : summary;
         this.detail = detail == null ? this.detail : detail;
         this.logoImage = logoImage == null ? this.logoImage : logoImage;

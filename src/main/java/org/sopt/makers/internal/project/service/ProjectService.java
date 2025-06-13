@@ -2,6 +2,7 @@ package org.sopt.makers.internal.project.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.exception.WrongImageInputException;
 import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.project.domain.ProjectLink;
 import org.sopt.makers.internal.project.domain.MemberProjectRelation;
@@ -42,6 +43,7 @@ public class ProjectService {
 
     @Transactional
     public void createProject (ProjectSaveRequest request) {
+        validateImageCount(request.images().length);
         val project = projectRepository.save(
                 Project.builder()
                         .name(request.name())
@@ -79,71 +81,83 @@ public class ProjectService {
     }
 
     @Transactional
-    public void updateProject (Long writerId, Long id, ProjectUpdateRequest request) {
-        val project = projectRepository.findById(id)
-                .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
-        if (!Objects.equals(project.getWriterId(), writerId)) throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
+    public void updateProject (Long writerId, Long projectId, ProjectUpdateRequest request) {
+        validateImageCount(request.images().length);
+
+        Project project = getProjectById(projectId);
+        validateWriter(project, writerId);
+
         project.updateAll(
                 request.name(), request.generation(), request.category(), request.startAt(),
-                request.endAt(), request.serviceType(), request.isAvailable(), request.summary(), request.detail(),
+                request.endAt(), request.serviceType(), request.isAvailable(), request.isFounding(), request.summary(), request.detail(),
                 request.logoImage(), request.thumbnailImage(), request.images()
         );
 
-        val relationList = relationRepository.findAllByProjectId(id);
-        val relations = relationList.stream()
+        updateProjectMembers(projectId, request);
+        updateProjectLinks(projectId, request);
+    }
+
+    private void updateProjectMembers(Long projectId, ProjectUpdateRequest request) {
+        List<MemberProjectRelation> existingRelations = relationRepository.findAllByProjectId(projectId);
+        Map<Long, MemberProjectRelation> relationMap = existingRelations.stream()
                 .collect(Collectors.toMap(MemberProjectRelation::getUserId, Function.identity()));
-        val relationUserSet = Set.copyOf(relationList.stream().map(MemberProjectRelation::getUserId).collect(Collectors.toList()));
-        val requestedRelationUserSet = Set.copyOf(request.members().stream()
+
+        Set<Long> requestedUserIds = request.members().stream()
                 .map(ProjectUpdateRequest.ProjectMemberUpdateRequest::memberId)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toSet());
 
-        relationRepository.deleteAll(relationUserSet.stream()
-                .filter(e -> !requestedRelationUserSet.contains(e))
-                .map(relations::get)
-                .collect(Collectors.toList())
-        );
+        List<MemberProjectRelation> relationsToRemove = relationMap.keySet().stream()
+                .filter(id -> !requestedUserIds.contains(id))
+                .map(relationMap::get)
+                .toList();
+        relationRepository.deleteAll(relationsToRemove);
 
-        relationRepository.saveAll(request.members().stream().map(memberRequest -> {
-            if (relations.containsKey(memberRequest.memberId())) {
-                return relations.get(memberRequest.memberId())
-                        .updateAll(
+        List<MemberProjectRelation> relationsToSave = request.members().stream()
+                .map(memberRequest -> {
+                    Long memberId = memberRequest.memberId();
+                    if (relationMap.containsKey(memberId)) {
+                        return relationMap.get(memberId).updateAll(
                                 memberRequest.memberRole(),
                                 memberRequest.memberDescription(),
                                 memberRequest.isTeamMember()
                         );
-            } else {
-                return MemberProjectRelation.builder()
-                        .projectId(project.getId())
-                        .userId(memberRequest.memberId())
-                        .role(memberRequest.memberRole())
-                        .description(memberRequest.memberDescription())
-                        .isTeamMember(memberRequest.isTeamMember())
-                        .build();
-            }
-        }).collect(Collectors.toList()));
+                    } else {
+                        return MemberProjectRelation.builder()
+                                .projectId(projectId)
+                                .userId(memberId)
+                                .role(memberRequest.memberRole())
+                                .description(memberRequest.memberDescription())
+                                .isTeamMember(memberRequest.isTeamMember())
+                                .build();
+                    }
+                })
+                .toList();
 
-        projectLinkRepository.deleteAllByProjectId(id);
-        projectLinkRepository.saveAll(request.links().stream().map(linkRequest -> ProjectLink.builder()
-                .projectId(project.getId())
-                .title(linkRequest.linkTitle())
-                .url(linkRequest.linkUrl())
-                .build()).collect(Collectors.toList()));
+        relationRepository.saveAll(relationsToSave);
+    }
 
+    private void updateProjectLinks(Long projectId, ProjectUpdateRequest request) {
+        projectLinkRepository.deleteAllByProjectId(projectId);
+
+        List<ProjectLink> linksToSave = request.links().stream()
+                .map(linkRequest -> ProjectLink.builder()
+                        .projectId(projectId)
+                        .title(linkRequest.linkTitle())
+                        .url(linkRequest.linkUrl())
+                        .build()
+                ).toList();
+
+        projectLinkRepository.saveAll(linksToSave);
     }
 
     @Transactional
-    public void deleteProject (Long writerId, Long id) {
-        val project = projectRepository.findById(id)
-                .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
-        if (!Objects.equals(project.getWriterId(), writerId)) throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
-        projectLinkRepository.deleteAllByProjectId(id);
-        relationRepository.deleteAllByProjectId(id);
-        projectRepository.delete(project);
-    }
+    public void deleteProject (Long writerId, Long projectId) {
+        Project project = getProjectById(projectId);
+        validateWriter(project, writerId);
 
-    @Transactional(readOnly = true)
-    public List<Project> getProjectByName (String name) {
-        return projectRepository.findAllByNameContaining(name);
+        projectLinkRepository.deleteAllByProjectId(projectId);
+        relationRepository.deleteAllByProjectId(projectId);
+        projectRepository.delete(project);
     }
 
     @Transactional(readOnly = true)
@@ -172,8 +186,7 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<ProjectLinkDao> fetchLinksById (Long id) {
-        val project = projectQueryRepository.findLinksById(id);
-        return project;
+        return projectQueryRepository.findLinksById(id);
     }
 
     @Transactional(readOnly = true)
@@ -197,8 +210,20 @@ public class ProjectService {
         return projectQueryRepository.countProjectsExcludeSopkathon(memberId);
     }
 
-    @Transactional(readOnly = true)
-    public Long getAllCount() {
-        return projectRepository.count();
+    private Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
+    }
+
+    private void validateImageCount(int imageCount) {
+        if (imageCount > 10) {
+            throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");
+        }
+    }
+
+    private void validateWriter(Project project, Long writerId) {
+        if (!Objects.equals(project.getWriterId(), writerId)) {
+            throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
+        }
     }
 }
