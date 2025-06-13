@@ -85,7 +85,7 @@ public class ProjectService {
         if (!Objects.equals(project.getWriterId(), writerId)) throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         project.updateAll(
                 request.name(), request.generation(), request.category(), request.startAt(),
-                request.endAt(), request.serviceType(), request.isAvailable(), request.summary(), request.detail(),
+                request.endAt(), request.serviceType(), request.isAvailable(), request.isFounding(), request.summary(), request.detail(),
                 request.logoImage(), request.thumbnailImage(), request.images()
         );
 
@@ -95,7 +95,7 @@ public class ProjectService {
         val relationUserSet = Set.copyOf(relationList.stream().map(MemberProjectRelation::getUserId).collect(Collectors.toList()));
         val requestedRelationUserSet = Set.copyOf(request.members().stream()
                 .map(ProjectUpdateRequest.ProjectMemberUpdateRequest::memberId)
-                .collect(Collectors.toList()));
+                .toList());
 
         relationRepository.deleteAll(relationUserSet.stream()
                 .filter(e -> !requestedRelationUserSet.contains(e))
