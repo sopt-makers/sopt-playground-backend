@@ -37,6 +37,7 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.9.0'
 	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
+	implementation 'net.minidev:json-smart'
 
 	// Postgresql Array type
 	implementation('com.vladmihalcea:hibernate-types-52:2.19.2')

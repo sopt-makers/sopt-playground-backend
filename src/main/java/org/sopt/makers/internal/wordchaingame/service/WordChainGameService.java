@@ -7,7 +7,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
