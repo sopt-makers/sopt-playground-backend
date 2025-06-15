@@ -47,7 +47,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
-	implementation "com.nimbusds:nimbus-jose-jwt:7.8.1"
+	implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
 
 	// lombok
 	compileOnly 'org.projectlombok:lombok'
@@ -86,6 +86,9 @@ dependencies {
 	// Google Service
 	implementation 'com.google.apis:google-api-services-sheets:v4-rev516-1.23.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
+
+	// Web Client
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
 }
 
 dependencyManagement {

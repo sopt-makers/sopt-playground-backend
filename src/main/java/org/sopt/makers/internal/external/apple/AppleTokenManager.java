@@ -15,7 +15,7 @@ import lombok.val;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;

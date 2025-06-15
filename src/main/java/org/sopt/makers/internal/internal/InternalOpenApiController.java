@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.community.dto.InternalCommunityPost;
 import org.sopt.makers.internal.community.dto.PostCategoryDao;
 import org.sopt.makers.internal.internal.dto.*;
