@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.auth.jwtFilter;
 
+import java.util.Objects;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
@@ -26,7 +27,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtAuthenticationService jwtAuthenticationService;
-    private static final String ACCESS_TOKEN_PREFIX = "Bearer ";
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void checkJwtAvailable (String jwtToken) {
-        if (jwtToken != null && !jwtToken.startsWith(ACCESS_TOKEN_PREFIX)) {
+        if (Objects.isNull(jwtToken)) {
             throw new WrongAccessTokenException("Token is empty or not verified");
         }
 
