@@ -20,6 +20,7 @@ public class AuthController {
     private final AuthService authService;
     private final AuthConfig authConfig;
 
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Operation(summary = "SSO Code Test API", description = "SSO 코드 발급을 위한 테스트 엔드포인트")
     @PostMapping("/idp/sso/code")
     public ResponseEntity<CodeResponse> createCode (@RequestBody CodeRequest request) {
@@ -27,6 +28,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new CodeResponse(code));
     }
 
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Operation(summary = "SSO Access Token API", description = "SSO AccessToken 발급을 위한 엔드포인트")
     @PostMapping("/idp/sso/auth")
     public ResponseEntity<AccessTokenResponse> ssoAccessToken (@RequestBody AuthRequest request) {
@@ -34,6 +36,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Operation(summary = "Facebook auth API", description = "페이스북으로 로그인")
     @PostMapping("/idp/facebook/auth")
     public ResponseEntity<AccessTokenResponse> authByFacebook (@RequestBody AuthRequest request) {
@@ -41,6 +44,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Operation(summary = "Facebook register API")
     @PostMapping("/idp/facebook/register")
     public ResponseEntity<AccessTokenResponse> registerByFacebook (@RequestBody RegisterRequest request) {
@@ -62,17 +66,25 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Google register API, status = {register/change}")
+    @Operation(summary = "Google register API, status = {register/change}", description = "구글로 회원가입")
     @PostMapping("/idp/google/{status}")
     public ResponseEntity<AccessTokenResponse> registerByGoogle (@PathVariable String status, @RequestBody RegisterRequest request) {
         String accessToken;
+
+        // 1. 매직 회원가입 토큰일 때
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByGoogleAndMagicRegisterToken(request.registerToken(), request.code(), status);
+
+        // 2. 개발 환경에서 QA용 토큰일 때
         } else if (authConfig.getActiveProfile().equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
             accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "google");
+
+        // 3. 그 외 일반 구글 회원가입
         } else {
             accessToken = authService.registerByGoogle(request.registerToken(), request.code(), status);
         }
+
+        // 4. 액세스 토큰을 응답 객체에 담아 반환
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
@@ -83,17 +95,25 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
-    @Operation(summary = "Apple register API, status = {register/change}")
+    @Operation(summary = "Apple register API, status = {register/change}", description = "애플로 회원가입")
     @PostMapping("/idp/apple/{status}")
     public ResponseEntity<AccessTokenResponse> registerByApple (@PathVariable String status, @RequestBody RegisterRequest request) {
         String accessToken;
+
+        // 1. 요청의 회원가입 토큰이 매직 토큰이면 매직 회원가입 처리
         if (request.registerToken().equals(authConfig.getMagicRegisterToken())) {
             accessToken = authService.registerByAppleAndMagicRegisterToken(request.registerToken(), request.code(), status);
+
+        // 2. 개발 환경 + QA 토큰이면 QA 회원가입 처리
         } else if (authConfig.getActiveProfile().equals("dev") && request.registerToken().equals(authConfig.getDevRegisterQaToken())) {
             accessToken = authService.registerByDevQaMagicRegisterToken(request.registerToken(), request.code(), "apple");
+
+        // 3. 그 외 일반 애플 회원가입 처리
         } else {
             accessToken = authService.registerByApple(request.registerToken(), request.code(), status);
         }
+
+        // 4. 발급된 액세스 토큰을 응답으로 반환
         return ResponseEntity.status(HttpStatus.OK).body(new AccessTokenResponse(accessToken));
     }
 
@@ -125,7 +145,7 @@ public class AuthController {
         };
     }
 
-    @Operation(summary = "Get 6 numbers code, status = {registration/change}")
+    @Operation(summary = "Get 6 numbers code, status = {registration/change}", description = "핸드폰으로 6문자 인증 코드 받기")
     @PostMapping("/{status}/sms/code")
     public ResponseEntity<SmsCodeResponse> sendRegistrationSms (@PathVariable String status, @Valid @RequestBody RegistrationPhoneRequest request) {
         if(!status.equals("registration") && !status.equals("change")) {
@@ -157,7 +177,7 @@ public class AuthController {
         };
     }
 
-    @Operation(summary = "Get registerToken by 6 number Code, status = {registration/change}")
+    @Operation(summary = "Get registerToken by 6 number Code, status = {registration/change}", description = "6문자 인증 코드로 토큰 받기")
     @PostMapping("/{status}/sms/token")
     public ResponseEntity<RegisterTokenBySmsResponse> getRegistrationToken (@PathVariable String status, @RequestBody RegistrationTokenBySmsRequest request) {
         if(!status.equals("registration") && !status.equals("change")) {

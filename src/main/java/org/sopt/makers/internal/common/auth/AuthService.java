@@ -47,7 +47,7 @@ public class AuthService {
     private final EmailSender emailSender;
 
     private final GabiaService gabiaService;
-    private final SmsSender smsSender;
+    private final SmsSender smsSender; // 삭제 필요
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -122,6 +122,7 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Transactional
     public String registerByFbAndMagicRegisterToken(String registerToken, String code) {
         val isMagic = tokenManager.verifyMagicRegisterToken(registerToken);
@@ -154,7 +155,7 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
-
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Transactional
     public String authByFb (String code) {
         val fbAccessToken = fbTokenManager.getAccessTokenByCode(code, "auth");
@@ -169,6 +170,7 @@ public class AuthService {
         return tokenManager.createAuthToken(member.getId());
     }
 
+    @Deprecated(since = "2025.06.15 인증중앙화 정리")
     @Transactional
     public String registerByFb (String registerToken, String code) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
@@ -189,82 +191,136 @@ public class AuthService {
 
     @Transactional
     public String authByGoogle (String code) {
+        // 1. 구글 Access Token 요청
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "auth");
+
+        // 2. 토큰 발급 실패 시 예외 발생
         if (googleAccessTokenResponse == null) {
             throw new AuthFailureException("Google 인증에 실패했습니다.");
         }
+
+        // 3. Access Token에서 idToken 추출
         val googleAccessToken = googleAccessTokenResponse.idToken();
+
+        // 4. idToken으로 사용자 정보 조회
         val googleUserInfoResponse = googleTokenManager.getUserInfo(googleAccessToken);
         log.info("Google user id : " + googleUserInfoResponse);
+
+        // 5. 해당 Google 사용자 ID로 회원 조회, 없으면 예외 발생
         val member = memberRepository.findByAuthUserId(googleUserInfoResponse.sub())
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Google] : " + googleUserInfoResponse));
+
+        // 6. 회원 이메일 정보 확인, null이면 해당 이메일로 변경해줌
         checkEmailIsNull(member, googleUserInfoResponse.email());
 
+        // 7. 최종적으로 인증 토큰 생성 후 반환
         return tokenManager.createAuthToken(member.getId());
     }
 
     @Transactional
     public String registerByGoogle(String registerToken, String code, String state) {
+        // 1. 상태값이 register 또는 change가 아니면 예외
         if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
+
+        // 2. 회원가입 토큰 검증
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
+
+        // 3. 구글 인증 코드로 액세스 토큰 요청
         val googleAccessTokenResponse = googleTokenManager.getAccessTokenByCode(code, "register");
+
+        // 4. 토큰 정보 또는 구글 토큰 응답이 없으면 예외
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
         if (googleAccessTokenResponse == null) throw new AuthFailureException("google 인증에 실패했습니다.");
+
+        // 5. 구글 idToken 추출
         val googleAccessToken = googleAccessTokenResponse.idToken();
 
+        // 6. 회원 이력 조회
         val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
+
+        // 7. register 상태인데 이미 가입된 이력이 있으면 예외
         if (state.equals("register") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined))
             throw new AuthFailureException("이미 가입된 사용자입니다.");
 
+        // 8. 첫 번째 회원 이력 가져오기
         val memberHistory = memberHistories.get(0);
+
+        // 9. 구글 사용자 정보 조회
         val googleUserInfo = googleTokenManager.getUserInfo(googleAccessToken);
         if (googleUserInfo == null) throw new WrongTokenException("Google AccessToken Invalid");
 
+        // 10. 상태에 따라 회원 정보 변경 또는 신규 등록
         val member = state.equals("change")
                 ? changeMemberSocialData(memberHistory.getPhone(), "google", googleUserInfo.sub())
                 : insertMemberAndActivityData("google", googleUserInfo.sub(), memberHistories);
+
+        // 11. 인증 토큰 생성 및 반환
         return tokenManager.createAuthToken(member.getId());
     }
 
     @Transactional
     public String authByApple (String code) {
+        // 1. 애플 인증 코드로 액세스 토큰 요청
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+
+        // 2. 토큰 발급 실패 시 예외 처리
         if (appleAccessTokenResponse == null) {
             throw new AuthFailureException("Apple 인증에 실패했습니다.");
         }
+
+        // 3. 액세스 토큰으로 사용자 정보 조회
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         log.info("Apple user id : " + appleUserInfo);
+
+        // 4. 사용자 정보로 회원 조회, 없으면 예외 발생
         val member = memberRepository.findByAuthUserId(appleUserInfo)
                 .orElseThrow(() -> new AuthFailureException("SOPT.org 회원이 아닙니다. [Apple] : " +  appleUserInfo));
 
+        // 5. 인증 토큰 생성 및 반환
         return tokenManager.createAuthToken(member.getId());
     }
 
     @Transactional
     public String registerByApple (String registerToken, String code, String state) {
+        // 1. 상태값이 register 또는 change가 아니면 예외
         if(!state.equals("register") && !state.equals("change")) throw new AuthFailureException("잘못된 경로입니다.");
+
+        // 2. 회원가입 토큰 검증
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
+
+        // 3. 애플 인증 코드로 액세스 토큰 요청
         val appleAccessTokenResponse = appleTokenManager.getAccessTokenByCode(code);
+
+        // 4. 토큰 정보 또는 애플 토큰 응답이 없으면 예외
         if (registerTokenInfo == null) throw new WrongTokenException("tokenInvalid");
         if (appleAccessTokenResponse == null) throw new AuthFailureException("apple 인증에 실패했습니다.");
 
+        // 5. 회원 이력 조회
         val memberHistories = findAllMemberHistoriesByRegisterTokenInfo(registerTokenInfo);
+
+        // 6. register 상태인데 이미 가입된 이력이 있으면 예외
         if (memberHistories.isEmpty()) throw new EntityNotFoundException("Sopt Member History's email or phone" + registerTokenInfo + " not found");
         if (state.equals("register") && memberHistories.stream().anyMatch(SoptMemberHistory::getIsJoined)) throw new AuthFailureException("이미 가입된 사용자입니다.");
 
+        // 7. 첫 번째 회원 이력 가져오기
         val memberHistory = memberHistories.get(0);
+
+        // 8. 애플 사용자 정보 조회
         val appleUserInfo = appleTokenManager.getUserInfo(appleAccessTokenResponse);
         if (appleUserInfo == null) throw new WrongTokenException("Apple AccessToken Invalid");
 
+        // 9. 상태에 따라 회원 정보 변경 또는 신규 등록
         val member = state.equals("change")
                 ? changeMemberSocialData(memberHistory.getPhone(), "apple", appleUserInfo)
                 : insertMemberAndActivityData("apple", appleUserInfo, memberHistories);
 
+        // 10. 인증 토큰 생성 및 반환
         return tokenManager.createAuthToken(member.getId());
     }
 
     @Transactional
+    // 회원가입 토큰이 전화번호인지 이메일인지 판별해 해당 정보로 최신 회원 이력을 조회하는 메소드
     public Optional<SoptMemberHistory> findMemberByRegisterToken (String registerToken) {
         val registerTokenInfo = tokenManager.verifyRegisterToken(registerToken);
         if(registerTokenInfo.startsWith("010")){
@@ -275,6 +331,7 @@ public class AuthService {
     }
 
     @Transactional
+    // 회원가입 토큰 정보가 전화번호인지 이메일인지에 따라, 해당 정보로 회원의 모든 이력을 최신순으로 조회하는 메소드
     public List<SoptMemberHistory> findAllMemberHistoriesByRegisterTokenInfo (String registerTokenInfo) {
         if(registerTokenInfo.startsWith("010")){
             return soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(registerTokenInfo);
@@ -284,6 +341,7 @@ public class AuthService {
     }
 
     @Transactional
+    // 이메일로 회원가입 링크를 전송하고, 전송 결과를 문자열로 반환하는 메소드
     public String sendRegisterLinkByEmail(String email) {
         val memberHistories = soptMemberHistoryRepository.findAllByEmailOrderByIdDesc(email);
         if (memberHistories.isEmpty()) return "invalidEmail";
@@ -300,6 +358,7 @@ public class AuthService {
         }
     }
 
+    // 전화번호로 회원을 찾아 소셜 로그인 정보를 갱신하는 메소드
     private Member changeMemberSocialData(String phone, String idpType, String userInfoId) {
         val member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new EntityNotFoundException("해당 유저를 찾을 수 없습니다."));
@@ -307,6 +366,7 @@ public class AuthService {
         return member;
     }
 
+    // 회원 이력을 기반으로 새 회원과 활동 이력을 등록하는 메소드
     private Member insertMemberAndActivityData (String idpType, String userInfoId, List<SoptMemberHistory> memberHistories) {
         val memberHistory = memberHistories.get(0);
         val member = memberRepository.save(
@@ -321,6 +381,7 @@ public class AuthService {
                         .build()
         );
         val memberActivities = memberHistories.stream().map(soptMemberHistory -> {
+            // organizer 테이블 안쓴다고 들었는데 내 생각에는 프로필 조회 시 운영진 정보도 조회해서 쓰이는 것 같다
             val team = isInSoptOrganizerTeam(soptMemberHistory.getPart()) ? soptMemberHistory.getPart() : null;
             return MemberSoptActivity.builder()
                     .memberId(member.getId())
@@ -334,6 +395,7 @@ public class AuthService {
         return member;
     }
 
+    // 핸드폰으로 6문자 인증코드 보내기
     public String sendSixNumberSmsCode (String phone, String state) {
         val memberHistories = soptMemberHistoryRepository.findAllByPhoneOrderByIdDesc(phone);
         if (memberHistories.isEmpty()) return "emptySoptUser";
@@ -348,11 +410,11 @@ public class AuthService {
         val message = "[SOPT Makers] 인증번호 [" + sixNumberCode + "]를 입력해주세요.";
         log.info(message);
         gabiaService.sendSMS(phone, message);
-//        smsSender.sendSms(new NaverSmsRequest.SmsMessage(phone, message));
         clearMapByRandomAccess();
         return "success";
     }
 
+    // 6문자 인증 코드로 토큰 받기
     public String getRegisterTokenBySixNumberCode (String sixNumberCode) {
         val smsToken = memberAndSmsTokenMap.get(sixNumberCode);
         if (smsToken == null) throw new WrongSixNumberCodeException("notExistedCode");
@@ -377,6 +439,7 @@ public class AuthService {
         return (part.contains("장") || part.equals("총무"));
     }
 
+    // 만료된 SMS 토큰이 있을 경우, 해당 토큰을 가진 맵의 엔트리들을 삭제하는 메소드
     private void clearMapByRandomAccess () {
         log.info("[Before clear Map] Map size : {}", memberAndSmsTokenMap.size());
         val isMapEmpty = memberAndSmsTokenMap.isEmpty();
@@ -390,6 +453,7 @@ public class AuthService {
         }
     }
 
+    // 만료된 SMS 토큰을 가진 맵의 키들을 찾아 반환하는 메소드
     private Set<String> findShouldDeleteKeys () {
         val shouldDeleteKeys = new HashSet<String>();
         for (val elem: memberAndSmsTokenMap.entrySet()) {
@@ -399,6 +463,7 @@ public class AuthService {
         return shouldDeleteKeys;
     }
 
+    // 주어진 SMS 토큰이 만료되었는지 확인하는 메소드
     public boolean checkIsExpiredSmsToken (String smsToken) {
         val exp = LocalDateTime.parse(smsToken.split("@")[1], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         val now = LocalDateTime.now(KST);
