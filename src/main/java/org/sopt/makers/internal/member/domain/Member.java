@@ -3,6 +3,7 @@ package org.sopt.makers.internal.member.domain;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
+import org.sopt.makers.internal.vote.domain.VoteSelection;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -134,6 +135,13 @@ public class Member {
     @Column(nullable = false)
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
+
+    @OneToMany(
+            mappedBy = "member",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<VoteSelection> voteSelections = new ArrayList<>();
 
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;

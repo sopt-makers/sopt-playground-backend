@@ -5,6 +5,7 @@ import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
+import org.sopt.makers.internal.vote.domain.Vote;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -66,6 +67,13 @@ public class CommunityPost extends AuditingTimeEntity {
     )
     @JoinColumn(name = "postId")
     private List<CommunityComment> comments = new ArrayList<>();
+
+    @OneToOne(
+            mappedBy = "post",
+            cascade = CascadeType.REMOVE, 
+            orphanRemoval = true
+    )
+    private Vote vote;
 
     public void updatePost(Long categoryId, String title, String content,
                            String[] images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
