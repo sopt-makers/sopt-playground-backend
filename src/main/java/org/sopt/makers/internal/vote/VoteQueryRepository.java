@@ -2,9 +2,9 @@ package org.sopt.makers.internal.vote;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.community.vote.domain.QVote;
-import org.sopt.makers.internal.community.vote.domain.QVoteOption;
-import org.sopt.makers.internal.community.vote.domain.QVoteSelection;
+import org.sopt.makers.internal.vote.domain.QVote;
+import org.sopt.makers.internal.vote.domain.QVoteOption;
+import org.sopt.makers.internal.vote.domain.QVoteSelection;
 import org.springframework.stereotype.Repository;
 
 @Repository
