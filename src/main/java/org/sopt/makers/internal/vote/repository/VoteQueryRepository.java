@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.vote;
+package org.sopt.makers.internal.vote.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
