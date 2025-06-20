@@ -5,6 +5,7 @@ import lombok.Builder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import org.sopt.makers.internal.vote.dto.request.VoteRequest;
 
 @Builder
 public record PostSaveRequest(
@@ -30,6 +31,8 @@ public record PostSaveRequest(
         @NotNull(message = "이미지 필드는 필수 필드입니다.")
         String[] images,
 
-        String link
+        String link,
+
+        VoteRequest vote
 ) {
 }
