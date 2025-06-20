@@ -61,18 +61,11 @@ public class CommunityPost extends AuditingTimeEntity {
     private String sopticleUrl;
 
     @Builder.Default
-    @OneToMany(
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true
-    )
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "postId")
     private List<CommunityComment> comments = new ArrayList<>();
 
-    @OneToOne(
-            mappedBy = "post",
-            cascade = CascadeType.REMOVE, 
-            orphanRemoval = true
-    )
+    @OneToOne(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Vote vote;
 
     public void updatePost(Long categoryId, String title, String content,

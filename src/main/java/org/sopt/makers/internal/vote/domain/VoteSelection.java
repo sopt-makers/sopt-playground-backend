@@ -7,9 +7,7 @@ import org.sopt.makers.internal.member.domain.Member;
 
 import javax.persistence.*;
 
-@Table(
-        uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "vote_option_id"})
-)
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "vote_option_id"}))
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

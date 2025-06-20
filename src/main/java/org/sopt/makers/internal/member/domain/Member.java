@@ -60,11 +60,7 @@ public class Member {
     private String introduction;
 
     @Builder.Default
-    @OneToMany(
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private List<MemberSoptActivity> activities = new ArrayList<>();
 
@@ -90,18 +86,12 @@ public class Member {
     private String selfIntroduction;
 
     @Builder.Default
-    @OneToMany(
-        cascade = CascadeType.ALL,
-        orphanRemoval = true
-    )
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
     private List<MemberLink> links = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
     private List<MemberCareer> careers = new ArrayList<>();
 
@@ -136,27 +126,23 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
-    @OneToMany(
-            mappedBy = "member",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
 
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
 
-    public void updateMemberAuth (String authUserId, String idpType) {
+    public void updateMemberAuth(String authUserId, String idpType) {
         this.authUserId = authUserId;
         this.idpType = idpType;
     }
 
-    public void agreeToUseSoulmate () {
+    public void agreeToUseSoulmate() {
         this.openToSoulmate = true;
     }
 
-    public void disagreeToUseSoulmate () {
+    public void disagreeToUseSoulmate() {
         this.openToSoulmate = false;
     }
 
@@ -192,7 +178,7 @@ public class Member {
         this.profileImage = profileImage;
         this.birthday = birthday;
         this.phone = phone;
-        this.email =email;
+        this.email = email;
         this.address = address;
         this.university = university;
         this.major = major;
@@ -206,9 +192,12 @@ public class Member {
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
         this.allowOfficial = allowOfficial;
-        this.activities.clear(); this.activities.addAll(activities);
-        this.links.clear(); this.links.addAll(links);
-        this.careers.clear(); this.careers.addAll(careers);
+        this.activities.clear();
+        this.activities.addAll(activities);
+        this.links.clear();
+        this.links.addAll(links);
+        this.careers.clear();
+        this.careers.addAll(careers);
         this.hasProfile = true;
         this.isPhoneBlind = isPhoneBlind;
     }
