@@ -7,6 +7,7 @@ import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.vote.domain.Vote;
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
+import org.sopt.makers.internal.vote.repository.VoteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
