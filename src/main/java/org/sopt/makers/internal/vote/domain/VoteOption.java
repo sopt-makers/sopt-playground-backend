@@ -25,7 +25,7 @@ public class VoteOption {
     private String content;
 
     @Column(nullable = false)
-    private Integer voteCount = 0;
+    private int voteCount;
 
     @OneToMany(mappedBy = "voteOption", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
