@@ -37,6 +37,7 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +59,7 @@ public class CommunityPostService {
 
     private final AnonymousPostProfileService anonymousPostProfileService;
     private final SopticleScrapedService sopticleScrapedService;
+    private final VoteService voteService;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -116,6 +118,8 @@ public class CommunityPostService {
     public PostSaveResponse createPost(Long writerId, PostSaveRequest request) {
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = createCommunityPostBasedOnCategory(member, request);
+
+        if(Objects.nonNull(request.vote())) voteService.createVote(post, request.vote());
 
         handleBlindWriter(request, member, post);
         sendSlackNotificationForNonMakers(member, post);
