@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.vote.domain;
 
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,4 +28,14 @@ public class Vote {
 
     @OneToMany(mappedBy = "vote", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteOption> voteOptions = new ArrayList<>();
+
+    public static Vote of(CommunityPost post, boolean isMultiple, List<String> optionContents) {
+        Vote vote = new Vote();
+        vote.post = post;
+        vote.isMultipleOptions = isMultiple;
+        vote.voteOptions = optionContents.stream()
+                .map(content -> VoteOption.of(vote, content))
+                .toList();
+        return vote;
+    }
 }
