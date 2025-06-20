@@ -29,4 +29,12 @@ public class VoteOption {
 
     @OneToMany(mappedBy = "voteOption", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
+
+    public static VoteOption of(Vote vote, String content) {
+        VoteOption option = new VoteOption();
+        option.vote = vote;
+        option.content = content;
+        option.voteCount = 0;
+        return option;
+    }
 }
