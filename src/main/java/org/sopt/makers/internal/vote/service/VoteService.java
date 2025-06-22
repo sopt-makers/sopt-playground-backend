@@ -42,20 +42,21 @@ public class VoteService {
         CommunityPost post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundException("게시글이 존재하지 않습니다."));
 
-        Vote vote = voteRepository.findByCommunityPost(post)
+        Vote vote = voteRepository.findByPost(post)
                 .orElseThrow(() -> new NotFoundException("해당 게시글에는 투표가 존재하지 않습니다."));
 
         Member member = memberRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("유저가 존재하지 않습니다."));
 
+        List<VoteOption> selectedOptions = voteOptionRepository.findAllById(selectedOptionIds);
+
         //이미 투표했으면 투표 불가
-        if (voteSelectionRepository.existsByVoteAndMember(vote, member)) {
+        if (voteSelectionRepository.existsByVoteOptionInAndMember(selectedOptions, member)) {
             throw new ClientBadRequestException("이미 투표했습니다.");
         }
 
         validateVoteSelectionPolicy(vote, selectedOptionIds);
 
-        List<VoteOption> selectedOptions = voteOptionRepository.findAllById(selectedOptionIds);
         for (VoteOption option : selectedOptions) {
             VoteSelection selection = VoteSelection.of(member, option);
             voteSelectionRepository.save(selection);

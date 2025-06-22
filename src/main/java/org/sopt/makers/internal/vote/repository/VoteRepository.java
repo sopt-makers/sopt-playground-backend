@@ -6,5 +6,5 @@ import org.sopt.makers.internal.vote.domain.Vote;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface VoteRepository extends JpaRepository<Vote, Long> {
-    Optional<Vote> findByCommunityPost(CommunityPost post);
+    Optional<Vote> findByPost(CommunityPost post);
 }
