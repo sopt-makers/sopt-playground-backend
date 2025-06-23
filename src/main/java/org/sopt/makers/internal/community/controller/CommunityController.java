@@ -249,7 +249,7 @@ public class CommunityController {
     }
 
     @Operation(summary = "투표 선택 API")
-    @PatchMapping("/posts/{postId}/vote")
+    @PostMapping("/posts/{postId}/vote")
     public ResponseEntity<Map<String, Boolean>> vote(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @PathVariable Long postId,
