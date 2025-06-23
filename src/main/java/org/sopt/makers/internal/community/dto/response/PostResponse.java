@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
 import org.sopt.makers.internal.community.dto.MemberVo;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,5 +29,6 @@ public record PostResponse(
         String sopticleUrl,
         AnonymousProfileVo anonymousProfile,
         String createdAt,
-        List<CommentResponse> comments
+        List<CommentResponse> comments,
+        VoteResponse voteResponse
 ) {}
