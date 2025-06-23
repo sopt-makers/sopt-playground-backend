@@ -7,7 +7,7 @@ import org.sopt.makers.internal.member.domain.Member;
 
 import javax.persistence.*;
 
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "vote_option_id"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "vote_option_id"}))
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -17,7 +17,7 @@ public class VoteSelection {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
