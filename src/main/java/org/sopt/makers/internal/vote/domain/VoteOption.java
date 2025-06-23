@@ -37,4 +37,8 @@ public class VoteOption {
         option.voteCount = 0;
         return option;
     }
+
+    public void increaseCount() {
+        this.voteCount++;
+    }
 }

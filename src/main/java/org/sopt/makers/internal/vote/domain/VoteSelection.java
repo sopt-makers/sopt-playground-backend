@@ -23,4 +23,11 @@ public class VoteSelection {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "vote_option_id", nullable = false)
     private VoteOption voteOption;
+
+    public static VoteSelection of(Member member, VoteOption voteOption) {
+        VoteSelection selection = new VoteSelection();
+        selection.member = member;
+        selection.voteOption = voteOption;
+        return selection;
+    }
 }

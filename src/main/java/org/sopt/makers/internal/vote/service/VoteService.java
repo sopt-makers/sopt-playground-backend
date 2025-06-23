@@ -4,18 +4,30 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.vote.domain.Vote;
+import org.sopt.makers.internal.vote.domain.VoteOption;
+import org.sopt.makers.internal.vote.domain.VoteSelection;
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
+import org.sopt.makers.internal.vote.repository.VoteOptionRepository;
 import org.sopt.makers.internal.vote.repository.VoteRepository;
+import org.sopt.makers.internal.vote.repository.VoteSelectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.webjars.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
 public class VoteService {
 
     private final VoteRepository voteRepository;
+    private final VoteOptionRepository voteOptionRepository;
+    private final CommunityPostRepository communityPostRepository;
+    private final VoteSelectionRepository voteSelectionRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public void createVote(CommunityPost post, VoteRequest voteRequest) {
@@ -23,6 +35,33 @@ public class VoteService {
 
         Vote vote = Vote.of(post, voteRequest.isMultiple(), voteRequest.voteOptions());
         voteRepository.save(vote);
+    }
+
+    @Transactional
+    public void selectVote(Long postId, Long userId, List<Long> selectedOptionIds) {
+        CommunityPost post = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("게시글이 존재하지 않습니다."));
+
+        Vote vote = voteRepository.findByPost(post)
+                .orElseThrow(() -> new NotFoundException("해당 게시글에는 투표가 존재하지 않습니다."));
+
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("유저가 존재하지 않습니다."));
+
+        List<VoteOption> selectedOptions = voteOptionRepository.findAllById(selectedOptionIds);
+
+        //이미 투표했으면 투표 불가
+        if (voteSelectionRepository.existsByVoteOptionInAndMember(selectedOptions, member)) {
+            throw new ClientBadRequestException("이미 투표했습니다.");
+        }
+
+        validateVoteSelectionPolicy(vote, selectedOptionIds);
+
+        for (VoteOption option : selectedOptions) {
+            VoteSelection selection = VoteSelection.of(member, option);
+            voteSelectionRepository.save(selection);
+            option.increaseCount();
+        }
     }
 
     private void validateVotePolicy(Long categoryId, VoteRequest vote) {
@@ -44,6 +83,19 @@ public class VoteService {
             if (option.length() > 40) {
                 throw new ClientBadRequestException("투표 옵션은 40자까지만 입력 가능합니다.");
             }
+        }
+    }
+
+    private void validateVoteSelectionPolicy(Vote vote, List<Long> selectedOptionIds) {
+        // 복수 투표 불가인 경우 옵션 2개 이상 불가능
+        if (!vote.isMultipleOptions() && selectedOptionIds.size() > 1) {
+            throw new ClientBadRequestException("복수 선택 불가능한 투표입니다.");
+        }
+
+        // 선택한 옵션이 존재하지 않는 경우 체크
+        List<VoteOption> selectedOptions = voteOptionRepository.findAllById(selectedOptionIds);
+        if (selectedOptions.size() != selectedOptionIds.size()) {
+            throw new ClientBadRequestException("존재하지 않는 투표 옵션이 포함되어 있습니다.");
         }
     }
 }

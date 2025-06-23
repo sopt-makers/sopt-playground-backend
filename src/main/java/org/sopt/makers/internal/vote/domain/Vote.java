@@ -26,7 +26,7 @@ public class Vote {
     @Column(nullable = false)
     private boolean isMultipleOptions;
 
-    @OneToMany(mappedBy = "vote", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "vote", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private List<VoteOption> voteOptions = new ArrayList<>();
 
     public static Vote of(CommunityPost post, boolean isMultiple, List<String> optionContents) {
