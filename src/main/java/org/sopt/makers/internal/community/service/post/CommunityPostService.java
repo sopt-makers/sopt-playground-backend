@@ -37,6 +37,8 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.vote.domain.Vote;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -94,9 +96,13 @@ public class CommunityPostService {
         if (limit == null || limit >= 50) limit = 50;
 
         categoryRetriever.checkExistsCategoryById(categoryId);
-        val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
+        List<CategoryPostMemberDao> posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
 
-        return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
+        return posts.stream()
+                .map(postDao -> {
+                    VoteResponse voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
+                    return communityResponseMapper.toCommunityVo(postDao, voteResponse);
+                }).toList();
     }
 
     @Transactional(readOnly = true)
@@ -111,7 +117,9 @@ public class CommunityPostService {
             memberRetriever.checkBlockedMember(blocker, blockedMember);
         }
 
-        return communityResponseMapper.toCommunityVo(postDao);
+        VoteResponse voteResponse = voteService.getVoteByPostId(postId, memberId);
+
+        return communityResponseMapper.toCommunityVo(postDao, voteResponse);
     }
 
     @Transactional

@@ -6,7 +6,7 @@ import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 
 public record CategoryPostMemberDao(
-        CommunityPost posts,
+        CommunityPost post,
         Member member,
         Category category
 ) {
