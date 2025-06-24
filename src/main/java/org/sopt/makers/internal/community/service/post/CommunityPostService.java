@@ -102,7 +102,7 @@ public class CommunityPostService {
                 .map(postDao -> {
                     VoteResponse voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
                     return communityResponseMapper.toCommunityVo(postDao, voteResponse);
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     @Transactional(readOnly = true)
