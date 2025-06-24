@@ -200,4 +200,110 @@ class VoteServiceTest {
                     .hasMessageContaining("유저가 존재하지 않습니다.");
         }
     }
+
+    @Nested
+    @DisplayName("투표 조회")
+    class GetVote {
+
+        Vote vote;
+        VoteOption option1, option2;
+        VoteSelection voteSelection1, voteSelection2;
+        CommunityPost post;
+        Member member;
+        Long postId = 1L, userId = 2L;
+
+        @BeforeEach
+        void setUpVote() {
+            // mock 객체
+            vote = mock(Vote.class);
+            option1 = mock(VoteOption.class);
+            option2 = mock(VoteOption.class);
+            post = mock(CommunityPost.class);
+            member = mock(Member.class);
+            voteSelection1 = mock(VoteSelection.class);
+            voteSelection2 = mock(VoteSelection.class);
+
+            // vote와 voteOption 설정
+            when(vote.getVoteOptions()).thenReturn(new ArrayList<>(List.of(option1, option2)));
+            when(vote.getId()).thenReturn(10L);
+            when(option1.getId()).thenReturn(20L);
+            when(option1.getContent()).thenReturn("치킨");
+            when(option1.getVoteCount()).thenReturn(6);
+            when(option2.getId()).thenReturn(21L);
+            when(option2.getContent()).thenReturn("피자");
+            when(option2.getVoteCount()).thenReturn(4);
+
+            // 리포지토리 응답 정의
+            when(communityPostRetriever.findCommunityPostById(postId)).thenReturn(post);
+            when(voteRepository.findByPost(post)).thenReturn(Optional.of(vote));
+            when(memberRetriever.findMemberById(userId)).thenReturn(member);
+        }
+
+        @Test
+        @DisplayName("성공: 다중 투표의 투표 조회")
+        void getVote_success_multiple() {
+            // 다중 투표 설정
+            when(vote.isMultipleOptions()).thenReturn(true);
+            when(voteSelectionRepository.findByVoteOptionInAndMember(anyList(), eq(member)))
+                    .thenReturn(List.of(voteSelection1, voteSelection2));
+            when(voteSelection1.getVoteOption()).thenReturn(option1);
+            when(voteSelection2.getVoteOption()).thenReturn(option2);
+
+            // 테스트 실행
+            VoteResponse response = voteService.getVoteByPostId(postId, userId);
+
+            // 검증
+            assertThat(response).isNotNull();
+            assertThat(response.hasVoted()).isTrue();
+            assertThat(response.totalParticipants()).isEqualTo(10);
+            assertThat(response.options()).hasSize(2);
+
+            VoteOptionResponse chickenOption = response.options().get(0);
+            assertThat(chickenOption.id()).isEqualTo(20L);
+            assertThat(chickenOption.content()).isEqualTo("치킨");
+            assertThat(chickenOption.voteCount()).isEqualTo(6);
+            assertThat(chickenOption.votePercent()).isEqualTo(60);
+            assertThat(chickenOption.isSelected()).isTrue();
+
+            VoteOptionResponse pizzaOption = response.options().get(1);
+            assertThat(pizzaOption.id()).isEqualTo(21L);
+            assertThat(pizzaOption.content()).isEqualTo("피자");
+            assertThat(pizzaOption.voteCount()).isEqualTo(4);
+            assertThat(pizzaOption.votePercent()).isEqualTo(40);
+            assertThat(pizzaOption.isSelected()).isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: 단일 투표의 투표 조회")
+        void getVote_success_single() {
+            // 단일 투표 설정
+            when(vote.isMultipleOptions()).thenReturn(false);
+            when(voteSelectionRepository.findByVoteOptionInAndMember(anyList(), eq(member)))
+                    .thenReturn(List.of(voteSelection1));
+            when(voteSelection1.getVoteOption()).thenReturn(option1);
+
+            // 테스트 실행
+            VoteResponse response = voteService.getVoteByPostId(postId, userId);
+
+            // 검증
+            assertThat(response).isNotNull();
+            assertThat(response.hasVoted()).isTrue();
+            assertThat(response.totalParticipants()).isEqualTo(10);
+            assertThat(response.options()).hasSize(2);
+
+            VoteOptionResponse chickenOption = response.options().get(0);
+            assertThat(chickenOption.id()).isEqualTo(20L);
+            assertThat(chickenOption.content()).isEqualTo("치킨");
+            assertThat(chickenOption.voteCount()).isEqualTo(6);
+            assertThat(chickenOption.votePercent()).isEqualTo(60);
+            assertThat(chickenOption.isSelected()).isTrue();
+
+            VoteOptionResponse pizzaOption = response.options().get(1);
+            assertThat(pizzaOption.id()).isEqualTo(21L);
+            assertThat(pizzaOption.content()).isEqualTo("피자");
+            assertThat(pizzaOption.voteCount()).isEqualTo(4);
+            assertThat(pizzaOption.votePercent()).isEqualTo(40);
+            assertThat(pizzaOption.isSelected()).isFalse();
+        }
+    }
 }
