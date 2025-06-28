@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -75,7 +76,7 @@ public class CommunityController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val posts = communityPostService.getAllPosts(categoryId, isBlockOn, memberDetails.getId(),
+        List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, memberDetails.getId(),
                 infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
