@@ -127,17 +127,12 @@ public class CommunityPostService {
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = createCommunityPostBasedOnCategory(member, request);
 
-        VoteResponse voteResponse = null;
-
-        if(Objects.nonNull(request.vote())){
-            voteService.createVote(post, request.vote());
-            voteResponse = voteService.getVoteByPostId(post.getId(), writerId);
-        }
+        if(Objects.nonNull(request.vote())) voteService.createVote(post, request.vote());
 
         handleBlindWriter(request, member, post);
         sendSlackNotificationForNonMakers(member, post);
 
-        return communityResponseMapper.toPostSaveResponse(post, voteResponse);
+        return communityResponseMapper.toPostSaveResponse(post);
     }
 
     @Transactional
