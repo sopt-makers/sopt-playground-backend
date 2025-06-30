@@ -41,10 +41,10 @@ public class CommunityResponseMapper {
                 post.getIsBlindWriter(), post.getCreatedAt(), post.getUpdatedAt());
     }
 
-    public PostSaveResponse toPostSaveResponse(CommunityPost post) {
+    public PostSaveResponse toPostSaveResponse(CommunityPost post, VoteResponse vote) {
         return new PostSaveResponse(post.getId(), post.getCategoryId(), post.getTitle(),
                 post.getContent(), post.getHits(), post.getImages(), post.getIsQuestion(),
-                post.getIsBlindWriter(), post.getCreatedAt());
+                post.getIsBlindWriter(), post.getCreatedAt(), vote);
     }
 
     public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId, Boolean isLiked, Integer likes, AnonymousPostProfile anonymousPostProfile) {
