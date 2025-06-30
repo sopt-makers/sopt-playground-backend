@@ -3,6 +3,7 @@ package org.sopt.makers.internal.community.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 
 public record PostSaveResponse(
         @Schema(required = true)
@@ -14,5 +15,6 @@ public record PostSaveResponse(
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        VoteResponse vote
 ) {}
