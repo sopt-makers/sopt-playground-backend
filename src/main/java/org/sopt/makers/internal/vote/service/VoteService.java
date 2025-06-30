@@ -75,25 +75,27 @@ public class VoteService {
         if (vote == null) return null;
 
         Member member = memberRetriever.findMemberById(userId);
-        List<VoteOption> options = vote.getVoteOptions();
-        options.sort(Comparator.comparing(VoteOption::getId));
+
+        List<VoteOption> sortedOptions = vote.getVoteOptions().stream()
+                .sorted(Comparator.comparing(VoteOption::getId))
+                .collect(Collectors.toList());
 
         // 총 투표자 계산
         int totalParticipants = voteSelectionRepository.countDistinctMembersByVote(vote);
 
         // 유저가 투표했는지 여부 및 선택한 옵션 ID 조회
-        List<VoteSelection> selections = voteSelectionRepository.findByVoteOptionInAndMember(options, member);
+        List<VoteSelection> selections = voteSelectionRepository.findByVoteOptionInAndMember(sortedOptions, member);
         boolean hasVoted = !selections.isEmpty();
         Set<Long> selectedOptionIds = selections.stream()
                 .map(selection -> selection.getVoteOption().getId())
                 .collect(Collectors.toSet());
 
-        List<VoteOptionResponse> optionsResponse = options.stream()
+        List<VoteOptionResponse> optionsResponse = sortedOptions.stream()
                 .map(option -> new VoteOptionResponse(
                         option.getId(),
                         option.getContent(),
                         option.getVoteCount(),
-                        calculateVotePercent(option.getVoteCount(), options.stream().mapToInt(VoteOption::getVoteCount).sum()),
+                        calculateVotePercent(option.getVoteCount(), sortedOptions.stream().mapToInt(VoteOption::getVoteCount).sum()),
                         selectedOptionIds.contains(option.getId()))
                 ).toList();
         return new VoteResponse(vote.getId(), vote.isMultipleOptions(), hasVoted, totalParticipants, optionsResponse);
