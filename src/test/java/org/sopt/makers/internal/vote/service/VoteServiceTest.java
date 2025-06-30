@@ -237,6 +237,8 @@ class VoteServiceTest {
             when(communityPostRetriever.findCommunityPostById(postId)).thenReturn(post);
             when(voteRepository.findByPost(post)).thenReturn(Optional.of(vote));
             when(memberRetriever.findMemberById(userId)).thenReturn(member);
+
+            when(voteSelectionRepository.countDistinctMembersByVote(vote)).thenReturn(7);
         }
 
         @Test
@@ -255,7 +257,7 @@ class VoteServiceTest {
             // 검증
             assertThat(response).isNotNull();
             assertThat(response.hasVoted()).isTrue();
-            assertThat(response.totalParticipants()).isEqualTo(10);
+            assertThat(response.totalParticipants()).isEqualTo(7);
             assertThat(response.options()).hasSize(2);
 
             VoteOptionResponse chickenOption = response.options().get(0);
@@ -288,7 +290,7 @@ class VoteServiceTest {
             // 검증
             assertThat(response).isNotNull();
             assertThat(response.hasVoted()).isTrue();
-            assertThat(response.totalParticipants()).isEqualTo(10);
+            assertThat(response.totalParticipants()).isEqualTo(7);
             assertThat(response.options()).hasSize(2);
 
             VoteOptionResponse chickenOption = response.options().get(0);

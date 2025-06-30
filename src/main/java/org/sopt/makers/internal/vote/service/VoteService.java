@@ -71,14 +71,15 @@ public class VoteService {
     public VoteResponse getVoteByPostId(Long postId, Long userId) {
         Vote vote = voteRepository.findByPost(
                 communityPostRetriever.findCommunityPostById(postId)).orElse(null);
-        if (vote == null) return null; // vote 없는 경우 null 반환
+
+        if (vote == null) return null;
 
         Member member = memberRetriever.findMemberById(userId);
         List<VoteOption> options = vote.getVoteOptions();
         options.sort(Comparator.comparing(VoteOption::getId));
 
         // 총 투표자 계산
-        int totalParticipants = options.stream().mapToInt(VoteOption::getVoteCount).sum();
+        int totalParticipants = voteSelectionRepository.countDistinctMembersByVote(vote);
 
         // 유저가 투표했는지 여부 및 선택한 옵션 ID 조회
         List<VoteSelection> selections = voteSelectionRepository.findByVoteOptionInAndMember(options, member);
@@ -92,7 +93,7 @@ public class VoteService {
                         option.getId(),
                         option.getContent(),
                         option.getVoteCount(),
-                        calculateVotePercent(option.getVoteCount(), totalParticipants),
+                        calculateVotePercent(option.getVoteCount(), options.stream().mapToInt(VoteOption::getVoteCount).sum()),
                         selectedOptionIds.contains(option.getId()))
                 ).toList();
         return new VoteResponse(vote.getId(), vote.isMultipleOptions(), hasVoted, totalParticipants, optionsResponse);

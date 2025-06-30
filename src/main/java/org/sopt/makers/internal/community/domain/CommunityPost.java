@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
 import org.hibernate.annotations.Type;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
@@ -67,6 +68,13 @@ public class CommunityPost extends AuditingTimeEntity {
 
     @OneToOne(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Vote vote;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<CommunityPostLike> likes = new ArrayList<>();
+
+    @OneToOne(mappedBy = "communityPost", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private AnonymousPostProfile anonymousProfile;
 
     public void updatePost(Long categoryId, String title, String content,
                            String[] images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
