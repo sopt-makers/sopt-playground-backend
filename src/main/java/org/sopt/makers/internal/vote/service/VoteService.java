@@ -81,7 +81,6 @@ public class VoteService {
         // 총 투표자 계산
         int totalParticipants = voteSelectionRepository.countDistinctMembersByVote(vote);
 
-
         // 유저가 투표했는지 여부 및 선택한 옵션 ID 조회
         List<VoteSelection> selections = voteSelectionRepository.findByVoteOptionInAndMember(options, member);
         boolean hasVoted = !selections.isEmpty();
