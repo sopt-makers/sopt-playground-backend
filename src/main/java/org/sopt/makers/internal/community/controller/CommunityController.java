@@ -19,6 +19,7 @@ import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +65,6 @@ public class CommunityController {
             description =
                     """
                             categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
-                                                        
                             cursor: 처음 조회시 null, 이외에 마지막 글 id
                             """
     )
@@ -251,12 +251,12 @@ public class CommunityController {
 
     @Operation(summary = "투표 선택 API")
     @PostMapping("/posts/{postId}/vote")
-    public ResponseEntity<Map<String, Boolean>> vote(
+    public ResponseEntity<VoteResponse> vote(
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @PathVariable Long postId,
             @RequestBody VoteSelectionRequest request
     ) {
-        voteService.selectVote(postId, memberDetails.getId(), request.selectedOptions());
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("투표 선택 성공", true));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(voteService.selectVote(postId, memberDetails.getId(), request.selectedOptions()));
     }
 }

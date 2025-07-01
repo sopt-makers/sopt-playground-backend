@@ -15,6 +15,5 @@ public record PostSaveResponse(
         String[] images,
         Boolean isQuestion,
         Boolean isBlindWriter,
-        LocalDateTime createdAt,
-        VoteResponse vote
+        LocalDateTime createdAt
 ) {}
