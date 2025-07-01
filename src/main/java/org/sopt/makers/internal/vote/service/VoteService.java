@@ -45,7 +45,7 @@ public class VoteService {
     }
 
     @Transactional
-    public void selectVote(Long postId, Long userId, List<Long> selectedOptionIds) {
+    public VoteResponse selectVote(Long postId, Long userId, List<Long> selectedOptionIds) {
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
         Member member = memberRetriever.findMemberById(userId);
         Vote vote = voteRepository.findByPost(post)
@@ -65,6 +65,8 @@ public class VoteService {
             voteSelectionRepository.save(selection);
             option.increaseCount();
         }
+
+        return getVoteByPostId(postId, userId);
     }
 
     @Transactional(readOnly = true)
