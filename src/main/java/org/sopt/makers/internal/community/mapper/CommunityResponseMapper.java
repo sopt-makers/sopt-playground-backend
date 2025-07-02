@@ -92,14 +92,16 @@ public class CommunityResponseMapper {
         );
     }
 
-    public QuestionPostResponse toQuestionPostResponse(CommunityPost post, int likeCount, int commentCount) {
-        return new QuestionPostResponse(
+    public RecentPostResponse toRecentPostResponse(CommunityPost post, int likeCount, int commentCount, String categoryName, Integer totalVoteCount) {
+        return new RecentPostResponse(
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
                 getRelativeTime(post.getCreatedAt()),
                 likeCount,
                 commentCount,
+                categoryName,
+                totalVoteCount,
                 commentCount > 0
         );
     }
