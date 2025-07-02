@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
@@ -230,11 +229,13 @@ public class CommunityController {
         return ResponseEntity.ok().body(sopticlePosts);
     }
 
-    @Operation(summary = "커뮤니티 홈 답변 대기 질문 목록 조회 API")
-    @GetMapping("/posts/question")
-    public ResponseEntity<List<QuestionPostResponse>> getRecentQuestionPost() {
-        List<QuestionPostResponse> questionPosts = communityPostService.getRecentQuestionPosts();
-        return ResponseEntity.ok().body(questionPosts);
+    @Operation(summary = "커뮤니티 홈 모든 카테고리 최신글 조회 API")
+    @GetMapping("/posts/all/recent")
+    public ResponseEntity<List<RecentPostResponse>> getRecentPosts(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        List<RecentPostResponse> recentPosts = communityPostService.getRecentPosts(memberDetails.getId());
+        return ResponseEntity.ok().body(recentPosts);
     }
 
     @Operation(summary = "핫 게시물 조회 API")
