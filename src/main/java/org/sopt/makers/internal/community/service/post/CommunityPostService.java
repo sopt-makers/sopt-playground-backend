@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
-import org.sopt.makers.internal.community.dto.response.QuestionPostResponse;
+import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
@@ -37,7 +37,6 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
-import org.sopt.makers.internal.vote.domain.Vote;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,7 +51,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -90,6 +88,7 @@ public class CommunityPostService {
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
+    private static final long SOPTICLE_CATEGORY_ID = 21;
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
@@ -289,7 +288,6 @@ public class CommunityPostService {
 
     @Transactional(readOnly = true)
     public List<SopticlePostResponse> getRecentSopticlePosts() {
-        Long SOPTICLE_CATEGORY_ID = 21L;
         List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
         return posts.stream()
                 .map(communityResponseMapper::toSopticlePostResponse)
@@ -297,14 +295,22 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public List<QuestionPostResponse> getRecentQuestionPosts() {
-        Long QUESTION_CATEGORY_ID = 22L;
-        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(QUESTION_CATEGORY_ID);
+    public List<RecentPostResponse> getRecentPosts(Long memberId) {
+        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdNotOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
+
+        Map<Long, String> categoryNameMap = getCategoryNameMap(posts); //n+1 문제 방지를 위해 미리 카테고리 조회
+
         return posts.stream()
                 .map(post -> {
                     int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
                     int commentCount = communityCommentRepository.countAllByPostId(post.getId());
-                    return communityResponseMapper.toQuestionPostResponse(post, likeCount, commentCount);
+                    VoteResponse vote = voteService.getVoteByPostId(post.getId(), memberId);
+                    Integer totalVoteCount = Objects.nonNull(vote) ? vote.totalParticipants() : null;
+                    String categoryName = categoryNameMap.get(post.getCategoryId());
+
+                    return communityResponseMapper.toRecentPostResponse(
+                            post, likeCount, commentCount, categoryName, totalVoteCount
+                    );
                 })
                 .toList();
     }
