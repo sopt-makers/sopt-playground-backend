@@ -34,7 +34,7 @@ public class PushNotificationScheduler {
     @PersistenceContext
     private EntityManager em;
 
-    @Scheduled(cron = "0 40 11 * * ?")
+//    @Scheduled(cron = "0 40 11 * * ?")
     public void sendHotPostPushNotification() {
         List<CommunityPost> todayCommunityPosts = communityPostService.getTodayPosts();
         CommunityPost hotPost = communityPostService.findTodayHotPost(todayCommunityPosts);

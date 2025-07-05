@@ -3,7 +3,6 @@ package org.sopt.makers.internal.external.pushNotification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
-import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
