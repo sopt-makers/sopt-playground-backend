@@ -330,7 +330,7 @@ public class CommunityPostService {
                     String categoryName = "";
 
                     if (Objects.nonNull(category)) {
-                        categoryName = category.getName();
+                        categoryName = (category.getParent() != null) ? category.getParent().getName() : category.getName();
                         categoryId = (category.getParent() != null) ? category.getParent().getId() : category.getId();
                     }
 
