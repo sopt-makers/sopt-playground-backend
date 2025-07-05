@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.common.CommonResponse;
@@ -66,6 +67,9 @@ public class MemberController {
     private final MemberResponseMapper memberResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
     private final MakersCrewClient makersCrewClient;
+
+    private static final int MEMBER_SEARCH_RANDOM_SIZE = 30;
+
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -85,11 +89,27 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "유저 이름으로 조회 API")
+    @Operation(summary = "멤버 검색 API", description = """
+            - name 파라미터가 없거나 '@'인 경우: 랜덤 유저 30명을 반환합니다.
+            - name 파라미터에 검색어가 있는 경우: 해당 이름이 포함된 유저를 최신 활동기수 순으로 정렬하여 반환합니다.
+            """)
     @GetMapping("/search")
-    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
-        val members = memberService.getMemberByName(name);
-        val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
+    public ResponseEntity<List<MemberResponse>> getMemberByName (
+            @RequestParam(required = false) String name
+    ) {
+        boolean isFirstSearch = (name == null || name.isBlank() || name.equals("@"));
+
+        List<Member> members;
+        if (isFirstSearch) {
+            members = memberService.getRandomMembers(MEMBER_SEARCH_RANDOM_SIZE);
+        } else {
+            members = memberService.getMembersByNameSorted(name);
+        }
+
+        List<MemberResponse> responses = members.stream()
+                .map(memberMapper::toResponse)
+                .collect(Collectors.toList());
+
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
