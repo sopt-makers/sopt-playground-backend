@@ -24,4 +24,8 @@ public class CategoryRetriever {
             throw new NotFoundDBEntityException("존재하지 않는 category id 값입니다.");
         }
     }
+
+    public List<Category> findAllByIds(List<Long> ids) {
+        return categoryRepository.findAllById(ids);
+    }
 }

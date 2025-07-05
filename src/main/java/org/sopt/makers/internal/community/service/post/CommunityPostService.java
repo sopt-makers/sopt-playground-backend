@@ -1,9 +1,12 @@
 package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
@@ -313,7 +316,7 @@ public class CommunityPostService {
     public List<RecentPostResponse> getRecentPosts(Long memberId) {
         List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdNotOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
 
-        Map<Long, String> categoryNameMap = getCategoryNameMap(posts); //n+1 문제 방지를 위해 미리 카테고리 조회
+        Map<Long, Category> categoryMap = getCategoryMap(posts); //n+1 문제 방지를 위해 미리 카테고리 조회
 
         return posts.stream()
                 .map(post -> {
@@ -321,10 +324,18 @@ public class CommunityPostService {
                     int commentCount = communityCommentRepository.countAllByPostId(post.getId());
                     VoteResponse vote = voteService.getVoteByPostId(post.getId(), memberId);
                     Integer totalVoteCount = Objects.nonNull(vote) ? vote.totalParticipants() : null;
-                    String categoryName = categoryNameMap.get(post.getCategoryId());
+                    Category category = categoryMap.get(post.getCategoryId());
+
+                    Long categoryId = null;
+                    String categoryName = "";
+
+                    if (Objects.nonNull(category)) {
+                        categoryName = category.getName();
+                        categoryId = (category.getParent() != null) ? category.getParent().getId() : category.getId();
+                    }
 
                     return communityResponseMapper.toRecentPostResponse(
-                            post, likeCount, commentCount, post.getCategoryId(), categoryName, totalVoteCount
+                            post, likeCount, commentCount, categoryId, categoryName, totalVoteCount
                     );
                 })
                 .toList();
@@ -436,5 +447,19 @@ public class CommunityPostService {
                 .distinct()
                 .toList();
         return communityQueryRepository.getAnonymousPostProfilesByPostId(postIds);
+    }
+
+    private Map<Long, Category> getCategoryMap(List<CommunityPost> posts) {
+        List<Long> categoryIds = posts.stream()
+                .map(CommunityPost::getCategoryId)
+                .distinct()
+                .toList();
+
+        if (categoryIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return categoryRetriever.findAllByIds(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, category -> category));
     }
 }
