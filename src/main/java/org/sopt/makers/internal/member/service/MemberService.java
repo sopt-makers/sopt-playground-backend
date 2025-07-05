@@ -418,13 +418,13 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberByName(String name) {
-        return memberRepository.findAllByNameContaining(name);
+    public List<Member> getRandomMembers(int limit) {
+        return memberProfileQueryRepository.findRandomMembers(limit);
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberBySearchCond(String search) {
-        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(search);
+    public List<Member> getMembersByNameSorted(String name) {
+        return memberProfileQueryRepository.findByNameContainingOrderByLatestActivity(name);
     }
 
     @Transactional
