@@ -99,12 +99,8 @@ public class MemberController {
     ) {
         boolean isFirstSearch = (name == null || name.isBlank() || name.equals("@"));
 
-        List<Member> members;
-        if (isFirstSearch) {
-            members = memberService.getRandomMembers(MEMBER_SEARCH_RANDOM_SIZE);
-        } else {
-            members = memberService.getMembersByNameSorted(name);
-        }
+
+        List<Member> members = isFirstSearch ? memberService.getRandomMembers(MEMBER_SEARCH_RANDOM_SIZE) : memberService.getMembersByNameSorted(name);
 
         List<MemberResponse> responses = members.stream()
                 .map(memberMapper::toResponse)
