@@ -5,6 +5,7 @@ import lombok.Builder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
 
 @Builder
@@ -33,6 +34,8 @@ public record PostSaveRequest(
 
         String link,
 
-        VoteRequest vote
+        VoteRequest vote,
+
+        MentionRequest mention
 ) {
 }

@@ -12,6 +12,7 @@ import org.sopt.makers.internal.community.repository.post.CommunityPostRepositor
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -60,6 +61,7 @@ public class CommunityPostService {
     private final AnonymousPostProfileService anonymousPostProfileService;
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
+    private final PushNotificationService pushNotificationService;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -126,12 +128,25 @@ public class CommunityPostService {
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = createCommunityPostBasedOnCategory(member, request);
 
-        if(Objects.nonNull(request.vote())) voteService.createVote(post, request.vote());
+        if(Objects.nonNull(request.vote())) {
+            voteService.createVote(post, request.vote());
+        }
+        if(Objects.nonNull(request.mention())) {
+            sendMentionPushNotification(post.getTitle(), request);
+        }
 
         handleBlindWriter(request, member, post);
         sendSlackNotificationForNonMakers(member, post);
 
         return communityResponseMapper.toPostSaveResponse(post);
+    }
+
+    private void sendMentionPushNotification(String postTitle, PostSaveRequest request) {
+        String title = "✏️게시글에서 회원님이 언급됐어요.";
+        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
+        String content = "[" + writerName + "의 글] : \"" + postTitle + "\"";
+
+        pushNotificationService.sendPushNotification(title, content, request.mention().userIds(), request.mention().webLink());
     }
 
     @Transactional
