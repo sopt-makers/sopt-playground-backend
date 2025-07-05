@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.mention;
+package org.sopt.makers.internal.community.dto.request;
 
 public record MentionRequest(
         Long[] userIds,

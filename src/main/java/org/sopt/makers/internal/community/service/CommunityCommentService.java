@@ -32,8 +32,7 @@ import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCom
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
-import org.sopt.makers.internal.mention.MentionCleaner;
-import org.sopt.makers.internal.mention.MentionRequest;
+import org.sopt.makers.internal.common.util.MentionCleaner;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

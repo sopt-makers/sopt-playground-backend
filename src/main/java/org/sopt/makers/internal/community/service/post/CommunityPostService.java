@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.dto.response.QuestionPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
@@ -14,7 +13,6 @@ import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRe
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
-import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -40,9 +38,6 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
-import org.sopt.makers.internal.mention.MentionCleaner;
-import org.sopt.makers.internal.mention.MentionRequest;
-import org.sopt.makers.internal.vote.domain.Vote;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +49,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
