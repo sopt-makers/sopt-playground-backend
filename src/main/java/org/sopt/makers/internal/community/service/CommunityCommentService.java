@@ -2,7 +2,10 @@ package org.sopt.makers.internal.community.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.community.domain.CommunityPost;
