@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.dto.response.QuestionPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
@@ -12,6 +13,8 @@ import org.sopt.makers.internal.community.repository.post.CommunityPostRepositor
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -37,6 +40,8 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.mention.MentionCleaner;
+import org.sopt.makers.internal.mention.MentionRequest;
 import org.sopt.makers.internal.vote.domain.Vote;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
@@ -48,10 +53,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -62,6 +64,7 @@ public class CommunityPostService {
     private final AnonymousPostProfileService anonymousPostProfileService;
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
+    private final PushNotificationService pushNotificationService;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -127,12 +130,25 @@ public class CommunityPostService {
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = createCommunityPostBasedOnCategory(member, request);
 
-        if(Objects.nonNull(request.vote())) voteService.createVote(post, request.vote());
+        if(Objects.nonNull(request.vote())) {
+            voteService.createVote(post, request.vote());
+        }
+        if(Objects.nonNull(request.mention())) {
+            sendMentionPushNotification(post.getTitle(), request);
+        }
 
         handleBlindWriter(request, member, post);
         sendSlackNotificationForNonMakers(member, post);
 
         return communityResponseMapper.toPostSaveResponse(post);
+    }
+
+    private void sendMentionPushNotification(String postTitle, PostSaveRequest request) {
+        String title = "✏️게시글에서 회원님이 언급됐어요.";
+        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
+        String content = "[" + writerName + "의 글] : \"" + postTitle + "\"";
+
+        pushNotificationService.sendPushNotification(title, content, request.mention().userIds(), request.mention().webLink());
     }
 
     @Transactional
