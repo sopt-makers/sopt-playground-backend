@@ -100,11 +100,11 @@ class CommunityPostServiceTest {
             when(voteService.getVoteByPostId(postWithoutVote.getId(), MEMBER_ID)).thenReturn(null);
 
             // 4. Mapper가 반환할 최종 DTO Mocking
-            RecentPostResponse response1 = new RecentPostResponse(101L, "투표 있는 글", "내용1", "방금 전", 10, 5, "자유", 15, true);
-            RecentPostResponse response2 = new RecentPostResponse(102L, "투표 없는 글", "내용2", "1분 전", 3, 0, "홍보", null, false);
+            RecentPostResponse response1 = new RecentPostResponse(101L, "투표 있는 글", "내용1", "방금 전", 10, 5, 1L,"자유", 15, true);
+            RecentPostResponse response2 = new RecentPostResponse(102L, "투표 없는 글", "내용2", "1분 전", 3, 0, 2L, "홍보", null, false);
 
-            when(communityResponseMapper.toRecentPostResponse(postWithVote, 10, 5, "자유", 15)).thenReturn(response1);
-            when(communityResponseMapper.toRecentPostResponse(postWithoutVote, 3, 0, "홍보", null)).thenReturn(response2);
+            when(communityResponseMapper.toRecentPostResponse(postWithVote, 10, 5, 1L, "자유", 15)).thenReturn(response1);
+            when(communityResponseMapper.toRecentPostResponse(postWithoutVote, 3, 0, 2L, "홍보", null)).thenReturn(response2);
 
             // When
             List<RecentPostResponse> result = communityPostService.getRecentPosts(MEMBER_ID);
@@ -126,8 +126,8 @@ class CommunityPostServiceTest {
             verify(communityQueryRepository, times(1)).getCategoryNamesByIds(anyList());
             verify(voteService, times(1)).getVoteByPostId(postWithVote.getId(), MEMBER_ID);
             verify(voteService, times(1)).getVoteByPostId(postWithoutVote.getId(), MEMBER_ID);
-            verify(communityResponseMapper, times(1)).toRecentPostResponse(postWithVote, 10, 5, "자유", 15);
-            verify(communityResponseMapper, times(1)).toRecentPostResponse(postWithoutVote, 3, 0, "홍보", null);
+            verify(communityResponseMapper, times(1)).toRecentPostResponse(postWithVote, 10, 5, 1L,"자유", 15);
+            verify(communityResponseMapper, times(1)).toRecentPostResponse(postWithoutVote, 3, 0, 2L, "홍보", null);
         }
 
         @Test
@@ -147,7 +147,7 @@ class CommunityPostServiceTest {
             // 게시글이 없으므로 다른 의존성은 호출되지 않아야 함
             verify(communityQueryRepository, times(1)).getCategoryNamesByIds(Collections.emptyList());
             verify(voteService, never()).getVoteByPostId(anyLong(), anyLong());
-            verify(communityResponseMapper, never()).toRecentPostResponse(any(), anyInt(), anyInt(), any(), any());
+            verify(communityResponseMapper, never()).toRecentPostResponse(any(), anyInt(), anyInt(), anyLong(), any(), any());
         }
     }
 }

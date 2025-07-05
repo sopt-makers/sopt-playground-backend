@@ -92,7 +92,7 @@ public class CommunityResponseMapper {
         );
     }
 
-    public RecentPostResponse toRecentPostResponse(CommunityPost post, int likeCount, int commentCount, String categoryName, Integer totalVoteCount) {
+    public RecentPostResponse toRecentPostResponse(CommunityPost post, int likeCount, int commentCount, long categoryId, String categoryName, Integer totalVoteCount) {
         return new RecentPostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -100,6 +100,7 @@ public class CommunityResponseMapper {
                 getRelativeTime(post.getCreatedAt()),
                 likeCount,
                 commentCount,
+                categoryId,
                 categoryName,
                 totalVoteCount,
                 commentCount > 0

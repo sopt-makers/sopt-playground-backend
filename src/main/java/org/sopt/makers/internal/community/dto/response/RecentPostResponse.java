@@ -7,6 +7,7 @@ public record RecentPostResponse(
         String createdAt,
         int likeCount,
         int commentCount,
+        Long categoryId,
         String categoryName,
         Integer totalVoteCount,
         Boolean isAnswered

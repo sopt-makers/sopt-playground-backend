@@ -309,7 +309,7 @@ public class CommunityPostService {
                     String categoryName = categoryNameMap.get(post.getCategoryId());
 
                     return communityResponseMapper.toRecentPostResponse(
-                            post, likeCount, commentCount, categoryName, totalVoteCount
+                            post, likeCount, commentCount, post.getCategoryId(), categoryName, totalVoteCount
                     );
                 })
                 .toList();
