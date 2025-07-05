@@ -11,7 +11,6 @@ import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
@@ -83,10 +82,10 @@ class CommunityPostServiceTest {
 
             // 4. Mapper가 반환할 최종 DTO Mocking
             RecentPostResponse response1 = new RecentPostResponse(101L, "부모 카테고리 글", "부모글 내용", "방금 전", 10, 5, 1L, "메인", null, true);
-            RecentPostResponse response2 = new RecentPostResponse(102L, "자식 카테고리 글", "자식글 내용", "5분 전", 10, 5, 1L, "자유", null, true); // categoryId는 부모 ID(1L)
+            RecentPostResponse response2 = new RecentPostResponse(102L, "자식 카테고리 글", "자식글 내용", "5분 전", 10, 5, 1L, "메인", null, true); // categoryId는 부모 ID(1L)
 
             when(communityResponseMapper.toRecentPostResponse(postInParent, 10, 5, 1L, "메인", null)).thenReturn(response1);
-            when(communityResponseMapper.toRecentPostResponse(postInChild, 10, 5, 1L, "자유", null)).thenReturn(response2);
+            when(communityResponseMapper.toRecentPostResponse(postInChild, 10, 5, 1L, "메인", null)).thenReturn(response2);
 
             // When
             List<RecentPostResponse> result = communityPostService.getRecentPosts(MEMBER_ID);
@@ -94,12 +93,14 @@ class CommunityPostServiceTest {
             // Then
             assertThat(result).hasSize(2);
             assertThat(result.get(0).categoryId()).isEqualTo(1L);
+            assertThat(result.get(0).categoryName()).isEqualTo("메인");
             assertThat(result.get(1).categoryId()).isEqualTo(1L);
+            assertThat(result.get(1).categoryName()).isEqualTo("메인");
 
             // Verify
             verify(categoryRetriever, times(1)).findAllByIds(anyList());
             verify(communityResponseMapper, times(1)).toRecentPostResponse(postInParent, 10, 5, 1L, "메인", null);
-            verify(communityResponseMapper, times(1)).toRecentPostResponse(postInChild, 10, 5, 1L, "자유", null);
+            verify(communityResponseMapper, times(1)).toRecentPostResponse(postInChild, 10, 5, 1L, "메인", null);
         }
 
         @Test
