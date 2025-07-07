@@ -92,7 +92,7 @@ public class CommunityCommentService {
         }
 
         if (!post.getMember().getId().equals(writerId)) {
-            sendCommentPushNotification(post.getMember().getId(), request);
+            sendCommentPushNotification(post.getMember().getId(), request, member.getName());
         }
 
         if(Objects.nonNull(request.mention())) {
@@ -190,9 +190,9 @@ public class CommunityCommentService {
         );
     }
 
-    private void sendCommentPushNotification(Long userId, CommentSaveRequest request) {
+    private void sendCommentPushNotification(Long userId, CommentSaveRequest request, String commentWriterName) {
         String title = "💬나의 게시글에 새로운 댓글이 달렸어요.";
-        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
+        String writerName = request.isBlindWriter() ? "익명" : commentWriterName;
         String content = "[" + writerName + "의 댓글] : \""
                 + StringUtils.abbreviate(MentionCleaner.removeMentionIds(request.content()), 100) + "\"";
         Long[] userIds = new Long[]{userId};
