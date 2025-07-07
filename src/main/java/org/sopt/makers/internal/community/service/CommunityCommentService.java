@@ -23,7 +23,6 @@ import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.ReportComment;
 import org.sopt.makers.internal.community.dto.CommentDao;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
-import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
@@ -36,6 +35,7 @@ import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCom
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.common.util.MentionCleaner;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,7 +92,11 @@ public class CommunityCommentService {
         }
 
         if (!post.getMember().getId().equals(writerId)) {
-            sendPushNotification(post, request);
+            sendCommentPushNotification(post.getMember().getId(), request, member.getName());
+        }
+
+        if(Objects.nonNull(request.mention())) {
+            sendMentionPushNotification(request.content(), request);
         }
     }
 
@@ -186,23 +190,21 @@ public class CommunityCommentService {
         );
     }
 
-    private void sendPushNotification(CommunityPost post, CommentSaveRequest request) {
-        try {
-            String title = StringUtils.defaultIfBlank(post.getTitle(),
-                    StringUtils.abbreviate(post.getContent(), 20) + "...");
-            String message = "\"" + title + "\"" + " 글에 댓글이 달렸어요.";
+    private void sendCommentPushNotification(Long userId, CommentSaveRequest request, String commentWriterName) {
+        String title = "💬나의 게시글에 새로운 댓글이 달렸어요.";
+        String writerName = request.isBlindWriter() ? "익명" : commentWriterName;
+        String content = "[" + writerName + "의 댓글] : \""
+                + StringUtils.abbreviate(MentionCleaner.removeMentionIds(request.content()), 100) + "\"";
+        Long[] userIds = new Long[]{userId};
 
-            PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
-                    .title("")
-                    .content(message)
-                    .category("NEWS")
-                    .webLink(request.webLink())
-                    .userIds(new String[]{post.getMember().getId().toString()})
-                    .build();
+        pushNotificationService.sendPushNotification(title, content, userIds, request.webLink());
+    }
 
-            pushNotificationService.sendPushNotification(pushNotificationRequest);
-        } catch (Exception error) {
-            log.error("Push 알림 실패: {}", error.getMessage());
-        }
+    private void sendMentionPushNotification(String commentContent, CommentSaveRequest request) {
+        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
+        String title = "💬" + writerName + "님이 회원님을 언급했어요.";
+        String content = "\"" + StringUtils.abbreviate(MentionCleaner.removeMentionIds(commentContent), 100) + "\"";
+
+        pushNotificationService.sendPushNotification(title, content, request.mention().userIds(), request.webLink());
     }
 }

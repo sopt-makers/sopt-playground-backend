@@ -10,6 +10,7 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,10 +28,10 @@ public class CommunityResponseMapper {
                 comment.getContent(), comment.getIsBlindWriter(), anonymousProfile, comment.getIsReported(), comment.getCreatedAt());
     }
 
-    public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao) {
+    public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao, VoteResponse voteResponse) {
         val member = MemberVo.of(dao.member());
         val category = toCategoryResponse(dao.category());
-        val post = toPostVo(dao.posts());
+        CommunityPostVo post = toPostVo(dao.post(), voteResponse);
         return new CommunityPostMemberVo(member, post, category);
     }
 
@@ -60,9 +61,10 @@ public class CommunityResponseMapper {
         return new CategoryVo(category.getId(), category.getName(), parentId, parentCategoryName);
     }
 
-    public CommunityPostVo toPostVo(CommunityPost post) {
+    public CommunityPostVo toPostVo(CommunityPost post, VoteResponse voteResponse) {
         return new CommunityPostVo(post.getId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getHits(),
-                post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getSopticleUrl(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt());
+                post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getSopticleUrl(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt(),
+                voteResponse);
     }
 
     public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId, AnonymousPostProfile anonymousPostProfile, Boolean isLiked, Integer likes) {
@@ -75,7 +77,7 @@ public class CommunityResponseMapper {
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         val createdAt = getRelativeTime(dao.post().createdAt());
         return new PostResponse(post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, createdAt, comments);
+                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote());
     }
 
     public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {
@@ -90,14 +92,17 @@ public class CommunityResponseMapper {
         );
     }
 
-    public QuestionPostResponse toQuestionPostResponse(CommunityPost post, int likeCount, int commentCount) {
-        return new QuestionPostResponse(
+    public RecentPostResponse toRecentPostResponse(CommunityPost post, int likeCount, int commentCount, Long categoryId, String categoryName, Integer totalVoteCount) {
+        return new RecentPostResponse(
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
                 getRelativeTime(post.getCreatedAt()),
                 likeCount,
                 commentCount,
+                categoryId,
+                categoryName,
+                totalVoteCount,
                 commentCount > 0
         );
     }

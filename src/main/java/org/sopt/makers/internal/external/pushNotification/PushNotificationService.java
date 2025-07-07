@@ -1,13 +1,15 @@
 package org.sopt.makers.internal.external.pushNotification;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
-import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PushNotificationService {
@@ -23,27 +25,38 @@ public class PushNotificationService {
 
     private final PushServerClient pushServerClient;
 
-    public void sendPushNotification(PushNotificationRequest request) {
-        PushNotificationResponse response = pushServerClient.sendPushNotification(
-                pushNotificationApiKey,
-                action,
-                UUID.randomUUID().toString(),
-                service,
-                request
-        );
+    public void sendPushNotification(String title, String content, Long[] userIds, String webLink) {
+        try {
+            String[] stringUserIds = Arrays.stream(userIds)
+                    .map(String::valueOf)
+                    .toArray(String[]::new);
 
-        // TODO: 푸시알림 에러에 따른 플로우 처리
+            PushNotificationRequest pushNotificationRequest = PushNotificationRequest.builder()
+                    .title(title)
+                    .content(content)
+                    .userIds(stringUserIds)
+                    .webLink(webLink)
+                    .category("NEWS").build();
+
+            pushServerClient.sendPushNotification(
+                    pushNotificationApiKey,
+                    action,
+                    UUID.randomUUID().toString(),
+                    service,
+                    pushNotificationRequest
+            );
+        } catch (Exception error) {
+            log.error("Push 알림 실패: {}", error.getMessage());
+        }
     }
 
     public void sendAllPushNotification(PushNotificationRequest request) {
-        PushNotificationResponse response = pushServerClient.sendPushNotification(
+        pushServerClient.sendPushNotification(
                 pushNotificationApiKey,
                 "sendAll",
                 UUID.randomUUID().toString(),
                 service,
                 request
         );
-
-        // TODO: 푸시알림 에러에 따른 플로우 처리
     }
 }

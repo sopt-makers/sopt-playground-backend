@@ -1,17 +1,21 @@
 package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
-import org.sopt.makers.internal.community.dto.response.QuestionPostResponse;
+import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -37,6 +41,8 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
+import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +55,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,6 +63,8 @@ public class CommunityPostService {
 
     private final AnonymousPostProfileService anonymousPostProfileService;
     private final SopticleScrapedService sopticleScrapedService;
+    private final VoteService voteService;
+    private final PushNotificationService pushNotificationService;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -86,15 +93,20 @@ public class CommunityPostService {
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
+    private static final long SOPTICLE_CATEGORY_ID = 21;
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
         if (limit == null || limit >= 50) limit = 50;
 
         categoryRetriever.checkExistsCategoryById(categoryId);
-        val posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
+        List<CategoryPostMemberDao> posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
 
-        return posts.stream().map(communityResponseMapper::toCommunityVo).collect(Collectors.toList());
+        return posts.stream()
+                .map(postDao -> {
+                    VoteResponse voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
+                    return communityResponseMapper.toCommunityVo(postDao, voteResponse);
+                }).toList();
     }
 
     @Transactional(readOnly = true)
@@ -109,7 +121,9 @@ public class CommunityPostService {
             memberRetriever.checkBlockedMember(blocker, blockedMember);
         }
 
-        return communityResponseMapper.toCommunityVo(postDao);
+        VoteResponse voteResponse = voteService.getVoteByPostId(postId, memberId);
+
+        return communityResponseMapper.toCommunityVo(postDao, voteResponse);
     }
 
     @Transactional
@@ -117,10 +131,25 @@ public class CommunityPostService {
         Member member = memberRetriever.findMemberById(writerId);
         CommunityPost post = createCommunityPostBasedOnCategory(member, request);
 
+        if(Objects.nonNull(request.vote())) {
+            voteService.createVote(post, request.vote());
+        }
+        if(Objects.nonNull(request.mention())) {
+            sendMentionPushNotification(post.getTitle(), request);
+        }
+
         handleBlindWriter(request, member, post);
         sendSlackNotificationForNonMakers(member, post);
 
         return communityResponseMapper.toPostSaveResponse(post);
+    }
+
+    private void sendMentionPushNotification(String postTitle, PostSaveRequest request) {
+        String title = "✏️게시글에서 회원님이 언급됐어요.";
+        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
+        String content = "[" + writerName + "의 글] : \"" + postTitle + "\"";
+
+        pushNotificationService.sendPushNotification(title, content, request.mention().userIds(), request.mention().webLink());
     }
 
     @Transactional
@@ -277,7 +306,6 @@ public class CommunityPostService {
 
     @Transactional(readOnly = true)
     public List<SopticlePostResponse> getRecentSopticlePosts() {
-        Long SOPTICLE_CATEGORY_ID = 21L;
         List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
         return posts.stream()
                 .map(communityResponseMapper::toSopticlePostResponse)
@@ -285,14 +313,30 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public List<QuestionPostResponse> getRecentQuestionPosts() {
-        Long QUESTION_CATEGORY_ID = 22L;
-        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(QUESTION_CATEGORY_ID);
+    public List<RecentPostResponse> getRecentPosts(Long memberId) {
+        List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdNotOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
+
+        Map<Long, Category> categoryMap = getCategoryMap(posts); //n+1 문제 방지를 위해 미리 카테고리 조회
+
         return posts.stream()
                 .map(post -> {
                     int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
                     int commentCount = communityCommentRepository.countAllByPostId(post.getId());
-                    return communityResponseMapper.toQuestionPostResponse(post, likeCount, commentCount);
+                    VoteResponse vote = voteService.getVoteByPostId(post.getId(), memberId);
+                    Integer totalVoteCount = Objects.nonNull(vote) ? vote.totalParticipants() : null;
+                    Category category = categoryMap.get(post.getCategoryId());
+
+                    Long categoryId = null;
+                    String categoryName = "";
+
+                    if (Objects.nonNull(category)) {
+                        categoryName = (category.getParent() != null) ? category.getParent().getName() : category.getName();
+                        categoryId = (category.getParent() != null) ? category.getParent().getId() : category.getId();
+                    }
+
+                    return communityResponseMapper.toRecentPostResponse(
+                            post, likeCount, commentCount, categoryId, categoryName, totalVoteCount
+                    );
                 })
                 .toList();
     }
@@ -403,5 +447,19 @@ public class CommunityPostService {
                 .distinct()
                 .toList();
         return communityQueryRepository.getAnonymousPostProfilesByPostId(postIds);
+    }
+
+    private Map<Long, Category> getCategoryMap(List<CommunityPost> posts) {
+        List<Long> categoryIds = posts.stream()
+                .map(CommunityPost::getCategoryId)
+                .distinct()
+                .toList();
+
+        if (categoryIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return categoryRetriever.findAllByIds(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, category -> category));
     }
 }
