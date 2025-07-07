@@ -170,6 +170,11 @@ public class CommunityPostService {
         }
 
         communityPostRepository.save(post);
+
+        if(Objects.nonNull(request.mention())) {
+            sendMentionPushNotification(post.getTitle(), request.isBlindWriter(), request.mention());
+        }
+
         return communityResponseMapper.toPostUpdateResponse(post);
     }
 
