@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.community.domain.category.Category;
+import org.sopt.makers.internal.community.dto.request.MentionRequest;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
@@ -135,7 +136,7 @@ public class CommunityPostService {
             voteService.createVote(post, request.vote());
         }
         if(Objects.nonNull(request.mention())) {
-            sendMentionPushNotification(post.getTitle(), request);
+            sendMentionPushNotification(post.getTitle(), request.isBlindWriter(), request.mention());
         }
 
         handleBlindWriter(request, member, post);
@@ -144,12 +145,12 @@ public class CommunityPostService {
         return communityResponseMapper.toPostSaveResponse(post);
     }
 
-    private void sendMentionPushNotification(String postTitle, PostSaveRequest request) {
+    private void sendMentionPushNotification(String postTitle, boolean isBlindWriter, MentionRequest mentionRequest) {
         String title = "✏️게시글에서 회원님이 언급됐어요.";
-        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
+        String writerName = isBlindWriter ? "익명" : mentionRequest.writerName();
         String content = "[" + writerName + "의 글] : \"" + postTitle + "\"";
 
-        pushNotificationService.sendPushNotification(title, content, request.mention().userIds(), request.mention().webLink());
+        pushNotificationService.sendPushNotification(title, content, mentionRequest.userIds(), mentionRequest.webLink());
     }
 
     @Transactional
@@ -169,6 +170,11 @@ public class CommunityPostService {
         }
 
         communityPostRepository.save(post);
+
+        if(Objects.nonNull(request.mention())) {
+            sendMentionPushNotification(post.getTitle(), request.isBlindWriter(), request.mention());
+        }
+
         return communityResponseMapper.toPostUpdateResponse(post);
     }
 

@@ -18,5 +18,7 @@ public record PostUpdateRequest(
         Boolean isQuestion,
         Boolean isBlindWriter,
         String[] images,
-        String link
+        String link,
+
+        MentionRequest mention
 ) { }
