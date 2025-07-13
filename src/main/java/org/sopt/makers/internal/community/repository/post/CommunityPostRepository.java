@@ -21,7 +21,7 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
 
     List<CommunityPost> findTop5ByCategoryIdNotOrderByCreatedAtDesc(Long categoryId);
 
-    Optional<CommunityPost> findFirstByCategoryIdOrderByCreatedAtDesc(Long categoryId);
+    Optional<CommunityPost> findFirstByCategoryIdInOrderByCreatedAtDesc(List<Long> categoryIds);
 
     @Modifying
     @Query("UPDATE CommunityPost p SET p.hits = p.hits + 1 WHERE p.id = :postId")
