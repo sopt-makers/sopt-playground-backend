@@ -276,11 +276,7 @@ public class CommunityPostService {
 
     @Transactional(readOnly = true)
     public List<PopularPostResponse> getPopularPosts(int limitCount) {
-        List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
-
-        if (posts.isEmpty()) {
-            throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
-        }
+        List<CommunityPost> posts = getPopularPostsBase(limitCount);
 
         Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
         Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
@@ -292,6 +288,16 @@ public class CommunityPostService {
                         categoryNameMap.get(post.getCategoryId())
                 ))
                 .toList();
+    }
+
+
+    private List<CommunityPost> getPopularPostsBase(int limitCount) {
+        List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
+
+        if (posts.isEmpty()) {
+            throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
+        }
+        return posts;
     }
 
     @Transactional(readOnly = true)
