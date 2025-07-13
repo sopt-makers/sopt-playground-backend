@@ -361,7 +361,9 @@ public class CommunityPostService {
         List<InternalLatestPostResponse> responses = new ArrayList<>();
 
         for (Long categoryId : topLevelCategoryIds) {
-            Optional<CommunityPost> postOptional = communityPostRepository.findFirstByCategoryIdOrderByCreatedAtDesc(categoryId);
+            List<Long> allCategoryIds = categoryRetriever.findAllDescendantIds(categoryId);
+
+            Optional<CommunityPost> postOptional = communityPostRepository.findFirstByCategoryIdInOrderByCreatedAtDesc(allCategoryIds);
 
             postOptional.ifPresent(post -> {
                 Member member = post.getMember();
