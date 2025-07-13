@@ -1,7 +1,9 @@
 package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
+import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -41,6 +44,7 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
@@ -372,6 +376,39 @@ public class CommunityPostService {
                     );
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InternalLatestPostResponse> getInternalLatestPosts() {
+        final List<Long> topLevelCategoryIds = List.of(1L, 22L, 4L, 2L, 21L);
+
+        Map<Long, String> categoryNameMap = categoryRetriever.findAllByIds(topLevelCategoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
+
+        List<InternalLatestPostResponse> responses = new ArrayList<>();
+
+        for (Long categoryId : topLevelCategoryIds) {
+            List<Long> allCategoryIds = categoryRetriever.findAllDescendantIds(categoryId);
+
+            Optional<CommunityPost> postOptional = communityPostRepository.findFirstByCategoryIdInOrderByCreatedAtDesc(allCategoryIds);
+
+            postOptional.ifPresent(post -> {
+                Member member = post.getMember();
+                MemberSoptActivity latestActivity = member.getActivities().stream()
+                        .max(Comparator.comparing(MemberSoptActivity::getGeneration))
+                        .orElse(null);
+
+                String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
+
+                Optional<AnonymousPostProfile> anonymousProfile = Optional.empty();
+                if (post.getIsBlindWriter()) {
+                    anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
+                }
+
+                responses.add(InternalLatestPostResponse.of(post, latestActivity, categoryName, anonymousProfile));
+            });
+        }
+        return responses;
     }
 
     private PostWithPoints createPostWithPoints(CommunityPost post) {
