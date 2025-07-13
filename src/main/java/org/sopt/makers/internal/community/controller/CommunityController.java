@@ -238,6 +238,7 @@ public class CommunityController {
         return ResponseEntity.ok().body(recentPosts);
     }
 
+    @Deprecated
     @Operation(summary = "핫 게시물 조회 API")
     @GetMapping("/posts/hot")
     public ResponseEntity<Object> getTodayHotPost() {

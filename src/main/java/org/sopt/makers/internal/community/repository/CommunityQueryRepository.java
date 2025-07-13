@@ -182,12 +182,14 @@ public class CommunityQueryRepository {
     public List<CommunityPost> findPopularPosts(int limitCount) {
         QCommunityPost communityPost = QCommunityPost.communityPost;
         QMember member = QMember.member;
+        QMemberSoptActivity activities = QMemberSoptActivity.memberSoptActivity;
 
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
 
         return queryFactory
                 .selectFrom(communityPost)
                 .leftJoin(communityPost.member, member).fetchJoin()
+                .leftJoin(member.activities, activities).fetchJoin()
                 .where(communityPost.createdAt.after(oneMonthAgo))
                 .orderBy(communityPost.hits.desc())
                 .limit(limitCount)

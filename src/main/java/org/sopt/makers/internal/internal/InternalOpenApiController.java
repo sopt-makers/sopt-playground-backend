@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.common.auth.AuthConfig;
 import org.sopt.makers.internal.community.dto.InternalCommunityPost;
@@ -340,6 +341,14 @@ public class InternalOpenApiController {
     public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
         List<InternalCoffeeChatMemberDto> members = memberService.getAllMemberByCoffeeChatActivate();
         List<InternalCoffeeChatMemberResponse> response = coffeeChatResponseMapper.toInternalCoffeeChatMemberResponse(members);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "앱팀 Internal API 인기글 3 조회")
+    @GetMapping("/community/posts/popular")
+    public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
+        int limit = 3;
+        List<InternalPopularPostResponse> response = communityPostService.getPopularPostsForInternal(limit);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
