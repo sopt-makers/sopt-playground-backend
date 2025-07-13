@@ -3,19 +3,24 @@ package org.sopt.makers.internal.community.mapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.val;
+import org.sopt.makers.internal.common.util.MentionCleaner;
 import org.sopt.makers.internal.community.dto.*;
 import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Component
 public class CommunityResponseMapper {
@@ -73,7 +78,7 @@ public class CommunityResponseMapper {
         val member = dao.post().isBlindWriter() ? null : dao.member();
         val writerId = dao.post().isBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
-        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(Collectors.toList());
+        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(toList());
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         val createdAt = getRelativeTime(dao.post().createdAt());
         return new PostResponse(post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
