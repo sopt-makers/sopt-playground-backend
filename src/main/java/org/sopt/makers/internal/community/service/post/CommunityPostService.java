@@ -17,6 +17,7 @@ import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRe
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -56,6 +57,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -290,6 +292,25 @@ public class CommunityPostService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<InternalPopularPostResponse> getPopularPostsForInternal(int limitCount) {
+        List<CommunityPost> posts = getPopularPostsBase(limitCount);
+
+        Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
+        Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
+
+        return IntStream.range(0, posts.size())
+                .mapToObj(idx -> {
+                    CommunityPost post = posts.get(idx);
+                    return communityResponseMapper.toInternalPopularPostResponse(
+                            post,
+                            anonymousProfileMap.get(post.getId()),
+                            categoryNameMap.get(post.getCategoryId()),
+                            idx + 1
+                    );
+                })
+                .toList();
+    }
 
     private List<CommunityPost> getPopularPostsBase(int limitCount) {
         List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
