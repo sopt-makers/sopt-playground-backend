@@ -371,7 +371,12 @@ public class CommunityPostService {
 
                 String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
 
-                responses.add(InternalLatestPostResponse.of(post, latestActivity, categoryName));
+                Optional<AnonymousPostProfile> anonymousProfile = Optional.empty();
+                if (post.getIsBlindWriter()) {
+                    anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
+                }
+
+                responses.add(InternalLatestPostResponse.of(post, latestActivity, categoryName, anonymousProfile));
             });
         }
         return responses;
