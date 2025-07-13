@@ -326,6 +326,15 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(
+            summary = "앱팀 Internal API 최신글 5개 조회",
+            description = "최상위 카테고리별(자유, 질문, 홍보, 파트Talk, 솝티클)로 최신글 1개씩 총 5개를 조회하는 API입니다.")
+    @GetMapping("/community/posts/latest")
+    public ResponseEntity<List<InternalLatestPostResponse>> getLatestPostsForApp() {
+        List<InternalLatestPostResponse> response = communityPostService.getInternalLatestPosts();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @Operation(summary = "커피챗 오픈 유저 리스트 조회 API")
     @GetMapping("/members/coffeechat")
     public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
