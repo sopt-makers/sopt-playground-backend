@@ -119,6 +119,41 @@ public class CommunityResponseMapper {
         return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
     }
 
+    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName, int rank) {
+        if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
+            // 익명일 경우
+            return InternalPopularPostResponse.builder()
+                    .id(post.getId())
+                    .profileImage(anonymousPostProfile.getProfileImg().getImageUrl())
+                    .name(anonymousPostProfile.getNickname().getNickname())
+                    .generationAndPart("")
+                    .rank(rank)
+                    .category(categoryName)
+                    .title(post.getTitle())
+                    .content(MentionCleaner.removeMentionIds(post.getContent()))
+                    .webLink("https://playground.sopt.org/?feed=" + post.getId())
+                    .build();
+        } else {
+            MemberSoptActivity latestActivity = post.getMember().getActivities().stream()
+                    .max(Comparator.comparing(MemberSoptActivity::getGeneration))
+                    .orElse(null);
+            String generationAndPart = (latestActivity != null)
+                    ? latestActivity.getGeneration() + "기 " + latestActivity.getPart()
+                    : "정보 없음";
+            return InternalPopularPostResponse.builder()
+                    .id(post.getId())
+                    .profileImage(post.getMember().getProfileImage())
+                    .name(post.getMember().getName())
+                    .generationAndPart(generationAndPart)
+                    .rank(rank)
+                    .category(categoryName)
+                    .title(post.getTitle())
+                    .content(MentionCleaner.removeMentionIds(post.getContent()))
+                    .webLink("https://playground.sopt.org/?feed=" + post.getId())
+                    .build();
+        }
+    }
+
     public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName) {
         MemberNameAndProfileImageResponse memberResponse;
 
