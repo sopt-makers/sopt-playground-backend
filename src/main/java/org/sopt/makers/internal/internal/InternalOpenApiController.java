@@ -335,7 +335,7 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "솝트앱 내 보여지는 인기글 리스트 조회 API")
+    @Operation(summary = "앱팀 Internal API 인기글 3 조회")
     @GetMapping("/community/posts/popular")
     public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
         int limit = 3;
