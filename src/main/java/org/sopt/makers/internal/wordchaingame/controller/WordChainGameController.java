@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameAllResponse;
 import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
@@ -42,7 +43,7 @@ public class WordChainGameController {
             @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
             @RequestBody WordChainGameGenerateRequest request
     ) {
-        val member = memberService.getMemberById(memberDetails.getId());
+        Member member = memberService.getMemberById(memberDetails.getId());
         val responseMember = memberMapper.toUserResponse(member);
         if(request.word().length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
         wordChainGameService.createWord(member, request);

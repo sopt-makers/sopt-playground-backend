@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.community.dto.InternalCommunityPost;
@@ -160,9 +161,9 @@ public class InternalOpenApiController {
     public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
             @PathVariable Long memberId
     ) {
-        Member member = memberService.getMemberById(memberId);
+        InternalUserDetails user = memberService.getInternalUserById(memberId);
         int count = projectService.getProjectCountByMemberId(memberId);
-        InternalMemberProjectResponse response = projectMapper.toInternalMemberProjectResponse(member,count);
+        InternalMemberProjectResponse response = projectMapper.toInternalMemberProjectResponse(user, count);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
