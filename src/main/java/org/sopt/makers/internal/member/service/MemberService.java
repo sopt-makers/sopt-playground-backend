@@ -10,6 +10,9 @@ import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
@@ -31,6 +34,7 @@ import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
+import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
@@ -78,9 +82,25 @@ public class MemberService {
     private final SlackMessageUtil slackMessageUtil;
     private final ReviewService reviewService;
 
+    private final AuthConfig authConfig;
+    private final PlatformClient platformClient;
+
+    public InternalUserDetails getInternalUserById(Long id) {
+        return platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(), new ArrayList<>(List.of(id))).getBody().getData().get(0);
+    }
+
     @Transactional(readOnly = true)
     public Member getMemberById(Long id) {
-        return memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        return memberRetriever.findMemberById(id);
+    }
+
+    public MemberResponse getMemberResponseById(Long id) {
+        InternalUserDetails user = getInternalUserById(id);
+        Member member = getMemberById(id);
+
+        return new MemberResponse(id, user.name(), user.lastGeneration(), user.profileImage(),
+                member.getHasProfile(), member.getEditActivitiesAble());
     }
 
     @Transactional(readOnly = true)

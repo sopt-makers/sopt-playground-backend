@@ -69,9 +69,7 @@ public class MemberController {
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
-        val member = memberService.getMemberById(id);
-        val response = memberMapper.toResponse(member);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberResponseById(id));
     }
 
     @Operation(summary = "자신의 토큰으로 조회 API")
