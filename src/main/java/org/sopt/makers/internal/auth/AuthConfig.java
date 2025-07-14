@@ -120,4 +120,10 @@ public class AuthConfig {
 
     @Value("${gabia.send-number}")
     private String gabiaSendNumber;
+
+    @Value("${external.auth.api-key}")
+    private String platformApiKey;
+
+    @Value("${external.auth.service-name}")
+    private String platformServiceName;
 }
