@@ -2,20 +2,24 @@ package org.sopt.makers.internal.project.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformClient;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberSoptActivity;
+import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.project.domain.ProjectLink;
 import org.sopt.makers.internal.project.domain.MemberProjectRelation;
 import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.project.dto.response.*;
 import org.sopt.makers.internal.project.mapper.ProjectMapper;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
 import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
-import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.response.ProjectMemberDao;
-import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
+import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
 import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
 import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
@@ -36,10 +40,16 @@ import java.util.stream.Collectors;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectLinkRepository projectLinkRepository;
-    private final MemberProjectRelationRepository relationRepository;
+    private final MemberProjectRelationRepository memberProjectRelationRepository;
     private final ProjectQueryRepository projectQueryRepository;
     private final MemberSoptActivityRepository soptActivityRepository;
+    private final MemberRepository memberRepository;
+
     private final ProjectMapper projectMapper;
+    private final ProjectResponseMapper projectResponseMapper;
+
+    private final PlatformClient platformClient;
+    private final AuthConfig authConfig;
 
     @Transactional
     public void createProject (ProjectSaveRequest request) {
@@ -65,7 +75,7 @@ public class ProjectService {
                         .build()
         );
 
-        relationRepository.saveAll(request.members().stream().map(memberRequest -> MemberProjectRelation.builder()
+        memberProjectRelationRepository.saveAll(request.members().stream().map(memberRequest -> MemberProjectRelation.builder()
                 .projectId(project.getId())
                 .userId(memberRequest.memberId())
                 .role(memberRequest.memberRole())
@@ -98,7 +108,7 @@ public class ProjectService {
     }
 
     private void updateProjectMembers(Long projectId, ProjectUpdateRequest request) {
-        List<MemberProjectRelation> existingRelations = relationRepository.findAllByProjectId(projectId);
+        List<MemberProjectRelation> existingRelations = memberProjectRelationRepository.findAllByProjectId(projectId);
         Map<Long, MemberProjectRelation> relationMap = existingRelations.stream()
                 .collect(Collectors.toMap(MemberProjectRelation::getUserId, Function.identity()));
 
@@ -110,7 +120,7 @@ public class ProjectService {
                 .filter(id -> !requestedUserIds.contains(id))
                 .map(relationMap::get)
                 .toList();
-        relationRepository.deleteAll(relationsToRemove);
+        memberProjectRelationRepository.deleteAll(relationsToRemove);
 
         List<MemberProjectRelation> relationsToSave = request.members().stream()
                 .map(memberRequest -> {
@@ -133,7 +143,7 @@ public class ProjectService {
                 })
                 .toList();
 
-        relationRepository.saveAll(relationsToSave);
+        memberProjectRelationRepository.saveAll(relationsToSave);
     }
 
     private void updateProjectLinks(Long projectId, ProjectUpdateRequest request) {
@@ -156,7 +166,7 @@ public class ProjectService {
         validateWriter(project, writerId);
 
         projectLinkRepository.deleteAllByProjectId(projectId);
-        relationRepository.deleteAllByProjectId(projectId);
+        memberProjectRelationRepository.deleteAllByProjectId(projectId);
         projectRepository.delete(project);
     }
 
@@ -167,13 +177,14 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<ProjectMemberVo> fetchById (Long id) {
-        val project = projectQueryRepository.findById(id);
+        List<ProjectMemberDao> project = projectQueryRepository.findById(id);
         if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
 
         val projectMemberIds = project.stream()
                 .filter(ProjectMemberDao::memberHasProfile)
                 .map(ProjectMemberDao::memberId)
-                .collect(Collectors.toList());
+                .toList();
+
         val memberActivityMap = soptActivityRepository.findAllByMemberIdIn(projectMemberIds)
                 .stream().collect(Collectors.groupingBy(MemberSoptActivity::getMemberId, Collectors.toList()));
         val memberGenerationMap = memberActivityMap.entrySet().stream().collect(Collectors.toMap(
@@ -228,7 +239,7 @@ public class ProjectService {
         List<Member> hasProfileList = memberRepository.findAllByIdIn(userIds);
 
         List<ProjectDetailResponse.ProjectMemberResponse> memberResponse = projectResponseMapper.toListProjectMemberResponse(projectUsers, projectUsersDetails, hasProfileList);
-        return projectResponseMapper.toProjectDetailResponseNew(project, memberResponse, projectLinks);
+        return projectResponseMapper.toProjectDetailResponse(project, memberResponse, projectLinks);
     }
 
     private void validateImageCount(int imageCount) {
