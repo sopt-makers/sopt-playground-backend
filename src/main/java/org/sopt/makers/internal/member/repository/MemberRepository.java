@@ -15,6 +15,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     List<Member> findAllByNameContaining(String name);
 
+    List<Member> findAllByIdIn(List<Long> ids);
+
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
     Long countByIdIn(Set<Long> memberIds);
 }
