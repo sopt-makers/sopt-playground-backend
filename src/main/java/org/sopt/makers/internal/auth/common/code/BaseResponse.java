@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.common.auth.code;
+package org.sopt.makers.internal.auth.common.code;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
