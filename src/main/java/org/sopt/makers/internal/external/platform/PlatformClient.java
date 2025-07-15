@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.external.platform;
 
-import org.sopt.makers.internal.common.auth.code.BaseResponse;
+import org.sopt.makers.internal.auth.common.code.BaseResponse;
 import org.sopt.makers.internal.community.dto.SopticleVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;

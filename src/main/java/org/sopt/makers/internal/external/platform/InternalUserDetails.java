@@ -3,7 +3,7 @@ package org.sopt.makers.internal.external.platform;
 import java.util.List;
 
 public record InternalUserDetails(
-        long userId,
+        Long userId,
         String name,
         String profileImage,
         String birthday,

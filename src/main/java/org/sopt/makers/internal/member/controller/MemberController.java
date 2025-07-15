@@ -66,6 +66,7 @@ public class MemberController {
     private final MemberResponseMapper memberResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
     private final MakersCrewClient makersCrewClient;
+
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
