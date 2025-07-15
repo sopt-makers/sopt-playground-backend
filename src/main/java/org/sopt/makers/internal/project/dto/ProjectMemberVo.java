@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.project.dto.response;
+package org.sopt.makers.internal.project.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

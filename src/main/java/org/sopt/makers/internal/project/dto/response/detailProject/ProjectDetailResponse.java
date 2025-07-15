@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.project.dto.response;
+package org.sopt.makers.internal.project.dto.response.detailProject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -35,23 +35,6 @@ public record ProjectDetailResponse(
         String[] images,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        List<ProjectMemberResponse> members,
+        List<ProjectDetailMemberResponse> members,
         List<ProjectLinkResponse> links
-) {
-    public record ProjectMemberResponse(
-            Long memberId,
-            String memberRole,
-            String memberDescription,
-            Boolean isTeamMember,
-            String memberName,
-            List<Integer> memberGenerations,
-            String memberProfileImage,
-            Boolean memberHasProfile
-    ){}
-
-    public record ProjectLinkResponse(
-            Long linkId,
-            String linkTitle,
-            String linkUrl
-    ){}
-}
+) { }

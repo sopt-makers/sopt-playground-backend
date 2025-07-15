@@ -10,10 +10,13 @@ import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectDetailResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.project.domain.ProjectLink;
-import org.sopt.makers.internal.project.dto.response.ProjectDetailResponse;
-import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
-import org.sopt.makers.internal.project.dto.response.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.allProject.ProjectMemberResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
+import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.ProjectMemberVo;
+import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectLinkResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

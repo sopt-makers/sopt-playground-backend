@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.project.dto.response;
+package org.sopt.makers.internal.project.dto.response.allProject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -25,17 +25,6 @@ public record ProjectResponse(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
-        List<ProjectMemberResponse> members,
-        List<ProjectLinkResponse> links
-) {
-    public record ProjectMemberResponse(
-            Long memberId,
-            String memberName,
-            String memberProfileImage
-    ){}
-    public record ProjectLinkResponse(
-            Long linkId,
-            String linkTitle,
-            String linkUrl
-    ){}
-}
+        List<ProjectMemberResponse> members
+        // 0715 변경사항 - List<ProjectLinkResponse> links 삭제 (오류 롤백 주석)
+) { }

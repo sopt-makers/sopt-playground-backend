@@ -17,7 +17,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.Part;
 import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.mapper.MemberMapper;

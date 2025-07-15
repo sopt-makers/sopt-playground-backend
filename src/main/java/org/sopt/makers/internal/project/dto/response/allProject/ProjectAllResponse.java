@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.project.dto.response;
+package org.sopt.makers.internal.project.dto.response.allProject;
 
 import java.util.List;
 

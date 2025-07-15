@@ -8,10 +8,10 @@ import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.project.domain.QProject;
 import org.sopt.makers.internal.project.domain.QProjectLink;
-import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.response.ProjectMemberDao;
-import org.sopt.makers.internal.project.dto.response.QProjectLinkDao;
-import org.sopt.makers.internal.project.dto.response.QProjectMemberDao;
+import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.dao.ProjectMemberDao;
+import org.sopt.makers.internal.project.dto.dao.QProjectLinkDao;
+import org.sopt.makers.internal.project.dto.dao.QProjectMemberDao;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
