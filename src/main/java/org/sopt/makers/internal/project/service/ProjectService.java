@@ -215,6 +215,22 @@ public class ProjectService {
                 .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
     }
 
+    @Transactional(readOnly = true)
+    public ProjectDetailResponse getProjectDetailResponseById(Long projectId) {
+        Project project = getProjectById(projectId);
+        List<MemberProjectRelation> projectUsers = memberProjectRelationRepository.findAllByProjectId(projectId);
+        List<ProjectLink> projectLinks = projectLinkRepository.findAllByProjectId(projectId);
+
+        // 추가로 필요한 user 정보 가져오기
+        List<Long> userIds = projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
+        List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(), userIds).getBody()).getData();
+        List<Member> hasProfileList = memberRepository.findAllByIdIn(userIds);
+
+        List<ProjectDetailResponse.ProjectMemberResponse> memberResponse = projectResponseMapper.toListProjectMemberResponse(projectUsers, projectUsersDetails, hasProfileList);
+        return projectResponseMapper.toProjectDetailResponseNew(project, memberResponse, projectLinks);
+    }
+
     private void validateImageCount(int imageCount) {
         if (imageCount > 10) {
             throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");

@@ -2,10 +2,14 @@ package org.sopt.makers.internal.project.mapper;
 
 import lombok.val;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.project.domain.MemberProjectRelation;
 import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectDetailResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
+import org.sopt.makers.internal.project.domain.ProjectLink;
 import org.sopt.makers.internal.project.dto.response.ProjectDetailResponse;
 import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
@@ -36,9 +40,10 @@ public class ProjectResponseMapper {
         return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
     }
 
-    public ProjectDetailResponse.ProjectLinkResponse toProjectDetailLinkResponse (ProjectLinkDao project) {
-        return new ProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    public ProjectDetailResponse.ProjectLinkResponse toProjectDetailLinkResponse (ProjectLink project) {
+        return new ProjectDetailResponse.ProjectLinkResponse(project.getId(), project.getTitle(), project.getUrl());
     }
+
     public ProjectResponse toProjectResponse (Project project, List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
         val linkResponses = projectLinks.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
         val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
@@ -60,29 +65,58 @@ public class ProjectResponseMapper {
         );
     }
 
-    public ProjectDetailResponse toProjectDetailResponse (List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
-        val projectInfo = projectMembers.get(0);
-        val memberResponses = projectMembers.stream().map(this::toProjectDetailMemberResponse).collect(Collectors.toList());
-        val linkResponses = projectLinks.stream().map(this::toProjectDetailLinkResponse).collect(Collectors.toList());
+    public List<ProjectDetailResponse.ProjectMemberResponse> toListProjectMemberResponse(List<MemberProjectRelation> projectMembers,
+                                                                                         List<InternalUserDetails> projectMembersDetails,
+                                                                                         List<Member> hasProfileList) {
+        return projectMembers.stream()
+                .map(member -> {
+                    InternalUserDetails details = projectMembersDetails.stream()
+                            .filter(d -> d.userId().equals(member.getUserId()))
+                            .findFirst().get();
+
+                    Boolean memberHasProfile = hasProfileList.stream()
+                            .filter(m -> m.getId().equals(member.getUserId()))
+                            .findFirst().get().getHasProfile();
+
+                    return new ProjectDetailResponse.ProjectMemberResponse(
+                            member.getId(),
+                            member.getRole(),
+                            member.getDescription(),
+                            member.getIsTeamMember(),
+                            details.name(),
+                            details.soptActivities().stream().map(SoptActivity::generation).toList(),
+                            details.profileImage(),
+                            memberHasProfile
+                    );
+                })
+                .toList();
+    }
+
+    public ProjectDetailResponse toProjectDetailResponse(Project project,
+                                                         List<ProjectDetailResponse.ProjectMemberResponse> memberResponses,
+                                                         List<ProjectLink> projectLinks) {
+        List<ProjectDetailResponse.ProjectLinkResponse> linkResponses = projectLinks.stream()
+                .map(this::toProjectDetailLinkResponse)
+                .toList();
 
         return new ProjectDetailResponse(
-                projectInfo.id(),
-                projectInfo.name(),
-                projectInfo.writerId(),
-                projectInfo.generation(),
-                projectInfo.category(),
-                projectInfo.startAt(),
-                projectInfo.endAt(),
-                projectInfo.serviceType(),
-                projectInfo.isAvailable(),
-                projectInfo.isFounding(),
-                projectInfo.summary(),
-                projectInfo.detail(),
-                projectInfo.logoImage(),
-                projectInfo.thumbnailImage(),
-                projectInfo.images(),
-                projectInfo.createdAt(),
-                projectInfo.updatedAt(),
+                project.getId(),
+                project.getName(),
+                project.getWriterId(),
+                project.getGeneration(),
+                project.getCategory(),
+                project.getStartAt(),
+                project.getEndAt(),
+                project.getServiceType(),
+                project.getIsAvailable(),
+                project.getIsFounding(),
+                project.getSummary(),
+                project.getDetail(),
+                project.getLogoImage(),
+                project.getThumbnailImage(),
+                project.getImages(),
+                project.getCreatedAt(),
+                project.getUpdatedAt(),
                 memberResponses,
                 linkResponses
         );

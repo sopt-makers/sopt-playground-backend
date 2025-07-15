@@ -9,13 +9,10 @@ import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.project.dto.response.*;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
 import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
-import org.sopt.makers.internal.project.dto.response.ProjectAllResponse;
-import org.sopt.makers.internal.project.dto.response.ProjectDetailResponse;
-import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
 import org.sopt.makers.internal.project.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,9 +38,7 @@ public class ProjectController {
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDetailResponse> getProject (@PathVariable Long id) {
-        val projectMembers = projectService.fetchById(id);
-        val projectLinks = projectService.fetchLinksById(id);
-        val response = projectMapper.toProjectDetailResponse(projectMembers, projectLinks);
+        ProjectDetailResponse response = projectService.getProjectDetailResponseById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
