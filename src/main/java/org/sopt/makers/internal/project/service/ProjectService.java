@@ -42,10 +42,8 @@ public class ProjectService {
     private final ProjectLinkRepository projectLinkRepository;
     private final MemberProjectRelationRepository memberProjectRelationRepository;
     private final ProjectQueryRepository projectQueryRepository;
-    private final MemberSoptActivityRepository soptActivityRepository;
     private final MemberRepository memberRepository;
 
-    private final ProjectMapper projectMapper;
     private final ProjectResponseMapper projectResponseMapper;
 
     private final PlatformClient platformClient;
@@ -171,44 +169,43 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectLinkDao> fetchAllLinks () {
-        return projectQueryRepository.findAllLinks();
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProjectMemberVo> fetchById (Long id) {
-        List<ProjectMemberDao> project = projectQueryRepository.findById(id);
-        if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
-
-        val projectMemberIds = project.stream()
-                .filter(ProjectMemberDao::memberHasProfile)
-                .map(ProjectMemberDao::memberId)
-                .toList();
-
-        val memberActivityMap = soptActivityRepository.findAllByMemberIdIn(projectMemberIds)
-                .stream().collect(Collectors.groupingBy(MemberSoptActivity::getMemberId, Collectors.toList()));
-        val memberGenerationMap = memberActivityMap.entrySet().stream().collect(Collectors.toMap(
-                Map.Entry::getKey, e -> e.getValue().stream().map(MemberSoptActivity::getGeneration).collect(Collectors.toList())
-        ));
-        return project.stream().map(p -> projectMapper.projectMemberDaoToProjectMemberVo(
-                p, memberGenerationMap.getOrDefault(p.memberId(), List.of())
-                )).collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProjectLinkDao> fetchLinksById (Long id) {
-        return projectQueryRepository.findLinksById(id);
-    }
-
-    @Transactional(readOnly = true)
     public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding) {
-        if(limit != null && name != null) return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
-        else if(limit != null) {
+        if(limit != null && name != null) {
+            return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
+        } else if(limit != null) {
             return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding);
         } else if(name != null) {
             return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding);
         }
         return projectRepository.findAll();
+    }
+
+    public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
+        return projectList.stream()
+                .map(project -> {
+                    List<Long> userIds = getProjectUserIdsByProjectId(project.getId());
+                    List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                            authConfig.getPlatformServiceName(), userIds).getBody()).getData();
+                    List<ProjectMemberResponse> memberResponses = projectUsersDetails.stream()
+                            .map(p-> new ProjectMemberResponse(p.userId(), p.name(), p.profileImage())).toList();
+
+                    return projectResponseMapper.toProjectResponse(project, memberResponses);
+                }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectDetailResponse getProjectDetailResponseById(Long projectId) {
+        Project project = getProjectById(projectId);
+        List<MemberProjectRelation> projectUsers = memberProjectRelationRepository.findAllByProjectId(projectId);
+        List<ProjectLink> projectLinks = projectLinkRepository.findAllByProjectId(projectId);
+
+        List<Long> userIds = projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
+        List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(), userIds).getBody()).getData();
+        List<Member> hasProfileList = memberRepository.findAllByIdIn(userIds);
+
+        List<ProjectDetailMemberResponse> memberResponse = projectResponseMapper.toListProjectMemberResponse(projectUsers, projectUsersDetails, hasProfileList);
+        return projectResponseMapper.toProjectDetailResponse(project, memberResponse, projectLinks);
     }
 
     @Transactional(readOnly = true)
@@ -226,20 +223,9 @@ public class ProjectService {
                 .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
     }
 
-    @Transactional(readOnly = true)
-    public ProjectDetailResponse getProjectDetailResponseById(Long projectId) {
-        Project project = getProjectById(projectId);
+    public List<Long> getProjectUserIdsByProjectId(Long projectId) {
         List<MemberProjectRelation> projectUsers = memberProjectRelationRepository.findAllByProjectId(projectId);
-        List<ProjectLink> projectLinks = projectLinkRepository.findAllByProjectId(projectId);
-
-        // 추가로 필요한 user 정보 가져오기
-        List<Long> userIds = projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
-        List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
-                authConfig.getPlatformServiceName(), userIds).getBody()).getData();
-        List<Member> hasProfileList = memberRepository.findAllByIdIn(userIds);
-
-        List<ProjectDetailResponse.ProjectMemberResponse> memberResponse = projectResponseMapper.toListProjectMemberResponse(projectUsers, projectUsersDetails, hasProfileList);
-        return projectResponseMapper.toProjectDetailResponse(project, memberResponse, projectLinks);
+        return projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
     }
 
     private void validateImageCount(int imageCount) {

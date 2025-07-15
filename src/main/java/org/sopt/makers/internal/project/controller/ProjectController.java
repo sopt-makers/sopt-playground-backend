@@ -57,17 +57,16 @@ public class ProjectController {
             @RequestParam(required = false, name = "isAvailable") Boolean isAvailable,
             @RequestParam(required = false, name = "isFounding") Boolean isFounding
     ) {
-        val projectMap = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit), cursor, name, category, isAvailable, isFounding)
-                .stream().collect(Collectors.toMap(Project::getId, Function.identity()));
-        val projectLinkMap = projectService.fetchAllLinks().stream()
-                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
-        val projectIds = projectMap.keySet();
-        val projectList = projectIds.stream().sorted(Collections.reverseOrder())
-                .map(id -> projectMapper.toProjectResponse(projectMap.get(id), projectService.fetchById(id), projectLinkMap.getOrDefault(id, List.of())))
-                .collect(Collectors.toList());
-        val hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
-        val totalProjectsCount = projectService.getProjectsCount(name, category, isAvailable, isFounding);
-        val responses = new ProjectAllResponse(projectList, hasNextProject, totalProjectsCount);
+        List<Project> projectList = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit),
+                        cursor, name, category, isAvailable, isFounding);
+        List<ProjectResponse> projectResponseList = new ArrayList<>(
+                projectService.getAllProjectResponseList(projectList).stream()
+                        .sorted(Comparator.comparing(ProjectResponse::id).reversed())
+                        .toList());
+        Boolean hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectResponseList);
+        int totalProjectsCount = projectService.getProjectsCount(name, category, isAvailable, isFounding);
+
+        ProjectAllResponse responses = new ProjectAllResponse(projectResponseList, hasNextProject, totalProjectsCount);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 

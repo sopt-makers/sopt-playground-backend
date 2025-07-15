@@ -26,31 +26,17 @@ import java.util.stream.Collectors;
 @Component
 public class ProjectResponseMapper {
 
-    public ProjectDetailResponse.ProjectMemberResponse toProjectDetailMemberResponse(ProjectMemberVo project) {
-        return new ProjectDetailResponse.ProjectMemberResponse(
-                project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
-                project.memberName(), project.memberGenerations(), project.memberProfileImage(), project.memberHasProfile()
-        );
-    }
-
-    public ProjectResponse.ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
-        return new ProjectResponse.ProjectMemberResponse(
+    public ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
+        return new ProjectMemberResponse(
                 project.memberId(), project.memberName(), project.memberProfileImage()
         );
     }
 
-    public ProjectResponse.ProjectLinkResponse toProjectLinkResponse (ProjectLinkDao project) {
-        return new ProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    public ProjectLinkResponse toProjectDetailLinkResponse (ProjectLink project) {
+        return new ProjectLinkResponse(project.getId(), project.getTitle(), project.getUrl());
     }
 
-    public ProjectDetailResponse.ProjectLinkResponse toProjectDetailLinkResponse (ProjectLink project) {
-        return new ProjectDetailResponse.ProjectLinkResponse(project.getId(), project.getTitle(), project.getUrl());
-    }
-
-    public ProjectResponse toProjectResponse (Project project, List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
-        val linkResponses = projectLinks.stream().map(this::toProjectLinkResponse).collect(Collectors.toList());
-        val memberResponses = projectMembers.stream().map(this::toProjectMemberResponse).collect(Collectors.toList());
-
+    public ProjectResponse toProjectResponse(Project project, List<ProjectMemberResponse> projectMemberResponses) {
         return new ProjectResponse(
                 project.getId(),
                 project.getName(),
@@ -63,14 +49,13 @@ public class ProjectResponseMapper {
                 truncateString(project.getDetail()),
                 project.getLogoImage(),
                 project.getThumbnailImage(),
-                memberResponses,
-                linkResponses
+                projectMemberResponses
         );
     }
 
-    public List<ProjectDetailResponse.ProjectMemberResponse> toListProjectMemberResponse(List<MemberProjectRelation> projectMembers,
-                                                                                         List<InternalUserDetails> projectMembersDetails,
-                                                                                         List<Member> hasProfileList) {
+    public List<ProjectDetailMemberResponse> toListProjectMemberResponse(List<MemberProjectRelation> projectMembers,
+                                                                                               List<InternalUserDetails> projectMembersDetails,
+                                                                                               List<Member> hasProfileList) {
         return projectMembers.stream()
                 .map(member -> {
                     InternalUserDetails details = projectMembersDetails.stream()
@@ -81,7 +66,7 @@ public class ProjectResponseMapper {
                             .filter(m -> m.getId().equals(member.getUserId()))
                             .findFirst().get().getHasProfile();
 
-                    return new ProjectDetailResponse.ProjectMemberResponse(
+                    return new ProjectDetailMemberResponse(
                             member.getId(),
                             member.getRole(),
                             member.getDescription(),
@@ -96,9 +81,9 @@ public class ProjectResponseMapper {
     }
 
     public ProjectDetailResponse toProjectDetailResponse(Project project,
-                                                         List<ProjectDetailResponse.ProjectMemberResponse> memberResponses,
+                                                         List<ProjectDetailMemberResponse> memberResponses,
                                                          List<ProjectLink> projectLinks) {
-        List<ProjectDetailResponse.ProjectLinkResponse> linkResponses = projectLinks.stream()
+        List<ProjectLinkResponse> linkResponses = projectLinks.stream()
                 .map(this::toProjectDetailLinkResponse)
                 .toList();
 
