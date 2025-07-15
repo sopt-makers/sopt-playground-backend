@@ -11,12 +11,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 @Getter
 public class MakersAuthentication implements Authentication {
 
-    private final String userId;
+    private final Long userId;
     private final List<GrantedAuthority> authorities;
     private boolean authenticated = false;
 
     public MakersAuthentication(String userId, List<String> roles) {
-        this.userId = userId;
+        this.userId = Long.valueOf(userId);
         this.authorities = roles.stream()
                 .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role))
                 .toList();
@@ -60,6 +60,6 @@ public class MakersAuthentication implements Authentication {
 
     @Override
     public String getName() {
-        return userId;
+        return String.valueOf(userId);
     }
 }
