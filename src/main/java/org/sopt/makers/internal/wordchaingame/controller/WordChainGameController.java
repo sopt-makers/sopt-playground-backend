@@ -1,17 +1,19 @@
 package org.sopt.makers.internal.wordchaingame.controller;
 
+import com.slack.api.socket_mode.request.InteractiveEnvelope;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameAllResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.*;
 import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
-import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
-import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
-import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameWinnerAllResponse;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
@@ -23,6 +25,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -32,22 +36,22 @@ import java.util.stream.Collectors;
 @SecurityRequirement(name = "Authorization")
 @Tag(name = "끝말잇기 게임", description = "끝말잇기 게임과 관련 API들")
 public class WordChainGameController {
-    private final MemberService memberService;
     private final WordChainGameService wordChainGameService;
+    private final MemberService memberService;
     private final MemberMapper memberMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "단어보내기 API")
     @PostMapping("/wordGame")
     public ResponseEntity<WordChainGameGenerateResponse> getPostMapping(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody WordChainGameGenerateRequest request
     ) {
-        Member member = memberService.getMemberById(memberDetails.getId());
-        val responseMember = memberMapper.toUserResponse(member);
-        if(request.word().length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
+        Member member = memberService.getMemberById(userId);
+        WordChainGameGenerateUserResponse responseMember = wordChainGameService.getGenerateResponseMember(userId);
         wordChainGameService.createWord(member, request);
-        val response = new WordChainGameGenerateResponse(request.roomId(), request.word(), responseMember);
+
+        WordChainGameGenerateResponse response = new WordChainGameGenerateResponse(request.roomId(), request.word(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -77,12 +81,12 @@ public class WordChainGameController {
     @Operation(summary = "새 게임 생성")
     @PostMapping("/newGame")
     public ResponseEntity<WordChainGameGenerateResponse> createGameRoom(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val member = memberService.getMemberById(memberDetails.getId());
+        val member = memberService.getMemberById(userId);
         val newRoom = wordChainGameService.createWordGameRoom(member);
         val isFirstNewGame = newRoom.getCreatedUserId() == null;
-        val responseMember = (isFirstNewGame) ? null : memberMapper.toUserResponse(member);
+        WordChainGameGenerateUserResponse responseMember = (isFirstNewGame) ? null : wordChainGameService.getGenerateResponseMember(userId);
         val response = new WordChainGameGenerateResponse(newRoom.getId(), newRoom.getStartWord(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

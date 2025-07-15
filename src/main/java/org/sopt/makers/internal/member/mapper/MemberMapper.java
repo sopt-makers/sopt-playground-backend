@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.internal.dto.InternalMemberActivityResponse;
@@ -20,6 +21,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.MemberProjectVo;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateUserResponse;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
 
 @Mapper(componentModel = "spring")
@@ -28,7 +30,6 @@ public interface MemberMapper {
     InternalMemberResponse toInternalResponse(Member member, Integer latestGeneration);
     MemberProfileResponse toProfileResponse (Member member, Boolean isCoffeeChatActivate);
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
-    WordChainGameGenerateResponse.UserResponse toUserResponse (Member member);
     WordChainGameRoomResponse.WordResponse.UserResponse toAllGameRoomResponse (Member member);
     MakersMemberProfileResponse toMakersMemberProfileResponse (Member member);
 

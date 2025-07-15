@@ -8,7 +8,10 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
 import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameWinner;
@@ -16,6 +19,7 @@ import org.sopt.makers.internal.wordchaingame.dto.response.WinnerDao;
 import org.sopt.makers.internal.wordchaingame.dto.response.WinnerVo;
 import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateUserResponse;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameWinnerRepository;
@@ -28,6 +32,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -37,14 +42,24 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class WordChainGameService {
-    private final AuthConfig authConfig;
     private final WordRepository wordRepository;
     private final WordChainGameWinnerRepository wordChainGameWinnerRepository;
     private final WordChainGameRepository wordChainGameRepository;
     private final WordChainGameQueryRepository wordChainGameQueryRepository;
 
+    private final PlatformClient platformClient;
+    private final AuthConfig authConfig;
+
+    public WordChainGameGenerateUserResponse getGenerateResponseMember(Long memberId) {
+        InternalUserDetails userDetails = platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(), new ArrayList<>(List.of(memberId))).getBody().getData().get(0);
+        return new WordChainGameGenerateUserResponse(memberId, userDetails.profileImage(), userDetails.name());
+    }
+
     @Transactional
     public Word createWord(Member member, WordChainGameGenerateRequest request) {
+        checkWordIsOneLetter(request.word());
+        checkWordIsKoreanLetter(request.word());
         checkWordIsOneLetter(request.word());
         checkRoomIsValid(request.roomId());
         checkIsChainingWord(request.roomId(), request.word());
@@ -148,8 +163,12 @@ public class WordChainGameService {
         if(noInputWordInRoom) throw new WordChainGameHasWrongInputException("이전 게임에 아무도 답을 하지 않은 경우에는 새로운 방을 만들 수 없어요.");
     }
 
-    private void checkWordIsOneLetter(String word) {
+    private void checkWordIsKoreanLetter(String word) {
         if(!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
+    }
+
+    private void checkWordIsOneLetter(String word) {
+        if(word.length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
     }
 
     private void checkIsInDictionary(String word) {
