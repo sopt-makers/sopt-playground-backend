@@ -25,24 +25,36 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http.antMatcher("/**")
-                .httpBasic().disable()
-                .formLogin().disable()
-                .csrf().disable()
-                .cors().configurationSource(corsConfigurationSource())
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                    .authorizeHttpRequests()
-                    .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/webjars/swagger-ui/**", "/swagger-ui/**", "/makers/**").permitAll()
-                .and()
-                    .authorizeHttpRequests()
-                        .antMatchers("/internal/api/v1/projects/**", "/internal/api/v1/members/**", "/internal/api/v1/sopticles/**", "/internal/api/v1/profile",
-                                "/api/v1/presigned-url", "/api/v1/users/**", "/api/v1/projects/**").hasAuthority("Member")
-                .and()
-                    .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                    .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class)
-                .build();
+        http
+            .httpBasic().disable()
+            .formLogin().disable()
+            .csrf().disable()
+            .cors().configurationSource(corsConfigurationSource())
+        .and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and()
+            .authorizeHttpRequests()
+                .antMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui.html",
+                        "/webjars/swagger-ui/**",
+                        "/swagger-ui/**",
+                        "/makers/**"
+                ).permitAll()
+
+                .antMatchers(
+                        "/internal/api/v1/projects/**",
+                        "/internal/api/v1/members/**",
+                        "/internal/api/v1/sopticles/**",
+                        "/internal/api/v1/profile",
+                        "/api/v1/presigned-url"
+                ).hasAuthority("Member")
+
+        .and()
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
