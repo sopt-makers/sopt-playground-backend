@@ -90,6 +90,9 @@ dependencies {
 
 	// Web Client
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+	// Mac M1/M2 ARM 환경에서 Netty DNS Resolver
+	implementation "io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64"
 }
 
 dependencyManagement {
