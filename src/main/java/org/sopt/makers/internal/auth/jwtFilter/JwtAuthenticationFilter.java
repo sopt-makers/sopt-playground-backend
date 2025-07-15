@@ -32,20 +32,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        String uri = request.getRequestURI();
+
+        // Swagger 경로는 인증 로직 무시
+        if (uri.startsWith("/swagger-ui") || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-resources") || uri.startsWith("/webjars")
+                || uri.startsWith("/makers")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 헤더에서 Authorization 값 추출 (eyJhbxor...)
         String authorizationToken = parseJwt(request);
-
-        // 예외처리 (Authorization 헤더가 없거나 Bearer 타입이 아닌 경우 에러 처리)
         checkJwtAvailable(authorizationToken);
 
-        // JWT 추출, 토큰 검증 -> 인증 객체 생성
-        String uri = request.getRequestURI();
         if ((uri.startsWith("/api") || uri.startsWith("/internal"))
                 && !uri.contains("idp")) {
             MakersAuthentication authentication = jwtAuthenticationService.authenticate(authorizationToken);
-
-            // 인증 정보 저장
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
