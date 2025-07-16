@@ -23,8 +23,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,7 +40,7 @@ public class WordChainGameController {
 
     @Operation(summary = "단어보내기 API")
     @PostMapping("/wordGame")
-    public ResponseEntity<WordChainGameGenerateResponse> getPostMapping(
+    public ResponseEntity<WordChainGameGenerateResponse> getAllGameRooms(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody WordChainGameGenerateRequest request
     ) {
@@ -54,24 +54,25 @@ public class WordChainGameController {
 
     @Operation(summary = "게임 전체 조회", description = "cursor : 처음에는 null 또는 0, 이후 방번호 증 마지막 room의 id")
     @GetMapping("/gameRoom")
-    public ResponseEntity<WordChainGameAllResponse> getPostMapping(
+    public ResponseEntity<WordChainGameAllResponse> getAllGameRooms(
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val rooms = wordChainGameService.getAllRoom(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        val roomList = rooms.stream().map(room -> {
-            val isFirstGame = Objects.isNull(room.getCreatedUserId());
-            val startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
+        List<WordChainGameRoom> rooms = wordChainGameService.getAllRoom(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        List<WordChainGameRoomResponse> roomList = rooms.stream().map(room -> {
+            boolean isFirstGame = Objects.isNull(room.getCreatedUserId());
+            Member startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
             MemberSimpleResonse responseStartUser = platformService.getMemberSimpleInfo(startUser.getId());
             val wordList = room.getWordList().stream().sorted((Comparator.comparing(Word::getId))).map(word -> {
-                val member = memberService.getMemberById(word.getMemberId());
-                val responseMember = platformService.getMemberSimpleInfo(member.getId());
+                Member member = memberService.getMemberById(word.getMemberId());
+                MemberSimpleResonse responseMember = platformService.getMemberSimpleInfo(member.getId());
                 return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
-            }).collect(Collectors.toList());
+            }).toList();
             return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), responseStartUser, wordList);
-        }).collect(Collectors.toList());
-        val hasNextGame = infiniteScrollUtil.checkHasNextElement(limit,roomList);
-        val response = new WordChainGameAllResponse(roomList,hasNextGame);
+        }).toList();
+        boolean hasNextGame = infiniteScrollUtil.checkHasNextElement(limit, roomList);
+
+        WordChainGameAllResponse response = new WordChainGameAllResponse(roomList, hasNextGame);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
