@@ -15,6 +15,7 @@ import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameWinner;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameWinnerResponse;
 import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
@@ -130,6 +131,41 @@ public class WordChainGameService {
                 }).toList();
     }
 
+    public Map<Long, InternalUserDetails> getUserMapFromCreatedUserIds(List<WordChainGameRoom> rooms) {
+        List<Long> startUserIds = rooms.stream()
+                .map(WordChainGameRoom::getCreatedUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        List<InternalUserDetails> startUsersDetails = platformService.getInternalUsers(startUserIds);
+        return startUsersDetails.stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+    }
+
+    public WordChainGameRoomResponse toRoomResponse(WordChainGameRoom room, Map<Long, InternalUserDetails> startUserMap) {
+        InternalUserDetails startUserDetail = startUserMap.get(room.getCreatedUserId());
+        MemberSimpleResonse startUserResponse = new MemberSimpleResonse(startUserDetail.userId(), startUserDetail.name(), startUserDetail.profileImage());
+
+        List<Long> userIds = room.getWordList().stream()
+                .map(Word::getMemberId)
+                .distinct()
+                .toList();
+
+        Map<Long, InternalUserDetails> userDetailMap = platformService.getInternalUsers(userIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        List<WordChainGameRoomResponse.WordResponse> wordList = room.getWordList().stream()
+                .sorted(Comparator.comparing(Word::getId))
+                .map(word -> {
+                    InternalUserDetails userDetail = userDetailMap.get(word.getMemberId());
+                    MemberSimpleResonse responseMember =  new MemberSimpleResonse(userDetail.userId(), userDetail.name(), userDetail.profileImage());
+                    return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
+                })
+                .toList();
+
+        return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), startUserResponse, wordList);
+    }
+
     private String getRandomStartWord() {
         val random = new Random();
         int number = random.nextInt(gameStartWord.size());
@@ -139,7 +175,6 @@ public class WordChainGameService {
     /*
      validation 로직들
      */
-
     @Transactional(readOnly = true)
     public void checkIsLastWordWriterIsMakingNextWord(Long roomId, Long memberId) {
         val recentWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
@@ -271,6 +306,7 @@ public class WordChainGameService {
                 }
             }
         }
+
         if (Objects.equals(initialChs[initialCh], "ㄹ")) {
             val canBeDooem = leeuel_to_eung.contains(medialChs[medialCh]);
             if (canBeDooem) {
@@ -281,6 +317,7 @@ public class WordChainGameService {
                 }
             }
         }
+
         if (Objects.equals(initialChs[initialCh], "ㄹ")) {
             val canBeDooem = leeuel_to_neeun.contains(medialChs[medialCh]);
             if (canBeDooem) {

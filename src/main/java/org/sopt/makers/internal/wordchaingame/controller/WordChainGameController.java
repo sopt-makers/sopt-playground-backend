@@ -6,15 +6,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.dto.response.*;
 import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.wordchaingame.service.WordChainGameService;
 import org.springframework.http.HttpStatus;
@@ -22,9 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,7 +32,6 @@ import java.util.Objects;
 public class WordChainGameController {
     private final WordChainGameService wordChainGameService;
     private final MemberService memberService;
-    private final MemberMapper memberMapper;
     private final PlatformService platformService;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
@@ -59,17 +56,9 @@ public class WordChainGameController {
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
         List<WordChainGameRoom> rooms = wordChainGameService.getAllRoom(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        List<WordChainGameRoomResponse> roomList = rooms.stream().map(room -> {
-            boolean isFirstGame = Objects.isNull(room.getCreatedUserId());
-            Member startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
-            MemberSimpleResonse responseStartUser = platformService.getMemberSimpleInfo(startUser.getId());
-            val wordList = room.getWordList().stream().sorted((Comparator.comparing(Word::getId))).map(word -> {
-                Member member = memberService.getMemberById(word.getMemberId());
-                MemberSimpleResonse responseMember = platformService.getMemberSimpleInfo(member.getId());
-                return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
-            }).toList();
-            return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), responseStartUser, wordList);
-        }).toList();
+        Map<Long, InternalUserDetails> startUserMap = wordChainGameService.getUserMapFromCreatedUserIds(rooms);;
+
+        List<WordChainGameRoomResponse> roomList = rooms.stream().map(room -> wordChainGameService.toRoomResponse(room, startUserMap)).toList();
         boolean hasNextGame = infiniteScrollUtil.checkHasNextElement(limit, roomList);
 
         WordChainGameAllResponse response = new WordChainGameAllResponse(roomList, hasNextGame);
