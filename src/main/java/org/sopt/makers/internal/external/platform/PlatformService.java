@@ -6,7 +6,6 @@ import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,5 +58,10 @@ public class PlatformService {
         }
 
         return users.get(0);
+    }
+
+    public MemberSimpleResonse getMemberSimpleInfo(Long memberId) {
+        InternalUserDetails userDetails = getInternalUser(memberId);
+        return new MemberSimpleResonse(memberId, userDetails.profileImage(), userDetails.name());
     }
 }

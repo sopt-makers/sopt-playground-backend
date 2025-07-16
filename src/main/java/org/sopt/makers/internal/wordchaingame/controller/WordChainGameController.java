@@ -1,22 +1,19 @@
 package org.sopt.makers.internal.wordchaingame.controller;
 
-import com.slack.api.socket_mode.request.InteractiveEnvelope;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.auth.AuthConfig;
-import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
-import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.PlatformClient;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.wordchaingame.domain.Word;
+import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.dto.response.*;
 import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.internal.InternalMemberDetails;
-import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.wordchaingame.service.WordChainGameService;
@@ -25,8 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -39,6 +35,7 @@ public class WordChainGameController {
     private final WordChainGameService wordChainGameService;
     private final MemberService memberService;
     private final MemberMapper memberMapper;
+    private final PlatformService platformService;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "단어보내기 API")
@@ -48,7 +45,7 @@ public class WordChainGameController {
             @RequestBody WordChainGameGenerateRequest request
     ) {
         Member member = memberService.getMemberById(userId);
-        WordChainGameGenerateUserResponse responseMember = wordChainGameService.getGenerateResponseMember(userId);
+        MemberSimpleResonse responseMember = platformService.getMemberSimpleInfo(userId);
         wordChainGameService.createWord(member, request);
 
         WordChainGameGenerateResponse response = new WordChainGameGenerateResponse(request.roomId(), request.word(), responseMember);
@@ -65,10 +62,10 @@ public class WordChainGameController {
         val roomList = rooms.stream().map(room -> {
             val isFirstGame = Objects.isNull(room.getCreatedUserId());
             val startUser = isFirstGame ? null : memberService.getMemberById(room.getCreatedUserId());
-            val responseStartUser = memberMapper.toAllGameRoomResponse(startUser);
-            val wordList = room.getWordList().stream().sorted(((o1, o2) -> o1.getId().compareTo(o2.getId()))).map(word -> {
+            MemberSimpleResonse responseStartUser = platformService.getMemberSimpleInfo(startUser.getId());
+            val wordList = room.getWordList().stream().sorted((Comparator.comparing(Word::getId))).map(word -> {
                 val member = memberService.getMemberById(word.getMemberId());
-                val responseMember = memberMapper.toAllGameRoomResponse(member);
+                val responseMember = platformService.getMemberSimpleInfo(member.getId());
                 return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
             }).collect(Collectors.toList());
             return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), responseStartUser, wordList);
@@ -83,11 +80,11 @@ public class WordChainGameController {
     public ResponseEntity<WordChainGameGenerateResponse> createGameRoom(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val member = memberService.getMemberById(userId);
-        val newRoom = wordChainGameService.createWordGameRoom(member);
-        val isFirstNewGame = newRoom.getCreatedUserId() == null;
-        WordChainGameGenerateUserResponse responseMember = (isFirstNewGame) ? null : wordChainGameService.getGenerateResponseMember(userId);
-        val response = new WordChainGameGenerateResponse(newRoom.getId(), newRoom.getStartWord(), responseMember);
+        Member member = memberService.getMemberById(userId);
+        WordChainGameRoom newRoom = wordChainGameService.createWordGameRoom(member);
+        boolean isFirstNewGame = newRoom.getCreatedUserId() == null;
+        MemberSimpleResonse responseMember = (isFirstNewGame) ? null : platformService.getMemberSimpleInfo(userId);
+        WordChainGameGenerateResponse response = new WordChainGameGenerateResponse(newRoom.getId(), newRoom.getStartWord(), responseMember);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -99,7 +96,7 @@ public class WordChainGameController {
     ) {
         val winners = wordChainGameService.getAllWinner(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val hasNextWinner = infiniteScrollUtil.checkHasNextElement(limit, winners);
-        val response = new WordChainGameWinnerAllResponse(winners,hasNextWinner);
+        val response = new WordChainGameWinnerAllResponse(winners, hasNextWinner);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

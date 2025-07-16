@@ -21,11 +21,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,7 +33,6 @@ import java.util.stream.Collectors;
 @Tag(name = "Project 관련 API", description = "Project와 관련 API들")
 public class ProjectController {
     private final ProjectService projectService;
-    private final ProjectResponseMapper projectMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "Project id로 조회 API")
