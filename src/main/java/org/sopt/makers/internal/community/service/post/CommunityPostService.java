@@ -398,7 +398,7 @@ public class CommunityPostService {
                         .max(Comparator.comparing(MemberSoptActivity::getGeneration))
                         .orElse(null);
 
-                String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
+                String categoryName = categoryNameMap.getOrDefault(categoryId, "");
 
                 Optional<AnonymousPostProfile> anonymousProfile = Optional.empty();
                 if (post.getIsBlindWriter()) {
