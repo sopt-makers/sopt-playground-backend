@@ -45,14 +45,14 @@ public class CoffeeChatController {
     @Operation(summary = "커피챗 유저 검색 API")
     @GetMapping("")
     public ResponseEntity<CoffeeChatResponse> getSearchCoffeeChatList(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) String section,
             @RequestParam(required = false) String topicType,
             @RequestParam(required = false) String career,
             @RequestParam(required = false) String part,
             @RequestParam(required = false) String search
     ) {
-        List<CoffeeChatVo> searchCoffeeChatList = coffeeChatService.getSearchCoffeeChatList(memberDetails.getId(), section, topicType, career, part, search);
+        List<CoffeeChatVo> searchCoffeeChatList = coffeeChatService.getSearchCoffeeChatList(userId, section, topicType, career, part, search);
         return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatResponse(searchCoffeeChatList));
     }
 

@@ -63,12 +63,11 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
     }
 
     @Override
-    public List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
+    public List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String search) {
 
         QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
         QMember member = QMember.member;
         QMemberCareer memberCareer = QMemberCareer.memberCareer;
-        QMemberSoptActivity memberSoptActivity = QMemberSoptActivity.memberSoptActivity;
 
         // 검색 조건
         BooleanBuilder builder = new BooleanBuilder();
@@ -76,7 +75,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .and(isInTopicType(topicType))
                 .and(isInCareer(coffeeChat, career))
                 .and(isInSearch(member, memberCareer, search))
-                .and(isInPart(member, part, memberSoptActivity))
                 .and(coffeeChat.isCoffeeChatActivate.isTrue()
                         .or(coffeeChat.member.id.eq(memberId)));
 
@@ -86,8 +84,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         coffeeChat.member.id,
                         coffeeChat.coffeeChatBio,
                         coffeeChat.coffeeChatTopicType,
-                        coffeeChat.member.profileImage,
-                        coffeeChat.member.name,
                         coffeeChat.career,
                         coffeeChat.member.university,
                         coffeeChat.createdAt,

@@ -66,13 +66,13 @@ public class CoffeeChatResponseMapper {
         );
     }
 
-    public CoffeeChatVo toCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+    public CoffeeChatVo toCoffeeChatResponse(CoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities, MemberSimpleResonse memberSimpleResonse) {
         return new CoffeeChatVo(
                 coffeeChatInfo.memberId(),
                 coffeeChatInfo.bio(),
                 coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
-                coffeeChatInfo.profileImage(),
-                coffeeChatInfo.name(),
+                memberSimpleResonse.profileImage(),
+                memberSimpleResonse.name(),
                 coffeeChatInfo.career().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
                 memberCareer != null ? memberCareer.getTitle() : null,

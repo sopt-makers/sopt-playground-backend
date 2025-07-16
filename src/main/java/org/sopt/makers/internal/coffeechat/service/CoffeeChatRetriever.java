@@ -59,10 +59,6 @@ public class CoffeeChatRetriever {
         return coffeeChatRepository.findRecentCoffeeChatInfo();
     }
 
-    public List<CoffeeChatInfoDto> searchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
-        return coffeeChatRepository.findSearchCoffeeChatInfo(memberId, section, topicType, career, part, search);
-    }
-
     public MemberCoffeeChatPropertyDto getMemberCoffeeChatProperty(Member member) {
 
         Long receivedCoffeeChatCount = coffeeChatHistoryRepository.countByReceiver(member);
