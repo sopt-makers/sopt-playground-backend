@@ -62,6 +62,6 @@ public class PlatformService {
 
     public MemberSimpleResonse getMemberSimpleInfo(Long memberId) {
         InternalUserDetails userDetails = getInternalUser(memberId);
-        return new MemberSimpleResonse(memberId, userDetails.profileImage(), userDetails.name());
+        return new MemberSimpleResonse(memberId, userDetails.name(), userDetails.profileImage());
     }
 }
