@@ -10,6 +10,10 @@ import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -45,6 +49,7 @@ public class CoffeeChatService {
     private final MemberCareerRetriever memberCareerRetriever;
 
     private final EmailHistoryService emailHistoryService;
+    private final PlatformService platformService;
 
     private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
@@ -118,13 +123,21 @@ public class CoffeeChatService {
 
     @Transactional(readOnly = true)
     public List<CoffeeChatVo> getRecentCoffeeChatList() {
-
         List<RecentCoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
-            List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
-            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
+            List<String> soptActivities = getPartAndGenerationList(coffeeChatInfo.memberId());
+            MemberSimpleResonse memberSimpleResonse = platformService.getMemberSimpleInfo(coffeeChatInfo.memberId());
+            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities, memberSimpleResonse);
         }).toList();
+    }
+
+    private List<String> getPartAndGenerationList(Long userId) {
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        List<SoptActivity> soptActivities = userDetails.soptActivities();
+        return soptActivities.stream()
+                .map(activity -> String.format("%d기 %s", activity.generation(), activity.part()))
+                .toList();
     }
 
     @Transactional(readOnly = true)

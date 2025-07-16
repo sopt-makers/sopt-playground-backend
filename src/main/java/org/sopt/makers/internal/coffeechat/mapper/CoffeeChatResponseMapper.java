@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.coffeechat.mapper;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.exception.BusinessLogicException;
@@ -49,13 +50,13 @@ public class CoffeeChatResponseMapper {
         );
     }
 
-    public CoffeeChatVo toRecentCoffeeChatResponse(RecentCoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities) {
+    public CoffeeChatVo toRecentCoffeeChatResponse(RecentCoffeeChatInfoDto coffeeChatInfo, MemberCareer memberCareer, List<String> soptActivities, MemberSimpleResonse memberSimpleResonse) {
         return new CoffeeChatVo(
                 coffeeChatInfo.memberId(),
                 coffeeChatInfo.bio(),
                 coffeeChatInfo.topicTypeList().stream().map(CoffeeChatTopicType::getTitle).toList(),
-                coffeeChatInfo.profileImage(),
-                coffeeChatInfo.name(),
+                memberSimpleResonse.profileImage(),
+                memberSimpleResonse.name(),
                 coffeeChatInfo.career().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : coffeeChatInfo.university(),
                 memberCareer != null ? memberCareer.getTitle() : null,

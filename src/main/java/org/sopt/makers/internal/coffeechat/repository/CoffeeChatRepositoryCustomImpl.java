@@ -29,7 +29,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
 
     @Override
     public List<RecentCoffeeChatInfoDto> findRecentCoffeeChatInfo() {
-
         QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
         QCoffeeChatHistory coffeeChatHistory = QCoffeeChatHistory.coffeeChatHistory;
         QMember member = QMember.member;
@@ -40,8 +39,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         member.id,
                         coffeeChat.coffeeChatBio,
                         coffeeChat.coffeeChatTopicType,
-                        member.profileImage,
-                        member.name,
                         coffeeChat.career,
                         member.university,
                         coffeeChatHistory.createdAt
