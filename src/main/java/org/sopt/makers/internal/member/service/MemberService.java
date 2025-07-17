@@ -536,7 +536,7 @@ public class MemberService {
 
     @Transactional
     public void deleteUserProfileActivity(Long activityId, Long memberId) {
-        val activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
+        MemberSoptActivity activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
         memberSoptActivityRepository.delete(activity);
     }

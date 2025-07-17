@@ -236,10 +236,10 @@ public class MemberController {
     @DeleteMapping("/profile/activity/{activityId}")
     public ResponseEntity<CommonResponse> deleteUserProfileActivity (
             @PathVariable(name = "activityId") Long activityId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
+        memberService.deleteUserProfileActivity(activityId, userId);
+        CommonResponse response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
