@@ -204,9 +204,9 @@ public class MemberController {
     @PutMapping("/activity/check")
     public ResponseEntity<Map<String, Boolean>> isOkayActivities(
             @RequestBody @Valid final CheckActivityRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.checkActivities(memberDetails.getId(), request.isCheck());
+        memberService.checkActivities(userId, request.isCheck());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 기수 확인 여부가 변경됐습니다.", true));
     }
 

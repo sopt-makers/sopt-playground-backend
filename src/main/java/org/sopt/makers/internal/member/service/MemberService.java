@@ -548,7 +548,7 @@ public class MemberService {
 
     @Transactional
     public void checkActivities(Long memberId, Boolean isCheck) {
-        val member = memberRepository.findById(memberId)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
 
         member.editActivityChange(isCheck);
