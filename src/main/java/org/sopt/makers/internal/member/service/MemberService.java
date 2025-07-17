@@ -556,10 +556,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
-        val blocker = memberRetriever.findMemberById(memberId);
-        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
+        Member blocker = memberRetriever.findMemberById(memberId);
+        Member blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
-        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         return blockHistory.map(memberBlock ->
                 MemberBlockResponse.of(memberBlock.getIsBlocked(), blocker, blockedMember)
         ).orElseGet(() -> MemberBlockResponse.of(false, blocker, blockedMember));

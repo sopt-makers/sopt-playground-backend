@@ -257,9 +257,9 @@ public class MemberController {
     @GetMapping("/block/{memberId}")
     public ResponseEntity<MemberBlockResponse> getUserBlockStatus (
             @PathVariable Long memberId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val response = memberService.getBlockStatus(memberDetails.getId(), memberId);
+        MemberBlockResponse response = memberService.getBlockStatus(userId, memberId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
