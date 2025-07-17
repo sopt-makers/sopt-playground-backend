@@ -38,6 +38,8 @@ import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse.MemberActivityResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
@@ -54,6 +56,8 @@ import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyD
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,6 +128,38 @@ public class MemberService {
                     member.getEditActivitiesAble()
             );
         }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
+        Member member = getMemberHasProfileById(profileId);
+        InternalUserDetails userDetails = platformService.getInternalUser(profileId);
+        List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
+        Map<String, List<ActivityVo>> activityMap = getMemberProfileActivity(member.getActivities(), memberProfileProjects);
+        List<MemberProfileProjectVo> soptActivity = getMemberProfileProjects(member.getActivities(), memberProfileProjects);
+        List<MemberProfileProjectVo> soptActivityResponse = soptActivity.stream()
+                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()),
+                        m.projects()))
+                .collect(Collectors.toList());
+        List<MemberActivityResponse> activityResponses = activityMap.entrySet().stream()
+                .map(entry -> new MemberActivityResponse(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+        boolean isMine = Objects.equals(profileId, viewerId);
+        boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+        MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(
+                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
+        );
+
+        MemberProfileSpecificResponse finalResponse = new MemberProfileSpecificResponse(
+                userDetails.name(), userDetails.profileImage(), response.birthday(), response.isPhoneBlind(),
+                response.phone(), response.email(), response.address(), response.university(), response.major(),
+                response.introduction(), response.skill(), response.mbti(), response.mbtiDescription(),
+                response.sojuCapacity(), response.interest(), response.userFavor(), response.idealType(),
+                response.selfIntroduction(), response.activities(), response.soptActivities(), response.links(),
+                response.projects(), response.careers(), response.allowOfficial(), response.isCoffeeChatActivate(), response.isMine()
+        );
+
+        return MemberProfileSpecificResponse.applyPhoneMasking(finalResponse, isMine, isCoffeeChatActivate);
     }
 
     @Transactional(readOnly = true)
@@ -574,5 +610,13 @@ public class MemberService {
         blocks.add(contentNode);
         rootNode.set("blocks", blocks);
         return rootNode;
+    }
+
+    private String checkTeamNullCondition (String team) {
+        val teamNullCondition = (team == null || team.equals("해당 없음"));
+        if (teamNullCondition) {
+            team = null;
+        }
+        return team;
     }
 }
