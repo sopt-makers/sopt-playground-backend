@@ -157,27 +157,9 @@ public class MemberController {
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/profile/me")
     public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val id = memberDetails.getId();
-        val member = memberService.getMemberHasProfileById(id);
-        val memberProfileProjects = memberService.getMemberProfileProjects(id);
-        val activityMap = memberService.getMemberProfileActivity(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val activityResponses = activityMap.entrySet().stream().map(entry ->
-                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
-        ).collect(Collectors.toList());
-        val soptActivityResponse = memberService.getMemberProfileProjects(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
-        );
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(userId, userId);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
