@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.common.CommonResponse;
@@ -76,11 +77,9 @@ public class MemberController {
     @Operation(summary = "자신의 토큰으로 조회 API")
     @GetMapping("/me")
     public ResponseEntity<MemberInfoResponse> getMyInformation (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val member = memberService.getMemberById(memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.isCoffeeChatExist(member.getId());
-        val response = memberResponseMapper.toMemberInfoResponse(member, isCoffeeChatActivate);
+        MemberInfoResponse response = memberService.getMyInformation(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

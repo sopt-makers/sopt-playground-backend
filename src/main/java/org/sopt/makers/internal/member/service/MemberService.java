@@ -13,6 +13,7 @@ import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformClient;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
@@ -34,6 +35,7 @@ import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
+import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
@@ -81,13 +83,21 @@ public class MemberService {
     private final SlackClient slackClient;
     private final SlackMessageUtil slackMessageUtil;
     private final ReviewService reviewService;
-
+    private final PlatformService platformService;
     private final AuthConfig authConfig;
     private final PlatformClient platformClient;
 
     public InternalUserDetails getInternalUserById(Long id) {
         return platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
                 authConfig.getPlatformServiceName(), new ArrayList<>(List.of(id))).getBody().getData().get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberInfoResponse getMyInformation(Long userId) {
+        Member member = getMemberById(userId);
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        boolean isCoffeeChatActive = coffeeChatRetriever.existsCoffeeChat(member);
+        return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
     }
 
     @Transactional(readOnly = true)
