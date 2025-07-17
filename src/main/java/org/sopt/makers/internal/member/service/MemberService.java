@@ -585,8 +585,8 @@ public class MemberService {
 
     @Transactional
     public void reportUser(Long memberId, Long reportedMemberId) {
-        val reporter = memberRetriever.findMemberById(memberId);
-        val reportedMember = memberRetriever.findMemberById(reportedMemberId);
+        Member reporter = memberRetriever.findMemberById(memberId);
+        Member reportedMember = memberRetriever.findMemberById(reportedMemberId);
 
         sendReportToSlack(reporter, reportedMember);
 

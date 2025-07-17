@@ -4,12 +4,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import javax.validation.Valid;
-
-import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
@@ -20,7 +15,6 @@ import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
 import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
 import org.sopt.makers.internal.member.dto.request.MemberReportRequest;
 import org.sopt.makers.internal.member.dto.response.MemberCrewResponse;
-import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
@@ -31,7 +25,6 @@ import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
-import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -64,8 +57,6 @@ public class MemberController {
     private final MemberService memberService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
-    private final MemberResponseMapper memberResponseMapper;
-    private final InfiniteScrollUtil infiniteScrollUtil;
     private final MakersCrewClient makersCrewClient;
 
     @Operation(summary = "유저 id로 조회 API")
@@ -267,9 +258,9 @@ public class MemberController {
     @PostMapping("/report")
     public ResponseEntity<Map<String, Boolean>> reportUser (
             @RequestBody MemberReportRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.reportUser(memberDetails.getId(), request.reportMemberId());
+        memberService.reportUser(userId, request.reportMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 신고 성공", true));
     }
 
