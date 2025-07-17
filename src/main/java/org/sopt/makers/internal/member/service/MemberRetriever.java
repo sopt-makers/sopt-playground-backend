@@ -18,8 +18,7 @@ import java.util.List;
 public class MemberRetriever {
 
     private final MemberRepository memberRepository;
-    private final MemberProfileQueryRepository memberProfileQueryRepository;;
-    private final MemberSoptActivityRepository memberSoptActivityRepository;
+    private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberBlockRepository memberBlockRepository;
 
     public Member findMemberById(Long memberId) {
@@ -31,14 +30,6 @@ public class MemberRetriever {
         if (!memberRepository.existsById(memberId)) {
             throw new NotFoundDBEntityException("존재하지 않는 사용자의 id값 입니다. id: [" + memberId + "]");
         }
-    }
-
-    // TODO YB/OB 회원에 대한 활동 정보 Validation 추가
-    @Deprecated
-    public List<String> concatPartAndGeneration(Long memberId) {
-        return memberSoptActivityRepository.findAllByMemberId(memberId).stream()
-                .map(activity -> String.format("%d기 %s", activity.getGeneration(), activity.getPart()))
-                .toList();
     }
 
     public List<Member> findAllMembersByCoffeeChatActivate() {
