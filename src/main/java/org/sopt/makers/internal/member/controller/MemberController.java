@@ -293,12 +293,4 @@ public class MemberController {
             response.careers().remove(index+1);
         }
     }
-
-    private String checkTeamNullCondition (String team) {
-        val teamNullCondition = (team == null || team.equals("해당 없음"));
-        if (teamNullCondition) {
-            team = null;
-        }
-        return team;
-    }
 }
