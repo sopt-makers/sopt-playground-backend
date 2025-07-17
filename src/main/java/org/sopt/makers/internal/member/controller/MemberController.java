@@ -147,31 +147,9 @@ public class MemberController {
     @GetMapping("/profile/{id}")
     public ResponseEntity<MemberProfileSpecificResponse> getUserProfile (
             @PathVariable Long id,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val member = memberService.getMemberHasProfileById(id);
-        val memberProfileProjects = memberService.getMemberProfileProjects(id);
-        val activityMap = memberService.getMemberProfileActivity(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val soptActivity = memberService.getMemberProfileProjects(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val soptActivityResponse = soptActivity.stream()
-                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()), m.projects()))
-                .collect(Collectors.toList());
-        val activityResponses = activityMap.entrySet().stream().map(entry ->
-                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
-                ).collect(Collectors.toList());
-        val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = MemberProfileSpecificResponse.applyPhoneMasking(
-            memberMapper.toProfileSpecificResponse(
-                member, true, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
-            ),
-            isMine, isCoffeeChatActivate);
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(id, userId);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
