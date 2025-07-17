@@ -40,7 +40,7 @@ public class CoffeeChatRetriever {
     }
 
     public void checkAlreadyExistCoffeeChat(Member member) {
-        if (coffeeChatRepository.existsCoffeeChatByMember(member)) {
+        if (existsCoffeeChat(member)) {
             throw new ClientBadRequestException("이미 커피챗 정보가 등록된 유저입니다. " + "member id: " + member.getId());
         }
     }
@@ -65,7 +65,7 @@ public class CoffeeChatRetriever {
         Long sentCoffeeChatCount = coffeeChatHistoryRepository.countBySender(member);
         CoffeeChatStatus coffeeChatStatus;
 
-        if (!coffeeChatRepository.existsCoffeeChatByMember(member)) {
+        if (!existsCoffeeChat(member)) {
             coffeeChatStatus = CoffeeChatStatus.NONE;
         } else {
             CoffeeChat coffeeChat = findCoffeeChatByMember(member);
