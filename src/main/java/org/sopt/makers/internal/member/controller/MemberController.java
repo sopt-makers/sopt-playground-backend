@@ -267,9 +267,9 @@ public class MemberController {
     @Operation(summary = "Amplitude 를 위한 user properties 반환 API ")
     @GetMapping("/property")
     public ResponseEntity<MemberPropertiesResponse> getUserProperty (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberProperties(memberDetails.getId()));
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberProperties(userId));
     }
 
     private void sortProfileCareer (MemberProfileSpecificResponse response) {
