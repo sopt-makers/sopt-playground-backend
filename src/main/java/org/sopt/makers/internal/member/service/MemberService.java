@@ -2,7 +2,6 @@ package org.sopt.makers.internal.member.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import com.slack.api.model.User;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -13,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.external.platform.PlatformService;
@@ -36,8 +36,10 @@ import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse.MemberActivityResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
@@ -56,8 +58,6 @@ import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyD
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +66,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 
 @Slf4j
 @RequiredArgsConstructor
@@ -92,6 +93,7 @@ public class MemberService {
     private final PlatformService platformService;
     private final AuthConfig authConfig;
     private final PlatformClient platformClient;
+    private final InfiniteScrollUtil infiniteScrollUtil;
 
     public InternalUserDetails getInternalUserById(Long id) {
         return platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
@@ -272,22 +274,49 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public int getMemberProfilesCount(Integer filter, String search, Integer generation,
-                                      Integer employed, String mbti, String team) {
-        val part = getMemberPart(filter);
-        return memberProfileQueryRepository.countAllMemberProfile(part, search, generation, employed, mbti, team);
-    }
+    public MemberAllProfileResponse getMemberProfiles(
+            Integer filter, Integer limit, Integer cursor, String search,
+            Integer generation, Integer employed, Integer orderBy, String mbti, String team
+    ) {
+        List<Member> members = memberProfileQueryRepository.findAllLimitedMemberProfile(
+                    getMemberPart(filter), infiniteScrollUtil.checkLimitForPagination(limit),
+                    cursor, search, generation, employed, orderBy, mbti, team);
 
-    @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String search, Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
-        val part = getMemberPart(filter);
-        if (limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, search, generation,
-                    employed, orderBy, mbti, team);
-        } else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, search, generation,
-                    employed, orderBy, mbti, team);
+        if (members.isEmpty()) {
+            return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
         }
+
+        List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
+        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+        List<MemberProfileResponse> memberList = members.stream().map(member -> {
+            InternalUserDetails userDetails = userDetailsMap.get(member.getId());
+            if (Objects.isNull(userDetails)) {
+                return null;
+            }
+            boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+//            MemberProfileResponse profileResponse = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+
+            return MemberProfileResponse.checkIsBlindPhone(
+                    new MemberProfileResponse(
+                            member.getId(), userDetails.name(), userDetails.profileImage(), userDetails.birthday(),
+                            userDetails.phone(), userDetails.email(), member.getAddress(), member.getUniversity(),
+                            member.getMajor(), member.getIntroduction(), member.getSkill(), member.getMbti(),
+                            member.getMbtiDescription(), member.getSojuCapacity(), member.getInterest(),
+                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).userFavor(),
+                            member.getIdealType(), member.getSelfIntroduction(),
+                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).activities(),
+                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).links(),
+                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).careers(),
+                            member.getAllowOfficial(), isCoffeeChatActivate
+                    ),
+                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone())
+            );
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+
+        boolean hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
+        int totalMembersCount = memberProfileQueryRepository.countAllMemberProfile(getMemberPart(filter), search, generation, employed, mbti, team);
+        return new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
     }
 
     private String getMemberPart(Integer filter) {

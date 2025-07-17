@@ -193,15 +193,7 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, search, generation, employed, orderBy, mbti, team);
-        val memberList = members.stream().map(member ->
-                MemberProfileResponse.checkIsBlindPhone(
-                        memberMapper.toProfileResponse(member, coffeeChatService.getCoffeeChatActivate(member.getId())),
-                        memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))
-        ).collect(Collectors.toList());
-        val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
-        val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);
-        val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
+        MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, cursor, search, generation, employed, orderBy, mbti, team);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
