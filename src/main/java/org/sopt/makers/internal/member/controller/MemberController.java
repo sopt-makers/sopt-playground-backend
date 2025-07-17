@@ -86,8 +86,7 @@ public class MemberController {
     @Operation(summary = "유저 이름으로 조회 API")
     @GetMapping("/search")
     public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
-        val members = memberService.getMemberByName(name);
-        val responses = members.stream().map(memberMapper::toResponse).collect(Collectors.toList());
+        List<MemberResponse> responses = memberService.getMemberByName(name);
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 

@@ -2,9 +2,11 @@ package org.sopt.makers.internal.member.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import com.slack.api.model.User;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import lombok.RequiredArgsConstructor;
@@ -98,6 +100,30 @@ public class MemberService {
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         boolean isCoffeeChatActive = coffeeChatRetriever.existsCoffeeChat(member);
         return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberResponse> getMemberByName(String name) {
+        List<Member> members = memberRepository.findAllByNameContaining(name);
+        if (members.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
+        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        return members.stream().map(member -> {
+            InternalUserDetails userDetails = userDetailsMap.get(member.getId());
+            if (userDetails == null) return null;
+            return new MemberResponse(
+                    member.getId(),
+                    userDetails.name(),
+                    userDetails.lastGeneration(),
+                    userDetails.profileImage(),
+                    member.getHasProfile(),
+                    member.getEditActivitiesAble()
+            );
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -445,11 +471,6 @@ public class MemberService {
         val activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
         memberSoptActivityRepository.delete(activity);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Member> getMemberByName(String name) {
-        return memberRepository.findAllByNameContaining(name);
     }
 
     @Transactional(readOnly = true)
