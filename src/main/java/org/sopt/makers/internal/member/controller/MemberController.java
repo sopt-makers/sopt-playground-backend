@@ -247,9 +247,9 @@ public class MemberController {
     @PatchMapping("/block/activate")
     public ResponseEntity<Map<String, Boolean>> blockUser (
             @RequestBody MemberBlockRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.blockUser(memberDetails.getId(), request.blockedMemberId());
+        memberService.blockUser(userId, request.blockedMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 차단 활성 성공", true));
     }
 

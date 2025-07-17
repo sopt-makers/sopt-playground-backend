@@ -567,16 +567,16 @@ public class MemberService {
 
     @Transactional
     public void blockUser(Long memberId, Long blockedMemberId) {
-        val blocker = memberRetriever.findMemberById(memberId);
-        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
+        Member blocker = memberRetriever.findMemberById(memberId);
+        Member blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
-        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         if (blockHistory.isPresent()) {
-            val block = blockHistory.get();
+            MemberBlock block = blockHistory.get();
             block.updateIsBlocked(true);
             memberBlockRepository.save(block);
         } else {
-            val newBlock = MemberBlock.builder()
+            MemberBlock newBlock = MemberBlock.builder()
                     .blocker(blocker)
                     .blockedMember(blockedMember).build();
             memberBlockRepository.save(newBlock);
