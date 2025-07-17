@@ -284,11 +284,14 @@ public class MemberService {
     }
 
     @Transactional
-    public Member saveMemberProfile(Long id, MemberProfileSaveRequest request) {
-        val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        val memberId = member.getId();
-        if (memberId == null) throw new NotFoundDBEntityException("Member id is null");
-        val memberLinkEntities = request.links().stream().map(link ->
+    public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(
+                        () -> new NotFoundDBEntityException("Member")
+                );
+        Long memberId = member.getId();
+        if (Objects.isNull(memberId)) throw new NotFoundDBEntityException("Member id is null");
+        List<MemberLink> memberLinkEntities = request.links().stream().map(link ->
                 MemberLink.builder()
                         .memberId(memberId)
                         .title(link.title())

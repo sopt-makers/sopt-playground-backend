@@ -101,7 +101,7 @@ public class MemberController {
     )
     @PostMapping("/profile")
     public ResponseEntity<MemberProfileResponse> createUserProfile (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody MemberProfileSaveRequest request
     ) {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
@@ -111,9 +111,9 @@ public class MemberController {
         }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
-        val member = memberService.saveMemberProfile(memberDetails.getId(), request);
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+        Member member = memberService.saveMemberProfile(userId, request);
+        boolean isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        MemberProfileResponse response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
