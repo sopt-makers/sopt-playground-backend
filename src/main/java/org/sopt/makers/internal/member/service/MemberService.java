@@ -529,7 +529,7 @@ public class MemberService {
 
     @Transactional
     public void deleteUserProfileLink(Long linkId, Long memberId) {
-        val link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
+        MemberLink link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Link"));
         memberLinkRepository.delete(link);
     }

@@ -217,7 +217,7 @@ public class MemberController {
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "take") Integer take
     ) {
-        val response = makersCrewClient.getUserAllCrew(page, take, id);
+        MemberCrewResponse response = makersCrewClient.getUserAllCrew(page, take, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -225,10 +225,10 @@ public class MemberController {
     @DeleteMapping("/profile/link/{linkId}")
     public ResponseEntity<CommonResponse> deleteUserProfileLink (
             @PathVariable(name = "linkId") Long linkId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.deleteUserProfileLink(linkId, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 link를 삭제했습니다.");
+        memberService.deleteUserProfileLink(linkId, userId);
+        CommonResponse response = new CommonResponse(true, "성공적으로 link를 삭제했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
