@@ -64,4 +64,12 @@ public class PlatformService {
         InternalUserDetails userDetails = getInternalUser(memberId);
         return new MemberSimpleResonse(memberId, userDetails.name(), userDetails.profileImage());
     }
+
+    public List<String> getPartAndGenerationList(Long userId) {
+        InternalUserDetails userDetails = getInternalUser(userId);
+        List<SoptActivity> soptActivities = userDetails.soptActivities();
+        return soptActivities.stream()
+                .map(activity -> String.format("%d기 %s", activity.generation(), activity.part()))
+                .toList();
+    }
 }

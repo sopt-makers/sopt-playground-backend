@@ -315,7 +315,7 @@ public class MemberService {
     public List<InternalCoffeeChatMemberDto> getAllMemberByCoffeeChatActivate() {
         List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
         return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
-                member, memberRetriever.concatPartAndGeneration(member.getId())
+                member, platformService.getPartAndGenerationList(member.getId())
         )).toList();
     }
 
@@ -572,7 +572,7 @@ public class MemberService {
         Member member = memberRetriever.findMemberById(memberId);
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(memberId);
         MemberCoffeeChatPropertyDto coffeeChatProperty = coffeeChatRetriever.getMemberCoffeeChatProperty(member);
-        List<String> activitiesAndGeneration = memberRetriever.concatPartAndGeneration(memberId);
+        List<String> activitiesAndGeneration = platformService.getPartAndGenerationList(memberId);
 
         long uploadSopticleCount = communityPostRepository.countSopticleByMemberId(memberId);
         long uploadReviewCount = reviewService.fetchReviewCountByUsername(member.getName());

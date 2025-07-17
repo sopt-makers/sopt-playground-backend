@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.coffeechat.mapper;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
@@ -22,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CoffeeChatResponseMapper {
 
-    public CoffeeChatDetailResponse toCoffeeChatDetailResponse(CoffeeChat coffeeChat, Member member, MemberCareer memberCareer, Boolean isMine) {
+    public CoffeeChatDetailResponse toCoffeeChatDetailResponse(CoffeeChat coffeeChat, Member member, InternalUserDetails userDetails, MemberCareer memberCareer, Boolean isMine) {
 
         if (!coffeeChat.getMember().getId().equals(member.getId())) {
             throw new BusinessLogicException("잘못된 커피챗 사용자가 전달되었습니다.");
@@ -31,13 +32,13 @@ public class CoffeeChatResponseMapper {
         return new CoffeeChatDetailResponse(
                 coffeeChat.getCoffeeChatBio(),
                 member.getId(),
-                member.getProfileImage(),
-                member.getName(),
+                userDetails.profileImage(),
+                userDetails.name(),
                 coffeeChat.getCareer().getTitle(),
                 memberCareer != null ? memberCareer.getCompanyName() : member.getUniversity(),
                 memberCareer != null ? memberCareer.getTitle() : null,
-                member.getIsPhoneBlind() ? null : member.getPhone(),
-                member.getEmail(),
+                member.getIsPhoneBlind() ? null : userDetails.phone(),
+                userDetails.email(),
                 coffeeChat.getIntroduction(),
                 coffeeChat.getSection().stream().map(CoffeeChatSection::getTitle).toList(),
                 coffeeChat.getCoffeeChatTopicType().stream().map(CoffeeChatTopicType::getTitle).toList(),

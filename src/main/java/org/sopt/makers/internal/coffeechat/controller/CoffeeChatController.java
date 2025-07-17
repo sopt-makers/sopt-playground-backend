@@ -59,20 +59,20 @@ public class CoffeeChatController {
     @Operation(summary = "커피챗 상세 조회 API")
     @GetMapping("/{memberId}")
     public ResponseEntity<CoffeeChatDetailResponse> getCoffeeChat(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long memberId
     ) {
 
-        return ResponseEntity.status(HttpStatus.OK).body(coffeeChatService.getCoffeeChatDetail(memberDetails.getId(), memberId));
+        return ResponseEntity.status(HttpStatus.OK).body(coffeeChatService.getCoffeeChatDetail(userId, memberId));
     }
 
     @Operation(summary = "커피챗/쪽지 수신 API")
     @PostMapping("")
     public ResponseEntity<CommonResponse> requestCoffeeChat(
             @Valid @RequestBody CoffeeChatRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        coffeeChatService.sendCoffeeChatRequest(request, memberDetails.getId());
+        coffeeChatService.sendCoffeeChatRequest(request, userId);
         CommonResponse response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -81,9 +81,9 @@ public class CoffeeChatController {
     @PatchMapping("/open")
     public ResponseEntity<CommonResponse> updateCoffeeChatActivate(
             @Valid @RequestBody CoffeeChatOpenRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        coffeeChatService.updateCoffeeChatOpen(memberDetails.getId(), request);
+        coffeeChatService.updateCoffeeChatOpen(userId, request);
         CommonResponse response = new CommonResponse(true, "커피챗 공개 여부 변경에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -92,9 +92,9 @@ public class CoffeeChatController {
     @PostMapping("/details")
     public ResponseEntity<CommonResponse> createCoffeeChatDetails(
             @Valid @RequestBody CoffeeChatDetailsRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        coffeeChatService.createCoffeeChatDetails(memberDetails.getId(), request);
+        coffeeChatService.createCoffeeChatDetails(userId, request);
         CommonResponse response = new CommonResponse(true, "커피챗 정보 생성에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -103,9 +103,9 @@ public class CoffeeChatController {
     @PutMapping("/details")
     public ResponseEntity<CommonResponse> updateCoffeeChatDetails(
             @Valid @RequestBody CoffeeChatDetailsRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        coffeeChatService.updateCoffeeChatDetails(memberDetails.getId(), request);
+        coffeeChatService.updateCoffeeChatDetails(userId, request);
         CommonResponse response = new CommonResponse(true, "커피챗 정보 수정에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -113,9 +113,9 @@ public class CoffeeChatController {
     @Operation(summary = "커피챗 정보 삭제 API")
     @DeleteMapping("/details")
     public ResponseEntity<CommonResponse> deleteCoffeeChatDetails(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        coffeeChatService.deleteCoffeeChatDetails(memberDetails.getId());
+        coffeeChatService.deleteCoffeeChatDetails(userId);
         CommonResponse response = new CommonResponse(true, "커피챗 정보 삭제에 성공했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -123,19 +123,19 @@ public class CoffeeChatController {
     @Operation(summary = "진행한 커피챗 타이틀 조회 API")
     @GetMapping("/history")
     public ResponseEntity<CoffeeChatHistoryTitleResponse> getCoffeeChatHistoryTitle(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-
-        return ResponseEntity.status(HttpStatus.OK).body(new CoffeeChatHistoryTitleResponse(coffeeChatService.getCoffeeChatHistories(memberDetails.getId())));
+        CoffeeChatHistoryTitleResponse response = new CoffeeChatHistoryTitleResponse(coffeeChatService.getCoffeeChatHistories(userId));
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "진행한 커피챗 리뷰 생성 API")
     @PostMapping("/review")
     public ResponseEntity<Map<String, Boolean>> reviewCoffeeChat(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody @Valid CoffeeChatReviewRequest request
     ) {
-        coffeeChatService.createCoffeeChatReview(memberDetails.getId(), request);
+        coffeeChatService.createCoffeeChatReview(userId, request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
