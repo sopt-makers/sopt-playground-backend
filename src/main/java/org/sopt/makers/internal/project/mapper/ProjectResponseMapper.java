@@ -1,36 +1,25 @@
 package org.sopt.makers.internal.project.mapper;
 
-import lombok.val;
+import java.util.List;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
+import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.project.domain.MemberProjectRelation;
 import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
-import org.sopt.makers.internal.internal.dto.InternalProjectDetailResponse;
-import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.project.domain.ProjectLink;
+import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.allProject.ProjectMemberResponse;
+import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
-import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.ProjectMemberVo;
-import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectLinkResponse;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Component
 public class ProjectResponseMapper {
-
-    public ProjectMemberResponse toProjectMemberResponse (ProjectMemberVo project) {
-        return new ProjectMemberResponse(
-                project.memberId(), project.memberName(), project.memberProfileImage()
-        );
-    }
 
     public ProjectLinkResponse toProjectDetailLinkResponse (ProjectLink project) {
         return new ProjectLinkResponse(project.getId(), project.getTitle(), project.getUrl());
@@ -110,36 +99,8 @@ public class ProjectResponseMapper {
         );
     }
 
-    public InternalProjectDetailResponse toInternalProjectDetailResponse (List<ProjectMemberVo> projectMembers, List<ProjectLinkDao> projectLinks) {
-        val projectInfo = projectMembers.get(0);
-        val memberResponses = projectMembers.stream().map(this::toInternalProjectMemberResponse).collect(Collectors.toList());
-        val linkResponses = projectLinks.stream().map(this::toInternalProjectDetailLinkResponse).collect(Collectors.toList());
-
-        return new InternalProjectDetailResponse(
-                projectInfo.id(),
-                projectInfo.name(),
-                projectInfo.writerId(),
-                projectInfo.generation(),
-                projectInfo.category(),
-                projectInfo.startAt(),
-                projectInfo.endAt(),
-                projectInfo.serviceType(),
-                projectInfo.isAvailable(),
-                projectInfo.isFounding(),
-                projectInfo.summary(),
-                projectInfo.detail(),
-                projectInfo.logoImage(),
-                projectInfo.thumbnailImage(),
-                projectInfo.images(),
-                projectInfo.createdAt(),
-                projectInfo.updatedAt(),
-                memberResponses,
-                linkResponses
-        );
-    }
-
     public InternalProjectResponse toInternalProjectResponse (Project project, List<ProjectLinkDao> projectLinks) {
-        val linkResponses = projectLinks.stream().map(this::toIntenralProjectLinkResponse).collect(Collectors.toList());
+        List<ProjectLinkResponse> linkResponses = projectLinks.stream().map(this::toIntenralProjectLinkResponse).toList();
 
         return new InternalProjectResponse(
                 project.getId(),
@@ -157,19 +118,8 @@ public class ProjectResponseMapper {
         );
     }
 
-    public InternalProjectDetailResponse.ProjectMemberResponse toInternalProjectMemberResponse (ProjectMemberVo project) {
-        return new InternalProjectDetailResponse.ProjectMemberResponse(
-                project.memberId(), project.memberRole(), project.memberDesc(), project.isTeamMember(),
-                project.memberName(), project.memberGenerations(), project.memberProfileImage(), project.memberHasProfile()
-        );
-    }
-
-    public InternalProjectResponse.ProjectLinkResponse toIntenralProjectLinkResponse (ProjectLinkDao project) {
-        return new InternalProjectResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
-    }
-
-    public InternalProjectDetailResponse.ProjectLinkResponse toInternalProjectDetailLinkResponse (ProjectLinkDao project) {
-        return new InternalProjectDetailResponse.ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
+    public ProjectLinkResponse toIntenralProjectLinkResponse (ProjectLinkDao project) {
+        return new ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
     }
 
     public InternalMemberProjectResponse toInternalMemberProjectResponse (InternalUserDetails user, int count) {

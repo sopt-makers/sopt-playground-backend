@@ -1,34 +1,33 @@
 package org.sopt.makers.internal.internal;
 
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.sopt.makers.internal.internal.dto.InternalAuthVo;
-import org.sopt.makers.internal.member.dto.ActivityVo;
-import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
-import org.sopt.makers.internal.member.domain.enums.Part;
-import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
-import org.sopt.makers.internal.member.repository.MemberRepository;
-import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.dao.ProjectMemberDao;
-import org.sopt.makers.internal.project.dto.ProjectMemberVo;
-import org.sopt.makers.internal.exception.MemberHasNotProfileException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
-import org.sopt.makers.internal.project.mapper.ProjectMapper;
-import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
-import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
-import org.sopt.makers.internal.project.repository.ProjectRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.sopt.makers.internal.exception.MemberHasNotProfileException;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.internal.dto.InternalAuthVo;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
+import org.sopt.makers.internal.member.domain.enums.Part;
+import org.sopt.makers.internal.member.dto.ActivityVo;
+import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
+import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
+import org.sopt.makers.internal.member.repository.MemberRepository;
+import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
+import org.sopt.makers.internal.project.domain.Project;
+import org.sopt.makers.internal.project.dto.ProjectMemberVo;
+import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
+import org.sopt.makers.internal.project.dto.dao.ProjectMemberDao;
+import org.sopt.makers.internal.project.mapper.ProjectMapper;
+import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
+import org.sopt.makers.internal.project.repository.ProjectRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -69,12 +68,6 @@ public class InternalApiService {
     @Transactional(readOnly = true)
     public List<ProjectLinkDao> fetchAllLinks () {
         return projectQueryRepository.findAllLinks();
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProjectLinkDao> fetchLinksById (Long id) {
-        val project = projectQueryRepository.findLinksById(id);
-        return project;
     }
 
     @Transactional(readOnly = true)

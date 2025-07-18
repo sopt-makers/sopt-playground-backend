@@ -2,6 +2,7 @@ package org.sopt.makers.internal.internal.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectLinkResponse;
 
 public record InternalProjectResponse(
         @Schema(required = true)
@@ -30,10 +31,4 @@ public record InternalProjectResponse(
         Boolean isFounding,
 
         List<ProjectLinkResponse> links
-) {
-    public record ProjectLinkResponse(
-            Long linkId,
-            String linkTitle,
-            String linkUrl
-    ){}
-}
+) { }

@@ -2,9 +2,6 @@ package org.sopt.makers.internal.project.dto.dao;
 
 import com.querydsl.core.annotations.QueryProjection;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 public record ProjectLinkDao (
         Long id,
         String name,
