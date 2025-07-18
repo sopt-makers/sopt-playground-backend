@@ -11,7 +11,7 @@ public record MemberProfileResponse(
     @Schema(required = true)
     String name,
     String profileImage,
-    LocalDate birthday,
+    String birthday,
     String phone,
     String email,
     String address,

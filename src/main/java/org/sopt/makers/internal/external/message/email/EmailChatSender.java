@@ -3,6 +3,7 @@ package org.sopt.makers.internal.external.message.email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.external.message.MessageSender;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
@@ -19,20 +20,20 @@ public class EmailChatSender implements MessageSender {
 	private final EmailSender emailSender;
 
 	@Override
-	public void sendMessage(Member sender, Member receiver, String content, String replyInfo, ChatCategory category) {
+	public void sendMessage(InternalUserDetails sender, InternalUserDetails receiver, String content, String replyInfo, ChatCategory category) {
 		String html = emailSender.createCoffeeChatEmailHtml(
-				sender.getName(),
+				sender.name(),
 				replyInfo,
-				sender.getId(),
+				sender.userId(),
 				category.getTitle(),
-				sender.getProfileImage(),
+				sender.profileImage(),
 				content
 		);
 		String subject = """
-            띠링, %s님이 보낸 쪽지가 도착했어요!""".formatted(sender.getName());
+            띠링, %s님이 보낸 쪽지가 도착했어요!""".formatted(sender.name());
 		try {
 			emailSender.sendEmail(
-					receiver.getEmail(),
+					receiver.email(),
 					subject,
 					html
 			);
