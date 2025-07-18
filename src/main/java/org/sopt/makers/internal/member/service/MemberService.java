@@ -1,71 +1,77 @@
 package org.sopt.makers.internal.member.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.coffeechat.dto.request.InternalCoffeeChatMemberDto;
+import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
+import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.PlatformClient;
-import org.sopt.makers.internal.external.platform.PlatformService;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
-import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberCareer;
-import org.sopt.makers.internal.member.domain.MemberLink;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
-import org.sopt.makers.internal.member.domain.UserFavor;
-import org.sopt.makers.internal.member.domain.MemberBlock;
-import org.sopt.makers.internal.member.domain.MemberReport;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformClient;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.slack.SlackClient;
+import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberBlock;
+import org.sopt.makers.internal.member.domain.MemberCareer;
+import org.sopt.makers.internal.member.domain.MemberLink;
+import org.sopt.makers.internal.member.domain.MemberReport;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
+import org.sopt.makers.internal.member.domain.UserFavor;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
+import org.sopt.makers.internal.member.dto.response.MemberCareerResponse;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse.MemberActivityResponse;
-import org.sopt.makers.internal.member.dto.response.MemberResponse;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
+import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.sopt.makers.internal.member.repository.MemberLinkRepository;
 import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
+import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
-import org.sopt.makers.internal.coffeechat.dto.request.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
-import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
-import org.sopt.makers.internal.member.repository.MemberBlockRepository;
-import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 @Slf4j
@@ -647,5 +653,33 @@ public class MemberService {
             team = null;
         }
         return team;
+    }
+
+    public List<MakersMemberProfileResponse> getAllMakersMembersProfiles() {
+        List<Long> makerMemberIds = MakersMemberId.getMakersMember();
+        List<Member> members = memberRepository.findAllByHasProfileTrueAndIdIn(makerMemberIds);
+        List<InternalUserDetails> userDetails = platformService.getInternalUsers(makerMemberIds);
+
+        Map<Long, List<MemberCareer>> careerMap = members.stream()
+                .collect(Collectors.toMap(Member::getId, Member::getCareers, (a,b) -> a));
+
+        return userDetails.stream()
+                .map(userDetail -> {
+                    List<MemberSoptActivityResponse> memberSoptActivityResponses = userDetail.soptActivities().stream()
+                            .map(activity -> new MemberSoptActivityResponse(
+                                    (long)activity.activityId(),
+                                    activity.generation()))
+                            .toList();
+                    List<MemberCareer> memberCareers = careerMap.getOrDefault(userDetail.userId(), Collections.emptyList());
+                    List<MemberCareerResponse> memberCareerResponses = memberCareers.stream()
+                            .map(memberCareer -> new MemberCareerResponse(
+                                    memberCareer.getId(),
+                                    memberCareer.getCompanyName(),
+                                    memberCareer.getTitle(),
+                                    memberCareer.getIsCurrent()))
+                            .toList();
+
+                    return new MakersMemberProfileResponse(userDetail.userId(), userDetail.name(), userDetail.profileImage(), memberSoptActivityResponses, memberCareerResponses);
+                }).toList();
     }
 }
