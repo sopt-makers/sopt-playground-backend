@@ -275,11 +275,6 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getAllMakersMemberProfiles() {
-        return memberRepository.findAllByHasProfileTrueAndIdIn(MakersMemberId.getMakersMember());
-    }
-
-    @Transactional(readOnly = true)
     public MemberAllProfileResponse getMemberProfiles(
             Integer filter, Integer limit, Integer cursor, String search,
             Integer generation, Integer employed, Integer orderBy, String mbti, String team

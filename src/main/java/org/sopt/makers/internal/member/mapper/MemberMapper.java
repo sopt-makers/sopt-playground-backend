@@ -1,32 +1,27 @@
 package org.sopt.makers.internal.member.mapper;
 
 import java.util.List;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.internal.dto.InternalMemberActivityResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileSpecificResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberResponse;
 import org.sopt.makers.internal.internal.dto.InternalOfficialMemberResponse;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.dto.ActivityVo;
-import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
+import org.sopt.makers.internal.member.dto.MemberProjectVo;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
-import org.sopt.makers.internal.member.dto.MemberProjectVo;
-import org.sopt.makers.internal.member.dto.response.MemberResponse;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
-    MemberResponse toResponse(Member member);
     InternalMemberResponse toInternalResponse(Member member, Integer latestGeneration);
     MemberProfileResponse toProfileResponse (Member member, Boolean isCoffeeChatActivate);
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
-    MakersMemberProfileResponse toMakersMemberProfileResponse (Member member);
 
     @Mapping(target = "projects", source = "projects")
     MemberProfileProjectVo toSoptMemberProfileProjectVo(MemberSoptActivity member, List<MemberProjectVo> projects);
