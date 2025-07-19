@@ -10,10 +10,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.auth.AuthConfig;
-import org.sopt.makers.internal.coffeechat.dto.request.InternalCoffeeChatMemberDto;
-import org.sopt.makers.internal.coffeechat.dto.response.InternalCoffeeChatMemberResponse;
-import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.community.dto.InternalCommunityPost;
 import org.sopt.makers.internal.community.dto.PostCategoryDao;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
@@ -23,7 +19,6 @@ import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
@@ -48,9 +43,6 @@ public class InternalOpenApiController {
 
     private final InternalApiService internalApiService;
     private final MemberService memberService;
-    private final MemberMapper memberMapper;
-
-    private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
     private final ProjectService projectService;
     private final ProjectResponseMapper projectMapper;
@@ -58,19 +50,14 @@ public class InternalOpenApiController {
     private final CommunityPostService communityPostService;
     private final CommunityResponseMapper communityMapper;
 
-    private final AuthConfig authConfig;
-    private final List<String> organizerPartName = List.of(
-            "운영 팀장", "미디어 팀장", "총무", "회장", "부회장", "웹 파트장", "기획 파트장",
-            "서버 파트장", "디자인 파트장", "안드로이드 파트장", "iOS 파트장", "메이커스 리드");
-
-    @Operation(summary = "Project id로 조회 API")
+    @Operation(summary = "Project id로 조회 API") // 공홈 사용
     @GetMapping("/projects/{id}")
     public ResponseEntity<ProjectDetailResponse> getProject (@PathVariable Long id) {
         ProjectDetailResponse response = projectService.getProjectDetailResponseById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "Project 전체 조회 API")
+    @Operation(summary = "Project 전체 조회 API") // 공홈 사용
     @GetMapping("/projects")
     public ResponseEntity<List<InternalProjectResponse>> getProjects () {
         Map<Long, Project> projectMap = internalApiService.fetchAll().stream()
@@ -84,7 +71,7 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
-    @Operation(summary = "회원 프로필 및 활동 정보 조회 API")
+    @Operation(summary = "회원 프로필 및 활동 정보 조회 API") // 앱팀
     @GetMapping("members/{memberId}/project")
     public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
             @PathVariable Long memberId
@@ -92,6 +79,43 @@ public class InternalOpenApiController {
         InternalUserDetails user = memberService.getInternalUserById(memberId);
         int count = projectService.getProjectCountByMemberId(memberId);
         InternalMemberProjectResponse response = projectMapper.toInternalMemberProjectResponse(user, count);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    // TDDO
+    @Operation( // 앱팀
+            summary = "최근 Community Post 조회 API",
+            description= """
+                    요청 category별 가장 최근의 게시물을 반환하는 API입니다. (default는 전체 중 최근 게시물을 반환)
+                    
+                    [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
+                    * 각 대분류의 소분류로도 조회 가능합니다. 
+            """)
+    @GetMapping("/community/post/recent")
+    public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
+            @RequestParam(required = false) String category
+    ) {
+        PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
+        InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    // TDDO
+    @Operation(
+            summary = "앱팀 Internal API 최신글 5개 조회",
+            description = "최상위 카테고리별(자유, 질문, 홍보, 파트Talk, 솝티클)로 최신글 1개씩 총 5개를 조회하는 API입니다.")
+    @GetMapping("/community/posts/latest")
+    public ResponseEntity<List<InternalLatestPostResponse>> getLatestPostsForApp() {
+        List<InternalLatestPostResponse> response = communityPostService.getInternalLatestPosts();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    // TDDO
+    @Operation(summary = "앱팀 Internal API 인기글 3 조회")
+    @GetMapping("/community/posts/popular")
+    public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
+        int limit = 3;
+        List<InternalPopularPostResponse> response = communityPostService.getPopularPostsForInternal(limit);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -305,46 +329,12 @@ public class InternalOpenApiController {
 //            response.careers().remove(index+1);
 //        }
 //    }
-
-    @Operation(
-            summary = "최근 Community Post 조회 API",
-            description= """
-                    요청 category별 가장 최근의 게시물을 반환하는 API입니다. (default는 전체 중 최근 게시물을 반환)
-                    
-                    [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
-                    * 각 대분류의 소분류로도 조회 가능합니다. 
-            """)
-    @GetMapping("/community/post/recent")
-    public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
-            @RequestParam(required = false) String category
-    ) {
-        PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
-        InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(
-            summary = "앱팀 Internal API 최신글 5개 조회",
-            description = "최상위 카테고리별(자유, 질문, 홍보, 파트Talk, 솝티클)로 최신글 1개씩 총 5개를 조회하는 API입니다.")
-    @GetMapping("/community/posts/latest")
-    public ResponseEntity<List<InternalLatestPostResponse>> getLatestPostsForApp() {
-        List<InternalLatestPostResponse> response = communityPostService.getInternalLatestPosts();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "커피챗 오픈 유저 리스트 조회 API")
-    @GetMapping("/members/coffeechat")
-    public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
-        List<InternalCoffeeChatMemberDto> members = memberService.getAllMemberByCoffeeChatActivate();
-        List<InternalCoffeeChatMemberResponse> response = coffeeChatResponseMapper.toInternalCoffeeChatMemberResponse(members);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "앱팀 Internal API 인기글 3 조회")
-    @GetMapping("/community/posts/popular")
-    public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
-        int limit = 3;
-        List<InternalPopularPostResponse> response = communityPostService.getPopularPostsForInternal(limit);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
+//
+//    @Operation(summary = "커피챗 오픈 유저 리스트 조회 API")
+//    @GetMapping("/members/coffeechat")
+//    public ResponseEntity<List<InternalCoffeeChatMemberResponse>> getCoffeeChatActivateMembers() {
+//        List<InternalCoffeeChatMemberDto> members = memberService.getAllMemberByCoffeeChatActivate();
+//        List<InternalCoffeeChatMemberResponse> response = coffeeChatResponseMapper.toInternalCoffeeChatMemberResponse(members);
+//        return ResponseEntity.status(HttpStatus.OK).body(response);
+//    }
 }
