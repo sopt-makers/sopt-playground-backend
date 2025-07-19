@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -14,6 +15,7 @@ import org.sopt.makers.internal.community.dto.request.MentionRequest;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
+import org.sopt.makers.internal.community.repository.category.CategoryRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
@@ -94,6 +96,7 @@ public class CommunityPostService {
     private final ReportPostRepository reportPostRepository;
     private final MemberBlockRepository memberBlockRepository;
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final CategoryRepository categoryRepository;
 
     private final CommunityMapper communityMapper;
     private final CommunityResponseMapper communityResponseMapper;
@@ -203,9 +206,8 @@ public class CommunityPostService {
 
     @Transactional
     public void deletePost(Long postId, Long memberId) {
-        Member member = memberRetriever.findMemberById(memberId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
-        validatePostOwner(member.getId(), post.getMember().getId());
+        validatePostOwner(memberId, post.getMember().getId());
 
         val deletedPost = communityMapper.toDeleteCommunityPost(post);
         deletedCommunityPostRepository.save(deletedPost);
@@ -253,9 +255,7 @@ public class CommunityPostService {
 
     @Transactional
     public void unlikePost(Long memberId, Long postId) {
-        memberRetriever.checkExistsMemberById(memberId);
         CommunityPostLike communityPostLike = communityPostRetriever.findCommunityPostLike(memberId, postId);
-
         communityPostLikeRepository.delete(communityPostLike);
     }
 
@@ -301,15 +301,18 @@ public class CommunityPostService {
     public List<PopularPostResponse> getPopularPosts(int limitCount) {
         List<CommunityPost> posts = getPopularPostsBase(limitCount);
 
-        Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
-        Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
+        Map<Long, String> categoryNameMap = categoryRetriever.getAllCategories().stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
 
         return posts.stream()
-                .map(post -> communityResponseMapper.toPopularPostResponse(
-                        post,
-                        anonymousProfileMap.get(post.getId()),
-                        categoryNameMap.get(post.getCategoryId())
-                ))
+                .map(post -> {
+                    val authorDetails = platformService.getInternalUser(post.getMember().getId());
+                    val anonymousProfile = post.getIsBlindWriter()
+                            ? anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId()).orElse(null)
+                            : null;
+                    String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
+                    return communityResponseMapper.toPopularPostResponse(post, anonymousProfile, authorDetails, categoryName);
+                })
                 .toList();
     }
 
@@ -362,7 +365,12 @@ public class CommunityPostService {
     public List<SopticlePostResponse> getRecentSopticlePosts() {
         List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
         return posts.stream()
-                .map(communityResponseMapper::toSopticlePostResponse)
+                .map(post -> {
+                    val authorDetails = platformService.getInternalUser(post.getMember().getId());
+                    val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(post.getMember().getId());
+                    val memberVo = MemberVo.of(authorDetails, authorCareer);
+                    return communityResponseMapper.toSopticlePostResponse(post, memberVo);
+                })
                 .toList();
     }
 

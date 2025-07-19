@@ -10,6 +10,7 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfi
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
@@ -24,13 +25,16 @@ import static java.util.stream.Collectors.toList;
 
 @Component
 public class CommunityResponseMapper {
-    public CommentResponse toCommentResponse(CommentDao dao, Long memberId, AnonymousCommentProfile profile) {
-        val member = dao.comment().getIsBlindWriter() ? null : MemberVo.of(dao.member());
-        val comment = dao.comment();
-        val anonymousProfile = dao.comment().getIsBlindWriter() && profile != null? toAnonymousCommentProfileVo(profile) : null;
-        val isMine = Objects.equals(dao.member().getId(), memberId);
-        return new CommentResponse(comment.getId(), member, isMine, comment.getPostId(), comment.getParentCommentId(),
-                comment.getContent(), comment.getIsBlindWriter(), anonymousProfile, comment.getIsReported(), comment.getCreatedAt());
+    public CommentResponse toCommentResponse(CommentInfo info, Long memberId) {
+        val comment = info.commentDao().comment();
+        val memberVo = comment.getIsBlindWriter() ? null : info.memberVo();
+        val anonymousProfileVo = comment.getIsBlindWriter() && info.anonymousCommentProfile() != null
+                ? toAnonymousCommentProfileVo(info.anonymousCommentProfile()) : null;
+
+        val isMine = Objects.equals(info.commentDao().member().getId(), memberId);
+
+        return new CommentResponse(comment.getId(), memberVo, isMine, comment.getPostId(), comment.getParentCommentId(),
+                comment.getContent(), comment.getIsBlindWriter(), anonymousProfileVo, comment.getIsReported(), comment.getCreatedAt());
     }
 
     public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao, VoteResponse voteResponse) {
@@ -84,13 +88,24 @@ public class CommunityResponseMapper {
                 voteResponse);
     }
 
-    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId, AnonymousPostProfile anonymousPostProfile, Boolean isLiked, Integer likes) {
+    public CommentResponse toCommentResponse(CommentDao dao, Long memberId, AnonymousCommentProfile profile) {
+        val member = dao.comment().getIsBlindWriter() ? null : MemberVo.of(dao.member());
+        val comment = dao.comment();
+        val anonymousProfile = dao.comment().getIsBlindWriter() && profile != null? toAnonymousCommentProfileVo(profile) : null;
+        val isMine = Objects.equals(dao.member().getId(), memberId);
+        return new CommentResponse(comment.getId(), member, isMine, comment.getPostId(), comment.getParentCommentId(),
+                comment.getContent(), comment.getIsBlindWriter(), anonymousProfile, comment.getIsReported(), comment.getCreatedAt());
+    }
+
+    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentInfo> commentInfos, Long memberId, AnonymousPostProfile anonymousPostProfile, Boolean isLiked, Integer likes) {
         val post = dao.post();
         val category = dao.category();
         val member = dao.post().isBlindWriter() ? null : dao.member();
         val writerId = dao.post().isBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
-        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(toList());
+        val comments = commentInfos.stream()
+                .map(info -> toCommentResponse(info, memberId))
+                .collect(toList());
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         val createdAt = getRelativeTime(dao.post().createdAt());
 
@@ -99,6 +114,18 @@ public class CommunityResponseMapper {
                 category.name(), post.title(), post.content(), post.hits(),
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
                 post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote()
+        );
+    }
+
+    public SopticlePostResponse toSopticlePostResponse(CommunityPost post, MemberVo memberVo) {
+        return new SopticlePostResponse(
+                post.getId(),
+                memberVo,
+                getRelativeTime(post.getCreatedAt()),
+                post.getTitle(),
+                post.getContent(),
+                post.getImages(),
+                post.getSopticleUrl()
         );
     }
 
@@ -174,6 +201,23 @@ public class CommunityResponseMapper {
                     .webLink("https://playground.sopt.org/?feed=" + post.getId())
                     .build();
         }
+    }
+
+    public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, InternalUserDetails userDetails, String categoryName) {
+        MemberNameAndProfileImageResponse memberResponse;
+        if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
+            memberResponse = new MemberNameAndProfileImageResponse(
+                    anonymousPostProfile.getId(),
+                    anonymousPostProfile.getNickname().getNickname(),
+                    anonymousPostProfile.getProfileImg().getImageUrl()
+            );
+        } else {
+            memberResponse = MemberNameAndProfileImageResponse.from(userDetails);
+        }
+
+        return new PopularPostResponse(
+                post.getId(), categoryName, post.getTitle(), memberResponse, post.getHits()
+        );
     }
 
     public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName) {

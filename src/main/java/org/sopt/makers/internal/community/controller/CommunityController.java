@@ -137,10 +137,9 @@ public class CommunityController {
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<Map<String, Boolean>> deletePost(
             @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        communityPostService.deletePost(postId, memberDetails.getId());
-
+        communityPostService.deletePost(postId, userId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 글 삭제 성공", true));
     }
 
@@ -148,25 +147,24 @@ public class CommunityController {
     @PostMapping("/{postId}/comment")
     public ResponseEntity<Map<String, Boolean>> createComment(
             @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody @Valid CommentSaveRequest request
     ) {
-        val writerId = memberDetails.getId();
-        communityCommentService.createComment(writerId, postId, request);
+        communityCommentService.createComment(userId, postId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("댓글 생성 성공", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 조회 API")
     @GetMapping("/{postId}/comment")
     public ResponseEntity<List<CommentResponse>> getComments(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable("postId") Long postId,
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
-        val comments = communityCommentService.getPostCommentList(postId, memberDetails.getId(), isBlockOn);
+        val comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
         val response = comments.stream().
-                map(comment -> communityResponseMapper.toCommentResponse(comment, memberDetails.getId(),
-                        communityCommentService.getAnonymousCommentProfile(comment.comment()))).toList();
+                map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
+                .toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -174,10 +172,9 @@ public class CommunityController {
     @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<Map<String, Boolean>> deleteComment(
             @PathVariable("commentId") Long commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val writerId = memberDetails.getId();
-        communityCommentService.deleteComment(commentId, writerId);
+        communityCommentService.deleteComment(commentId, userId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("댓글 삭제 성공", true));
     }
 
@@ -185,9 +182,9 @@ public class CommunityController {
     @PostMapping("/comment/{commentId}/report")
     public ResponseEntity<Map<String, Boolean>> reportComment(
             @PathVariable("commentId") Long commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        communityCommentService.reportComment(memberDetails.getId(), commentId);
+        communityCommentService.reportComment(userId, commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
     }
 
@@ -195,10 +192,9 @@ public class CommunityController {
     @PostMapping("/posts/like/{postId}")
     public ResponseEntity<Map<String, Boolean>> likePost(
             @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-
-        communityPostService.likePost(memberDetails.getId(), postId);
+        communityPostService.likePost(userId, postId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 게시글 좋아요 성공", true));
     }
 
@@ -206,10 +202,9 @@ public class CommunityController {
     @DeleteMapping("/posts/unlike/{postId}")
     public ResponseEntity<Map<String, Boolean>> unlikePost(
             @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-
-        communityPostService.unlikePost(memberDetails.getId(), postId);
+        communityPostService.unlikePost(userId, postId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 게시글 좋아요 취소 성공", true));
     }
 
