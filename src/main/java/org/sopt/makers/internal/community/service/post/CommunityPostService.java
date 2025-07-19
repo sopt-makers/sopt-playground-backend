@@ -1,10 +1,11 @@
 package org.sopt.makers.internal.community.service.post;
 
+import static java.util.stream.Collectors.toMap;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -18,6 +19,7 @@ import org.sopt.makers.internal.community.repository.post.CommunityPostRepositor
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
@@ -47,6 +49,7 @@ import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,12 +75,14 @@ public class CommunityPostService {
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
     private final PushNotificationService pushNotificationService;
+    private final PlatformService platformService;
 
     private final CommunityPostModifier communityPostModifier;
 
     private final MemberRetriever memberRetriever;
     private final CategoryRetriever categoryRetriever;
     private final CommunityPostRetriever communityPostRetriever;
+    private final MemberCareerRetriever memberCareerRetriever;
 
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
@@ -105,32 +110,43 @@ public class CommunityPostService {
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
         if (limit == null || limit >= 50) limit = 50;
-
         categoryRetriever.checkExistsCategoryById(categoryId);
+
         List<CategoryPostMemberDao> posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
 
         return posts.stream()
                 .map(postDao -> {
-                    VoteResponse voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
-                    return communityResponseMapper.toCommunityVo(postDao, voteResponse);
-                }).toList();
+                    val authorDetails = platformService.getInternalUser(postDao.member().getId());
+                    val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(postDao.member().getId());
+                    val voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
+                    val memberVo = MemberVo.of(authorDetails, authorCareer);
+                    val categoryVo = communityResponseMapper.toCategoryResponse(postDao.category());
+                    val postVo = communityResponseMapper.toPostVo(postDao.post(), voteResponse);
+                    return new CommunityPostMemberVo(memberVo, postVo, categoryVo);
+                })
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public CommunityPostMemberVo getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
+    public PostDetailData getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
         val postDao = communityQueryRepository.getPostById(postId);
         if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
 
-        val blocker = memberRetriever.findMemberById(memberId);
-        val blockedMember = memberRetriever.findMemberById(postDao.member().getId());
+        val authorId = postDao.member().getId();
+        if (isBlockedOn && !Objects.equals(memberId, authorId)) {
+            val blocker = memberRetriever.findMemberById(memberId);
+            val blockedMember = memberRetriever.findMemberById(authorId);
 
-        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
-            memberRetriever.checkBlockedMember(blocker, blockedMember);
+            if (memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
+                memberRetriever.checkBlockedMember(blocker, blockedMember);
+            }
         }
 
-        VoteResponse voteResponse = voteService.getVoteByPostId(postId, memberId);
+        val authorDetails = platformService.getInternalUser(authorId);
+        val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(authorId);
+        val voteResponse = voteService.getVoteByPostId(postId, memberId);
 
-        return communityResponseMapper.toCommunityVo(postDao, voteResponse);
+        return new PostDetailData(postDao.post(), authorDetails, authorCareer, postDao.category(), voteResponse);
     }
 
     @Transactional
@@ -383,7 +399,7 @@ public class CommunityPostService {
         final List<Long> topLevelCategoryIds = List.of(1L, 22L, 4L, 2L, 21L);
 
         Map<Long, String> categoryNameMap = categoryRetriever.findAllByIds(topLevelCategoryIds).stream()
-                .collect(Collectors.toMap(Category::getId, Category::getName));
+                .collect(toMap(Category::getId, Category::getName));
 
         List<InternalLatestPostResponse> responses = new ArrayList<>();
 
@@ -530,6 +546,6 @@ public class CommunityPostService {
         }
 
         return categoryRetriever.findAllByIds(categoryIds).stream()
-                .collect(Collectors.toMap(Category::getId, category -> category));
+                .collect(toMap(Category::getId, category -> category));
     }
 }

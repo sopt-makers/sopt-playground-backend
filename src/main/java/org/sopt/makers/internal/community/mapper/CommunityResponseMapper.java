@@ -52,11 +52,23 @@ public class CommunityResponseMapper {
                 post.getIsBlindWriter(), post.getCreatedAt());
     }
 
-    public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId, Boolean isLiked, Integer likes, AnonymousPostProfile anonymousPostProfile) {
-        val member = post.post().isBlindWriter() ? null : post.member();
-        val isMine = Objects.equals(post.member().id(), memberId);
-        val anonymousProfile = post.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
-        return new PostDetailResponse(member, post.post(), post.category(), isMine, isLiked, likes, anonymousProfile);
+    public PostDetailResponse toPostDetailReponse(PostDetailData dto, Long viewerId, Boolean isLiked, Integer likes, AnonymousPostProfile anonymousPostProfile) {
+        val postEntity = dto.post();
+        val authorDetails = dto.userDetails();
+        val memberVo = postEntity.getIsBlindWriter()
+                ? null
+                : MemberVo.of(authorDetails, dto.authorCareer());
+
+        val isMine = Objects.equals(authorDetails.userId(), viewerId);
+
+        val anonymousProfileVo = postEntity.getIsBlindWriter() && anonymousPostProfile != null
+                ? toAnonymousPostProfileVo(anonymousPostProfile)
+                : null;
+
+        val postVo = toPostVo(postEntity, dto.vote());
+        val categoryVo = toCategoryResponse(dto.category());
+
+        return new PostDetailResponse(memberVo, postVo, categoryVo, isMine, isLiked, likes, anonymousProfileVo);
     }
 
     public CategoryVo toCategoryResponse(Category category) {
@@ -81,8 +93,13 @@ public class CommunityResponseMapper {
         val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(toList());
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         val createdAt = getRelativeTime(dao.post().createdAt());
-        return new PostResponse(post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote());
+
+        return new PostResponse(
+                post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
+                category.name(), post.title(), post.content(), post.hits(),
+                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
+                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote()
+        );
     }
 
     public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {

@@ -46,45 +46,44 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<PostDetailResponse> getOnePost(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable("postId") Long postId,
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
-        val post = communityPostService.getPostById(memberDetails.getId(), postId, isBlockOn);
-        val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
-        val likes = communityPostService.getLikes(post.post().id());
-        val anonymousProfile = communityPostService.getAnonymousPostProfile(post.post().id());
-        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes,
+        val postDetailData = communityPostService.getPostById(userId, postId, isBlockOn);
+        val isLiked = communityPostService.isLiked(userId, postId);
+        val likes = communityPostService.getLikes(postId);
+        val anonymousProfile = communityPostService.getAnonymousPostProfile(postId);
+        val response = communityResponseMapper.toPostDetailReponse(postDetailData, userId, isLiked, likes,
                 anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(
             summary = "커뮤니티 글 전체 조회",
-            description =
-                    """
-                            categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
-                            cursor: 처음 조회시 null, 이외에 마지막 글 id
-                            """
+            description = """
+                        categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
+                        cursor: 처음 조회시 null, 이외에 마지막 글 id
+            """
     )
     @GetMapping("/posts")
     public ResponseEntity<PostAllResponse> getAllPosts(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestParam(required = false, name = "categoryId") Long categoryId,
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn,
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, memberDetails.getId(),
+        List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, userId,
                 infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getPostCommentList(post.post().id(), memberDetails.getId(),
-                    isBlockOn);
+            val comments = communityCommentService.getPostCommentList(post.post().id(), userId, isBlockOn);
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
-            val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
+            val isLiked = communityPostService.isLiked(userId, post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile,
+
+            return communityResponseMapper.toPostResponse(post, comments, userId, anonymousPostProfile,
                     isLiked, likes);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
