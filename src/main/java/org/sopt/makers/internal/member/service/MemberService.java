@@ -33,6 +33,7 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.PlatformUserUpdateRequest;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
@@ -351,6 +352,31 @@ public class MemberService {
 
     @Transactional
     public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {
+        val userDetails = platformService.getInternalUser(userId);
+        val activityTeamMap = request.activities().stream()
+                .collect(Collectors.toMap(
+                        MemberProfileSaveRequest.MemberSoptActivitySaveRequest::generation,
+                        MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team,
+                        (team1, team2) -> team1
+                ));
+
+        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities().stream()
+                .map(activity -> new PlatformUserUpdateRequest.SoptActivityRequest(
+                        activity.activityId(),
+                        activityTeamMap.get(activity.generation())
+                ))
+                .toList();
+
+        val platformRequest = new PlatformUserUpdateRequest(
+                request.name(),
+                request.profileImage(),
+                request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
+                request.phone(),
+                request.email(),
+                soptActivitiesForPlatform
+        );
+
+        platformService.updateInternalUser(userId, platformRequest);
         Member member = memberRepository.findById(userId)
                 .orElseThrow(
                         () -> new NotFoundDBEntityException("Member")
@@ -458,6 +484,32 @@ public class MemberService {
 
     @Transactional
     public Member updateMemberProfile(Long id, MemberProfileUpdateRequest request) {
+        val userDetails = platformService.getInternalUser(id);
+        val activityTeamMap = request.activities().stream()
+                .collect(Collectors.toMap(
+                        MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::generation,
+                        MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::team,
+                        (team1, team2) -> team1
+                ));
+
+        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities().stream()
+                .map(activity -> new PlatformUserUpdateRequest.SoptActivityRequest(
+                        activity.activityId(),
+                        activityTeamMap.get(activity.generation())
+                ))
+                .toList();
+
+        val platformRequest = new PlatformUserUpdateRequest(
+                request.name(),
+                request.profileImage(),
+                request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
+                request.phone(),
+                request.email(),
+                soptActivitiesForPlatform
+        );
+
+        platformService.updateInternalUser(id, platformRequest);
+
         val member = getMemberById(id);
 
         if (!member.getEditActivitiesAble()) {

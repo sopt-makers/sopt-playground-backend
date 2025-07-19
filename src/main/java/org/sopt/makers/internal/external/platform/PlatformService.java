@@ -72,4 +72,18 @@ public class PlatformService {
                 .map(activity -> String.format("%d기 %s", activity.generation(), activity.part()))
                 .toList();
     }
+
+    public void updateInternalUser(Long userId, PlatformUserUpdateRequest request) {
+        val result = platformClient.updateUser(
+                authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(),
+                userId,
+                request
+        );
+
+        val body = result.getBody();
+        if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
+            throw new RuntimeException("플랫폼 API 호출 실패 또는 인증 오류. id: " + userId);
+        }
+    }
 }

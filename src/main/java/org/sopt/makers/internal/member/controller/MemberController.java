@@ -59,8 +59,6 @@ public class MemberController {
     private final MemberMapper memberMapper;
     private final MakersCrewClient makersCrewClient;
 
-    private static final int MEMBER_SEARCH_RANDOM_SIZE = 30;
-
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
@@ -124,7 +122,7 @@ public class MemberController {
     )
     @PutMapping("/profile")
     public ResponseEntity<MemberProfileResponse> updateUserProfile (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody MemberProfileUpdateRequest request
     ) {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
@@ -134,7 +132,7 @@ public class MemberController {
         }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
-        val member = memberService.updateMemberProfile(memberDetails.getId(), request);
+        val member = memberService.updateMemberProfile(userId, request);
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
         val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
