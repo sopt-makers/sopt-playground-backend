@@ -79,11 +79,10 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Boolean>> updateProject (
             @PathVariable("id") Long projectId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody ProjectUpdateRequest request
     ) {
-        Long writerId = memberDetails.getId();
-        projectService.updateProject(writerId, projectId, request);
+        projectService.updateProject(userId, projectId, request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 
@@ -91,10 +90,9 @@ public class ProjectController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Boolean>> delteProject (
             @PathVariable("id") Long projectId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val writerId = memberDetails.getId();
-        projectService.deleteProject(writerId, projectId);
+        projectService.deleteProject(userId, projectId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
 }
