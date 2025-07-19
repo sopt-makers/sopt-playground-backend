@@ -33,10 +33,10 @@ public class ActivityReviewController {
 	@Operation(summary = "활동 후기 생성")
 	@PostMapping
 	public ResponseEntity<Map<String, Boolean>> createActivityReview(
-		@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+		@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
 		@Valid @RequestBody CreateActivityReviewRequest request
 	) {
-		activityReviewService.createActivityReview(request, memberDetails.getId());
+		activityReviewService.createActivityReview(request, userId);
 		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("활동 후기 생성 성공", true));
 	}
 
