@@ -14,7 +14,6 @@ import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
 import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
-import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.CommunityCommentService;
 import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
@@ -226,9 +225,9 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 홈 모든 카테고리 최신글 조회 API")
     @GetMapping("/posts/all/recent")
     public ResponseEntity<List<RecentPostResponse>> getRecentPosts(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        List<RecentPostResponse> recentPosts = communityPostService.getRecentPosts(memberDetails.getId());
+        List<RecentPostResponse> recentPosts = communityPostService.getRecentPosts(userId);
         return ResponseEntity.ok().body(recentPosts);
     }
 
@@ -248,11 +247,11 @@ public class CommunityController {
     @Operation(summary = "투표 선택 API")
     @PostMapping("/posts/{postId}/vote")
     public ResponseEntity<VoteResponse> vote(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long postId,
             @RequestBody VoteSelectionRequest request
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(voteService.selectVote(postId, memberDetails.getId(), request.selectedOptions()));
+                .body(voteService.selectVote(postId, userId, request.selectedOptions()));
     }
 }
