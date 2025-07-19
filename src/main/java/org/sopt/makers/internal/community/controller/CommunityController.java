@@ -103,22 +103,22 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 글 생성")
     @PostMapping("/posts")
     public ResponseEntity<PostSaveResponse> createPost(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody @Valid PostSaveRequest request
     ) {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                communityPostService.createPost(memberDetails.getId(), request)
+                communityPostService.createPost(userId, request)
         );
     }
 
     @Operation(summary = "커뮤니티 글 수정")
     @PutMapping("/posts")
     public ResponseEntity<PostUpdateResponse> updatePost(
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody PostUpdateRequest request
     ) {
-        val response = communityPostService.updatePost(memberDetails.getId(), request);
+        val response = communityPostService.updatePost(userId, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -127,9 +127,9 @@ public class CommunityController {
     @PostMapping("/posts/{postId}/report")
     public ResponseEntity<Map<String, Boolean>> reportPost(
             @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        communityPostService.reportPost(memberDetails.getId(), postId);
+        communityPostService.reportPost(userId, postId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 글 신고 성공", true));
     }
 

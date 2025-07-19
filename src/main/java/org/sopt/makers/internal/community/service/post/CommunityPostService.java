@@ -19,6 +19,7 @@ import org.sopt.makers.internal.community.repository.post.CommunityPostRepositor
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
@@ -221,12 +222,12 @@ public class CommunityPostService {
 
     @Transactional
     public void reportPost(Long memberId, Long postId) {
-        Member member = memberRetriever.findMemberById(memberId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
+        InternalUserDetails userDetails = platformService.getInternalUser(memberId);
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createReportSlackRequest(post.getId(), member.getName());
+                val slackRequest = createReportSlackRequest(post.getId(), userDetails.name());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
