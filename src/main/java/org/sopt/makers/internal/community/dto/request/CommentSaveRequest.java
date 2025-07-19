@@ -19,5 +19,7 @@ public record CommentSaveRequest (
     @NotNull String webLink,
 
     @Schema(required = false)
-    Long parentCommentId
+    Long parentCommentId,
+
+    MentionRequest mention
 ) {}

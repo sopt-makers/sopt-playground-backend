@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
@@ -17,6 +17,9 @@ import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.CommunityCommentService;
+import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
+import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
 public class CommunityController {
 
     private final CommunityPostService communityPostService;
+    private final VoteService voteService;
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
@@ -50,7 +54,8 @@ public class CommunityController {
         val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
         val likes = communityPostService.getLikes(post.post().id());
         val anonymousProfile = communityPostService.getAnonymousPostProfile(post.post().id());
-        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes, anonymousProfile);
+        val response = communityResponseMapper.toPostDetailReponse(post, memberDetails.getId(), isLiked, likes,
+                anonymousProfile);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -59,7 +64,6 @@ public class CommunityController {
             description =
                     """
                             categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
-                            
                             cursor: 처음 조회시 null, 이외에 마지막 글 id
                             """
     )
@@ -71,14 +75,17 @@ public class CommunityController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        val posts = communityPostService.getAllPosts(categoryId, isBlockOn, memberDetails.getId(), infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, memberDetails.getId(),
+                infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getPostCommentList(post.post().id(), memberDetails.getId(), isBlockOn);
+            val comments = communityCommentService.getPostCommentList(post.post().id(), memberDetails.getId(),
+                    isBlockOn);
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
             val isLiked = communityPostService.isLiked(memberDetails.getId(), post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
-            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile, isLiked, likes);
+            return communityResponseMapper.toPostResponse(post, comments, memberDetails.getId(), anonymousPostProfile,
+                    isLiked, likes);
         }).collect(Collectors.toList());
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -222,13 +229,16 @@ public class CommunityController {
         return ResponseEntity.ok().body(sopticlePosts);
     }
 
-    @Operation(summary = "커뮤니티 홈 답변 대기 질문 목록 조회 API")
-    @GetMapping("/posts/question")
-    public ResponseEntity<List<QuestionPostResponse>> getRecentQuestionPost() {
-        List<QuestionPostResponse> questionPosts = communityPostService.getRecentQuestionPosts();
-        return ResponseEntity.ok().body(questionPosts);
+    @Operation(summary = "커뮤니티 홈 모든 카테고리 최신글 조회 API")
+    @GetMapping("/posts/all/recent")
+    public ResponseEntity<List<RecentPostResponse>> getRecentPosts(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+    ) {
+        List<RecentPostResponse> recentPosts = communityPostService.getRecentPosts(memberDetails.getId());
+        return ResponseEntity.ok().body(recentPosts);
     }
 
+    @Deprecated
     @Operation(summary = "핫 게시물 조회 API")
     @GetMapping("/posts/hot")
     public ResponseEntity<Object> getTodayHotPost() {
@@ -239,5 +249,16 @@ public class CommunityController {
             return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(recentHotPost));
         }
         return ResponseEntity.status(HttpStatus.OK).body(HotPostResponse.of(todayHotPost));
+    }
+
+    @Operation(summary = "투표 선택 API")
+    @PostMapping("/posts/{postId}/vote")
+    public ResponseEntity<VoteResponse> vote(
+            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @PathVariable Long postId,
+            @RequestBody VoteSelectionRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(voteService.selectVote(postId, memberDetails.getId(), request.selectedOptions()));
     }
 }

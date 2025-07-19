@@ -1,52 +1,52 @@
 package org.sopt.makers.internal.member.controller;
 
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import javax.validation.Valid;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
-import org.sopt.makers.internal.internal.InternalMemberDetails;
-import org.sopt.makers.internal.common.CommonResponse;
-import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
-import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
-import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
-import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
-import org.sopt.makers.internal.member.dto.request.MemberReportRequest;
-import org.sopt.makers.internal.member.dto.response.MemberCrewResponse;
-import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
-import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
-import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
-import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
-import org.sopt.makers.internal.member.dto.response.MemberResponse;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.makers.MakersCrewClient;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
-import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
-import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
-import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
-import org.sopt.makers.internal.member.service.MemberService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
+import org.sopt.makers.internal.common.CommonResponse;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.makers.MakersCrewClient;
+import org.sopt.makers.internal.internal.InternalMemberDetails;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
+import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
+import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
+import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
+import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.request.MemberReportRequest;
+import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
+import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
+import org.sopt.makers.internal.member.dto.response.MemberCrewResponse;
+import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.service.MemberService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -58,6 +58,8 @@ public class MemberController {
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final MakersCrewClient makersCrewClient;
+
+    private static final int MEMBER_SEARCH_RANDOM_SIZE = 30;
 
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
@@ -74,8 +76,12 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "유저 이름으로 조회 API")
+    @Operation(summary = "멤버 검색 API", description = """
+            - name 파라미터가 없거나 '@'인 경우: 랜덤 유저 30명을 반환합니다.
+            - name 파라미터에 검색어가 있는 경우: 해당 이름이 포함된 유저를 최신 활동기수 순으로 정렬하여 반환합니다.
+            """)
     @GetMapping("/search")
+
     public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
         List<MemberResponse> responses = memberService.getMemberByName(name);
         return ResponseEntity.status(HttpStatus.OK).body(responses);

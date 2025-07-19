@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.member.repository;
 
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -367,6 +369,32 @@ public class MemberProfileQueryRepository {
                 .selectFrom(member)
                 .innerJoin(coffeeChat).on(coffeeChat.member.eq(member))
                 .where(coffeeChat.isCoffeeChatActivate.isTrue())
+                .fetch();
+    }
+
+    public List<Member> findRandomMembers(int limit) {
+        QMember member = QMember.member;
+
+        NumberExpression<Double> rand = Expressions.numberTemplate(Double.class, "function('RAND')");
+
+        return queryFactory
+                .selectFrom(member)
+                .where(member.hasProfile.isTrue())
+                .orderBy(rand.asc())
+                .limit(limit)
+                .fetch();
+    }
+
+    public List<Member> findByNameContainingOrderByLatestActivity(String name) {
+        QMember member = QMember.member;
+        QMemberSoptActivity activity = QMemberSoptActivity.memberSoptActivity;
+
+        return queryFactory
+                .selectFrom(member)
+                .leftJoin(member.activities, activity)
+                .where(member.name.contains(name))
+                .groupBy(member.id)
+                .orderBy(activity.generation.max().desc(), member.id.desc())
                 .fetch();
     }
 }

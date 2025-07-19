@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.community.dto;
 
+import org.sopt.makers.internal.vote.dto.response.VoteResponse;
+
 import java.time.LocalDateTime;
 
 public record CommunityPostVo(
@@ -14,5 +16,6 @@ public record CommunityPostVo(
         String sopticleUrl,
         Boolean isReported,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        VoteResponse vote
 ) {}
