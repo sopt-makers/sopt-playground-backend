@@ -10,9 +10,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.community.dto.InternalCommunityPost;
-import org.sopt.makers.internal.community.dto.PostCategoryDao;
-import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
@@ -30,7 +27,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -48,7 +44,6 @@ public class InternalOpenApiController {
     private final ProjectResponseMapper projectMapper;
 
     private final CommunityPostService communityPostService;
-    private final CommunityResponseMapper communityMapper;
 
     @Operation(summary = "Project id로 조회 API") // 공홈 사용
     @GetMapping("/projects/{id}")
@@ -71,7 +66,7 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
-    @Operation(summary = "회원 프로필 및 활동 정보 조회 API") // 앱팀
+    @Operation(summary = "회원 프로필 및 활동 정보 조회 API") // 앱팀 사용
     @GetMapping("members/{memberId}/project")
     public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
             @PathVariable Long memberId
@@ -82,26 +77,8 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    // TDDO
-    @Operation( // 앱팀
-            summary = "최근 Community Post 조회 API",
-            description= """
-                    요청 category별 가장 최근의 게시물을 반환하는 API입니다. (default는 전체 중 최근 게시물을 반환)
-                    
-                    [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
-                    * 각 대분류의 소분류로도 조회 가능합니다. 
-            """)
-    @GetMapping("/community/post/recent")
-    public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
-            @RequestParam(required = false) String category
-    ) {
-        PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
-        InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-    
     @Operation(
-            summary = "앱팀 Internal API 최신글 5개 조회",
+            summary = "앱팀 Internal API 최신글 5개 조회", // 앱팀 사용
             description = "최상위 카테고리별(자유, 질문, 홍보, 파트Talk, 솝티클)로 최신글 1개씩 총 5개를 조회하는 API입니다.")
     @GetMapping("/community/posts/latest")
     public ResponseEntity<List<InternalLatestPostResponse>> getLatestPostsForApp() {
@@ -109,7 +86,7 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "앱팀 Internal API 인기글 3 조회")
+    @Operation(summary = "앱팀 Internal API 인기글 3 조회") // 앱팀 사용
     @GetMapping("/community/posts/popular")
     public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
         int limit = 3;
@@ -117,6 +94,22 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+//    @Operation(
+//            summary = "최근 Community Post 조회 API",
+//            description= """
+//                    요청 category별 가장 최근의 게시물을 반환하는 API입니다. (default는 전체 중 최근 게시물을 반환)
+//
+//                    [대분류] 전체, 자유, 파트, SOPT 활동, 취업/진로, 홍보 \n
+//                    * 각 대분류의 소분류로도 조회 가능합니다.
+//            """)
+//    @GetMapping("/community/post/recent")
+//    public ResponseEntity<InternalCommunityPost> getRecentPostByCategory (
+//            @RequestParam(required = false) String category
+//    ) {
+//        PostCategoryDao recentPost = communityPostService.getRecentPostByCategory(category);
+//        InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
+//        return ResponseEntity.status(HttpStatus.OK).body(response);
+//    }
 //    @Operation(summary = "자신의 토큰으로 조회 API")
 //    @GetMapping("/members/me")
 //    public ResponseEntity<InternalMemberResponse> getMyInformation (
