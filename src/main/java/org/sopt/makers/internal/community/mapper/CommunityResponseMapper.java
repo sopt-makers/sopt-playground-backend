@@ -2,26 +2,42 @@ package org.sopt.makers.internal.community.mapper;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import lombok.val;
 import org.sopt.makers.internal.common.util.MentionCleaner;
-import org.sopt.makers.internal.community.dto.*;
-import org.sopt.makers.internal.community.dto.response.*;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
-import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
+import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
+import org.sopt.makers.internal.community.dto.CategoryVo;
+import org.sopt.makers.internal.community.dto.CommentDao;
+import org.sopt.makers.internal.community.dto.CommentInfo;
+import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
+import org.sopt.makers.internal.community.dto.CommunityPostVo;
+import org.sopt.makers.internal.community.dto.InternalCommunityPost;
+import org.sopt.makers.internal.community.dto.MemberVo;
+import org.sopt.makers.internal.community.dto.PostCategoryDao;
+import org.sopt.makers.internal.community.dto.PostDetailData;
+import org.sopt.makers.internal.community.dto.response.CommentResponse;
+import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.PostDetailResponse;
+import org.sopt.makers.internal.community.dto.response.PostResponse;
+import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
+import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
+import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 @Component
 public class CommunityResponseMapper {
@@ -168,7 +184,7 @@ public class CommunityResponseMapper {
         return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
     }
 
-    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName, int rank) {
+    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, InternalUserDetails userDetails, String categoryName, int rank) {
         if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
             // 익명일 경우
             return InternalPopularPostResponse.builder()
@@ -183,16 +199,14 @@ public class CommunityResponseMapper {
                     .webLink("https://playground.sopt.org/?feed=" + post.getId())
                     .build();
         } else {
-            MemberSoptActivity latestActivity = post.getMember().getActivities().stream()
-                    .max(Comparator.comparing(MemberSoptActivity::getGeneration))
+            SoptActivity lastActivity = userDetails.soptActivities().stream()
+                    .max(Comparator.comparing(SoptActivity::generation))
                     .orElse(null);
-            String generationAndPart = (latestActivity != null)
-                    ? latestActivity.getGeneration() + "기 " + latestActivity.getPart()
-                    : "정보 없음";
+            String generationAndPart = String.format("%d기 %s", Objects.requireNonNull(lastActivity).generation(), lastActivity.part());
             return InternalPopularPostResponse.builder()
                     .id(post.getId())
-                    .profileImage(post.getMember().getProfileImage())
-                    .name(post.getMember().getName())
+                    .profileImage(userDetails.profileImage())
+                    .name(userDetails.name())
                     .generationAndPart(generationAndPart)
                     .rank(rank)
                     .category(categoryName)

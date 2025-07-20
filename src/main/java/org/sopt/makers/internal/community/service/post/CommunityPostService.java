@@ -1,57 +1,69 @@
 package org.sopt.makers.internal.community.service.post;
 
-import static java.util.stream.Collectors.toMap;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.community.domain.category.Category;
-import org.sopt.makers.internal.community.dto.request.MentionRequest;
-import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
-import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
-import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
-import org.sopt.makers.internal.community.repository.category.CategoryRepository;
-import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
-import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
-import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
-import org.sopt.makers.internal.community.service.SopticleScrapedService;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.PlatformService;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
-import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
-import org.sopt.makers.internal.external.slack.SlackMessageUtil;
-import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
-import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
-import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
-import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
-import org.sopt.makers.internal.community.dto.response.SopticleScrapedResponse;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.domain.ReportPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.dto.*;
-import org.sopt.makers.internal.community.repository.*;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
-import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
-import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
-import org.sopt.makers.internal.community.service.anonymous.*;
-import org.sopt.makers.internal.community.service.category.CategoryRetriever;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.slack.SlackClient;
+import org.sopt.makers.internal.community.domain.category.Category;
+import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
+import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
+import org.sopt.makers.internal.community.dto.MemberVo;
+import org.sopt.makers.internal.community.dto.PostCategoryDao;
+import org.sopt.makers.internal.community.dto.PostDetailData;
+import org.sopt.makers.internal.community.dto.request.MentionRequest;
+import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
+import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
+import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
+import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticleScrapedResponse;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
-import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
+import org.sopt.makers.internal.community.repository.ReportPostRepository;
+import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
+import org.sopt.makers.internal.community.repository.category.CategoryRepository;
+import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
+import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
+import org.sopt.makers.internal.community.service.SopticleScrapedService;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
+import org.sopt.makers.internal.community.service.category.CategoryRetriever;
+import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.external.slack.SlackClient;
+import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
+import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
+import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
@@ -59,15 +71,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.IntStream;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -326,9 +330,11 @@ public class CommunityPostService {
         return IntStream.range(0, posts.size())
                 .mapToObj(idx -> {
                     CommunityPost post = posts.get(idx);
+                    InternalUserDetails userDetails = platformService.getInternalUser(post.getMember().getId());
                     return communityResponseMapper.toInternalPopularPostResponse(
                             post,
                             anonymousProfileMap.get(post.getId()),
+                            userDetails,
                             categoryNameMap.get(post.getCategoryId()),
                             idx + 1
                     );
@@ -418,9 +424,9 @@ public class CommunityPostService {
             Optional<CommunityPost> postOptional = communityPostRepository.findFirstByCategoryIdInOrderByCreatedAtDesc(allCategoryIds);
 
             postOptional.ifPresent(post -> {
-                Member member = post.getMember();
-                MemberSoptActivity latestActivity = member.getActivities().stream()
-                        .max(Comparator.comparing(MemberSoptActivity::getGeneration))
+                InternalUserDetails userDetails = platformService.getInternalUser(post.getMember().getId());
+                SoptActivity latestActivity = userDetails.soptActivities().stream()
+                        .max(Comparator.comparing(SoptActivity::generation))
                         .orElse(null);
 
                 String categoryName = categoryNameMap.getOrDefault(categoryId, "");
@@ -430,7 +436,7 @@ public class CommunityPostService {
                     anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
                 }
 
-                responses.add(InternalLatestPostResponse.of(post, latestActivity, categoryName, anonymousProfile));
+                responses.add(InternalLatestPostResponse.of(post, latestActivity, userDetails, categoryName, anonymousProfile));
             });
         }
         return responses;

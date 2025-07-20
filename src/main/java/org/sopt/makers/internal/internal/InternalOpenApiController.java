@@ -99,8 +99,7 @@ public class InternalOpenApiController {
         InternalCommunityPost response = communityMapper.toInternalCommunityPostResponse(recentPost);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-
-    // TDDO
+    
     @Operation(
             summary = "앱팀 Internal API 최신글 5개 조회",
             description = "최상위 카테고리별(자유, 질문, 홍보, 파트Talk, 솝티클)로 최신글 1개씩 총 5개를 조회하는 API입니다.")
@@ -110,7 +109,6 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    // TDDO
     @Operation(summary = "앱팀 Internal API 인기글 3 조회")
     @GetMapping("/community/posts/popular")
     public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
