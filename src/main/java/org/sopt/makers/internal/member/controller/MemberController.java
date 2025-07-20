@@ -14,6 +14,8 @@ import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
 import org.sopt.makers.internal.common.CommonResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
@@ -57,6 +59,7 @@ public class MemberController {
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final MakersCrewClient makersCrewClient;
+    private final PlatformService platformService;
 
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
@@ -106,8 +109,9 @@ public class MemberController {
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         Member member = memberService.saveMemberProfile(userId, request);
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
         boolean isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        MemberProfileResponse response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+        MemberProfileResponse response = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -132,8 +136,9 @@ public class MemberController {
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(userId, request);
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+        val response = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

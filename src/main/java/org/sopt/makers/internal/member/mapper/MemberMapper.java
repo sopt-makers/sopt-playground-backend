@@ -3,6 +3,7 @@ package org.sopt.makers.internal.member.mapper;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.internal.dto.InternalMemberActivityResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileSpecificResponse;
@@ -20,20 +21,32 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
     InternalMemberResponse toInternalResponse(Member member, Integer latestGeneration);
-    MemberProfileResponse toProfileResponse (Member member, Boolean isCoffeeChatActivate);
+    @Mapping(target = "name", source = "userDetails.name")
+    @Mapping(target = "profileImage", source = "userDetails.profileImage")
+    @Mapping(target = "birthday", source = "userDetails.birthday")
+    @Mapping(target = "phone", source = "userDetails.phone")
+    @Mapping(target = "email", source = "userDetails.email")
+    MemberProfileResponse toProfileResponse (Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActivate);
+
     InternalMemberProfileResponse toInternalProfileResponse (Member member);
 
     @Mapping(target = "projects", source = "projects")
     MemberProfileProjectVo toSoptMemberProfileProjectVo(MemberSoptActivity member, List<MemberProjectVo> projects);
 
+    @Mapping(target = "name", source = "userDetails.name")
+    @Mapping(target = "profileImage", source = "userDetails.profileImage")
+    @Mapping(target = "birthday", expression = "java(userDetails.birthday() != null ? java.time.LocalDate.parse(userDetails.birthday()) : null)")
+    @Mapping(target = "phone", source = "userDetails.phone")
+    @Mapping(target = "email", source = "userDetails.email")
     @Mapping(target = "activities", source = "activities")
     MemberProfileSpecificResponse toProfileSpecificResponse (
-        Member member,
-        boolean isMine,
-        List<MemberProfileProjectDao> projects,
-        List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
-        List<MemberProfileProjectVo> soptActivities,
-        Boolean isCoffeeChatActivate
+            Member member,
+            InternalUserDetails userDetails,
+            boolean isMine,
+            List<MemberProfileProjectDao> projects,
+            List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
+            List<MemberProfileProjectVo> soptActivities,
+            Boolean isCoffeeChatActivate
     );
 
     @Mapping(target = "activities", source = "activities")

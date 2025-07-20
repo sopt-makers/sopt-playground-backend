@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class MakersMemberController {
 
     private final MemberService memberService;
-    private final MemberMapper memberMapper;
 
     @Operation(summary = "메이커스 만든 사람들을 위한 전체 조회 API")
     @GetMapping("/makers/profile")

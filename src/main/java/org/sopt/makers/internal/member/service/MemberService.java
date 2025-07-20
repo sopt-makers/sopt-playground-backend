@@ -156,19 +156,11 @@ public class MemberService {
         boolean isMine = Objects.equals(profileId, viewerId);
         boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
         MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
+                member, userDetails, isMine, memberProfileProjects,
+                activityResponses, soptActivityResponse, isCoffeeChatActivate
         );
 
-        MemberProfileSpecificResponse finalResponse = new MemberProfileSpecificResponse(
-                userDetails.name(), userDetails.profileImage(), response.birthday(), response.isPhoneBlind(),
-                response.phone(), response.email(), response.address(), response.university(), response.major(),
-                response.introduction(), response.skill(), response.mbti(), response.mbtiDescription(),
-                response.sojuCapacity(), response.interest(), response.userFavor(), response.idealType(),
-                response.selfIntroduction(), response.activities(), response.soptActivities(), response.links(),
-                response.projects(), response.careers(), response.allowOfficial(), response.isCoffeeChatActivate(), response.isMine()
-        );
-
-        return MemberProfileSpecificResponse.applyPhoneMasking(finalResponse, isMine, isCoffeeChatActivate);
+        return MemberProfileSpecificResponse.applyPhoneMasking(response, isMine, isCoffeeChatActivate);
     }
 
     @Transactional(readOnly = true)
@@ -291,28 +283,19 @@ public class MemberService {
         List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
                 .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
         List<MemberProfileResponse> memberList = members.stream().map(member -> {
             InternalUserDetails userDetails = userDetailsMap.get(member.getId());
             if (Objects.isNull(userDetails)) {
                 return null;
             }
             boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
-//            MemberProfileResponse profileResponse = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+
+            MemberProfileResponse profileResponse = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
 
             return MemberProfileResponse.checkIsBlindPhone(
-                    new MemberProfileResponse(
-                            member.getId(), userDetails.name(), userDetails.profileImage(), userDetails.birthday(),
-                            userDetails.phone(), userDetails.email(), member.getAddress(), member.getUniversity(),
-                            member.getMajor(), member.getIntroduction(), member.getSkill(), member.getMbti(),
-                            member.getMbtiDescription(), member.getSojuCapacity(), member.getInterest(),
-                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).userFavor(),
-                            member.getIdealType(), member.getSelfIntroduction(),
-                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).activities(),
-                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).links(),
-                            memberMapper.toProfileResponse(member, isCoffeeChatActivate).careers(),
-                            member.getAllowOfficial(), isCoffeeChatActivate
-                    ),
-                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone())
+                    profileResponse,
+                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), userDetails.phone())
             );
         }).filter(Objects::nonNull).collect(Collectors.toList());
 
@@ -638,10 +621,13 @@ public class MemberService {
 
     @Transactional
     public void reportUser(Long memberId, Long reportedMemberId) {
+        InternalUserDetails reporterDetails = platformService.getInternalUser(memberId);
+        InternalUserDetails reportedDetails = platformService.getInternalUser(reportedMemberId);
+
+        sendReportToSlack(reporterDetails, reportedDetails);
+
         Member reporter = memberRetriever.findMemberById(memberId);
         Member reportedMember = memberRetriever.findMemberById(reportedMemberId);
-
-        sendReportToSlack(reporter, reportedMember);
 
         memberReportRepository.save(MemberReport.builder()
                 .reporter(reporter)
@@ -664,10 +650,10 @@ public class MemberService {
                 activitiesAndGeneration, uploadSopticleCount, uploadReviewCount);
     }
 
-    private void sendReportToSlack(Member reporter, Member reportedMember) {
+    private void sendReportToSlack(InternalUserDetails reporter, InternalUserDetails reportedMember) {
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createReportSlackRequest(reporter.getId(), reporter.getName(), reportedMember.getId(), reportedMember.getName());
+                val slackRequest = createReportSlackRequest(reporter.userId(), reporter.name(), reportedMember.userId(), reportedMember.name());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
