@@ -39,16 +39,18 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/webjars/swagger-ui/**",
                         "/swagger-ui/**",
-                        "/makers/**"
+                        "/makers/**",
+                        "/internal/api/v1/**"
+//                        "/api/v1/presigned-url"
                 ).permitAll()
 
-                .antMatchers(
-                        "/internal/api/v1/projects/**",
-                        "/internal/api/v1/members/**",
-                        "/internal/api/v1/sopticles/**",
-                        "/internal/api/v1/profile",
-                        "/api/v1/presigned-url"
-                ).hasAuthority("Member")
+//                .antMatchers(
+//                        "/internal/api/v1/projects/**",
+//                        "/internal/api/v1/members/**",
+//                        "/internal/api/v1/sopticles/**",
+//                        "/internal/api/v1/profile",
+//                        "/api/v1/presigned-url"
+//                ).hasAuthority("MEMBER")
 
         .and()
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

@@ -1,10 +1,11 @@
 package org.sopt.makers.internal.auth.jwtFilter;
 
+import java.io.IOException;
 import java.util.Objects;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
 import org.sopt.makers.internal.auth.jwt.service.JwtAuthenticationService;
+import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
 import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,6 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * JwtAuthenticationFilter : 매 요청마다 실행되는 JWT 필터
@@ -33,11 +33,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
+        System.out.println(uri);
 
-        // Swagger 경로는 인증 로직 무시
-        if (uri.startsWith("/swagger-ui") || uri.startsWith("/v3/api-docs")
-                || uri.startsWith("/swagger-resources") || uri.startsWith("/webjars")
-                || uri.startsWith("/makers")) {
+        // 해당 경로는 인증 로직 무시
+        if (uri.startsWith("/swagger-ui")
+                || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-resources")
+                || uri.startsWith("/webjars")
+                || uri.startsWith("/makers")
+                || uri.startsWith("/internal/api/v1")) {
             filterChain.doFilter(request, response);
             return;
         }
