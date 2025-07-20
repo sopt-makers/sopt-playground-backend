@@ -14,7 +14,6 @@ import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
 import org.sopt.makers.internal.common.CommonResponse;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
-import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
