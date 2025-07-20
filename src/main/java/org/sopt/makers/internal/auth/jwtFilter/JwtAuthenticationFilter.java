@@ -33,7 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
-        System.out.println(uri);
 
         // 해당 경로는 인증 로직 무시
         if (uri.startsWith("/swagger-ui")
