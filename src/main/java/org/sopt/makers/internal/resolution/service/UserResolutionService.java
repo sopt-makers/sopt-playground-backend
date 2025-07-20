@@ -5,10 +5,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.sopt.makers.internal.member.domain.Member;
+import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
@@ -20,9 +22,7 @@ import org.sopt.makers.internal.resolution.repository.UserResolutionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.RequiredArgsConstructor;
-
-import static org.sopt.makers.internal.common.Constant.CURRENT_GENERATION;
+import static org.sopt.makers.internal.common.Constant.*;
 
 @Service
 @RequiredArgsConstructor
@@ -34,18 +34,22 @@ public class UserResolutionService {
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 	private final UserResolutionServiceUtil userResolutionServiceUtil;
 
+	private final PlatformService platformService;
+
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
+		InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+
 		Member member = getMemberById(memberId);
 		Optional<UserResolution> resolutionOptional = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION);
 
 		if (resolutionOptional.isEmpty()){
-			return userResolutionResponseMapper.toResolutionResponse(member, null, null);
+			return userResolutionResponseMapper.toResolutionResponse(userDetails, null, null);
 		}
 
 		UserResolution resolution = resolutionOptional.get();
 
-		return userResolutionResponseMapper.toResolutionResponse(member, resolution.getResolutionTags(), resolution.getContent());
+		return userResolutionResponseMapper.toResolutionResponse(userDetails, resolution.getResolutionTags(), resolution.getContent());
 	}
 
 	@Transactional(readOnly = true)
