@@ -42,30 +42,30 @@ public record MemberVo(
     /**
      * [LEGACY] 기존 Member 엔티티로 MemberVo를 생성
      */
-    public static MemberVo of(Member member) {
-        if (member == null) return null;
-
-        MemberCareer career = (member.getCareers() == null || member.getCareers().isEmpty()) ?
-                null : member.getCareers().stream().filter(MemberCareer::getIsCurrent).findFirst().orElse(null);
-
-        MemberSoptActivity activity = member.getActivities() == null ? null : member.getActivities().stream()
-                .max(Comparator.comparingInt(MemberSoptActivity::getGeneration))
-                .orElse(null);
-
-        SoptActivityVo activityVo = activity != null
-                ? new SoptActivityVo(activity.getGeneration(), activity.getPart(), activity.getTeam())
-                : null;
-
-        CareerVo careerVo = career != null
-                ? new CareerVo(career.getCompanyName(), career.getTitle())
-                : null;
-
-        return new MemberVo(
-                member.getId(),
-                member.getName(),
-                member.getProfileImage(),
-                activityVo,
-                careerVo
-        );
-    }
+//    public static MemberVo of(Member member) {
+//        if (member == null) return null;
+//
+//        MemberCareer career = (member.getCareers() == null || member.getCareers().isEmpty()) ?
+//                null : member.getCareers().stream().filter(MemberCareer::getIsCurrent).findFirst().orElse(null);
+//
+//        MemberSoptActivity activity = member.getActivities() == null ? null : member.getActivities().stream()
+//                .max(Comparator.comparingInt(MemberSoptActivity::getGeneration))
+//                .orElse(null);
+//
+//        SoptActivityVo activityVo = activity != null
+//                ? new SoptActivityVo(activity.getGeneration(), activity.getPart(), activity.getTeam())
+//                : null;
+//
+//        CareerVo careerVo = career != null
+//                ? new CareerVo(career.getCompanyName(), career.getTitle())
+//                : null;
+//
+//        return new MemberVo(
+//                member.getId(),
+//                member.getName(),
+//                member.getProfileImage(),
+//                activityVo,
+//                careerVo
+//        );
+//    }
 }

@@ -101,7 +101,7 @@ public class CommunityCommentService {
         }
 
         if (!post.getMember().getId().equals(writerId)) {
-            sendCommentPushNotification(post.getMember().getId(), request, member.getName());
+            sendCommentPushNotification(post.getMember().getId(), request, writerDetails.name());
         }
 
         if(Objects.nonNull(request.mention())) {
