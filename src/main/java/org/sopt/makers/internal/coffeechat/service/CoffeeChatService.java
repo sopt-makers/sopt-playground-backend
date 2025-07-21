@@ -1,47 +1,46 @@
 package org.sopt.makers.internal.coffeechat.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.coffeechat.domain.enums.Career;
-import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
-import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
-import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
-import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
-import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
-import org.sopt.makers.internal.external.platform.PlatformService;
-import org.sopt.makers.internal.external.platform.SoptActivity;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberCareer;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.external.message.MessageSender;
-import org.sopt.makers.internal.external.message.MessageSenderFactory;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatReviewRequest;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatReviewResponse.CoffeeChatReviewInfo;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatDetailsRequest;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatRequest;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatOpenRequest;
-import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
-import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
-import org.sopt.makers.internal.member.service.MemberRetriever;
-import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.sopt.makers.internal.external.message.email.EmailHistoryService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
+import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
+import org.sopt.makers.internal.coffeechat.domain.enums.Career;
+import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
+import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
+import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatOpenRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatReviewRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatReviewResponse.CoffeeChatReviewInfo;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatUserHistoryResponse;
+import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.message.MessageSender;
+import org.sopt.makers.internal.external.message.MessageSenderFactory;
+import org.sopt.makers.internal.external.message.email.EmailHistoryService;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberCareer;
+import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -152,10 +151,13 @@ public class CoffeeChatService {
 
     private List<CoffeeChatInfoDto> getSearchCoffeeChatInfoList(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
         List<CoffeeChatInfoDto> coffeeChatInfoList = coffeeChatRepository.findSearchCoffeeChatInfo(memberId, section, topicType, career, search);
-        if (part != null) { // part 검색은 플랫폼팀에서 받아온 정보로 필터링하기
-            List<Long> userIds = coffeeChatInfoList.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
-            Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
-            return coffeeChatInfoList.stream()
+        List<CoffeeChatInfoDto> response = coffeeChatInfoList;
+
+        List<Long> userIds = coffeeChatInfoList.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
+        Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
+
+        if (part != null) { // part 검색은 플랫폼팀에서 받아온 정보로 필터링
+            response = response.stream()
                     .filter(dto -> {
                         InternalUserDetails userDetails = userMap.get(dto.memberId());
                         return userDetails.soptActivities().stream()
@@ -163,12 +165,29 @@ public class CoffeeChatService {
                     })
                     .toList();
         }
-        return coffeeChatInfoList;
+        if (search != null && !search.isBlank()) { // name 검색은 플랫폼팀에서 받아온 정보로 필터링
+            response = response.stream()
+                    .filter(dto -> {
+                        InternalUserDetails userDetails = userMap.get(dto.memberId());
+                        return userDetails.name().contains(search);
+                    }).toList();
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)
-    public List<CoffeeChatHistoryResponse> getCoffeeChatHistories(Long memberId) {
-        return coffeeChatRetriever.getCoffeeChatHistoryTitles(memberId);
+    public List<CoffeeChatUserHistoryResponse> getCoffeeChatHistories(Long memberId) {
+        List<CoffeeChatHistoryResponse> response = coffeeChatRetriever.getCoffeeChatHistoryTitles(memberId);
+
+        List<Long> userIds = response.stream().map(CoffeeChatHistoryResponse::memberId).toList();
+        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        return response.stream().map(r -> {
+            InternalUserDetails userDetails = userDetailsMap.get(r.memberId());
+            return new CoffeeChatUserHistoryResponse(r.id(), r.coffeeChatBio(), userDetails.name(), r.career(), r.coffeeChatTopicType());
+        }).toList();
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {

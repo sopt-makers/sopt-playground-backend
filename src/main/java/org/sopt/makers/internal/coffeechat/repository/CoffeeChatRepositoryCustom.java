@@ -1,13 +1,12 @@
 package org.sopt.makers.internal.coffeechat.repository;
 
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
+import java.util.List;
 import org.sopt.makers.internal.coffeechat.domain.enums.Career;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
-
-import java.util.List;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
 
 public interface CoffeeChatRepositoryCustom {
 

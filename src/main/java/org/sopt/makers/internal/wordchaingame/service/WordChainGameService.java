@@ -1,5 +1,17 @@
 package org.sopt.makers.internal.wordchaingame.service;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -8,32 +20,23 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
 import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.wordchaingame.domain.Word;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
 import org.sopt.makers.internal.wordchaingame.domain.WordChainGameWinner;
+import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
 import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameWinnerResponse;
-import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
-import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameQueryRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameWinnerRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -228,6 +231,8 @@ public class WordChainGameService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        // TODO - deprecated된 메소드 사용
         JSONParser parser = new JSONParser();
         JSONObject object = null;
         try {

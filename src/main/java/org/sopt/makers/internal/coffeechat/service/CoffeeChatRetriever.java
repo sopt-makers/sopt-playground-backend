@@ -1,25 +1,20 @@
 package org.sopt.makers.internal.coffeechat.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.coffeechat.domain.enums.Career;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatStatus;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
+import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
+import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatHistoryRepository;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatReviewRepository;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
-import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
-import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.member.domain.Member;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor

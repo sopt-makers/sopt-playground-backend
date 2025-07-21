@@ -7,20 +7,19 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.coffeechat.domain.QCoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.QCoffeeChatHistory;
 import org.sopt.makers.internal.coffeechat.domain.enums.Career;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
 import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCustom {
@@ -110,7 +109,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                                 CoffeeChatHistoryResponse.class,
                                 coffeeChat.id,
                                 coffeeChat.coffeeChatBio,
-                                coffeeChat.member.name,
+                                coffeeChat.member.id,
                                 coffeeChat.career,
                                 coffeeChat.coffeeChatTopicType
                         )
@@ -152,8 +151,8 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
             return null;
         }
         return memberCareer.companyName.contains(search)
-                .or(member.university.contains(search))
-                .or(member.name.contains(search));
+                .or(member.university.contains(search));
+//                .or(member.name.contains(search));
     }
 
     private BooleanExpression isInPart(QMember member, String part, QMemberSoptActivity memberSoptActivity) {
