@@ -2,8 +2,6 @@ package org.sopt.makers.internal.member.repository;
 
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,7 +17,6 @@ import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
 import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
-import org.sopt.makers.internal.member.domain.enums.Part;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.QMemberProfileProjectDao;
 import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
@@ -35,11 +32,6 @@ public class MemberProfileQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     private static final List<Long> WHITE_LIST = List.of(894L);
-
-    private BooleanExpression checkMemberContainsName(String name) {
-        if(name == null) return null;
-        return QMember.member.name.contains(name);
-    }
 
     private BooleanExpression checkActivityContainsPart(String part) {
         if(part == null) return null;
@@ -62,25 +54,6 @@ public class MemberProfileQueryRepository {
                                         .and(checkActivityContainsTeam(team)))
         );
     }
-
-    private BooleanExpression checkUserActivityContainsGeneration(Integer generation) {
-        if(generation == null) return null;
-        return QMember.member.id.in(
-                queryFactory.select(QMember.member.id)
-                        .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
-                        .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation))
-        );
-    }
-
-    private BooleanExpression checkUserActivityContainsGenerations(List<Integer> generations) {
-        if(generations.isEmpty()) return null;
-        return QMember.member.id.in(
-            queryFactory.select(QMember.member.id)
-                .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
-                .where(QMemberSoptActivity.memberSoptActivity.generation.in(generations))
-        );
-    }
-
 
     private BooleanExpression checkActivityContainsGenerationAndPart(Integer generation, String part) {
         if(generation == null && part == null) return null;
@@ -125,11 +98,6 @@ public class MemberProfileQueryRepository {
     private BooleanExpression checkMemberMbti(String mbti) {
         val isMbtiEmpty = !StringUtils.hasText(mbti);
         return isMbtiEmpty ? null : QMember.member.mbti.eq(mbti);
-    }
-
-    private BooleanExpression checkMemberUniversity(String university) {
-        val isUniversityEmpty = !StringUtils.hasText(university);
-        return isUniversityEmpty ? null : QMember.member.university.contains(university);
     }
 
     private BooleanExpression checkActivityContainsTeam(String team) {
@@ -205,19 +173,6 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-//    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
-//        val member = QMember.member;
-//        val activities = QMemberSoptActivity.memberSoptActivity;
-//        return queryFactory.selectFrom(member)
-//                .innerJoin(member.activities, activities)
-//                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
-//                .offset(cursor)
-//                .limit(limit)
-//                .groupBy(member.id)
-//                .orderBy(member.id.asc())
-//                .fetch();
-//    }
-
     public List<Member> findAllLimitedMemberProfile(
             String part, Integer limit, Integer cursor, String search,
             Integer generation, Integer employed, Integer orderBy, String mbti, String team
@@ -240,35 +195,6 @@ public class MemberProfileQueryRepository {
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy))).fetch();
     }
 
-//    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation) {
-//        val member = QMember.member;
-//        val activities = QMemberSoptActivity.memberSoptActivity;
-//        return queryFactory.selectFrom(member)
-//                .innerJoin(member.activities, activities)
-//                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
-//                .groupBy(member.id)
-//                .orderBy(member.id.asc())
-//                .fetch();
-//    }
-//
-//    public List<Member> findAllMemberProfile(String part, String search, Integer generation,
-//        Integer employed, Integer orderBy, String mbti, String team) {
-//        val member = QMember.member;
-//        val activities = QMemberSoptActivity.memberSoptActivity;
-//        val career = QMemberCareer.memberCareer;
-//        return queryFactory.selectFrom(member)
-//                .innerJoin(member.activities, activities)
-//                .leftJoin(member.careers, career)
-//                .where(checkMemberHasProfile(),
-//                        checkContainsSearchCond(member, career, search),
-//                        checkMemberCurrentlyEmployed(career, employed),
-//                        checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
-//                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
-//                .groupBy(member.id)
-//                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
-//                .fetch();
-//    }
-
     public List<Member> findAllMemberProfilesBySearchCond(String search) {
         val member = QMember.member;
         val career = QMemberCareer.memberCareer;
@@ -277,70 +203,6 @@ public class MemberProfileQueryRepository {
             .where(checkContainsSearchCond(member, career, search))
             .groupBy(member.id)
             .fetch();
-    }
-
-
-    public List<Long> findAllMemberIdsByGeneration(Integer generation) {
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        return queryFactory.select(member.id)
-                .from(member)
-                .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation)
-                ).groupBy(member.id)
-                .fetch();
-    }
-
-    public List<Long> findAllMemberIdsByRecommendFilter(List<Integer> generations, String university, String mbti) {
-        if (generations.isEmpty()) return null;
-
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-
-        return queryFactory.select(member.id)
-            .from(member)
-            .innerJoin(member.activities, activities)
-            .where(checkMemberHasProfile(), checkUserActivityContainsGenerations(generations),
-                checkMemberMbti(mbti), checkMemberUniversity(university))
-            .groupBy(member.id)
-            .fetch();
-
-    }
-
-    public List<Long> findAllInactivityMemberIdsByGenerationAndPart(Integer generation, Part part) {
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        if (part != null) {
-            return queryFactory.select(member.id)
-                    .from(member)
-                    .innerJoin(member.activities, activities)
-                    .where(activities.generation.ne(generation))
-                    .where(activities.part.eq(part.getTitle()))
-                    .groupBy(member.id)
-                    .orderBy(member.id.asc())
-                    .fetch();
-        } else {
-            return queryFactory.select(member.id)
-                    .from(member)
-                    .innerJoin(member.activities, activities)
-                    .where(activities.generation.ne(generation))
-                    .groupBy(member.id)
-                    .orderBy(member.id.asc())
-                    .fetch();
-        }
-    }
-
-
-    public int countMembersByGeneration(Integer generation) {
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        return queryFactory.select(member.id)
-                .from(member)
-                .innerJoin(member.activities, activities).on(activities.memberId.eq(member.id))
-                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation))
-                .groupBy(member.id)
-                .fetch()
-                .size();
     }
 
     public int countAllMemberProfile(String part, String search, Integer generation, Integer employed, String mbti, String team) {
@@ -372,30 +234,160 @@ public class MemberProfileQueryRepository {
                 .where(coffeeChat.isCoffeeChatActivate.isTrue())
                 .fetch();
     }
-
-    public List<Member> findRandomMembers(int limit) {
-        QMember member = QMember.member;
-
-        NumberExpression<Double> rand = Expressions.numberTemplate(Double.class, "function('RAND')");
-
-        return queryFactory
-                .selectFrom(member)
-                .where(member.hasProfile.isTrue())
-                .orderBy(rand.asc())
-                .limit(limit)
-                .fetch();
-    }
-
-    public List<Member> findByNameContainingOrderByLatestActivity(String name) {
-        QMember member = QMember.member;
-        QMemberSoptActivity activity = QMemberSoptActivity.memberSoptActivity;
-
-        return queryFactory
-                .selectFrom(member)
-                .leftJoin(member.activities, activity)
-                .where(member.name.contains(name))
-                .groupBy(member.id)
-                .orderBy(activity.generation.max().desc(), member.id.desc())
-                .fetch();
-    }
+//
+//    private BooleanExpression checkMemberUniversity(String university) {
+//        val isUniversityEmpty = !StringUtils.hasText(university);
+//        return isUniversityEmpty ? null : QMember.member.university.contains(university);
+//    }
+//    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        return queryFactory.selectFrom(member)
+//                .innerJoin(member.activities, activities)
+//                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
+//                .offset(cursor)
+//                .limit(limit)
+//                .groupBy(member.id)
+//                .orderBy(member.id.asc())
+//                .fetch();
+//    }
+//    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        return queryFactory.selectFrom(member)
+//                .innerJoin(member.activities, activities)
+//                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
+//                .groupBy(member.id)
+//                .orderBy(member.id.asc())
+//                .fetch();
+//    }
+//
+//    public List<Member> findAllMemberProfile(String part, String search, Integer generation,
+//        Integer employed, Integer orderBy, String mbti, String team) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        val career = QMemberCareer.memberCareer;
+//        return queryFactory.selectFrom(member)
+//                .innerJoin(member.activities, activities)
+//                .leftJoin(member.careers, career)
+//                .where(checkMemberHasProfile(),
+//                        checkContainsSearchCond(member, career, search),
+//                        checkMemberCurrentlyEmployed(career, employed),
+//                        checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
+//                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
+//                .groupBy(member.id)
+//                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
+//                .fetch();
+//    }
+//
+//    public List<Long> findAllMemberIdsByGeneration(Integer generation) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        return queryFactory.select(member.id)
+//                .from(member)
+//                .innerJoin(member.activities, activities)
+//                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation)
+//                ).groupBy(member.id)
+//                .fetch();
+//    }
+//
+//    public List<Long> findAllMemberIdsByRecommendFilter(List<Integer> generations, String university, String mbti) {
+//        if (generations.isEmpty()) return null;
+//
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//
+//        return queryFactory.select(member.id)
+//            .from(member)
+//            .innerJoin(member.activities, activities)
+//            .where(checkMemberHasProfile(), checkUserActivityContainsGenerations(generations),
+//                checkMemberMbti(mbti), checkMemberUniversity(university))
+//            .groupBy(member.id)
+//            .fetch();
+//
+//    }
+//
+//    public List<Long> findAllInactivityMemberIdsByGenerationAndPart(Integer generation, Part part) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        if (part != null) {
+//            return queryFactory.select(member.id)
+//                    .from(member)
+//                    .innerJoin(member.activities, activities)
+//                    .where(activities.generation.ne(generation))
+//                    .where(activities.part.eq(part.getTitle()))
+//                    .groupBy(member.id)
+//                    .orderBy(member.id.asc())
+//                    .fetch();
+//        } else {
+//            return queryFactory.select(member.id)
+//                    .from(member)
+//                    .innerJoin(member.activities, activities)
+//                    .where(activities.generation.ne(generation))
+//                    .groupBy(member.id)
+//                    .orderBy(member.id.asc())
+//                    .fetch();
+//        }
+//    }
+//
+//    public int countMembersByGeneration(Integer generation) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        return queryFactory.select(member.id)
+//                .from(member)
+//                .innerJoin(member.activities, activities).on(activities.memberId.eq(member.id))
+//                .where(checkMemberHasProfile(), checkUserActivityContainsGeneration(generation))
+//                .groupBy(member.id)
+//                .fetch()
+//                .size();
+//    }
+//
+//    private BooleanExpression checkMemberContainsName(String name) {
+//        if(name == null) return null;
+//        return QMember.member.name.contains(name);
+//    }
+//
+//    private BooleanExpression checkUserActivityContainsGeneration(Integer generation) {
+//        if(generation == null) return null;
+//        return QMember.member.id.in(
+//                queryFactory.select(QMember.member.id)
+//                        .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+//                        .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation))
+//        );
+//    }
+//
+//    private BooleanExpression checkUserActivityContainsGenerations(List<Integer> generations) {
+//        if(generations.isEmpty()) return null;
+//        return QMember.member.id.in(
+//            queryFactory.select(QMember.member.id)
+//                .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
+//                .where(QMemberSoptActivity.memberSoptActivity.generation.in(generations))
+//        );
+//    }
+//
+//    public List<Member> findRandomMembers(int limit) {
+//        QMember member = QMember.member;
+//
+//        NumberExpression<Double> rand = Expressions.numberTemplate(Double.class, "function('RAND')");
+//
+//        return queryFactory
+//                .selectFrom(member)
+//                .where(member.hasProfile.isTrue())
+//                .orderBy(rand.asc())
+//                .limit(limit)
+//                .fetch();
+//    }
+//
+//    public List<Member> findByNameContainingOrderByLatestActivity(String name) {
+//        QMember member = QMember.member;
+//        QMemberSoptActivity activity = QMemberSoptActivity.memberSoptActivity;
+//
+//        return queryFactory
+//                .selectFrom(member)
+//                .leftJoin(member.activities, activity)
+//                .where(member.name.contains(name))
+//                .groupBy(member.id)
+//                .orderBy(activity.generation.max().desc(), member.id.desc())
+//                .fetch();
+//    }
 }
