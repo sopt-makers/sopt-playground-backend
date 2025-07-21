@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    List<Member> findAllByNameContaining(String name);
+//    List<Member> findAllByNameContaining(String name);
 
     List<Member> findAllByIdIn(List<Long> ids);
 

@@ -105,30 +105,30 @@ public class MemberService {
         return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
     }
 
-    @Transactional(readOnly = true)
-    public List<MemberResponse> getMemberByName(String name) {
-        // TODO: - name이 이름에 포함된 멤버 리스트 받아오기 수정 필요해보임
-        List<Member> members = memberRepository.findAllByNameContaining(name);
-        if (members.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
-        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
-
-        return members.stream().map(member -> {
-            InternalUserDetails userDetails = userDetailsMap.get(member.getId());
-            if (userDetails == null) return null;
-            return new MemberResponse(
-                    member.getId(),
-                    userDetails.name(),
-                    userDetails.lastGeneration(),
-                    userDetails.profileImage(),
-                    member.getHasProfile(),
-                    member.getEditActivitiesAble()
-            );
-        }).filter(Objects::nonNull).collect(Collectors.toList());
-    }
+//    @Transactional(readOnly = true)
+//    public List<MemberResponse> getMemberByName(String name) {
+//        // TODO: - name이 이름에 포함된 멤버 리스트 받아오기 수정 필요해보임
+//        List<Member> members = memberRepository.findAllByNameContaining(name);
+//        if (members.isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//        List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
+//        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
+//                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+//
+//        return members.stream().map(member -> {
+//            InternalUserDetails userDetails = userDetailsMap.get(member.getId());
+//            if (userDetails == null) return null;
+//            return new MemberResponse(
+//                    member.getId(),
+//                    userDetails.name(),
+//                    userDetails.lastGeneration(),
+//                    userDetails.profileImage(),
+//                    member.getHasProfile(),
+//                    member.getEditActivitiesAble()
+//            );
+//        }).filter(Objects::nonNull).collect(Collectors.toList());
+//    }
 
     @Transactional(readOnly = true)
     public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
@@ -299,7 +299,7 @@ public class MemberService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
 
         boolean hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
-        
+
         // TODO : - countAllMemberProfile() 아래 메소드 해결 필요해보임.
         int totalMembersCount = memberProfileQueryRepository.countAllMemberProfile(getMemberPart(filter), search, generation, employed, mbti, team);
         return new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);

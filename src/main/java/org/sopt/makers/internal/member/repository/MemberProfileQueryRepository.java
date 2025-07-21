@@ -134,7 +134,7 @@ public class MemberProfileQueryRepository {
         if (search == null || memberCareer == null) return null;
         return memberCareer.companyName.contains(search)
                 // TODO : - name contain 해결하기
-            .or(member.name.contains(search))
+//            .or(member.name.contains(search))
             .or(member.university.contains(search));
     }
 
