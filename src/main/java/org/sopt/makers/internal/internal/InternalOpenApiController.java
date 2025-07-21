@@ -12,11 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
-import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalOpenApiController {
 
     private final InternalApiService internalApiService;
-    private final MemberService memberService;
+    private final PlatformService platformService;
 
     private final ProjectService projectService;
     private final ProjectResponseMapper projectMapper;
@@ -71,7 +71,7 @@ public class InternalOpenApiController {
     public ResponseEntity<InternalMemberProjectResponse> getMemberProject(
             @PathVariable Long memberId
     ) {
-        InternalUserDetails user = memberService.getInternalUserById(memberId);
+        InternalUserDetails user = platformService.getInternalUser(memberId);
         int count = projectService.getProjectCountByMemberId(memberId);
         InternalMemberProjectResponse response = projectMapper.toInternalMemberProjectResponse(user, count);
         return ResponseEntity.status(HttpStatus.OK).body(response);

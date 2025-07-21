@@ -1,30 +1,31 @@
 package org.sopt.makers.internal.member.repository;
 
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-
-import org.sopt.makers.internal.member.domain.*;
-import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
-import org.sopt.makers.internal.member.domain.enums.Part;
-import org.sopt.makers.internal.member.dto.QMemberProfileProjectDao;
-import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
-import org.sopt.makers.internal.project.domain.QProject;
-import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
-import org.sopt.makers.internal.coffeechat.domain.QCoffeeChat;
-import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
-
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.sopt.makers.internal.coffeechat.domain.QCoffeeChat;
+import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.QMember;
+import org.sopt.makers.internal.member.domain.QMemberCareer;
+import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
+import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
+import org.sopt.makers.internal.member.domain.enums.Part;
+import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
+import org.sopt.makers.internal.member.dto.QMemberProfileProjectDao;
+import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
+import org.sopt.makers.internal.project.domain.QProject;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Repository
@@ -204,18 +205,18 @@ public class MemberProfileQueryRepository {
                 .fetch();
     }
 
-    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        return queryFactory.selectFrom(member)
-                .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
-                .offset(cursor)
-                .limit(limit)
-                .groupBy(member.id)
-                .orderBy(member.id.asc())
-                .fetch();
-    }
+//    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        return queryFactory.selectFrom(member)
+//                .innerJoin(member.activities, activities)
+//                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
+//                .offset(cursor)
+//                .limit(limit)
+//                .groupBy(member.id)
+//                .orderBy(member.id.asc())
+//                .fetch();
+//    }
 
     public List<Member> findAllLimitedMemberProfile(
             String part, Integer limit, Integer cursor, String search,
@@ -239,34 +240,34 @@ public class MemberProfileQueryRepository {
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy))).fetch();
     }
 
-    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation) {
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        return queryFactory.selectFrom(member)
-                .innerJoin(member.activities, activities)
-                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
-                .groupBy(member.id)
-                .orderBy(member.id.asc())
-                .fetch();
-    }
-
-    public List<Member> findAllMemberProfile(String part, String search, Integer generation,
-        Integer employed, Integer orderBy, String mbti, String team) {
-        val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
-        val career = QMemberCareer.memberCareer;
-        return queryFactory.selectFrom(member)
-                .innerJoin(member.activities, activities)
-                .leftJoin(member.careers, career)
-                .where(checkMemberHasProfile(),
-                        checkContainsSearchCond(member, career, search),
-                        checkMemberCurrentlyEmployed(career, employed),
-                        checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
-                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
-                .groupBy(member.id)
-                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
-                .fetch();
-    }
+//    public List<Member> findAllMemberProfile(String part, Integer cursor, String name, Integer generation) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        return queryFactory.selectFrom(member)
+//                .innerJoin(member.activities, activities)
+//                .where(checkMemberHasProfile(), checkActivityContainsPart(part), checkUserActivityContainsGeneration(generation), checkMemberContainsName(name))
+//                .groupBy(member.id)
+//                .orderBy(member.id.asc())
+//                .fetch();
+//    }
+//
+//    public List<Member> findAllMemberProfile(String part, String search, Integer generation,
+//        Integer employed, Integer orderBy, String mbti, String team) {
+//        val member = QMember.member;
+//        val activities = QMemberSoptActivity.memberSoptActivity;
+//        val career = QMemberCareer.memberCareer;
+//        return queryFactory.selectFrom(member)
+//                .innerJoin(member.activities, activities)
+//                .leftJoin(member.careers, career)
+//                .where(checkMemberHasProfile(),
+//                        checkContainsSearchCond(member, career, search),
+//                        checkMemberCurrentlyEmployed(career, employed),
+//                        checkActivityContainsPart(part), checkMemberMbti(mbti), checkNotInWhiteList(member),
+//                        checkActivityContainsGenerationAndTeamAndPart(generation, team, part))
+//                .groupBy(member.id)
+//                .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy)))
+//                .fetch();
+//    }
 
     public List<Member> findAllMemberProfilesBySearchCond(String search) {
         val member = QMember.member;

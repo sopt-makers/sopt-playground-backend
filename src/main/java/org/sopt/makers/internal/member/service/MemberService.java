@@ -30,7 +30,6 @@ import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.PlatformUserUpdateRequest;
 import org.sopt.makers.internal.external.slack.SlackClient;
@@ -98,13 +97,7 @@ public class MemberService {
     private final ReviewService reviewService;
     private final PlatformService platformService;
     private final AuthConfig authConfig;
-    private final PlatformClient platformClient;
     private final InfiniteScrollUtil infiniteScrollUtil;
-
-    public InternalUserDetails getInternalUserById(Long id) {
-        return platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
-                authConfig.getPlatformServiceName(), new ArrayList<>(List.of(id))).getBody().getData().get(0);
-    }
 
     @Transactional(readOnly = true)
     public MemberInfoResponse getMyInformation(Long userId) {
@@ -168,7 +161,7 @@ public class MemberService {
     }
 
     public MemberResponse getMemberResponseById(Long id) {
-        InternalUserDetails user = getInternalUserById(id);
+        InternalUserDetails user = platformService.getInternalUser(id);
         Member member = getMemberById(id);
 
         return new MemberResponse(id, user.name(), user.lastGeneration(), user.profileImage(),
@@ -425,7 +418,6 @@ public class MemberService {
                 .build();
 
         member.saveMemberProfile(
-                request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
@@ -592,11 +584,13 @@ public class MemberService {
     public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
         Member blocker = memberRetriever.findMemberById(memberId);
         Member blockedMember = memberRetriever.findMemberById(blockedMemberId);
+        InternalUserDetails blockerDetail = platformService.getInternalUser(memberId);
+        InternalUserDetails blockedMemberDetail = platformService.getInternalUser(blockedMemberId);
 
         Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         return blockHistory.map(memberBlock ->
-                MemberBlockResponse.of(memberBlock.getIsBlocked(), blocker, blockedMember)
-        ).orElseGet(() -> MemberBlockResponse.of(false, blocker, blockedMember));
+                MemberBlockResponse.of(memberBlock.getIsBlocked(), blockerDetail, blockedMemberDetail)
+        ).orElseGet(() -> MemberBlockResponse.of(false, blockerDetail, blockedMemberDetail));
     }
 
     @Transactional
