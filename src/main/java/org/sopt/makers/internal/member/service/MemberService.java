@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
-import org.sopt.makers.internal.coffeechat.dto.request.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
@@ -325,13 +324,13 @@ public class MemberService {
         else return team;
     }
 
-    @Transactional(readOnly = true)
-    public List<InternalCoffeeChatMemberDto> getAllMemberByCoffeeChatActivate() {
-        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
-        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
-                member, platformService.getPartAndGenerationList(member.getId())
-        )).toList();
-    }
+//    @Transactional(readOnly = true)
+//    public List<InternalCoffeeChatMemberDto> getAllMemberByCoffeeChatActivate() {
+//        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
+//        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
+//                member, platformService.getPartAndGenerationList(member.getId())
+//        )).toList();
+//    }
 
     @Transactional
     public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {

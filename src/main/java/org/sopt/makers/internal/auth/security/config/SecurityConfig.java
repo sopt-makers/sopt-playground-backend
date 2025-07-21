@@ -41,7 +41,6 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/makers/**",
                         "/internal/api/v1/**"
-//                        "/api/v1/presigned-url"
                 ).permitAll()
 
 //                .antMatchers(

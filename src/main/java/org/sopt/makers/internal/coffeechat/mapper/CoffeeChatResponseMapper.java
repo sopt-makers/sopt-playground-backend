@@ -1,23 +1,20 @@
 package org.sopt.makers.internal.coffeechat.mapper;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberCareer;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.coffeechat.dto.response.InternalCoffeeChatMemberResponse;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
-import org.sopt.makers.internal.coffeechat.dto.request.InternalCoffeeChatMemberDto;
 import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -83,11 +80,11 @@ public class CoffeeChatResponseMapper {
         );
     }
 
-    public List<InternalCoffeeChatMemberResponse> toInternalCoffeeChatMemberResponse(List<InternalCoffeeChatMemberDto> coffeeChatMembers) {
-        return coffeeChatMembers.stream().map(
-                member -> new InternalCoffeeChatMemberResponse(
-                    member.id(), member.parts(), member.name(), member.profileImage()
-                )
-        ).toList();
-    }
+//    public List<InternalCoffeeChatMemberResponse> toInternalCoffeeChatMemberResponse(List<InternalCoffeeChatMemberDto> coffeeChatMembers) {
+//        return coffeeChatMembers.stream().map(
+//                member -> new InternalCoffeeChatMemberResponse(
+//                    member.id(), member.parts(), member.name(), member.profileImage()
+//                )
+//        ).toList();
+//    }
 }
