@@ -1,8 +1,8 @@
 package org.sopt.makers.internal.project.dto.response.allProject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.List;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 
 public record ProjectResponse(
         @Schema(required = true)
@@ -25,6 +25,6 @@ public record ProjectResponse(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
-        List<ProjectMemberResponse> members
+        List<MemberSimpleResonse> members
         // 0715 변경사항 - List<ProjectLinkResponse> links 삭제 (오류 롤백 주석)
 ) { }

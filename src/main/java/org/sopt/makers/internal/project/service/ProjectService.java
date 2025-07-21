@@ -1,32 +1,5 @@
 package org.sopt.makers.internal.project.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.sopt.makers.internal.auth.AuthConfig;
-import org.sopt.makers.internal.exception.WrongImageInputException;
-import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.PlatformClient;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.repository.MemberRepository;
-import org.sopt.makers.internal.project.domain.ProjectLink;
-import org.sopt.makers.internal.project.domain.MemberProjectRelation;
-import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.project.dto.response.allProject.ProjectMemberResponse;
-import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
-import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
-import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
-import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
-import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
-import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
-import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
-import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
-import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
-import org.sopt.makers.internal.project.repository.ProjectRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +7,32 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.external.platform.PlatformClient;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.repository.MemberRepository;
+import org.sopt.makers.internal.project.domain.MemberProjectRelation;
+import org.sopt.makers.internal.project.domain.Project;
+import org.sopt.makers.internal.project.domain.ProjectLink;
+import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
+import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
+import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
+import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
+import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
+import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
+import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
+import org.sopt.makers.internal.project.repository.ProjectRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -186,8 +185,8 @@ public class ProjectService {
                     List<Long> userIds = getProjectUserIdsByProjectId(project.getId());
                     List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
                             authConfig.getPlatformServiceName(), userIds).getBody()).getData();
-                    List<ProjectMemberResponse> memberResponses = projectUsersDetails.stream()
-                            .map(p-> new ProjectMemberResponse(p.userId(), p.name(), p.profileImage())).toList();
+                    List<MemberSimpleResonse> memberResponses = projectUsersDetails.stream()
+                            .map(p-> new MemberSimpleResonse(p.userId(), p.name(), p.profileImage())).toList();
 
                     return projectResponseMapper.toProjectResponse(project, memberResponses);
                 }).toList();
