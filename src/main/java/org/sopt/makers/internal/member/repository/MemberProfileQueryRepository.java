@@ -133,6 +133,7 @@ public class MemberProfileQueryRepository {
     private BooleanExpression checkContainsSearchCond(QMember member, QMemberCareer memberCareer, String search) {
         if (search == null || memberCareer == null) return null;
         return memberCareer.companyName.contains(search)
+                // TODO : - name contain 해결하기
             .or(member.name.contains(search))
             .or(member.university.contains(search));
     }
@@ -195,15 +196,15 @@ public class MemberProfileQueryRepository {
                 .orderBy(getOrderByCondition(OrderByCondition.valueOf(orderBy))).fetch();
     }
 
-    public List<Member> findAllMemberProfilesBySearchCond(String search) {
-        val member = QMember.member;
-        val career = QMemberCareer.memberCareer;
-        return queryFactory.selectFrom(member)
-            .innerJoin(member.careers, career)
-            .where(checkContainsSearchCond(member, career, search))
-            .groupBy(member.id)
-            .fetch();
-    }
+//    public List<Member> findAllMemberProfilesBySearchCond(String search) {
+//        val member = QMember.member;
+//        val career = QMemberCareer.memberCareer;
+//        return queryFactory.selectFrom(member)
+//            .innerJoin(member.careers, career)
+//            .where(checkContainsSearchCond(member, career, search))
+//            .groupBy(member.id)
+//            .fetch();
+//    }
 
     public int countAllMemberProfile(String part, String search, Integer generation, Integer employed, String mbti, String team) {
         val member = QMember.member;

@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
@@ -77,12 +76,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class MemberService {
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
     private final MemberRetriever memberRetriever;
     private final CoffeeChatRetriever coffeeChatRetriever;
     private final MemberCareerRetriever memberCareerRetriever;
     private final MemberResponseMapper memberResponseMapper;
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
     private final MemberSoptActivityRepository memberSoptActivityRepository;
@@ -96,7 +95,6 @@ public class MemberService {
     private final SlackMessageUtil slackMessageUtil;
     private final ReviewService reviewService;
     private final PlatformService platformService;
-    private final AuthConfig authConfig;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Transactional(readOnly = true)
@@ -109,6 +107,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<MemberResponse> getMemberByName(String name) {
+        // TODO: - name이 이름에 포함된 멤버 리스트 받아오기 수정 필요해보임
         List<Member> members = memberRepository.findAllByNameContaining(name);
         if (members.isEmpty()) {
             return Collections.emptyList();
@@ -268,13 +267,21 @@ public class MemberService {
                     getMemberPart(filter), infiniteScrollUtil.checkLimitForPagination(limit),
                     cursor, search, generation, employed, orderBy, mbti, team);
 
-        if (members.isEmpty()) {
-            return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
-        }
-
+        // 07.21.13:50 추가 - checkContainsSearchCond() name 검색해결 위해 플랫폼팀에서 받아온 정보로 필터링
         List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
                 .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+        if (search != null && !search.isBlank()) {
+            members = members.stream()
+                    .filter(dto -> {
+                        InternalUserDetails userDetails = userDetailsMap.get(dto.getId());
+                        return userDetails.name().contains(search);
+                    }).toList();
+        }
+
+        if (members.isEmpty()) {
+            return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
+        }
 
         List<MemberProfileResponse> memberList = members.stream().map(member -> {
             InternalUserDetails userDetails = userDetailsMap.get(member.getId());
@@ -292,6 +299,8 @@ public class MemberService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
 
         boolean hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
+        
+        // TODO : - countAllMemberProfile() 아래 메소드 해결 필요해보임.
         int totalMembersCount = memberProfileQueryRepository.countAllMemberProfile(getMemberPart(filter), search, generation, employed, mbti, team);
         return new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
     }
@@ -567,10 +576,10 @@ public class MemberService {
         memberSoptActivityRepository.delete(activity);
     }
 
-    @Transactional(readOnly = true)
-    public List<Member> getMemberBySearchCond(String search) {
-        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(search);
-    }
+//    @Transactional(readOnly = true)
+//    public List<Member> getMemberBySearchCond(String search) {
+//        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(search);
+//    }
 
     @Transactional
     public void checkActivities(Long memberId, Boolean isCheck) {
