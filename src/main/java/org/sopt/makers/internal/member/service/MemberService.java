@@ -551,7 +551,6 @@ public class MemberService {
                 .build();
 
         member.saveMemberProfile(
-                member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
@@ -637,12 +636,13 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberPropertiesResponse getMemberProperties(Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
+        InternalUserDetails userDetails = platformService.getInternalUser(memberId);
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(memberId);
         MemberCoffeeChatPropertyDto coffeeChatProperty = coffeeChatRetriever.getMemberCoffeeChatProperty(member);
         List<String> activitiesAndGeneration = platformService.getPartAndGenerationList(memberId);
 
         long uploadSopticleCount = communityPostRepository.countSopticleByMemberId(memberId);
-        long uploadReviewCount = reviewService.fetchReviewCountByUsername(member.getName());
+        long uploadReviewCount = reviewService.fetchReviewCountByUsername(userDetails.name());
 
         return memberResponseMapper.toMemberPropertiesResponse(
                 member, memberCareer, coffeeChatProperty,
