@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -148,23 +149,24 @@ public class WordChainGameService {
     public WordChainGameRoomResponse toRoomResponse(WordChainGameRoom room, Map<Long, InternalUserDetails> startUserMap) {
         InternalUserDetails startUserDetail = startUserMap.get(room.getCreatedUserId());
         MemberSimpleResonse startUserResponse = new MemberSimpleResonse(startUserDetail.userId(), startUserDetail.name(), startUserDetail.profileImage());
+        List<WordChainGameRoomResponse.WordResponse> wordList = new ArrayList<>();
 
-        List<Long> userIds = room.getWordList().stream()
-                .map(Word::getMemberId)
-                .distinct()
-                .toList();
-
-        Map<Long, InternalUserDetails> userDetailMap = platformService.getInternalUsers(userIds).stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
-
-        List<WordChainGameRoomResponse.WordResponse> wordList = room.getWordList().stream()
-                .sorted(Comparator.comparing(Word::getId))
-                .map(word -> {
-                    InternalUserDetails userDetail = userDetailMap.get(word.getMemberId());
-                    MemberSimpleResonse responseMember =  new MemberSimpleResonse(userDetail.userId(), userDetail.name(), userDetail.profileImage());
-                    return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
-                })
-                .toList();
+        if (!room.getWordList().isEmpty()) {
+            List<Long> userIds = room.getWordList().stream()
+                    .map(Word::getMemberId)
+                    .distinct()
+                    .toList();
+            Map<Long, InternalUserDetails> userDetailMap = platformService.getInternalUsers(userIds).stream()
+                    .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+            wordList = room.getWordList().stream()
+                    .sorted(Comparator.comparing(Word::getId))
+                    .map(word -> {
+                        InternalUserDetails userDetail = userDetailMap.get(word.getMemberId());
+                        MemberSimpleResonse responseMember = new MemberSimpleResonse(userDetail.userId(), userDetail.name(), userDetail.profileImage());
+                        return new WordChainGameRoomResponse.WordResponse(word.getWord(), responseMember);
+                    })
+                    .toList();
+        }
 
         return new WordChainGameRoomResponse(room.getId(), room.getStartWord(), startUserResponse, wordList);
     }
