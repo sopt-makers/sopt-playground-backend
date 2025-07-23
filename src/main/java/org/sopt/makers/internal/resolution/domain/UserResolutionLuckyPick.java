@@ -1,5 +1,11 @@
 package org.sopt.makers.internal.resolution.domain;
 
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.sopt.makers.internal.common.AuditingTimeEntity;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
