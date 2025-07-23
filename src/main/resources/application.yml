@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: test
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/internal?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=KST
@@ -121,4 +123,4 @@ external:
     api-key: test
     service-name: test
     endpoints:
-      jwk: test
+      jwk: /.well-known/jwks.json

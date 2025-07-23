@@ -13,17 +13,17 @@ public class AuthConfig {
     @Value("${jwt.secret}")
     private String jwtSecretKey;
 
-    @Value("${oauth.fb.redirect.auth}")
-    private String fbRedirectUriAuth;
-
-    @Value("${oauth.fb.redirect.register}")
-    private String fbRedirectUriRegister;
-
-    @Value("${oauth.fb.client.appId}")
-    private String fbClientAppId;
-
-    @Value("${oauth.fb.client.secret}")
-    private String fbClientSecret;
+//    @Value("${oauth.fb.redirect.auth}")
+//    private String fbRedirectUriAuth;
+//
+//    @Value("${oauth.fb.redirect.register}")
+//    private String fbRedirectUriRegister;
+//
+//    @Value("${oauth.fb.client.appId}")
+//    private String fbClientAppId;
+//
+//    @Value("${oauth.fb.client.secret}")
+//    private String fbClientSecret;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
