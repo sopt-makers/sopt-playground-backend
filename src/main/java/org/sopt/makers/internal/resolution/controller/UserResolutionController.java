@@ -68,6 +68,7 @@ public class UserResolutionController {
 	@Operation(summary = "행운 뽑기 결과 조회")
 	@GetMapping("/lucky-pick")
 	public ResponseEntity<LuckyPickResponse> getLuckyPickResult(
+			//TODO: 인증중앙화 연결해야함
 			@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
 	) {
 		LuckyPickResponse response = luckyPickService.checkLuckyPickResult(memberDetails.getId());
