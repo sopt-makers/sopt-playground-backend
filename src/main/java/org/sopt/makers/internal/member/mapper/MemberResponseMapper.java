@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.member.mapper;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
@@ -15,13 +16,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberResponseMapper {
 
-    public MemberInfoResponse toMemberInfoResponse(Member member, Boolean isCoffeeChatActive) {
-
+    public MemberInfoResponse toMemberInfoResponse(Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActive) {
         return new MemberInfoResponse(
                 member.getId(),
-                member.getName(),
-                member.getGeneration(),
-                member.getProfileImage(),
+                userDetails.name(),
+                userDetails.lastGeneration(),
+                userDetails.profileImage(),
                 member.getHasProfile(),
                 member.getEditActivitiesAble(),
                 isCoffeeChatActive

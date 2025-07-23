@@ -6,8 +6,8 @@ import lombok.Builder;
 import org.sopt.makers.internal.common.util.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 
 @Builder
 public record InternalLatestPostResponse(
@@ -23,17 +23,18 @@ public record InternalLatestPostResponse(
 ) {
     public static InternalLatestPostResponse of(
             CommunityPost post,
-            MemberSoptActivity latestActivity,
+            SoptActivity latestActivity,
+            InternalUserDetails userDetails,
             String categoryName,
             Optional<AnonymousPostProfile> anonymousPostProfile
             ) {
         String generationAndPart = "";
         if (latestActivity != null) {
-            generationAndPart = String.format("%d기 %s", latestActivity.getGeneration(), latestActivity.getPart());
+            generationAndPart = String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
         }
 
-        String finalName = post.getMember().getName();
-        String finalProfileImage = post.getMember().getProfileImage();
+        String finalName = userDetails.name();
+        String finalProfileImage = userDetails.profileImage();
 
         if (post.getIsBlindWriter() && anonymousPostProfile.isPresent()) {
             AnonymousPostProfile anonymousProfile = anonymousPostProfile.get();

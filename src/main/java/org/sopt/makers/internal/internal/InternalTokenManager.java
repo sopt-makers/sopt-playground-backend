@@ -5,28 +5,25 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.SignatureException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.common.auth.AuthConfig;
-import org.sopt.makers.internal.common.CustomMemberDetailsService;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.sopt.makers.internal.exception.WrongTokenException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 @RequiredArgsConstructor
 @Service
 public class InternalTokenManager {
 
     private final AuthConfig authConfig;
-    private final CustomMemberDetailsService memberDetailsService;
+//    private final CustomMemberDetailsService memberDetailsService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -85,11 +82,12 @@ public class InternalTokenManager {
         }
     }
 
-    public Authentication getAuthentication(String token) {
-        val userId = getUserIdFromAuthToken(token);
-        val userDetails = memberDetailsService.loadUserByUsername(userId);
-        return new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities());
-    }
+//    public Authentication getAuthentication(String token) {
+//        val userId = getUserIdFromAuthToken(token);
+//        val userDetails = memberDetailsService.loadUserByUsername(userId);
+//        return new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities());
+//    }
+// 인증중앙화 삭제 예정
 
     public String createRegisterToken(String email) {
         val signatureAlgorithm= SignatureAlgorithm.HS256;

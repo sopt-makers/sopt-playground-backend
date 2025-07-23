@@ -37,6 +37,7 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.9.0'
 	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
+	implementation 'net.minidev:json-smart'
 
 	// Postgresql Array type
 	implementation('com.vladmihalcea:hibernate-types-52:2.19.2')
@@ -47,7 +48,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
-	implementation "com.nimbusds:nimbus-jose-jwt:7.8.1"
+	implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
 
 	// lombok
 	compileOnly 'org.projectlombok:lombok'
@@ -86,6 +87,12 @@ dependencies {
 	// Google Service
 	implementation 'com.google.apis:google-api-services-sheets:v4-rev516-1.23.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
+
+	// Web Client
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+	// Mac M1/M2 ARM 환경에서 Netty DNS Resolver
+	implementation "io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64"
 }
 
 dependencyManagement {

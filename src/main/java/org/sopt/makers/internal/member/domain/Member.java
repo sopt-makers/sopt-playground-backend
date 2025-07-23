@@ -1,14 +1,27 @@
 package org.sopt.makers.internal.member.domain;
 
-import lombok.*;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.vote.domain.VoteSelection;
 
-import javax.persistence.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 @Entity
 @Getter
@@ -22,30 +35,6 @@ public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "auth_user_id")
-    private String authUserId;
-
-    @Column(name = "idp_type")
-    private String idpType;
-
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "generation")
-    private Integer generation;
-
-    @Column(name = "profile_image")
-    private String profileImage;
-
-    @Column
-    private LocalDate birthday;
-
-    @Column
-    private String phone;
 
     @Column
     private String address;
@@ -126,6 +115,31 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
+    //    해당 컬럼들은 QA 이상없으면 완전히 삭제하기
+//    @Column(name = "auth_user_id")
+//    private String authUserId;
+//
+//    @Column(name = "idp_type")
+//    private String idpType;
+//
+//    @Column(name = "name")
+//    private String name;
+//
+//    @Column(name = "email")
+//    private String email;
+//
+//    @Column(name = "generation")
+//    private Integer generation;
+//
+//    @Column(name = "profile_image")
+//    private String profileImage;
+//
+//    @Column
+//    private LocalDate birthday;
+//
+//    @Column
+//    private String phone;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
 
@@ -133,29 +147,16 @@ public class Member {
         this.editActivitiesAble = isCheck;
     }
 
-    public void updateMemberAuth(String authUserId, String idpType) {
-        this.authUserId = authUserId;
-        this.idpType = idpType;
-    }
+//    public void updateMemberAuth(String authUserId, String idpType) {
+//        this.authUserId = authUserId;
+//        this.idpType = idpType;
+//    }
 
-    public void agreeToUseSoulmate() {
-        this.openToSoulmate = true;
-    }
-
-    public void disagreeToUseSoulmate() {
-        this.openToSoulmate = false;
-    }
-
-    public void changeEmail(String email) {
-        this.email = email;
-    }
+//    public void changeEmail(String email) {
+//        this.email = email;
+//    }
 
     public void saveMemberProfile(
-            String name,
-            String profileImage,
-            LocalDate birthday,
-            String phone,
-            String email,
             String address,
             String university,
             String major,
@@ -174,11 +175,6 @@ public class Member {
             List<MemberCareer> careers,
             Boolean isPhoneBlind
     ) {
-        this.name = name;
-        this.profileImage = profileImage;
-        this.birthday = birthday;
-        this.phone = phone;
-        this.email = email;
         this.address = address;
         this.university = university;
         this.major = major;

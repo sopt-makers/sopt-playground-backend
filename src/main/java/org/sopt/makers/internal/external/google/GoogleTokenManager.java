@@ -3,7 +3,7 @@ package org.sopt.makers.internal.external.google;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;

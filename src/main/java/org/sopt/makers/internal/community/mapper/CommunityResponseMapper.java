@@ -2,43 +2,63 @@ package org.sopt.makers.internal.community.mapper;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import lombok.val;
 import org.sopt.makers.internal.common.util.MentionCleaner;
-import org.sopt.makers.internal.community.dto.*;
-import org.sopt.makers.internal.community.dto.response.*;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
-import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
+import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
+import org.sopt.makers.internal.community.dto.CategoryVo;
+import org.sopt.makers.internal.community.dto.CommentDao;
+import org.sopt.makers.internal.community.dto.CommentInfo;
+import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
+import org.sopt.makers.internal.community.dto.CommunityPostVo;
+import org.sopt.makers.internal.community.dto.InternalCommunityPost;
+import org.sopt.makers.internal.community.dto.MemberVo;
+import org.sopt.makers.internal.community.dto.PostCategoryDao;
+import org.sopt.makers.internal.community.dto.PostDetailData;
+import org.sopt.makers.internal.community.dto.response.CommentResponse;
+import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.PostDetailResponse;
+import org.sopt.makers.internal.community.dto.response.PostResponse;
+import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
+import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
+import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 @Component
 public class CommunityResponseMapper {
-    public CommentResponse toCommentResponse(CommentDao dao, Long memberId, AnonymousCommentProfile profile) {
-        val member = dao.comment().getIsBlindWriter() ? null : MemberVo.of(dao.member());
-        val comment = dao.comment();
-        val anonymousProfile = dao.comment().getIsBlindWriter() && profile != null? toAnonymousCommentProfileVo(profile) : null;
-        val isMine = Objects.equals(dao.member().getId(), memberId);
-        return new CommentResponse(comment.getId(), member, isMine, comment.getPostId(), comment.getParentCommentId(),
-                comment.getContent(), comment.getIsBlindWriter(), anonymousProfile, comment.getIsReported(), comment.getCreatedAt());
+    public CommentResponse toCommentResponse(CommentInfo info, Long memberId) {
+        val comment = info.commentDao().comment();
+        val memberVo = comment.getIsBlindWriter() ? null : info.memberVo();
+        val anonymousProfileVo = comment.getIsBlindWriter() && info.anonymousCommentProfile() != null
+                ? toAnonymousCommentProfileVo(info.anonymousCommentProfile()) : null;
+
+        val isMine = Objects.equals(info.commentDao().member().getId(), memberId);
+
+        return new CommentResponse(comment.getId(), memberVo, isMine, comment.getPostId(), comment.getParentCommentId(),
+                comment.getContent(), comment.getIsBlindWriter(), anonymousProfileVo, comment.getIsReported(), comment.getCreatedAt());
     }
 
-    public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao, VoteResponse voteResponse) {
-        val member = MemberVo.of(dao.member());
-        val category = toCategoryResponse(dao.category());
-        CommunityPostVo post = toPostVo(dao.post(), voteResponse);
-        return new CommunityPostMemberVo(member, post, category);
-    }
+//    public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao, VoteResponse voteResponse) {
+//        val member = MemberVo.of(dao.member());
+//        val category = toCategoryResponse(dao.category());
+//        CommunityPostVo post = toPostVo(dao.post(), voteResponse);
+//        return new CommunityPostMemberVo(member, post, category);
+//    }
 
     public PostUpdateResponse toPostUpdateResponse(CommunityPost post) {
         return new PostUpdateResponse(post.getId(), post.getCategoryId(), post.getTitle(),
@@ -52,11 +72,23 @@ public class CommunityResponseMapper {
                 post.getIsBlindWriter(), post.getCreatedAt());
     }
 
-    public PostDetailResponse toPostDetailReponse(CommunityPostMemberVo post, Long memberId, Boolean isLiked, Integer likes, AnonymousPostProfile anonymousPostProfile) {
-        val member = post.post().isBlindWriter() ? null : post.member();
-        val isMine = Objects.equals(post.member().id(), memberId);
-        val anonymousProfile = post.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
-        return new PostDetailResponse(member, post.post(), post.category(), isMine, isLiked, likes, anonymousProfile);
+    public PostDetailResponse toPostDetailReponse(PostDetailData dto, Long viewerId, Boolean isLiked, Integer likes, AnonymousPostProfile anonymousPostProfile) {
+        val postEntity = dto.post();
+        val authorDetails = dto.userDetails();
+        val memberVo = postEntity.getIsBlindWriter()
+                ? null
+                : MemberVo.of(authorDetails, dto.authorCareer());
+
+        val isMine = Objects.equals(authorDetails.userId(), viewerId);
+
+        val anonymousProfileVo = postEntity.getIsBlindWriter() && anonymousPostProfile != null
+                ? toAnonymousPostProfileVo(anonymousPostProfile)
+                : null;
+
+        val postVo = toPostVo(postEntity, dto.vote());
+        val categoryVo = toCategoryResponse(dto.category());
+
+        return new PostDetailResponse(memberVo, postVo, categoryVo, isMine, isLiked, likes, anonymousProfileVo);
     }
 
     public CategoryVo toCategoryResponse(Category category) {
@@ -72,23 +104,39 @@ public class CommunityResponseMapper {
                 voteResponse);
     }
 
-    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentDao> commentDaos, Long memberId, AnonymousPostProfile anonymousPostProfile, Boolean isLiked, Integer likes) {
+//    public CommentResponse toCommentResponse(CommentDao dao, Long memberId, AnonymousCommentProfile profile) {
+//        val member = dao.comment().getIsBlindWriter() ? null : MemberVo.of(dao.member());
+//        val comment = dao.comment();
+//        val anonymousProfile = dao.comment().getIsBlindWriter() && profile != null? toAnonymousCommentProfileVo(profile) : null;
+//        val isMine = Objects.equals(dao.member().getId(), memberId);
+//        return new CommentResponse(comment.getId(), member, isMine, comment.getPostId(), comment.getParentCommentId(),
+//                comment.getContent(), comment.getIsBlindWriter(), anonymousProfile, comment.getIsReported(), comment.getCreatedAt());
+//    }
+
+    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentInfo> commentInfos, Long memberId, AnonymousPostProfile anonymousPostProfile, Boolean isLiked, Integer likes) {
         val post = dao.post();
         val category = dao.category();
         val member = dao.post().isBlindWriter() ? null : dao.member();
         val writerId = dao.post().isBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
-        val comments = commentDaos.stream().map(comment -> toCommentResponse(comment, memberId, null)).collect(toList());
+        val comments = commentInfos.stream()
+                .map(info -> toCommentResponse(info, memberId))
+                .collect(toList());
         val anonymousProfile = dao.post().isBlindWriter() && anonymousPostProfile != null ? toAnonymousPostProfileVo(anonymousPostProfile) : null;
         val createdAt = getRelativeTime(dao.post().createdAt());
-        return new PostResponse(post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(), category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(), post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote());
+
+        return new PostResponse(
+                post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
+                category.name(), post.title(), post.content(), post.hits(),
+                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
+                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote()
+        );
     }
 
-    public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {
+    public SopticlePostResponse toSopticlePostResponse(CommunityPost post, MemberVo memberVo) {
         return new SopticlePostResponse(
                 post.getId(),
-                MemberVo.of(post.getMember()),
+                memberVo,
                 getRelativeTime(post.getCreatedAt()),
                 post.getTitle(),
                 post.getContent(),
@@ -96,6 +144,18 @@ public class CommunityResponseMapper {
                 post.getSopticleUrl()
         );
     }
+
+//    public SopticlePostResponse toSopticlePostResponse(CommunityPost post) {
+//        return new SopticlePostResponse(
+//                post.getId(),
+//                MemberVo.of(post.getMember()),
+//                getRelativeTime(post.getCreatedAt()),
+//                post.getTitle(),
+//                post.getContent(),
+//                post.getImages(),
+//                post.getSopticleUrl()
+//        );
+//    }
 
     public RecentPostResponse toRecentPostResponse(CommunityPost post, int likeCount, int commentCount, Long categoryId, String categoryName, Integer totalVoteCount) {
         return new RecentPostResponse(
@@ -120,11 +180,11 @@ public class CommunityResponseMapper {
         return new AnonymousProfileVo(profile.getNickname().getNickname(), profile.getProfileImg().getImageUrl());
     }
 
-    public InternalCommunityPost toInternalCommunityPostResponse(PostCategoryDao dao) {
-        return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
-    }
+//    public InternalCommunityPost toInternalCommunityPostResponse(PostCategoryDao dao) {
+//        return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
+//    }
 
-    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName, int rank) {
+    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, InternalUserDetails userDetails, String categoryName, int rank) {
         if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
             // 익명일 경우
             return InternalPopularPostResponse.builder()
@@ -139,16 +199,14 @@ public class CommunityResponseMapper {
                     .webLink("https://playground.sopt.org/?feed=" + post.getId())
                     .build();
         } else {
-            MemberSoptActivity latestActivity = post.getMember().getActivities().stream()
-                    .max(Comparator.comparing(MemberSoptActivity::getGeneration))
+            SoptActivity lastActivity = userDetails.soptActivities().stream()
+                    .max(Comparator.comparing(SoptActivity::generation))
                     .orElse(null);
-            String generationAndPart = (latestActivity != null)
-                    ? latestActivity.getGeneration() + "기 " + latestActivity.getPart()
-                    : "정보 없음";
+            String generationAndPart = String.format("%d기 %s", Objects.requireNonNull(lastActivity).generation(), lastActivity.part());
             return InternalPopularPostResponse.builder()
                     .id(post.getId())
-                    .profileImage(post.getMember().getProfileImage())
-                    .name(post.getMember().getName())
+                    .profileImage(userDetails.profileImage())
+                    .name(userDetails.name())
                     .generationAndPart(generationAndPart)
                     .rank(rank)
                     .category(categoryName)
@@ -159,9 +217,8 @@ public class CommunityResponseMapper {
         }
     }
 
-    public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName) {
+    public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, InternalUserDetails userDetails, String categoryName) {
         MemberNameAndProfileImageResponse memberResponse;
-
         if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
             memberResponse = new MemberNameAndProfileImageResponse(
                     anonymousPostProfile.getId(),
@@ -169,17 +226,35 @@ public class CommunityResponseMapper {
                     anonymousPostProfile.getProfileImg().getImageUrl()
             );
         } else {
-            memberResponse = MemberNameAndProfileImageResponse.from(post.getMember());
+            memberResponse = MemberNameAndProfileImageResponse.from(userDetails);
         }
 
         return new PopularPostResponse(
-                post.getId(),
-                categoryName,
-                post.getTitle(),
-                memberResponse,
-                post.getHits()
+                post.getId(), categoryName, post.getTitle(), memberResponse, post.getHits()
         );
     }
+
+//    public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, String categoryName) {
+//        MemberNameAndProfileImageResponse memberResponse;
+//
+//        if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
+//            memberResponse = new MemberNameAndProfileImageResponse(
+//                    anonymousPostProfile.getId(),
+//                    anonymousPostProfile.getNickname().getNickname(),
+//                    anonymousPostProfile.getProfileImg().getImageUrl()
+//            );
+//        } else {
+//            memberResponse = MemberNameAndProfileImageResponse.from(post.getMember());
+//        }
+//
+//        return new PopularPostResponse(
+//                post.getId(),
+//                categoryName,
+//                post.getTitle(),
+//                memberResponse,
+//                post.getHits()
+//        );
+//    }
 
     private String getRelativeTime(LocalDateTime createdAt) {
         Duration duration = Duration.between(createdAt, LocalDateTime.now());

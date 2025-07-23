@@ -26,6 +26,8 @@ spring:
 jwt:
   secret: test
   code: test
+  jwk:
+    issuer: test
 
 springdoc:
   swagger-ui:
@@ -112,3 +114,11 @@ gabia:
   sms-id: test
   api-key: test
   send-number: test
+
+external:
+  auth:
+    url: test
+    api-key: test
+    service-name: test
+    endpoints:
+      jwk: /.well-known/jwks.json

@@ -1,59 +1,52 @@
 package org.sopt.makers.internal.member.controller;
 
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import javax.validation.Valid;
-
-import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
-import org.sopt.makers.internal.internal.InternalMemberDetails;
-import org.sopt.makers.internal.common.CommonResponse;
-import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
-import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
-import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
-import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
-import org.sopt.makers.internal.member.dto.request.MemberReportRequest;
-import org.sopt.makers.internal.member.dto.response.MemberCrewResponse;
-import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
-import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
-import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
-import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
-import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
-import org.sopt.makers.internal.member.dto.response.MemberResponse;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.makers.MakersCrewClient;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
-import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
-import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
-import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
-import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
-import org.sopt.makers.internal.member.service.MemberService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
+import org.sopt.makers.internal.common.CommonResponse;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.makers.MakersCrewClient;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
+import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
+import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
+import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
+import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.request.MemberReportRequest;
+import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
+import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
+import org.sopt.makers.internal.member.dto.response.MemberCrewResponse;
+import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.service.MemberService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -64,50 +57,33 @@ public class MemberController {
     private final MemberService memberService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
-    private final MemberResponseMapper memberResponseMapper;
-    private final InfiniteScrollUtil infiniteScrollUtil;
     private final MakersCrewClient makersCrewClient;
-
-    private static final int MEMBER_SEARCH_RANDOM_SIZE = 30;
+    private final PlatformService platformService;
 
     @Operation(summary = "유저 id로 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMember (@PathVariable Long id) {
-        val member = memberService.getMemberById(id);
-        val response = memberMapper.toResponse(member);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberResponseById(id));
     }
 
     @Operation(summary = "자신의 토큰으로 조회 API")
     @GetMapping("/me")
     public ResponseEntity<MemberInfoResponse> getMyInformation (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val member = memberService.getMemberById(memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.isCoffeeChatExist(member.getId());
-        val response = memberResponseMapper.toMemberInfoResponse(member, isCoffeeChatActivate);
+        MemberInfoResponse response = memberService.getMyInformation(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "멤버 검색 API", description = """
-            - name 파라미터가 없거나 '@'인 경우: 랜덤 유저 30명을 반환합니다.
-            - name 파라미터에 검색어가 있는 경우: 해당 이름이 포함된 유저를 최신 활동기수 순으로 정렬하여 반환합니다.
-            """)
-    @GetMapping("/search")
-    public ResponseEntity<List<MemberResponse>> getMemberByName (
-            @RequestParam(required = false) String name
-    ) {
-        boolean isFirstSearch = (name == null || name.isBlank() || name.equals("@"));
-
-
-        List<Member> members = isFirstSearch ? memberService.getRandomMembers(MEMBER_SEARCH_RANDOM_SIZE) : memberService.getMembersByNameSorted(name);
-
-        List<MemberResponse> responses = members.stream()
-                .map(memberMapper::toResponse)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
-    }
+//    @Operation(summary = "멤버 검색 API", description = """
+//            - name 파라미터가 없거나 '@'인 경우: 랜덤 유저 30명을 반환합니다.
+//            - name 파라미터에 검색어가 있는 경우: 해당 이름이 포함된 유저를 최신 활동기수 순으로 정렬하여 반환합니다.
+//            """)
+//    @GetMapping("/search")
+//    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
+//        List<MemberResponse> responses = memberService.getMemberByName(name);
+//        return ResponseEntity.status(HttpStatus.OK).body(responses);
+//    }
 
 
     @Operation(summary = "유저 프로필 생성 API",
@@ -120,7 +96,7 @@ public class MemberController {
     )
     @PostMapping("/profile")
     public ResponseEntity<MemberProfileResponse> createUserProfile (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody MemberProfileSaveRequest request
     ) {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
@@ -130,9 +106,10 @@ public class MemberController {
         }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
-        val member = memberService.saveMemberProfile(memberDetails.getId(), request);
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+        Member member = memberService.saveMemberProfile(userId, request);
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        boolean isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
+        MemberProfileResponse response = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -146,7 +123,7 @@ public class MemberController {
     )
     @PutMapping("/profile")
     public ResponseEntity<MemberProfileResponse> updateUserProfile (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody MemberProfileUpdateRequest request
     ) {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
@@ -156,9 +133,10 @@ public class MemberController {
         }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
-        val member = memberService.updateMemberProfile(memberDetails.getId(), request);
+        val member = memberService.updateMemberProfile(userId, request);
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = memberMapper.toProfileResponse(member, isCoffeeChatActivate);
+        val response = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -166,31 +144,9 @@ public class MemberController {
     @GetMapping("/profile/{id}")
     public ResponseEntity<MemberProfileSpecificResponse> getUserProfile (
             @PathVariable Long id,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val member = memberService.getMemberHasProfileById(id);
-        val memberProfileProjects = memberService.getMemberProfileProjects(id);
-        val activityMap = memberService.getMemberProfileActivity(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val soptActivity = memberService.getMemberProfileProjects(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val soptActivityResponse = soptActivity.stream()
-                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()), m.projects()))
-                .collect(Collectors.toList());
-        val activityResponses = activityMap.entrySet().stream().map(entry ->
-                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
-                ).collect(Collectors.toList());
-        val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = MemberProfileSpecificResponse.applyPhoneMasking(
-            memberMapper.toProfileSpecificResponse(
-                member, true, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
-            ),
-            isMine, isCoffeeChatActivate);
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(id, userId);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -198,27 +154,9 @@ public class MemberController {
     @Operation(summary = "자신의 토큰으로 프로필 조회 API")
     @GetMapping("/profile/me")
     public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val id = memberDetails.getId();
-        val member = memberService.getMemberHasProfileById(id);
-        val memberProfileProjects = memberService.getMemberProfileProjects(id);
-        val activityMap = memberService.getMemberProfileActivity(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val activityResponses = activityMap.entrySet().stream().map(entry ->
-                new MemberProfileSpecificResponse.MemberActivityResponse(entry.getKey(), entry.getValue())
-        ).collect(Collectors.toList());
-        val soptActivityResponse = memberService.getMemberProfileProjects(
-                member.getActivities(),
-                memberProfileProjects
-        );
-        val isMine = Objects.equals(member.getId(), memberDetails.getId());
-        val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
-        val response = memberMapper.toProfileSpecificResponse(
-                member, isMine, memberProfileProjects, activityResponses, soptActivityResponse, isCoffeeChatActivate
-        );
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(userId, userId);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -252,15 +190,7 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        val members = memberService.getMemberProfiles(filter, infiniteScrollUtil.checkLimitForPagination(limit), cursor, search, generation, employed, orderBy, mbti, team);
-        val memberList = members.stream().map(member ->
-                MemberProfileResponse.checkIsBlindPhone(
-                        memberMapper.toProfileResponse(member, coffeeChatService.getCoffeeChatActivate(member.getId())),
-                        memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), member.getPhone()))
-        ).collect(Collectors.toList());
-        val hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
-        val totalMembersCount = memberService.getMemberProfilesCount(filter, search, generation, employed, mbti, team);
-        val response = new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
+        MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, cursor, search, generation, employed, orderBy, mbti, team);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -271,9 +201,9 @@ public class MemberController {
     @PutMapping("/activity/check")
     public ResponseEntity<Map<String, Boolean>> isOkayActivities(
             @RequestBody @Valid final CheckActivityRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.checkActivities(memberDetails.getId(), request.isCheck());
+        memberService.checkActivities(userId, request.isCheck());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 기수 확인 여부가 변경됐습니다.", true));
     }
 
@@ -284,7 +214,7 @@ public class MemberController {
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "take") Integer take
     ) {
-        val response = makersCrewClient.getUserAllCrew(page, take, id);
+        MemberCrewResponse response = makersCrewClient.getUserAllCrew(page, take, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -292,10 +222,10 @@ public class MemberController {
     @DeleteMapping("/profile/link/{linkId}")
     public ResponseEntity<CommonResponse> deleteUserProfileLink (
             @PathVariable(name = "linkId") Long linkId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.deleteUserProfileLink(linkId, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 link를 삭제했습니다.");
+        memberService.deleteUserProfileLink(linkId, userId);
+        CommonResponse response = new CommonResponse(true, "성공적으로 link를 삭제했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -303,10 +233,10 @@ public class MemberController {
     @DeleteMapping("/profile/activity/{activityId}")
     public ResponseEntity<CommonResponse> deleteUserProfileActivity (
             @PathVariable(name = "activityId") Long activityId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.deleteUserProfileActivity(activityId, memberDetails.getId());
-        val response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
+        memberService.deleteUserProfileActivity(activityId, userId);
+        CommonResponse response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -314,9 +244,9 @@ public class MemberController {
     @PatchMapping("/block/activate")
     public ResponseEntity<Map<String, Boolean>> blockUser (
             @RequestBody MemberBlockRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.blockUser(memberDetails.getId(), request.blockedMemberId());
+        memberService.blockUser(userId, request.blockedMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 차단 활성 성공", true));
     }
 
@@ -324,9 +254,9 @@ public class MemberController {
     @GetMapping("/block/{memberId}")
     public ResponseEntity<MemberBlockResponse> getUserBlockStatus (
             @PathVariable Long memberId,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        val response = memberService.getBlockStatus(memberDetails.getId(), memberId);
+        MemberBlockResponse response = memberService.getBlockStatus(userId, memberId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -334,18 +264,18 @@ public class MemberController {
     @PostMapping("/report")
     public ResponseEntity<Map<String, Boolean>> reportUser (
             @RequestBody MemberReportRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        memberService.reportUser(memberDetails.getId(), request.reportMemberId());
+        memberService.reportUser(userId, request.reportMemberId());
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("유저 신고 성공", true));
     }
 
     @Operation(summary = "Amplitude 를 위한 user properties 반환 API ")
     @GetMapping("/property")
     public ResponseEntity<MemberPropertiesResponse> getUserProperty (
-            @Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberProperties(memberDetails.getId()));
+        return ResponseEntity.status(HttpStatus.OK).body(memberService.getMemberProperties(userId));
     }
 
     private void sortProfileCareer (MemberProfileSpecificResponse response) {
@@ -368,13 +298,5 @@ public class MemberController {
             response.careers().add(0, currentCareer);
             response.careers().remove(index+1);
         }
-    }
-
-    private String checkTeamNullCondition (String team) {
-        val teamNullCondition = (team == null || team.equals("해당 없음"));
-        if (teamNullCondition) {
-            team = null;
-        }
-        return team;
     }
 }

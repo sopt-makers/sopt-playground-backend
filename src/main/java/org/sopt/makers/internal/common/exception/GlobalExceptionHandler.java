@@ -7,7 +7,7 @@ import java.util.Map;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.common.auth.dto.response.RegisterTokenBySmsResponse;
+import org.sopt.makers.internal.auth.dto.response.RegisterTokenBySmsResponse;
 import org.sopt.makers.internal.community.dto.response.SopticleResponse;
 import org.sopt.makers.internal.deprecated.soulmate.dto.SoulmateResponse;
 import org.sopt.makers.internal.exception.*;

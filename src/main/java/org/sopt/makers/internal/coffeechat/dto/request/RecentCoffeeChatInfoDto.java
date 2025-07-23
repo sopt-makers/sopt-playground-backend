@@ -14,10 +14,6 @@ public record RecentCoffeeChatInfoDto(
 
         List<CoffeeChatTopicType> topicTypeList,
 
-        String profileImage,
-
-        String name,
-
         Career career,
 
         String university,

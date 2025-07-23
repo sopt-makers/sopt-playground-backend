@@ -1,39 +1,46 @@
 package org.sopt.makers.internal.coffeechat.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.coffeechat.domain.enums.Career;
-import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
+import org.sopt.makers.internal.coffeechat.domain.enums.Career;
+import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatDetailsRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatOpenRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatReviewRequest;
+import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatReviewResponse.CoffeeChatReviewInfo;
+import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatUserHistoryResponse;
+import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
+import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.message.MessageSender;
 import org.sopt.makers.internal.external.message.MessageSenderFactory;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatReviewRequest;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleResponse.CoffeeChatHistoryResponse;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatReviewResponse.CoffeeChatReviewInfo;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatDetailsRequest;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatRequest;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatOpenRequest;
-import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
-import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
-import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
+import org.sopt.makers.internal.external.message.email.EmailHistoryService;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.sopt.makers.internal.external.message.email.EmailHistoryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -45,9 +52,11 @@ public class CoffeeChatService {
     private final MemberCareerRetriever memberCareerRetriever;
 
     private final EmailHistoryService emailHistoryService;
+    private final PlatformService platformService;
 
     private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
+    private final CoffeeChatRepository coffeeChatRepository;
 
     private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
@@ -55,28 +64,30 @@ public class CoffeeChatService {
 
     @Transactional
     public void sendCoffeeChatRequest(CoffeeChatRequest request, Long senderId) {
+        InternalUserDetails senderUserDetails = platformService.getInternalUser(senderId);
+        InternalUserDetails receiverUserDetails = platformService.getInternalUser(senderId);
+        String replyInfo = getReplyInfo(request, senderUserDetails);
+
+        MessageSender senderStrategy = messageSenderFactory.getSender(request.senderEmail(), request.senderPhone());
+        senderStrategy.sendMessage(senderUserDetails, receiverUserDetails, request.content(), replyInfo, request.category());
+
+        createHistoryByCategory(request, senderId, senderUserDetails.email());
+    }
+
+    private String getReplyInfo(CoffeeChatRequest request, InternalUserDetails sender) {
+        return request.category().equals(ChatCategory.COFFEE_CHAT)
+                ? applyDefaultPhone(request.senderPhone(), sender.phone())
+                : applyDefaultEmail(request.senderEmail(), sender.email());
+    }
+
+    private void createHistoryByCategory(CoffeeChatRequest request, Long senderId, String senderEmail) {
         Member receiver = memberRetriever.findMemberById(request.receiverId());
         Member sender = memberRetriever.findMemberById(senderId);
 
-        String replyInfo = getReplyInfo(request, sender);
-
-        MessageSender senderStrategy = messageSenderFactory.getSender(request.senderEmail(), request.senderPhone());
-        senderStrategy.sendMessage(sender, receiver, request.content(), replyInfo, request.category());
-
-        createHistoryByCategory(request, sender, receiver);
-    }
-
-    private String getReplyInfo(CoffeeChatRequest request, Member sender) {
-        return request.category().equals(ChatCategory.COFFEE_CHAT)
-                ? applyDefaultPhone(request.senderPhone(), sender.getPhone())
-                : applyDefaultEmail(request.senderEmail(), sender.getEmail());
-    }
-
-    private void createHistoryByCategory(CoffeeChatRequest request, Member sender, Member receiver) {
         if (request.category().equals(ChatCategory.COFFEE_CHAT)) {
             coffeeChatModifier.createCoffeeChatHistory(sender, receiver, request.content());
         } else {
-            emailHistoryService.createEmailHistory(request, sender, sender.getEmail());
+            emailHistoryService.createEmailHistory(request, sender, senderEmail);
         }
     }
 
@@ -88,7 +99,8 @@ public class CoffeeChatService {
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatAndCheckIsActivated(member, memberId.equals(detailMemberId));
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(detailMemberId);
         Boolean isMine = Objects.equals(memberId, detailMemberId);
-        return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, memberCareer, isMine);
+        InternalUserDetails userDetails = platformService.getInternalUser(detailMemberId);
+        return coffeeChatResponseMapper.toCoffeeChatDetailResponse(coffeeChat, member, userDetails, memberCareer, isMine);
     }
 
     @Transactional(readOnly = true)
@@ -102,12 +114,6 @@ public class CoffeeChatService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public Boolean isCoffeeChatExist(Long memberId) {
-        Member member = memberRetriever.findMemberById(memberId);
-        return coffeeChatRetriever.existsCoffeeChat(member);
-    }
-
     @Transactional
     public void updateCoffeeChatOpen(Long memberId, CoffeeChatOpenRequest request) {
         Member member = memberRetriever.findMemberById(memberId);
@@ -118,32 +124,75 @@ public class CoffeeChatService {
 
     @Transactional(readOnly = true)
     public List<CoffeeChatVo> getRecentCoffeeChatList() {
-
         List<RecentCoffeeChatInfoDto> recentCoffeeChatInfo = coffeeChatRetriever.recentCoffeeChatInfoList();
         return recentCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
-            List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
-            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
+            List<String> soptActivities = platformService.getPartAndGenerationList(coffeeChatInfo.memberId());
+            MemberSimpleResonse memberSimpleResonse = platformService.getMemberSimpleInfo(coffeeChatInfo.memberId());
+            return coffeeChatResponseMapper.toRecentCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities, memberSimpleResonse);
         }).toList();
     }
 
     @Transactional(readOnly = true)
     public List<CoffeeChatVo> getSearchCoffeeChatList(Long memberId, String section, String topicType, String career, String part, String search) {
-
         CoffeeChatSection coffeeChatSection = section != null ? CoffeeChatSection.fromTitle(section) : null;
         CoffeeChatTopicType coffeeChatTopicType = topicType != null ? CoffeeChatTopicType.fromTitle(topicType) : null;
         Career coffeeChatCareer = career != null ? Career.fromTitle(career) : null;
-        List<CoffeeChatInfoDto> searchCoffeeChatInfo = coffeeChatRetriever.searchCoffeeChatInfo(memberId, coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
+
+        List<CoffeeChatInfoDto> searchCoffeeChatInfo = getSearchCoffeeChatInfoList(memberId, coffeeChatSection, coffeeChatTopicType, coffeeChatCareer, part, search);
+
         return searchCoffeeChatInfo.stream().map(coffeeChatInfo -> {
             MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(coffeeChatInfo.memberId());
-            List<String> soptActivities = memberRetriever.concatPartAndGeneration(coffeeChatInfo.memberId());
-            return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities);
+            List<String> soptActivities = platformService.getPartAndGenerationList(coffeeChatInfo.memberId());
+            MemberSimpleResonse memberSimpleResonse = platformService.getMemberSimpleInfo(coffeeChatInfo.memberId());
+            return coffeeChatResponseMapper.toCoffeeChatResponse(coffeeChatInfo, memberCareer, soptActivities, memberSimpleResonse);
         }).toList();
     }
 
+    private List<CoffeeChatInfoDto> getSearchCoffeeChatInfoList(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
+        List<CoffeeChatInfoDto> coffeeChatInfoList = coffeeChatRepository.findSearchCoffeeChatInfo(memberId, section, topicType, career, search);
+        List<CoffeeChatInfoDto> response = coffeeChatInfoList;
+        System.out.println(response.size());
+        List<Long> userIds = coffeeChatInfoList.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
+        System.out.println(userIds);
+        System.out.println(search);
+
+        Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
+        if (part != null) { // part 검색은 플랫폼팀에서 받아온 정보로 필터링
+            response = response.stream()
+                    .filter(dto -> {
+                        InternalUserDetails userDetails = userMap.get(dto.memberId());
+                        return userDetails.soptActivities().stream()
+                                .anyMatch(activity -> part.equalsIgnoreCase(activity.part()));
+                    })
+                    .toList();
+        }
+
+        // TODO - response 사용 안하도록 로직 수정하기 (name 검색은 플랫폼팀에서 받아온 정보로 필터링)
+        if (search != null && !search.isBlank()) {
+            response = response.stream()
+                    .filter(dto -> {
+                        InternalUserDetails userDetails = userMap.get(dto.memberId());
+                        System.out.println(userDetails.name());
+                        return userDetails.name().contains(search);
+                    }).toList();
+        }
+
+        return response;
+    }
+
     @Transactional(readOnly = true)
-    public List<CoffeeChatHistoryResponse> getCoffeeChatHistories(Long memberId) {
-        return coffeeChatRetriever.getCoffeeChatHistoryTitles(memberId);
+    public List<CoffeeChatUserHistoryResponse> getCoffeeChatHistories(Long memberId) {
+        List<CoffeeChatHistoryResponse> response = coffeeChatRetriever.getCoffeeChatHistoryTitles(memberId);
+
+        List<Long> userIds = response.stream().map(CoffeeChatHistoryResponse::memberId).toList();
+        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        return response.stream().map(r -> {
+            InternalUserDetails userDetails = userDetailsMap.get(r.memberId());
+            return new CoffeeChatUserHistoryResponse(r.id(), r.coffeeChatBio(), userDetails.name(), r.career(), r.coffeeChatTopicType());
+        }).toList();
     }
 
     private String applyDefaultEmail(String requestEmail, String senderEmail) {
@@ -205,18 +254,24 @@ public class CoffeeChatService {
         coffeeChatModifier.createCoffeeChatReview(member, coffeeChat, image, request.nickname(), request.content());
     }
 
+    public Map<Long, InternalUserDetails> getUserMapFromUserIds(List<Long> userIds) {
+        List<InternalUserDetails> usersDetails = platformService.getInternalUsers(userIds);
+        return usersDetails.stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+    }
+
     @Transactional(readOnly = true)
     public List<CoffeeChatReviewInfo> getRecentCoffeeChatReviews() {
         List<CoffeeChatReview> reviews = coffeeChatRetriever.getRecentSixCoffeeChatReviews();
-        return reviews.stream().map(r -> {
-            Member reviewer = r.getReviewer();
-            CoffeeChat coffeeChat = r.getCoffeeChat();
+
+        return reviews.stream().map(review -> {
+            CoffeeChat coffeeChat = review.getCoffeeChat();
             return new CoffeeChatReviewInfo(
-                    r.getAnonymousProfileImage().getImageUrl(),
-                    r.getNickname(),
-                    memberRetriever.concatPartAndGeneration(reviewer.getId()),
+                    review.getAnonymousProfileImage().getImageUrl(),
+                    review.getNickname(),
+                    platformService.getPartAndGenerationList(review.getReviewer().getId()),
                     coffeeChat.getCoffeeChatTopicType(),
-                    r.getContent()
+                    review.getContent()
             );
         }).toList();
     }

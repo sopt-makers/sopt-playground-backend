@@ -12,9 +12,13 @@ import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
+import org.sopt.makers.internal.community.dto.CommentInfo;
+import org.sopt.makers.internal.community.dto.MemberVo;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentModifier;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentsRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
@@ -36,6 +40,7 @@ import org.sopt.makers.internal.community.repository.comment.ReportCommentReposi
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.common.util.MentionCleaner;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +58,9 @@ public class CommunityCommentService {
 
     @Value("${spring.profiles.active}")
     private String activeProfile;
+
+    private final PlatformService platformService;
+    private final MemberCareerRetriever memberCareerRetriever;
 
     private final AnonymousCommentProfileRepository anonymousCommentProfileRepository;
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
@@ -80,6 +88,7 @@ public class CommunityCommentService {
     @Transactional
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
         Member member = memberRetriever.findMemberById(writerId);
+        InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
         CommunityComment comment = communityCommentModifier.createCommunityComment(postId, member.getId(), request);
 
@@ -92,7 +101,7 @@ public class CommunityCommentService {
         }
 
         if (!post.getMember().getId().equals(writerId)) {
-            sendCommentPushNotification(post.getMember().getId(), request, member.getName());
+            sendCommentPushNotification(post.getMember().getId(), request, writerDetails.name());
         }
 
         if(Objects.nonNull(request.mention())) {
@@ -101,9 +110,17 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentDao> getPostCommentList(Long postId, Long memberId, Boolean isBlockedOn) {
+    public List<CommentInfo> getPostCommentList(Long postId, Long memberId, Boolean isBlockedOn) {
         communityPostRetriever.checkExistsCommunityPostById(postId);
-        return communityQueryRepository.findCommentByPostId(postId, memberId, isBlockedOn);
+        List<CommentDao> commentDaos = communityQueryRepository.findCommentByPostId(postId, memberId, isBlockedOn);
+
+        return commentDaos.stream().map(dao -> {
+            val authorDetails = platformService.getInternalUser(dao.member().getId());
+            val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(dao.member().getId());
+            val memberVo = MemberVo.of(authorDetails, authorCareer);
+            val anonymousProfile = getAnonymousCommentProfile(dao.comment());
+            return new CommentInfo(dao, memberVo, anonymousProfile);
+        }).toList();
     }
 
     @Transactional(readOnly = true)
@@ -113,10 +130,9 @@ public class CommunityCommentService {
 
     @Transactional
     public void deleteComment(Long commentId, Long writerId) {
-        Member member = memberRetriever.findMemberById(writerId);
         CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
 
-        if (!Objects.equals(member.getId(), comment.getWriterId())) {
+        if (!Objects.equals(writerId, comment.getWriterId())) {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
 
@@ -126,12 +142,12 @@ public class CommunityCommentService {
     }
 
     public void reportComment(Long memberId, Long commentId) {
-        Member member = memberRetriever.findMemberById(memberId);
         CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
+        InternalUserDetails userDetails = platformService.getInternalUser(memberId);
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createSlackRequest(comment.getPostId(), member.getName(), comment.getContent());
+                val slackRequest = createSlackRequest(comment.getPostId(), userDetails.name(), comment.getContent());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
