@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.resolution.repository;
 
+import java.util.List;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,6 @@ public interface UserResolutionRepository extends JpaRepository<UserResolution, 
     Optional<UserResolution> findUserResolutionByMemberAndGeneration(Member member, int generation);
 
     boolean existsByMemberAndGeneration(Member member, int generation);
+
+    List<UserResolution> findAllByGeneration(int generation);
 }

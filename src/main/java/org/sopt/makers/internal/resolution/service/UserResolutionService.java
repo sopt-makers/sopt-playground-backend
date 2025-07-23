@@ -3,7 +3,6 @@ package org.sopt.makers.internal.resolution.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -18,6 +17,7 @@ import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
 import org.sopt.makers.internal.resolution.mapper.UserResolutionResponseMapper;
+import org.sopt.makers.internal.resolution.repository.UserResolutionLuckyPickRepository;
 import org.sopt.makers.internal.resolution.repository.UserResolutionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +29,7 @@ import static org.sopt.makers.internal.common.Constant.*;
 public class UserResolutionService {
 
 	private final UserResolutionRepository userResolutionRepository;
+	private final UserResolutionLuckyPickRepository userResolutionLuckyPick;
 	private final MemberRepository memberRepository;
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
@@ -41,15 +42,15 @@ public class UserResolutionService {
 		InternalUserDetails userDetails = platformService.getInternalUser(memberId);
 
 		Member member = getMemberById(memberId);
-		Optional<UserResolution> resolutionOptional = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION);
+		return userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
+				.map(r -> userResolutionResponseMapper.toResolutionResponse(
+						true, r.getResolutionTags(), r.getContent(), hasDrawnTimeCapsule(memberId)))
+				.orElseGet(() -> userResolutionResponseMapper.toResolutionResponse(
+						false, null, null, hasDrawnTimeCapsule(memberId)));
+	}
 
-		if (resolutionOptional.isEmpty()){
-			return userResolutionResponseMapper.toResolutionResponse(userDetails, null, null);
-		}
-
-		UserResolution resolution = resolutionOptional.get();
-
-		return userResolutionResponseMapper.toResolutionResponse(userDetails, resolution.getResolutionTags(), resolution.getContent());
+	private boolean hasDrawnTimeCapsule(Long memberId) {
+		return userResolutionLuckyPick.existsByMemberIdAndHasDrawnTrue(memberId);
 	}
 
 	@Transactional(readOnly = true)
