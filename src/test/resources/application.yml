@@ -26,6 +26,8 @@ spring:
 jwt:
   secret: test
   code: test
+  jwk:
+    issuer: test
 
 cloud:
   aws:
@@ -133,3 +135,11 @@ google:
       }
     id: test
     name: test
+
+external:
+  auth:
+    url: test
+    api-key: test
+    service-name: test
+    endpoints:
+      jwk: /.well-known/jwks.json
