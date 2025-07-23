@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                     .authorizeHttpRequests()
-                    .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/webjars/swagger-ui/**", "/swagger-ui/**", "/makers/**").permitAll()
+                    .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/webjars/swagger-ui/**", "/swagger-ui/**", "/makers/**", "/api/v1/admin/**").permitAll()
                 .and()
                     .authorizeHttpRequests()
                         .antMatchers("/internal/api/v1/projects/**", "/internal/api/v1/members/**", "/internal/api/v1/sopticles/**", "/internal/api/v1/profile",
