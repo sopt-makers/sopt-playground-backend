@@ -152,10 +152,12 @@ public class CoffeeChatService {
     private List<CoffeeChatInfoDto> getSearchCoffeeChatInfoList(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
         List<CoffeeChatInfoDto> coffeeChatInfoList = coffeeChatRepository.findSearchCoffeeChatInfo(memberId, section, topicType, career, search);
         List<CoffeeChatInfoDto> response = coffeeChatInfoList;
-
+        System.out.println(response.size());
         List<Long> userIds = coffeeChatInfoList.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
-        Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
+        System.out.println(userIds);
+        System.out.println(search);
 
+        Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
         if (part != null) { // part 검색은 플랫폼팀에서 받아온 정보로 필터링
             response = response.stream()
                     .filter(dto -> {
@@ -165,10 +167,13 @@ public class CoffeeChatService {
                     })
                     .toList();
         }
-        if (search != null && !search.isBlank()) { // name 검색은 플랫폼팀에서 받아온 정보로 필터링
+
+        // TODO - response 사용 안하도록 로직 수정하기 (name 검색은 플랫폼팀에서 받아온 정보로 필터링)
+        if (search != null && !search.isBlank()) {
             response = response.stream()
                     .filter(dto -> {
                         InternalUserDetails userDetails = userMap.get(dto.memberId());
+                        System.out.println(userDetails.name());
                         return userDetails.name().contains(search);
                     }).toList();
         }

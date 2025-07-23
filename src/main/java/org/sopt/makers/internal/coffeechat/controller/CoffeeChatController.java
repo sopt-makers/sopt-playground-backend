@@ -3,6 +3,7 @@ package org.sopt.makers.internal.coffeechat.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 @SecurityRequirement(name = "Authorization")
 @RequestMapping("/api/v1/members/coffeechat")
+@Tag(name = "커피챗 관련 API")
 public class CoffeeChatController {
 
     private final CoffeeChatService coffeeChatService;

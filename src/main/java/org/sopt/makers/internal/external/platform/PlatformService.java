@@ -1,13 +1,12 @@
 package org.sopt.makers.internal.external.platform;
 
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -17,6 +16,10 @@ public class PlatformService {
     private final AuthConfig authConfig;
 
     public List<InternalUserDetails> getInternalUsers(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            throw new IllegalArgumentException("[InternalUserInfo 에러] 요청한 userIds 파라미터는 null이거나 빈 리스트일 수 없습니다.");
+        }
+
         val result = platformClient.getInternalUserDetails(
                 authConfig.getPlatformApiKey(),
                 authConfig.getPlatformServiceName(),
@@ -25,20 +28,22 @@ public class PlatformService {
 
         var body = result.getBody();
         if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
-            throw new NotFoundDBEntityException(
-                    "플랫폼 API 호출 실패 또는 인증 오류. ids: " + userIds);
+            throw new NotFoundDBEntityException("[InternalUserInfo 에러] 플랫폼 API 호출 실패 또는 인증 오류. ids: " + userIds);
         }
 
         var users = body.getData();
         if (users == null || users.isEmpty()) {
-            throw new NotFoundDBEntityException(
-                    "플랫폼에 해당 유저 정보가 없습니다. ids: " + userIds);
+            throw new NotFoundDBEntityException("[InternalUserInfo 에러] 플랫폼에 해당 유저 정보가 없습니다. ids: " + userIds);
         }
 
         return users;
     }
 
     public InternalUserDetails getInternalUser(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("[InternalUserInfo 에러] 요청한 userIds 파라미터는 null이거나 빈 리스트일 수 없습니다.");
+        }
+
         val result = platformClient.getInternalUserDetails(
                 authConfig.getPlatformApiKey(),
                 authConfig.getPlatformServiceName(),
@@ -47,14 +52,12 @@ public class PlatformService {
 
         var body = result.getBody();
         if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
-            throw new NotFoundDBEntityException(
-                    "플랫폼 API 호출 실패 또는 인증 오류. id: " + userId);
+            throw new NotFoundDBEntityException("[InternalUserInfo 에러] 플랫폼 API 호출 실패 또는 인증 오류. id: " + userId);
         }
 
         var users = body.getData();
         if (users == null || users.isEmpty() || users.get(0) == null) {
-            throw new NotFoundDBEntityException(
-                    "플랫폼에 해당 유저 정보가 없습니다. id: " + userId);
+            throw new NotFoundDBEntityException("[InternalUserInfo 에러] 플랫폼에 해당 유저 정보가 없습니다. id: " + userId);
         }
 
         return users.get(0);

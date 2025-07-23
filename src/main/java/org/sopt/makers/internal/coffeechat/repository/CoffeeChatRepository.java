@@ -1,11 +1,9 @@
 package org.sopt.makers.internal.coffeechat.repository;
 
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 import java.util.Optional;
+import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
+import org.sopt.makers.internal.member.domain.Member;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CoffeeChatRepository extends JpaRepository<CoffeeChat, Long>, CoffeeChatRepositoryCustom {
 
