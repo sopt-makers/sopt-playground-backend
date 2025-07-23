@@ -2,8 +2,10 @@ package org.sopt.makers.internal.resolution.controller;
 
 import org.sopt.makers.internal.internal.InternalMemberDetails;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
+import org.sopt.makers.internal.resolution.dto.response.LuckyPickResponse;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
+import org.sopt.makers.internal.resolution.service.LuckyPickService;
 import org.sopt.makers.internal.resolution.service.UserResolutionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import javax.validation.Valid;
 public class UserResolutionController {
 
 	private final UserResolutionService userResolutionService;
+	private final LuckyPickService luckyPickService;
 
 	@Operation(summary = "다짐 메세지 조회")
 	@GetMapping
@@ -60,5 +63,14 @@ public class UserResolutionController {
 	){
 		userResolutionService.deleteResolution(memberDetails.getId());
 		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "행운 뽑기 결과 조회")
+	@GetMapping("/lucky-pick")
+	public ResponseEntity<LuckyPickResponse> getLuckyPickResult(
+			@Parameter(hidden = true) @AuthenticationPrincipal InternalMemberDetails memberDetails
+	) {
+		LuckyPickResponse response = luckyPickService.checkLuckyPickResult(memberDetails.getId());
+		return ResponseEntity.ok(response);
 	}
 }
