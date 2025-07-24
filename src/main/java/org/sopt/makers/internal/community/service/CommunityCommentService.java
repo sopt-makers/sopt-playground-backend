@@ -125,7 +125,7 @@ public class CommunityCommentService {
 
     @Transactional(readOnly = true)
     public AnonymousCommentProfile getAnonymousCommentProfile(CommunityComment comment) {
-        return anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(comment.getWriterId(), comment.getPostId()).orElse(null);
+        return anonymousCommentProfileRepository.findByCommunityCommentId(comment.getId()).orElse(null);
     }
 
     @Transactional
