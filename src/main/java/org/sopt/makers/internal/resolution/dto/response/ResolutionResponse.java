@@ -1,14 +1,12 @@
 package org.sopt.makers.internal.resolution.dto.response;
 
+import java.util.List;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 
-import java.util.List;
-
 public record ResolutionResponse(
-
-        String memberImageUrl,
-        String memberName,
+        boolean hasWrittenTimeCapsule,
         List<ResolutionTag> tags,
-        String content
+        String content,
+        boolean hasDrawnLuckyPick
 ) {
 }
