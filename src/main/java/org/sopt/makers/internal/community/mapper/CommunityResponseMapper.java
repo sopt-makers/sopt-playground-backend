@@ -185,7 +185,7 @@ public class CommunityResponseMapper {
             // 익명일 경우
             return InternalPopularPostResponse.builder()
                     .id(post.getId())
-                    .userId(userDetails.userId())
+                    .userId(null)
                     .profileImage(anonymousPostProfile.getProfileImg().getImageUrl())
                     .name(anonymousPostProfile.getNickname().getNickname())
                     .generationAndPart("")

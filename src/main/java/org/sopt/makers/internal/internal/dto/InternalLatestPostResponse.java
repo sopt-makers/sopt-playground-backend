@@ -36,18 +36,20 @@ public record InternalLatestPostResponse(
 
         String finalName = userDetails.name();
         String finalProfileImage = userDetails.profileImage();
+        Long finalUserId = userDetails.userId();
 
         if (post.getIsBlindWriter() && anonymousPostProfile.isPresent()) {
             AnonymousPostProfile anonymousProfile = anonymousPostProfile.get();
             finalName = anonymousProfile.getNickname().getNickname();
             finalProfileImage = anonymousProfile.getProfileImg().getImageUrl();
+            finalUserId = null;
         }
 
         String cleanedContent = MentionCleaner.removeMentionIds(post.getContent());
 
         return new InternalLatestPostResponse(
                 post.getId(),
-                userDetails.userId(),
+                finalUserId,
                 finalProfileImage,
                 finalName,
                 generationAndPart,
