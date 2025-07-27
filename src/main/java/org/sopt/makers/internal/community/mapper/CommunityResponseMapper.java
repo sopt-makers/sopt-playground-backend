@@ -12,15 +12,11 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfi
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
-import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
 import org.sopt.makers.internal.community.dto.CategoryVo;
-import org.sopt.makers.internal.community.dto.CommentDao;
 import org.sopt.makers.internal.community.dto.CommentInfo;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
 import org.sopt.makers.internal.community.dto.CommunityPostVo;
-import org.sopt.makers.internal.community.dto.InternalCommunityPost;
 import org.sopt.makers.internal.community.dto.MemberVo;
-import org.sopt.makers.internal.community.dto.PostCategoryDao;
 import org.sopt.makers.internal.community.dto.PostDetailData;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
@@ -189,6 +185,7 @@ public class CommunityResponseMapper {
             // 익명일 경우
             return InternalPopularPostResponse.builder()
                     .id(post.getId())
+                    .userId(userDetails.userId())
                     .profileImage(anonymousPostProfile.getProfileImg().getImageUrl())
                     .name(anonymousPostProfile.getNickname().getNickname())
                     .generationAndPart("")
@@ -205,6 +202,7 @@ public class CommunityResponseMapper {
             String generationAndPart = String.format("%d기 %s", Objects.requireNonNull(lastActivity).generation(), lastActivity.part());
             return InternalPopularPostResponse.builder()
                     .id(post.getId())
+                    .userId(userDetails.userId())
                     .profileImage(userDetails.profileImage())
                     .name(userDetails.name())
                     .generationAndPart(generationAndPart)

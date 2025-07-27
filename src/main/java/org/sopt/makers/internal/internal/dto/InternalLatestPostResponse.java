@@ -12,6 +12,7 @@ import org.sopt.makers.internal.external.platform.SoptActivity;
 @Builder
 public record InternalLatestPostResponse(
         Long id,
+        Long userId,
         String profileImage,
         String name,
         String generationAndPart,
@@ -46,6 +47,7 @@ public record InternalLatestPostResponse(
 
         return new InternalLatestPostResponse(
                 post.getId(),
+                userDetails.userId(),
                 finalProfileImage,
                 finalName,
                 generationAndPart,
