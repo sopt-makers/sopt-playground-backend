@@ -12,6 +12,7 @@ import org.sopt.makers.internal.external.platform.SoptActivity;
 @Builder
 public record InternalLatestPostResponse(
         Long id,
+        Long userId,
         String profileImage,
         String name,
         String generationAndPart,
@@ -35,17 +36,20 @@ public record InternalLatestPostResponse(
 
         String finalName = userDetails.name();
         String finalProfileImage = userDetails.profileImage();
+        Long finalUserId = userDetails.userId();
 
         if (post.getIsBlindWriter() && anonymousPostProfile.isPresent()) {
             AnonymousPostProfile anonymousProfile = anonymousPostProfile.get();
             finalName = anonymousProfile.getNickname().getNickname();
             finalProfileImage = anonymousProfile.getProfileImg().getImageUrl();
+            finalUserId = null;
         }
 
         String cleanedContent = MentionCleaner.removeMentionIds(post.getContent());
 
         return new InternalLatestPostResponse(
                 post.getId(),
+                finalUserId,
                 finalProfileImage,
                 finalName,
                 generationAndPart,
