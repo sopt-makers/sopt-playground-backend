@@ -1,11 +1,10 @@
 package org.sopt.makers.internal.community.service.anonymous;
 
-import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
+import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

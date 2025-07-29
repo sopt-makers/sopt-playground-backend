@@ -4,7 +4,6 @@ import java.util.List;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.SoptActivity;
-import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.project.domain.MemberProjectRelation;
@@ -122,9 +121,6 @@ public class ProjectResponseMapper {
         return new ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
     }
 
-    public InternalMemberProjectResponse toInternalMemberProjectResponse (InternalUserDetails user, int count) {
-        return new InternalMemberProjectResponse(user.userId(), user.profileImage(), count);
-    }
 
     private String truncateString(String str) {
         if (str != null && str.length() > 20) {
