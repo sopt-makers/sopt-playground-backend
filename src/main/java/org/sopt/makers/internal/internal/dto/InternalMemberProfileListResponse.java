@@ -5,8 +5,7 @@ import java.util.List;
 import lombok.Builder;
 
 @Builder
-public record InternalMemberProfileResponse(
-
+public record InternalMemberProfileListResponse(
         @Schema(required = true)
         Long memberId,
 
@@ -18,12 +17,6 @@ public record InternalMemberProfileResponse(
 
         @Schema(required = true)
         String introduction,
-
-        @Schema(required = true)
-        String mbti,
-
-        @Schema(required = true)
-        String university,
 
         @Schema(required = true, example = "36,서버")
         List<CardinalInfoResponse> activities
