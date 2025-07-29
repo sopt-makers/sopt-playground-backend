@@ -235,11 +235,24 @@ public class MemberProfileQueryRepository {
                 .where(coffeeChat.isCoffeeChatActivate.isTrue())
                 .fetch();
     }
-//
-//    private BooleanExpression checkMemberUniversity(String university) {
-//        val isUniversityEmpty = !StringUtils.hasText(university);
-//        return isUniversityEmpty ? null : QMember.member.university.contains(university);
-//    }
+
+    public List<Long> findAllMemberIdsByRecommendFilter(String university, String mbti) {
+        val member = QMember.member;
+
+        return queryFactory.select(member.id)
+            .from(member)
+            .where(checkMemberHasProfile(),
+                    checkMemberMbti(mbti),
+                    checkMemberUniversity(university))
+            .groupBy(member.id)
+            .fetch();
+    }
+
+    private BooleanExpression checkMemberUniversity(String university) {
+        val isUniversityEmpty = !StringUtils.hasText(university);
+        return isUniversityEmpty ? null : QMember.member.university.contains(university);
+    }
+
 //    public List<Member> findAllLimitedMemberProfile(String part, Integer limit, Integer cursor, String name, Integer generation) {
 //        val member = QMember.member;
 //        val activities = QMemberSoptActivity.memberSoptActivity;
@@ -292,21 +305,6 @@ public class MemberProfileQueryRepository {
 //                .fetch();
 //    }
 //
-//    public List<Long> findAllMemberIdsByRecommendFilter(List<Integer> generations, String university, String mbti) {
-//        if (generations.isEmpty()) return null;
-//
-//        val member = QMember.member;
-//        val activities = QMemberSoptActivity.memberSoptActivity;
-//
-//        return queryFactory.select(member.id)
-//            .from(member)
-//            .innerJoin(member.activities, activities)
-//            .where(checkMemberHasProfile(), checkUserActivityContainsGenerations(generations),
-//                checkMemberMbti(mbti), checkMemberUniversity(university))
-//            .groupBy(member.id)
-//            .fetch();
-//
-//    }
 //
 //    public List<Long> findAllInactivityMemberIdsByGenerationAndPart(Integer generation, Part part) {
 //        val member = QMember.member;
@@ -354,15 +352,6 @@ public class MemberProfileQueryRepository {
 //                queryFactory.select(QMember.member.id)
 //                        .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
 //                        .where(QMemberSoptActivity.memberSoptActivity.generation.eq(generation))
-//        );
-//    }
-//
-//    private BooleanExpression checkUserActivityContainsGenerations(List<Integer> generations) {
-//        if(generations.isEmpty()) return null;
-//        return QMember.member.id.in(
-//            queryFactory.select(QMember.member.id)
-//                .innerJoin(QMember.member.activities, QMemberSoptActivity.memberSoptActivity)
-//                .where(QMemberSoptActivity.memberSoptActivity.generation.in(generations))
 //        );
 //    }
 //

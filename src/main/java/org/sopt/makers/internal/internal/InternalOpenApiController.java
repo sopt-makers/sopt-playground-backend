@@ -8,8 +8,10 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,9 @@ import org.sopt.makers.internal.internal.dto.InternalMemberProfileResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
+import org.sopt.makers.internal.internal.dto.InternalRecommendMemberListRequest;
+import org.sopt.makers.internal.internal.dto.InternalRecommendMemberListResponse;
+import org.sopt.makers.internal.internal.dto.SearchContent;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.project.domain.Project;
@@ -36,6 +41,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -133,7 +140,7 @@ public class InternalOpenApiController {
     @Operation(summary = "다중 멤버 ID별 프로필 조회 - 앱팀")
     @GetMapping("/members/profile")
     public ResponseEntity<List<InternalMemberProfileListResponse>> getUserProfileList(
-            @Parameter(description = "조회할 멤버 ID 목록", example = "1,2,3")
+            @Parameter(description = "조회할 멤버 ID 목록", example = "1,2")
             @RequestParam String memberIds
     ) {
         List<InternalMemberProfileListResponse> responseArray = new ArrayList<>();
@@ -165,23 +172,22 @@ public class InternalOpenApiController {
         return ResponseEntity.status(HttpStatus.OK).body(responseArray);
     }
 
-//    @Operation(summary = "프로필 정보 기반 추천 친구 목록 조회 API", // 앱팀
-//        description = """
-//            key 필드는 유효한 추천 필터 값이 들어가야 함
-//            - MBTI
-//            - UNIVERSITY
-//
-//            *대소문자 무관
-//            """)
-//    @PostMapping("/members/profile/recommend")
-//    public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList (
-//        @RequestBody InternalRecommendMemberListRequest request
-//    ) {
-//        val memberIds = internalApiService.getMembersIdByRecommendFilter(request.generations(),
-//            request.getValueByKey(SearchContent.UNIVERSITY),
-//            request.getValueByKey(SearchContent.MBTI));
-//        val response = new InternalRecommendMemberListResponse(memberIds);
-//        return ResponseEntity.status(HttpStatus.OK).body(response);
-//    }
-
+    @Operation(summary = "프로필 정보 기반 추천 친구 목록 조회 API - 앱팀",
+            description = """
+                    key 필드는 유효한 추천 필터 값이 들어가야 함
+                    - MBTI
+                    - UNIVERSITY
+                    """)
+    @PostMapping("/members/profile/recommend")
+    public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList(
+            @RequestBody InternalRecommendMemberListRequest request
+    ) {
+        val memberIds = internalApiService.getMembersIdByRecommendFilter(
+                request.generations(),
+                request.getValueByKey(SearchContent.UNIVERSITY),
+                request.getValueByKey(SearchContent.MBTI));
+        Set<Long> memberIdsSet = new HashSet<>(memberIds);
+        val response = new InternalRecommendMemberListResponse(memberIdsSet);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 }
