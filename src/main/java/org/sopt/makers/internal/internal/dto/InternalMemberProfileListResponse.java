@@ -1,17 +1,24 @@
 package org.sopt.makers.internal.internal.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
+import lombok.Builder;
 
-public record InternalMemberResponse(
+@Builder
+public record InternalMemberProfileListResponse(
         @Schema(required = true)
-        Long id,
+        Long memberId,
 
         @Schema(required = true)
         String name,
+
         @Schema(required = true)
-        Integer latestGeneration,
         String profileImage,
 
         @Schema(required = true)
-        Boolean hasProfile
-) {}
+        String introduction,
+
+        @Schema(required = true, example = "36,서버")
+        List<CardinalInfoResponse> activities
+) {
+}

@@ -48,11 +48,6 @@ public class Member {
     @Column
     private String introduction;
 
-    @Builder.Default
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private List<MemberSoptActivity> activities = new ArrayList<>();
-
     @Column
     private String mbti;
 
@@ -115,7 +110,16 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
-    //    해당 컬럼들은 QA 이상없으면 완전히 삭제하기
+    // ==================================
+    // 해당 컬럼들은 QA 이상없으면 완전히 삭제하기
+    // ==================================
+
+    // TODO: - activities 삭제 부탁
+    @Builder.Default
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private List<MemberSoptActivity> activities = new ArrayList<>();
+
 //    @Column(name = "auth_user_id")
 //    private String authUserId;
 //
@@ -170,7 +174,10 @@ public class Member {
             String idealType,
             String selfIntroduction,
             Boolean allowOfficial,
+
+            // TODO: - activities 삭제 부탁
             List<MemberSoptActivity> activities,
+
             List<MemberLink> links,
             List<MemberCareer> careers,
             Boolean isPhoneBlind
@@ -188,8 +195,11 @@ public class Member {
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
         this.allowOfficial = allowOfficial;
+
+        // TODO: - activities 삭제 부탁
         this.activities.clear();
         this.activities.addAll(activities);
+
         this.links.clear();
         this.links.addAll(links);
         this.careers.clear();

@@ -1,13 +1,10 @@
 package org.sopt.makers.internal.member.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -176,10 +173,10 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfileListById(String idList) {
+    public List<Member> getMemberProfileListById(List<Long> idList) {
         List<Member> members = new ArrayList<>();
 
-        for (Long id : Arrays.stream(URLDecoder.decode(idList, StandardCharsets.UTF_8).split(",")).mapToLong(Long::parseLong).toArray()) {
+        for (Long id : idList) {
             Member member = memberRepository.findById(id).orElse(null);
 
             if (member != null && member.getHasProfile()) {
@@ -218,24 +215,6 @@ public class MemberService {
                 });
         val genActivityMap = Stream.concat(activities, projects)
                 .collect(Collectors.groupingBy(ActivityVo::generation));
-        return genActivityMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
-                        Map.Entry::getValue
-                ));
-    }
-
-    public Map<String, List<ActivityVo>> getMemberProfileList(
-            List<MemberSoptActivity> memberActivities
-    ) {
-        val cardinalInfoMap = memberActivities.stream()
-                .collect(Collectors.toMap(
-                        MemberSoptActivity::getGeneration,
-                        MemberSoptActivity::getPart,
-                        (p1, p2) -> p1)
-                );
-        val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
-        val genActivityMap = activities.collect(Collectors.groupingBy(ActivityVo::generation));
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
