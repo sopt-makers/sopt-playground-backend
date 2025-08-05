@@ -12,7 +12,8 @@ public record CrewPost(
         int likeCount,
         boolean isLiked,
         int viewCount,
-        int commentCount
+        int commentCount,
+        Long meetingId
 ) {
     public record CrewUser(
             long id,
