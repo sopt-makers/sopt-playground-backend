@@ -128,7 +128,7 @@ public class CommunityResponseMapper {
                 post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
                 category.name(), post.title(), post.content(), post.hits(),
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
-                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote()
+                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote(), null
         );
     }
 
@@ -169,7 +169,8 @@ public class CommunityResponseMapper {
                 null,  // anonymousProfile
                 getRelativeTime(crewPost.createdDate()),
                 Collections.emptyList(), // comments
-                null // vote
+                null, // vote
+                crewPost.meetingId()
         );
     }
 
