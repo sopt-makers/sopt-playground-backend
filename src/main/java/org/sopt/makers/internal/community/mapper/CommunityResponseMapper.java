@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.mapper;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
 import org.sopt.makers.internal.community.dto.CommunityPostVo;
 import org.sopt.makers.internal.community.dto.MemberVo;
 import org.sopt.makers.internal.community.dto.PostDetailData;
+import org.sopt.makers.internal.community.dto.SoptActivityVo;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
 import org.sopt.makers.internal.community.dto.response.PostDetailResponse;
@@ -26,6 +28,7 @@ import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
 import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
 import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
 import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
+import org.sopt.makers.internal.external.makers.CrewPost;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
@@ -125,7 +128,49 @@ public class CommunityResponseMapper {
                 post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
                 category.name(), post.title(), post.content(), post.hits(),
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
-                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote()
+                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote(), null
+        );
+    }
+
+    public PostResponse toPostResponse(CrewPost crewPost, Long viewerId) {
+        val crewUser = crewPost.user();
+
+        val soptActivityVo = new SoptActivityVo(
+                crewUser.partInfo().generation(),
+                crewUser.partInfo().part(),
+                null
+        );
+
+        val memberVo = new MemberVo(
+                crewUser.id(),
+                crewUser.name(),
+                crewUser.profileImage(),
+                soptActivityVo,
+                null
+        );
+
+        return new PostResponse(
+                crewPost.id(),
+                memberVo,
+                crewUser.id(),
+                Objects.equals(crewUser.orgId(), viewerId), // isMine
+                crewPost.isLiked(),
+                crewPost.likeCount(),
+                24L, // 모임 카테고리 ID
+                "모임", // 모임 카테고리 이름
+                crewPost.title(),
+                crewPost.contents(),
+                crewPost.viewCount(),
+                crewPost.commentCount(),
+                crewPost.images(),
+                false, // isQuestion
+                false, // isBlindWriter
+                null,  // sopticleUrl
+                null,  // anonymousProfile
+                getRelativeTime(crewPost.createdDate()),
+                Collections.emptyList(), // comments
+                null, // vote
+                crewPost.meetingId()
         );
     }
 

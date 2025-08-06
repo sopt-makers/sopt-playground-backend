@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
@@ -42,6 +43,8 @@ public class CommunityController {
     private final CommunityResponseMapper communityResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
+    private static final Long MEETING_CATEGORY_ID = 24L;
+
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<PostDetailResponse> getOnePost(
@@ -71,8 +74,14 @@ public class CommunityController {
             @RequestParam(required = false, name = "categoryId") Long categoryId,
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn,
             @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Long cursor
+            @RequestParam(required = false, name = "cursor") Long cursor,
+            @RequestParam(required = false, name = "page", defaultValue = "1") Integer page
     ) {
+        if(Objects.equals(categoryId, MEETING_CATEGORY_ID)){
+            PostAllResponse response = communityPostService.getMeetingPosts(userId, page, limit);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        }
+
         List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, userId,
                 infiniteScrollUtil.checkLimitForPagination(limit), cursor);
         val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);

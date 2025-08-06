@@ -31,6 +31,8 @@ import org.sopt.makers.internal.community.dto.request.MentionRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
 import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.PostAllResponse;
+import org.sopt.makers.internal.community.dto.response.PostResponse;
 import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
 import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
 import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
@@ -52,6 +54,8 @@ import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfile
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.makers.CrewPostListResponse;
+import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
@@ -83,6 +87,7 @@ public class CommunityPostService {
     private final VoteService voteService;
     private final PushNotificationService pushNotificationService;
     private final PlatformService platformService;
+    private final MakersCrewClient makersCrewClient;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -100,7 +105,6 @@ public class CommunityPostService {
     private final ReportPostRepository reportPostRepository;
     private final MemberBlockRepository memberBlockRepository;
     private final AnonymousPostProfileRepository anonymousPostProfileRepository;
-    private final CategoryRepository categoryRepository;
 
     private final CommunityMapper communityMapper;
     private final CommunityResponseMapper communityResponseMapper;
@@ -114,6 +118,22 @@ public class CommunityPostService {
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
     private static final long SOPTICLE_CATEGORY_ID = 21;
+    private static final long MEETING_CATEGORY_ID = 24L;
+
+    @Transactional(readOnly = true)
+    public PostAllResponse getMeetingPosts(Long userId, Integer page, Integer take) {
+        CrewPostListResponse crewResponse = makersCrewClient.getPosts(userId, page, take);
+
+        List<PostResponse> postResponses = crewResponse.posts().stream()
+                .map(crewPost -> communityResponseMapper.toPostResponse(crewPost, userId))
+                .collect(Collectors.toList());
+
+        return new PostAllResponse(
+                MEETING_CATEGORY_ID,
+                crewResponse.pageMeta().hasNextPage(),
+                postResponses
+        );
+    }
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {

@@ -28,5 +28,6 @@ public record PostResponse(
         AnonymousProfileVo anonymousProfile,
         String createdAt,
         List<CommentResponse> comments,
-        VoteResponse vote
+        VoteResponse vote,
+        Long meetingId //크루팀 모임Id
 ) {}
