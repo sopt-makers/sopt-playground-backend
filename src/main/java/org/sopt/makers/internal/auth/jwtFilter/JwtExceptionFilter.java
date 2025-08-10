@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.auth.jwtFilter;
 
 import io.github.resilience4j.core.lang.NonNull;
+import org.sopt.makers.internal.auth.jwt.exception.JwtException;
 import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,7 +25,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         try {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
-        } catch(WrongAccessTokenException e){
+        } catch(WrongAccessTokenException | JwtException e){
             httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
             httpServletResponse.setCharacterEncoding("UTF-8");
