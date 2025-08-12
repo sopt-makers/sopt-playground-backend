@@ -152,7 +152,11 @@ public class InternalOpenApiController {
         List<Member> members = memberService.getMemberProfileListById(userIds);
         List<InternalUserDetails> internalMembers = platformService.getInternalUsers(userIds);
         Map<Long, InternalUserDetails> internalUserDetailsMap = internalMembers.stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+                .collect(Collectors.toMap(
+                        InternalUserDetails::userId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
 
         for (Member member: members) {
             InternalUserDetails userDetails = internalUserDetailsMap.get(member.getId());

@@ -123,10 +123,12 @@ public class WordChainGameService {
     private List<WordChainGameWinnerResponse> getWinnerResponse(List<WordChainGameWinner> gameWinners) {
         List<Long> userIds = gameWinners.stream().map(WordChainGameWinner::getUserId).toList();
         List<InternalUserDetails> userDetails = platformService.getInternalUsers(userIds);
-
         Map<Long, InternalUserDetails> userDetailMap = userDetails.stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
-
+                .collect(Collectors.toMap(
+                        InternalUserDetails::userId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
         return gameWinners.stream()
                 .map(winner -> {
                     InternalUserDetails userDetail = userDetailMap.get(winner.getUserId());
@@ -143,7 +145,11 @@ public class WordChainGameService {
                 .toList();
         List<InternalUserDetails> startUsersDetails = platformService.getInternalUsers(startUserIds);
         return startUsersDetails.stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+                .collect(Collectors.toMap(
+                        InternalUserDetails::userId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
     }
 
     public WordChainGameRoomResponse toRoomResponse(WordChainGameRoom room, Map<Long, InternalUserDetails> startUserMap) {
@@ -158,7 +164,11 @@ public class WordChainGameService {
                     .distinct()
                     .toList();
             Map<Long, InternalUserDetails> userDetailMap = platformService.getInternalUsers(userIds).stream()
-                    .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+                    .collect(Collectors.toMap(
+                            InternalUserDetails::userId,
+                            Function.identity(),
+                            (existing, replacement) -> existing
+                    ));
             wordList = room.getWordList().stream()
                     .sorted(Comparator.comparing(Word::getId))
                     .map(word -> {
