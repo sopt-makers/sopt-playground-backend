@@ -4,25 +4,32 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
-import org.sopt.makers.internal.wordchaingame.dto.response.*;
-import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
-import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.member.service.MemberService;
+import org.sopt.makers.internal.wordchaingame.domain.WordChainGameRoom;
+import org.sopt.makers.internal.wordchaingame.dto.request.WordChainGameGenerateRequest;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameAllResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameGenerateResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameRoomResponse;
+import org.sopt.makers.internal.wordchaingame.dto.response.WordChainGameWinnerAllResponse;
 import org.sopt.makers.internal.wordchaingame.service.WordChainGameService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor

@@ -249,7 +249,11 @@ public class MemberService {
         // 07.21.13:50 추가 - checkContainsSearchCond() name 검색해결 위해 플랫폼팀에서 받아온 정보로 필터링
         List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+                .collect(Collectors.toMap(
+                        InternalUserDetails::userId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
         if (search != null && !search.isBlank()) {
             members = members.stream()
                     .filter(dto -> {

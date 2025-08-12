@@ -187,7 +187,11 @@ public class CoffeeChatService {
 
         List<Long> userIds = response.stream().map(CoffeeChatHistoryResponse::memberId).toList();
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+                .collect(Collectors.toMap(
+                        InternalUserDetails::userId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
 
         return response.stream().map(r -> {
             InternalUserDetails userDetails = userDetailsMap.get(r.memberId());
@@ -257,7 +261,11 @@ public class CoffeeChatService {
     public Map<Long, InternalUserDetails> getUserMapFromUserIds(List<Long> userIds) {
         List<InternalUserDetails> usersDetails = platformService.getInternalUsers(userIds);
         return usersDetails.stream()
-                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+                .collect(Collectors.toMap(
+                        InternalUserDetails::userId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
     }
 
     @Transactional(readOnly = true)
