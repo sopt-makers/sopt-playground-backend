@@ -63,21 +63,15 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        val cfg = new CorsConfiguration();
+        val configuration = new CorsConfiguration();
 
-        cfg.setAllowedOrigins(List.of(
-                "https://sopt-internal-dev.pages.dev/",
-                "https://playground.sopt.org",
-                "localhost:3000",
-                "localhost:5173"
-        ));
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Content-Type","Accept","Authorization"));
-        cfg.setAllowCredentials(true);
-        cfg.setMaxAge(3600L);
+        configuration.addAllowedOrigin("*");
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        configuration.setAllowCredentials(false);
 
-        var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", cfg);
+        val source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
