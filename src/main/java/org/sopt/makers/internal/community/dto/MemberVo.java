@@ -2,9 +2,7 @@ package org.sopt.makers.internal.community.dto;
 
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
-import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 
 import java.util.Comparator;
 

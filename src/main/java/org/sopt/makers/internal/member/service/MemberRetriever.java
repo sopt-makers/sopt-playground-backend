@@ -5,20 +5,15 @@ import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
-import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class MemberRetriever {
 
     private final MemberRepository memberRepository;
-    private final MemberProfileQueryRepository memberProfileQueryRepository;
     private final MemberBlockRepository memberBlockRepository;
 
     public Member findMemberById(Long memberId) {
@@ -30,10 +25,6 @@ public class MemberRetriever {
         if (!memberRepository.existsById(memberId)) {
             throw new NotFoundDBEntityException("존재하지 않는 사용자의 id값 입니다. id: [" + memberId + "]");
         }
-    }
-
-    public List<Member> findAllMembersByCoffeeChatActivate() {
-        return memberProfileQueryRepository.findAllMembersByCoffeeChatActivate();
     }
 
     public void checkBlockedMember(Member blocker, Member blockedMember) {
