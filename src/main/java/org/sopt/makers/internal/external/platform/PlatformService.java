@@ -119,4 +119,24 @@ public class PlatformService {
             throw new RuntimeException("플랫폼 API 호출 실패 또는 인증 오류. id: " + userId);
         }
     }
+
+    /**
+     * 유저 검색 관련 메서드
+     */
+    public UserSearchResponse searchInternalUsers(
+        Integer generation, String part, String team, String name,
+        Integer limit, Integer offset, String orderBy
+    ) {
+        val result = platformClient.searchUsers(
+            authConfig.getPlatformApiKey(),
+            authConfig.getPlatformServiceName(),
+            generation, part, team, name, limit, offset, orderBy
+        );
+
+        val body = result.getBody();
+        if (body == null || !Boolean.TRUE.equals(body.isSuccess()) || body.getData() == null) {
+            throw new RuntimeException("플랫폼 검색 API 호출 실패 또는 인증 오류.");
+        }
+        return body.getData();
+    }
 }
