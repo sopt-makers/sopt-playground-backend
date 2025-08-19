@@ -4,8 +4,8 @@ import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
@@ -23,7 +23,7 @@ public interface MemberMapper {
     MemberProfileResponse toProfileResponse (Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActivate);
 
     @Mapping(target = "projects", source = "projects")
-    MemberProfileProjectVo toSoptMemberProfileProjectVo(MemberSoptActivity member, List<MemberProjectVo> projects);
+    MemberProfileProjectVo toSoptMemberProfileProjectVo(SoptActivity member, List<MemberProjectVo> projects);
 
     @Mapping(target = "name", source = "userDetails.name")
     @Mapping(target = "profileImage", source = "userDetails.profileImage")
@@ -41,14 +41,12 @@ public interface MemberMapper {
             Boolean isCoffeeChatActivate
     );
 
-    ActivityVo toActivityInfoVo (MemberSoptActivity activity, boolean isProject);
+    @Mapping(target="id", source="activity.activityId")
+    ActivityVo toActivityInfoVo (SoptActivity activity, boolean isProject);
 
     @Mapping(source = "project.name", target = "team")
     ActivityVo toActivityInfoVo (MemberProfileProjectDao project, boolean isProject, String part);
 
     MemberProjectVo toActivityInfoVo (MemberProfileProjectDao project);
 
-    default String mapPhoneIfBlind(Boolean isPhoneBlind, String phone) {
-        return isPhoneBlind ? null : phone;
-    }
 }

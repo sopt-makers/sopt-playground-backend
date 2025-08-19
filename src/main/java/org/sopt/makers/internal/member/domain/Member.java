@@ -110,55 +110,12 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
-    // ==================================
-    // 해당 컬럼들은 QA 이상없으면 완전히 삭제하기
-    // ==================================
-
-    // TODO: - activities 삭제 부탁
-    @Builder.Default
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private List<MemberSoptActivity> activities = new ArrayList<>();
-
-//    @Column(name = "auth_user_id")
-//    private String authUserId;
-//
-//    @Column(name = "idp_type")
-//    private String idpType;
-//
-//    @Column(name = "name")
-//    private String name;
-//
-//    @Column(name = "email")
-//    private String email;
-//
-//    @Column(name = "generation")
-//    private Integer generation;
-//
-//    @Column(name = "profile_image")
-//    private String profileImage;
-//
-//    @Column
-//    private LocalDate birthday;
-//
-//    @Column
-//    private String phone;
-
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
 
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
-
-//    public void updateMemberAuth(String authUserId, String idpType) {
-//        this.authUserId = authUserId;
-//        this.idpType = idpType;
-//    }
-
-//    public void changeEmail(String email) {
-//        this.email = email;
-//    }
 
     public void saveMemberProfile(
             String address,
@@ -174,10 +131,6 @@ public class Member {
             String idealType,
             String selfIntroduction,
             Boolean allowOfficial,
-
-            // TODO: - activities 삭제 부탁
-            List<MemberSoptActivity> activities,
-
             List<MemberLink> links,
             List<MemberCareer> careers,
             Boolean isPhoneBlind
@@ -195,11 +148,6 @@ public class Member {
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
         this.allowOfficial = allowOfficial;
-
-        // TODO: - activities 삭제 부탁
-        this.activities.clear();
-        this.activities.addAll(activities);
-
         this.links.clear();
         this.links.addAll(links);
         this.careers.clear();

@@ -18,7 +18,6 @@ import org.sopt.makers.internal.community.dto.QCommentDao;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberBlock;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
-import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -40,7 +39,6 @@ public class CommunityQueryRepository {
         val posts = QCommunityPost.communityPost;
         val member = QMember.member;
         val category = QCategory.category;
-        val activities = QMemberSoptActivity.memberSoptActivity;
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
 
@@ -49,7 +47,6 @@ public class CommunityQueryRepository {
             query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
                     .from(posts)
                     .innerJoin(posts.member, member)
-                    .innerJoin(member.activities, activities)
                     .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
                     .innerJoin(category).on(posts.categoryId.eq(category.id))
                     .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
@@ -60,7 +57,6 @@ public class CommunityQueryRepository {
             query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
                     .from(posts)
                     .innerJoin(posts.member, member)
-                    .innerJoin(member.activities, activities)
                     .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
                     .innerJoin(category).on(posts.categoryId.eq(category.id))
                     .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
@@ -82,7 +78,6 @@ public class CommunityQueryRepository {
     }
 
     public CategoryPostMemberDao getPostById(Long postId) {
-        val activities = QMemberSoptActivity.memberSoptActivity;
         val posts = QCommunityPost.communityPost;
         val category = QCategory.category;
         val member = QMember.member;
@@ -90,7 +85,6 @@ public class CommunityQueryRepository {
         return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
                 .from(posts)
                 .innerJoin(posts.member, member)
-                .leftJoin(member.activities, activities)
                 .innerJoin(category).on(posts.categoryId.eq(category.id))
                 .where(posts.id.eq(postId)).distinct().fetchOne();
     }
@@ -135,14 +129,12 @@ public class CommunityQueryRepository {
     public List<CommentDao> findCommentByPostId(Long postId, Long memberId, boolean isBlockedOn) {
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
-        val activities = QMemberSoptActivity.memberSoptActivity;
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
 
         JPAQuery<CommentDao> query = queryFactory.select(new QCommentDao(member, comment))
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
-                .innerJoin(member.activities, activities)
                 .leftJoin(member.careers, careers)
                 .where(comment.postId.eq(postId))
                 .distinct()
@@ -182,14 +174,12 @@ public class CommunityQueryRepository {
     public List<CommunityPost> findPopularPosts(int limitCount) {
         QCommunityPost communityPost = QCommunityPost.communityPost;
         QMember member = QMember.member;
-        QMemberSoptActivity activities = QMemberSoptActivity.memberSoptActivity;
 
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
 
         return queryFactory
                 .selectFrom(communityPost)
                 .leftJoin(communityPost.member, member).fetchJoin()
-                .leftJoin(member.activities, activities).fetchJoin()
                 .where(communityPost.createdAt.after(oneMonthAgo))
                 .orderBy(communityPost.hits.desc())
                 .limit(limitCount)
