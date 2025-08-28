@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -75,15 +76,15 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-//    @Operation(summary = "멤버 검색 API", description = """
-//            - name 파라미터가 없거나 '@'인 경우: 랜덤 유저 30명을 반환합니다.
-//            - name 파라미터에 검색어가 있는 경우: 해당 이름이 포함된 유저를 최신 활동기수 순으로 정렬하여 반환합니다.
-//            """)
-//    @GetMapping("/search")
-//    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
-//        List<MemberResponse> responses = memberService.getMemberByName(name);
-//        return ResponseEntity.status(HttpStatus.OK).body(responses);
-//    }
+   @Operation(summary = "멤버 검색 API", description = """
+           - name 파라미터가 없거나 '@'인 경우: 랜덤 유저 30명을 반환합니다.
+           - name 파라미터에 검색어가 있는 경우: 해당 이름이 포함된 유저를 최신 활동기수 순으로 정렬하여 반환합니다.
+           """)
+   @GetMapping("/search")
+   public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
+       List<MemberResponse> responses = memberService.getMemberByName(name);
+       return ResponseEntity.status(HttpStatus.OK).body(responses);
+   }
 
 
     @Operation(summary = "유저 프로필 생성 API",
@@ -229,16 +230,16 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "멤버 프로필 활동 삭제 API")
-    @DeleteMapping("/profile/activity/{activityId}")
-    public ResponseEntity<CommonResponse> deleteUserProfileActivity (
-            @PathVariable(name = "activityId") Long activityId,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
-    ) {
-        memberService.deleteUserProfileActivity(activityId, userId);
-        CommonResponse response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
+    // @Operation(summary = "멤버 프로필 활동 삭제 API")
+    // @DeleteMapping("/profile/activity/{activityId}")
+    // public ResponseEntity<CommonResponse> deleteUserProfileActivity (
+    //         @PathVariable(name = "activityId") Long activityId,
+    //         @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    // ) {
+    //     memberService.deleteUserProfileActivity(activityId, userId);
+    //     CommonResponse response = new CommonResponse(true, "성공적으로 activity를 삭제했습니다.");
+    //     return ResponseEntity.status(HttpStatus.OK).body(response);
+    // }
 
     @Operation(summary = "유저 차단 활성하기 API")
     @PatchMapping("/block/activate")

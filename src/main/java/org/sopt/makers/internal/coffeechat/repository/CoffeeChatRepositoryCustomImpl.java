@@ -19,7 +19,6 @@ import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
-import org.sopt.makers.internal.member.domain.QMemberSoptActivity;
 
 @RequiredArgsConstructor
 public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCustom {
@@ -155,17 +154,17 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
 //                .or(member.name.contains(search));
     }
 
-    private BooleanExpression isInPart(QMember member, String part, QMemberSoptActivity memberSoptActivity) {
-        if (part == null) {
-            return null;
-        }
-        return JPAExpressions
-                .selectFrom(memberSoptActivity)
-                .where(memberSoptActivity.memberId.eq(member.id)
-                        .and(memberSoptActivity.part.like(part + "%"))
-                )
-                .exists();
-    }
+    // private BooleanExpression isInPart(QMember member, String part, QMemberSoptActivity memberSoptActivity) {
+    //     if (part == null) {
+    //         return null;
+    //     }
+    //     return JPAExpressions
+    //             .selectFrom(memberSoptActivity)
+    //             .where(memberSoptActivity.memberId.eq(member.id)
+    //                     .and(memberSoptActivity.part.like(part + "%"))
+    //             )
+    //             .exists();
+    // }
 
 
 }

@@ -28,6 +28,8 @@ import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.PlatformUserUpdateRequest;
+import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.member.domain.MakersMemberId;
@@ -36,8 +38,8 @@ import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
@@ -62,7 +64,6 @@ import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
-import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -81,7 +82,6 @@ public class MemberService {
     private final MemberResponseMapper memberResponseMapper;
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
-    private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final CommunityPostRepository communityPostRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
@@ -92,7 +92,6 @@ public class MemberService {
     private final SlackMessageUtil slackMessageUtil;
     private final ReviewService reviewService;
     private final PlatformService platformService;
-    private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Transactional(readOnly = true)
     public MemberInfoResponse getMyInformation(Long userId) {
@@ -102,38 +101,54 @@ public class MemberService {
         return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
     }
 
-//    @Transactional(readOnly = true)
-//    public List<MemberResponse> getMemberByName(String name) {
-//        // TODO: - name이 이름에 포함된 멤버 리스트 받아오기 수정 필요해보임
-//        List<Member> members = memberRepository.findAllByNameContaining(name);
-//        if (members.isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//        List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
-//        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
-//                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
-//
-//        return members.stream().map(member -> {
-//            InternalUserDetails userDetails = userDetailsMap.get(member.getId());
-//            if (userDetails == null) return null;
-//            return new MemberResponse(
-//                    member.getId(),
-//                    userDetails.name(),
-//                    userDetails.lastGeneration(),
-//                    userDetails.profileImage(),
-//                    member.getHasProfile(),
-//                    member.getEditActivitiesAble()
-//            );
-//        }).filter(Objects::nonNull).collect(Collectors.toList());
-//    }
+    @Transactional(readOnly = true)
+    public List<MemberResponse> getMemberByName(String name) {
+        val orderBy = OrderByCondition.LATEST_GENERATION.name();
+        UserSearchResponse searchResponse = platformService.searchInternalUsers(
+            null, null, null, name, 30, 0, orderBy
+        );
+
+        List<InternalUserDetails> userDetailsList = searchResponse.profiles();
+        if (userDetailsList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> userIds = userDetailsList.stream()
+            .map(InternalUserDetails::userId)
+            .toList();
+
+        Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds).stream()
+            .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+
+        return userDetailsList.stream()
+            .map(userDetails -> {
+                Member member = memberMap.get(userDetails.userId());
+
+                boolean hasProfile = (member != null) && member.getHasProfile();
+                boolean editActivitiesAble = (member != null) ? member.getEditActivitiesAble() : true;
+
+                return new MemberResponse(
+                    userDetails.userId(),
+                    userDetails.name(),
+                    userDetails.lastGeneration(),
+                    userDetails.profileImage(),
+                    hasProfile,
+                    editActivitiesAble
+                );
+            })
+            .collect(Collectors.toList());
+    }
 
     @Transactional(readOnly = true)
     public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
         Member member = getMemberHasProfileById(profileId);
         InternalUserDetails userDetails = platformService.getInternalUser(profileId);
         List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
-        Map<String, List<ActivityVo>> activityMap = getMemberProfileActivity(member.getActivities(), memberProfileProjects);
-        List<MemberProfileProjectVo> soptActivity = getMemberProfileProjects(member.getActivities(), memberProfileProjects);
+
+        val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
+        val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
+
         List<MemberProfileProjectVo> soptActivityResponse = soptActivity.stream()
                 .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()),
                         m.projects()))
@@ -193,28 +208,32 @@ public class MemberService {
     }
 
     public Map<String, List<ActivityVo>> getMemberProfileActivity(
-            List<MemberSoptActivity> memberActivities,
+            List<SoptActivity> soptActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
-        if (memberActivities.isEmpty()) {
+        if (soptActivities.isEmpty()) {
             throw new NotFoundDBEntityException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
         }
 
-        val cardinalInfoMap = memberActivities.stream()
+        val cardinalInfoMap = soptActivities.stream()
                 .collect(Collectors.toMap(
-                        MemberSoptActivity::getGeneration,
-                        MemberSoptActivity::getPart,
+                        SoptActivity::generation,
+                        SoptActivity::part,
                         (p1, p2) -> p1)
                 );
-        val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+
+        val activities = soptActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+
         val projects = memberProfileProjects.stream()
                 .filter(p -> p.generation() != null)
                 .map(p -> {
                     val part = cardinalInfoMap.getOrDefault(p.generation(), "");
                     return memberMapper.toActivityInfoVo(p, true, part);
                 });
+
         val genActivityMap = Stream.concat(activities, projects)
                 .collect(Collectors.groupingBy(ActivityVo::generation));
+
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
@@ -223,14 +242,14 @@ public class MemberService {
     }
 
     public List<MemberProfileProjectVo> getMemberProfileProjects(
-            List<MemberSoptActivity> memberActivities,
+            List<SoptActivity> soptActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
-        return memberActivities.stream()
+        return soptActivities.stream()
                 .map(m -> {
                     val projects = memberProfileProjects.stream()
                             .filter(p -> p.generation() != null)
-                            .filter(p -> p.generation().equals(m.getGeneration()))
+                            .filter(p -> p.generation().equals(m.generation()))
                             .map(memberMapper::toActivityInfoVo).collect(Collectors.toList());
                     return memberMapper.toSoptMemberProfileProjectVo(m, projects);
                 })
@@ -242,50 +261,63 @@ public class MemberService {
             Integer filter, Integer limit, Integer cursor, String search,
             Integer generation, Integer employed, Integer orderBy, String mbti, String team
     ) {
-        List<Member> members = memberProfileQueryRepository.findAllLimitedMemberProfile(
-                    getMemberPart(filter), infiniteScrollUtil.checkLimitForPagination(limit),
-                    cursor, search, generation, employed, orderBy, mbti, team);
+        String part = getMemberPart(filter);
+        String orderByString = convertOrderBy(orderBy);
 
-        // 07.21.13:50 추가 - checkContainsSearchCond() name 검색해결 위해 플랫폼팀에서 받아온 정보로 필터링
-        List<Long> userIds = members.stream().map(Member::getId).collect(Collectors.toList());
-        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
-                .collect(Collectors.toMap(
-                        InternalUserDetails::userId,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
-        if (search != null && !search.isBlank()) {
-            members = members.stream()
-                    .filter(dto -> {
-                        InternalUserDetails userDetails = userDetailsMap.get(dto.getId());
-                        return userDetails.name().contains(search);
-                    }).toList();
-        }
+        UserSearchResponse searchResponse = platformService.searchInternalUsers(
+            generation, part, team, search, limit, cursor, orderByString
+        );
 
-        if (members.isEmpty()) {
+        List<InternalUserDetails> userDetailsFromPlatform = searchResponse.profiles();
+        if (userDetailsFromPlatform.isEmpty()) {
             return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
         }
 
-        List<MemberProfileResponse> memberList = members.stream().map(member -> {
-            InternalUserDetails userDetails = userDetailsMap.get(member.getId());
-            if (Objects.isNull(userDetails)) {
-                return null;
-            }
+        List<Long> userIds = userDetailsFromPlatform.stream().map(InternalUserDetails::userId).toList();
+        Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds).stream()
+            .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+        List<InternalUserDetails> finalFilteredUserDetails = userDetailsFromPlatform.stream()
+            .filter(userDetails -> {
+                Member member = memberMap.get(userDetails.userId());
+
+                if (member == null) return false;
+
+                if (mbti != null && !mbti.equals(member.getMbti())) {
+                    return false;
+                }
+
+                if (employed != null && !isCurrentlyEmployed(member.getCareers(), employed)) {
+                    return false;
+                }
+
+                if (search != null && !search.isBlank()) {
+                    boolean matchesLocal = member.getUniversity().contains(search) ||
+                        member.getCareers().stream().anyMatch(c -> c.getCompanyName().contains(search));
+                    if (!userDetails.name().contains(search) && !matchesLocal) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .toList();
+
+        List<MemberProfileResponse> memberList = finalFilteredUserDetails.stream().map(userDetails -> {
+            Member member = memberMap.get(userDetails.userId());
             boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+            return memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
+        }).toList();
 
-            MemberProfileResponse profileResponse = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
+        return new MemberAllProfileResponse(
+            memberList,
+            searchResponse.hasNext(),
+            searchResponse.totalCount()
+        );
+    }
 
-            return MemberProfileResponse.checkIsBlindPhone(
-                    profileResponse,
-                    memberMapper.mapPhoneIfBlind(member.getIsPhoneBlind(), userDetails.phone())
-            );
-        }).filter(Objects::nonNull).collect(Collectors.toList());
-
-        boolean hasNextMember = infiniteScrollUtil.checkHasNextElement(limit, memberList);
-
-        // TODO : - countAllMemberProfile() 아래 메소드 해결 필요해보임.
-        int totalMembersCount = memberProfileQueryRepository.countAllMemberProfile(getMemberPart(filter), search, generation, employed, mbti, team);
-        return new MemberAllProfileResponse(memberList, hasNextMember, totalMembersCount);
+    private boolean isCurrentlyEmployed(List<MemberCareer> careers, int employedStatus) {
+        boolean isWorking = careers.stream().anyMatch(MemberCareer::getIsCurrent);
+        return (employedStatus == 1) == isWorking;
     }
 
     private String getMemberPart(Integer filter) {
@@ -301,6 +333,17 @@ public class MemberService {
         };
     }
 
+    private String convertOrderBy(Integer orderBy) {
+        if (orderBy == null) return OrderByCondition.LATEST_REGISTERED.name();
+        return switch (orderBy) {
+            case 1 -> OrderByCondition.LATEST_REGISTERED.name();
+            case 2 -> OrderByCondition.OLDEST_REGISTERED.name();
+            case 3 -> OrderByCondition.LATEST_GENERATION.name();
+            case 4 -> OrderByCondition.OLDEST_GENERATION.name();
+            default -> OrderByCondition.LATEST_REGISTERED.name();
+        };
+    }
+
     private String checkActivityTeamConditions(String team) {
         Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
@@ -308,14 +351,6 @@ public class MemberService {
         if (isNullResult) return null;
         else return team;
     }
-
-//    @Transactional(readOnly = true)
-//    public List<InternalCoffeeChatMemberDto> getAllMemberByCoffeeChatActivate() {
-//        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
-//        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
-//                member, platformService.getPartAndGenerationList(member.getId())
-//        )).toList();
-//    }
 
     @Transactional
     public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {
@@ -358,28 +393,6 @@ public class MemberService {
                         .build()).collect(Collectors.toList());
         memberLinkEntities.forEach(link -> link.setMemberId(memberId));
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
-
-        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
-            val sameGenerationInActivity = request.activities().stream()
-                    .filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
-            if (sameGenerationInActivity.isPresent()) {
-                val team = sameGenerationInActivity.map(MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team).orElse(null);
-                return MemberSoptActivity.builder()
-                        .memberId(activity.getMemberId())
-                        .part(activity.getPart())
-                        .generation(activity.getGeneration())
-                        .team(checkActivityTeamConditions(team)).build();
-            }
-            return MemberSoptActivity.builder()
-                    .memberId(activity.getMemberId())
-                    .part(activity.getPart())
-                    .generation(activity.getGeneration())
-                    .team(checkActivityTeamConditions(activity.getTeam())).build();
-        }).collect(Collectors.toList());
-
-        val nnActivities = memberActivities.stream().filter(l -> l.getMemberId() != null).count();
-        if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
-
         val memberCareerEntities = request.careers().stream().map(career -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             try {
@@ -414,7 +427,7 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers, request.isPhoneBlind()
+                memberLinks, memberCareers, request.isPhoneBlind()
         );
 
         try {
@@ -477,13 +490,6 @@ public class MemberService {
         platformService.updateInternalUser(id, platformRequest);
 
         val member = getMemberById(id);
-
-        if (!member.getEditActivitiesAble()) {
-            if (!request.compareProfileActivities(request.activities(), member.getActivities())) {
-                throw new ClientBadRequestException("이미 프로필을 수정한 적이 있는 유저입니다.");
-            }
-        }
-
         val memberId = member.getId();
         val memberLinks = memberLinkRepository.saveAll(
                 request.links().stream().map(link ->
@@ -492,16 +498,6 @@ public class MemberService {
                                 .memberId(memberId)
                                 .title(link.title())
                                 .url(link.url())
-                                .build()).collect(Collectors.toList())
-        );
-
-        val memberActivities = memberSoptActivityRepository.saveAll(
-                request.activities().stream().map(activity ->
-                        MemberSoptActivity.builder()
-                                .memberId(memberId)
-                                .part(activity.part())
-                                .generation(activity.generation())
-                                .team(checkActivityTeamConditions(activity.team()))
                                 .build()).collect(Collectors.toList())
         );
 
@@ -539,7 +535,7 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers, request.isPhoneBlind()
+                memberLinks, memberCareers, request.isPhoneBlind()
         );
 
         return member;
@@ -552,17 +548,15 @@ public class MemberService {
         memberLinkRepository.delete(link);
     }
 
-    @Transactional
-    public void deleteUserProfileActivity(Long activityId, Long memberId) {
-        MemberSoptActivity activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
-        memberSoptActivityRepository.delete(activity);
-    }
-
-//    @Transactional(readOnly = true)
-//    public List<Member> getMemberBySearchCond(String search) {
-//        return memberProfileQueryRepository.findAllMemberProfilesBySearchCond(search);
-//    }
+    /*
+        플랫폼 팀에서 멤버 활동을 관리하고 있기 때문에, 내부에서 삭제 불가
+     */
+    // @Transactional
+    // public void deleteUserProfileActivity(Long activityId, Long memberId) {
+    //     MemberSoptActivity activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
+    //             .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
+    //     memberSoptActivityRepository.delete(activity);
+    // }
 
     @Transactional
     public void checkActivities(Long memberId, Boolean isCheck) {
