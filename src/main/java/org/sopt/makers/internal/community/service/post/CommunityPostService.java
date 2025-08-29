@@ -347,8 +347,8 @@ public class CommunityPostService {
         Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
         String baseUrl = activeProfile.equals("prod")
-                ? "https://playground.sopt.org"
-                : "https://dev.playground.sopt.org";
+                ? "https://playground.sopt.org/?feed="
+                : "https://dev.playground.sopt.org/?feed=";
 
         return IntStream.range(0, posts.size())
                 .mapToObj(idx -> {
@@ -443,8 +443,8 @@ public class CommunityPostService {
         List<InternalLatestPostResponse> responses = new ArrayList<>();
 
         String baseUrl = activeProfile.equals("prod")
-                ? "https://playground.sopt.org"
-                : "https://dev.playground.sopt.org";
+                ? "https://playground.sopt.org/?feed="
+                : "https://dev.playground.sopt.org/?feed=";
 
         for (Long categoryId : topLevelCategoryIds) {
             List<Long> allCategoryIds = categoryRetriever.findAllDescendantIds(categoryId);
