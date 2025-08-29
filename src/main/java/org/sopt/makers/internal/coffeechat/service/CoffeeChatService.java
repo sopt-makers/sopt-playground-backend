@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
@@ -150,16 +151,15 @@ public class CoffeeChatService {
     }
 
     private List<CoffeeChatInfoDto> getSearchCoffeeChatInfoList(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
-        List<CoffeeChatInfoDto> coffeeChatInfoList = coffeeChatRepository.findSearchCoffeeChatInfo(memberId, section, topicType, career, search);
-        List<CoffeeChatInfoDto> response = coffeeChatInfoList;
-        List<Long> userIds = coffeeChatInfoList.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
-        System.out.println(userIds);
-        System.out.println(search);
+        List<CoffeeChatInfoDto> dbResult =
+                coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
 
+        List<Long> userIds =  dbResult.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
         Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
 
+        List<CoffeeChatInfoDto> response =  dbResult;
 
-        if (part != null) { // part 검색은 플랫폼팀에서 받아온 정보로 필터링
+        if (part != null) {
             response = response.stream()
                     .filter(dto -> {
                         InternalUserDetails userDetails = userMap.get(dto.memberId());
@@ -169,14 +169,28 @@ public class CoffeeChatService {
                     .toList();
         }
 
-        // name 검색은 플랫폼팀에서 받아온 정보로 필터링
+        // 검색어 처리
         if (search != null && !search.isBlank()) {
-            response = response.stream()
+            // DB에서 검색되는 company/university 조건
+            List<CoffeeChatInfoDto> dbMatched = dbResult.stream()
+                    .filter(dto ->
+                            (dto.university() != null && dto.university().contains(search))
+                                    || (dto.companyName() != null && dto.companyName().contains(search))
+                    )
+                    .toList();
+
+            // 외부 API에서 검색되는 name 조건
+            List<CoffeeChatInfoDto> nameMatched = response.stream()
                     .filter(dto -> {
                         InternalUserDetails userDetails = userMap.get(dto.memberId());
-                        System.out.println(userDetails.name());
-                        return userDetails.name().contains(search);
-                    }).toList();
+                        return userDetails != null && userDetails.name().contains(search);
+                    })
+                    .toList();
+
+            // 합집합
+            response = Stream.concat(dbMatched.stream(), nameMatched.stream())
+                    .distinct()
+                    .toList();
         }
 
         return response;
