@@ -11,6 +11,6 @@ import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryRespons
 public interface CoffeeChatRepositoryCustom {
 
     List<RecentCoffeeChatInfoDto> findRecentCoffeeChatInfo();
-    List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String search);
+    List<CoffeeChatInfoDto> findCoffeeChatInfoByDbConditions(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career);
     List<CoffeeChatHistoryResponse> getCoffeeChatHistoryTitles(Long memberId);
 }

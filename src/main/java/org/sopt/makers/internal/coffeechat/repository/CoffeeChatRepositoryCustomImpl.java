@@ -61,18 +61,17 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
     }
 
     @Override
-    public List<CoffeeChatInfoDto> findSearchCoffeeChatInfo(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String search) {
+    public List<CoffeeChatInfoDto> findCoffeeChatInfoByDbConditions(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career) {
 
         QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
         QMember member = QMember.member;
         QMemberCareer memberCareer = QMemberCareer.memberCareer;
 
-        // 검색 조건
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(isInSection(section))
+        // 기본 조건
+        BooleanBuilder baseCondition = new BooleanBuilder();
+        baseCondition.and(isInSection(section))
                 .and(isInTopicType(topicType))
                 .and(isInCareer(coffeeChat, career))
-                .and(isInSearch(member, memberCareer, search))
                 .and(coffeeChat.isCoffeeChatActivate.isTrue()
                         .or(coffeeChat.member.id.eq(memberId)));
 
@@ -86,12 +85,14 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         coffeeChat.member.university,
                         coffeeChat.createdAt,
                         coffeeChat.member.id.eq(memberId),
-                        coffeeChat.isCoffeeChatActivate.isFalse()
+                        coffeeChat.isCoffeeChatActivate.isFalse(),
+                        memberCareer.companyName
+
                 ))
                 .from(coffeeChat)
                 .leftJoin(member).on(coffeeChat.member.id.eq(member.id))
                 .leftJoin(memberCareer).on(coffeeChat.member.id.eq(memberCareer.memberId))
-                .where(builder)
+                .where(baseCondition)
                 .orderBy(coffeeChat.createdAt.desc())
                 .fetch();
     }
@@ -151,7 +152,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
         }
         return memberCareer.companyName.contains(search)
                 .or(member.university.contains(search));
-//                .or(member.name.contains(search));
     }
 
     // private BooleanExpression isInPart(QMember member, String part, QMemberSoptActivity memberSoptActivity) {
