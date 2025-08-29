@@ -225,7 +225,7 @@ public class CommunityResponseMapper {
 //        return new InternalCommunityPost(dao.post().getId(), dao.post().getTitle(), dao.category().getName(), dao.post().getImages(), dao.post().getIsHot(), dao.post().getContent());
 //    }
 
-    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, InternalUserDetails userDetails, String categoryName, int rank) {
+    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousPostProfile anonymousPostProfile, InternalUserDetails userDetails, String categoryName, int rank, String baseUrl) {
         if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousPostProfile != null) {
             // 익명일 경우
             return InternalPopularPostResponse.builder()
@@ -238,7 +238,7 @@ public class CommunityResponseMapper {
                     .category(categoryName)
                     .title(post.getTitle())
                     .content(MentionCleaner.removeMentionIds(post.getContent()))
-                    .webLink("https://playground.sopt.org/?feed=" + post.getId())
+                    .webLink(baseUrl + post.getId())
                     .build();
         } else {
             SoptActivity lastActivity = userDetails.soptActivities().stream()
@@ -255,7 +255,7 @@ public class CommunityResponseMapper {
                     .category(categoryName)
                     .title(post.getTitle())
                     .content(MentionCleaner.removeMentionIds(post.getContent()))
-                    .webLink("https://playground.sopt.org/?feed=" + post.getId())
+                    .webLink(baseUrl + post.getId())
                     .build();
         }
     }

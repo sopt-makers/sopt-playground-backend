@@ -27,10 +27,11 @@ public record InternalLatestPostResponse(
             SoptActivity latestActivity,
             InternalUserDetails userDetails,
             String categoryName,
-            Optional<AnonymousPostProfile> anonymousPostProfile
+            Optional<AnonymousPostProfile> anonymousPostProfile,
+            String baseUrl
             ) {
         String generationAndPart = "";
-        if (latestActivity != null) {
+        if (!post.getIsBlindWriter() && latestActivity != null) {
             generationAndPart = String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
         }
 
@@ -56,7 +57,7 @@ public record InternalLatestPostResponse(
                 categoryName,
                 post.getTitle(),
                 cleanedContent,
-                "https://playground.sopt.org/?feed=" + post.getId(),
+                baseUrl + post.getId(),
                 post.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))
         );
     }

@@ -43,7 +43,6 @@ import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.ReportPostRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
-import org.sopt.makers.internal.community.repository.category.CategoryRepository;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
@@ -347,6 +346,10 @@ public class CommunityPostService {
         Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
         Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
+        String baseUrl = activeProfile.equals("prod")
+                ? "https://playground.sopt.org"
+                : "https://dev.playground.sopt.org";
+
         return IntStream.range(0, posts.size())
                 .mapToObj(idx -> {
                     CommunityPost post = posts.get(idx);
@@ -356,7 +359,8 @@ public class CommunityPostService {
                             anonymousProfileMap.get(post.getId()),
                             userDetails,
                             categoryNameMap.get(post.getCategoryId()),
-                            idx + 1
+                            idx + 1,
+                            baseUrl
                     );
                 })
                 .toList();
@@ -438,6 +442,10 @@ public class CommunityPostService {
 
         List<InternalLatestPostResponse> responses = new ArrayList<>();
 
+        String baseUrl = activeProfile.equals("prod")
+                ? "https://playground.sopt.org"
+                : "https://dev.playground.sopt.org";
+
         for (Long categoryId : topLevelCategoryIds) {
             List<Long> allCategoryIds = categoryRetriever.findAllDescendantIds(categoryId);
 
@@ -456,7 +464,7 @@ public class CommunityPostService {
                     anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
                 }
 
-                responses.add(InternalLatestPostResponse.of(post, latestActivity, userDetails, categoryName, anonymousProfile));
+                responses.add(InternalLatestPostResponse.of(post, latestActivity, userDetails, categoryName, anonymousProfile, baseUrl));
             });
         }
         return responses;
