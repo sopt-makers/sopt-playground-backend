@@ -186,11 +186,13 @@ public class InternalOpenApiController {
     @Operation(summary = "기본 유저 프로필 생성 - 플랫폼팀")
     @PostMapping("/members/profile")
     public ResponseEntity<String> createUserProfile(
-            @RequestBody(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "플그 기본 유저 프로필 생성 요청",
                     required = true,
                     content = @Content(schema = @Schema(implementation = CreateDefaultUserProfileRequest.class))
-            ) CreateDefaultUserProfileRequest request,
+            )
+            @org.springframework.web.bind.annotation.RequestBody
+            CreateDefaultUserProfileRequest request,
             @RequestHeader("apiKey") String apiKey,
             @Value("${internal.platform.api-key}") String internalApiKey
     ) {
