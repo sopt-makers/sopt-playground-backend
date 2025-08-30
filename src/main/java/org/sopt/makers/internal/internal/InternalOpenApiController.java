@@ -2,6 +2,9 @@ package org.sopt.makers.internal.internal;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URLDecoder;
@@ -21,6 +24,7 @@ import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.internal.dto.CardinalInfoResponse;
+import org.sopt.makers.internal.internal.dto.CreateDefaultUserProfileRequest;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileListResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileResponse;
@@ -43,7 +47,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -200,7 +203,11 @@ public class InternalOpenApiController {
     @Operation(summary = "기본 유저 프로필 생성 - 플랫폼팀")
     @PostMapping("/members/profile")
     public ResponseEntity<String> createUserProfile(
-            @RequestHeader("userId") Long userId,
+            @RequestBody(
+                    description = "플그 기본 유저 프로필 생성 요청",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = CreateDefaultUserProfileRequest.class))
+            ) CreateDefaultUserProfileRequest request,
             @RequestHeader("apiKey") String apiKey,
             @Value("${internal.platform.api-key}") String internalApiKey
     ) {
@@ -210,7 +217,7 @@ public class InternalOpenApiController {
                     .body("잘못된 api key 입니다.");
         }
 
-        Member member = memberService.saveDefaultMemberProfile(userId);
+        Member member = memberService.saveDefaultMemberProfile(request.userId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body("기본 유저 프로필이 성공적으로 생성되었습니다. user id: " + member.getId());
