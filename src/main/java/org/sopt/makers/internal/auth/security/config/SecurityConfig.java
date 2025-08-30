@@ -41,7 +41,8 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/makers/**",
                         "/internal/api/v1/**",
-                        "/api/v1/admin/**"
+                        "/api/v1/admin/**",
+                        "/api/v1/projects/"
                 ).permitAll()
 
 //                .antMatchers(
