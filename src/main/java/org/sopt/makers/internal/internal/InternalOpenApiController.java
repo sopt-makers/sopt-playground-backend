@@ -30,14 +30,11 @@ import org.sopt.makers.internal.internal.dto.InternalMemberProfileListResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalRecommendMemberListRequest;
 import org.sopt.makers.internal.internal.dto.InternalRecommendMemberListResponse;
 import org.sopt.makers.internal.internal.dto.SearchContent;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberService;
-import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.service.ProjectService;
@@ -73,20 +70,6 @@ public class InternalOpenApiController {
     public ResponseEntity<ProjectDetailResponse> getProject (@PathVariable Long id) {
         ProjectDetailResponse response = projectService.getProjectDetailResponseById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "Project 전체 조회 - 공홈")
-    @GetMapping("/projects")
-    public ResponseEntity<List<InternalProjectResponse>> getProjects () {
-        Map<Long, Project> projectMap = internalApiService.fetchAll().stream()
-                .collect(Collectors.toMap(Project::getId, Function.identity()));
-        Map<Long, List<ProjectLinkDao>> projectLinkMap = internalApiService.fetchAllLinks().stream()
-                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
-        val projectIds = projectMap.keySet();
-        val responses = projectIds.stream()
-                .map(id -> projectMapper.toInternalProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
-                .toList();
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
     @Operation(summary = "솝트에서 진행한 프로젝트 개수 조회 - 앱팀")
