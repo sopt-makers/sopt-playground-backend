@@ -37,12 +37,14 @@ import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.service.ProjectService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -193,5 +195,24 @@ public class InternalOpenApiController {
         Set<Long> memberIdsSet = new HashSet<>(memberIds);
         val response = new InternalRecommendMemberListResponse(memberIdsSet);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "기본 유저 프로필 생성 - 플랫폼팀")
+    @PostMapping("/members/profile")
+    public ResponseEntity<String> createUserProfile(
+            @RequestHeader("userId") Long userId,
+            @RequestHeader("apiKey") String apiKey,
+            @Value("${internal.platform.api-key}") String internalApiKey
+    ) {
+        if (!internalApiKey.equals(apiKey)) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("잘못된 api key 입니다.");
+        }
+
+        Member member = memberService.saveDefaultMemberProfile(userId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("기본 유저 프로필이 성공적으로 생성되었습니다. user id: " + member.getId());
     }
 }

@@ -317,7 +317,7 @@ public class MemberService {
                     boolean companyContain = false;
 
                     if (member.getUniversity() != null ) {
-                        universityContain = member.getUniversity().contains(search)
+                        universityContain = member.getUniversity().contains(search);
                     }
                     if (member.getCareers() != null) {
                         companyContain = member.getCareers().stream().anyMatch(c -> c.getCompanyName() != null && c.getCompanyName().contains(search));
@@ -382,6 +382,43 @@ public class MemberService {
         else return team;
     }
 
+    public Member saveDefaultMemberProfile(Long userId) {
+        if (memberRepository.existsById(userId)) {
+            throw new IllegalStateException("이미 존재하는 유저입니다. userId=" + userId);
+        }
+
+        Member member = Member.builder()
+                .id(userId)
+                .address(null)
+                .university(null)
+                .major(null)
+                .introduction(null)
+                .mbti(null)
+                .mbtiDescription(null)
+                .sojuCapacity(null)
+                .interest(null)
+                .userFavor(null)
+                .idealType(null)
+                .selfIntroduction(null)
+                .skill(null)
+                .openToWork(null)
+                .openToSideProject(null)
+                .allowOfficial(false)
+                .hasProfile(true)
+                .editActivitiesAble(true)
+                .openToSoulmate(false)
+                .isPhoneBlind(true)
+                .links(null)
+                .careers(null)
+                .voteSelections(null)
+                .build();
+
+        memberRepository.save(member);
+        return member;
+    }
+
+    // 프론트 연결하면 삭제 예정
+    @Deprecated
     @Transactional
     public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {
         val userDetails = platformService.getInternalUser(userId);
