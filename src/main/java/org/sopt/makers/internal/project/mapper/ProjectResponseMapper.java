@@ -55,7 +55,7 @@ public class ProjectResponseMapper {
                             .findFirst().get().getHasProfile();
 
                     return new ProjectDetailMemberResponse(
-                            member.getId(),
+                            member.getUserId(),
                             member.getRole(),
                             member.getDescription(),
                             member.getIsTeamMember(),
