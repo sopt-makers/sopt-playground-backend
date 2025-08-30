@@ -65,6 +65,7 @@ import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -384,7 +385,7 @@ public class MemberService {
 
     public Member saveDefaultMemberProfile(Long userId) {
         if (memberRepository.existsById(userId)) {
-            throw new IllegalStateException("이미 존재하는 유저입니다. userId=" + userId);
+            throw new DuplicateKeyException("이미 존재하는 유저입니다. userId=" + userId);
         }
 
         Member member = Member.builder()
