@@ -313,8 +313,17 @@ public class MemberService {
                 }
 
                 if (search != null && !search.isBlank()) {
-                    boolean matchesLocal = member.getUniversity().contains(search) ||
-                        member.getCareers().stream().anyMatch(c -> c.getCompanyName().contains(search));
+                    boolean universityContain = false;
+                    boolean companyContain = false;
+
+                    if (member.getUniversity() != null ) {
+                        universityContain = member.getUniversity().contains(search)
+                    }
+                    if (member.getCareers() != null) {
+                        companyContain = member.getCareers().stream().anyMatch(c -> c.getCompanyName() != null && c.getCompanyName().contains(search));
+                    }
+
+                    boolean matchesLocal = universityContain || companyContain;
                     if (!userDetails.name().contains(search) && !matchesLocal) {
                         return false;
                     }
