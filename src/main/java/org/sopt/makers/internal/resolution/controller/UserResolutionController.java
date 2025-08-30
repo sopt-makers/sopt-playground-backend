@@ -1,5 +1,20 @@
 package org.sopt.makers.internal.resolution.controller;
 
+<<<<<<< HEAD
+=======
+import org.sopt.makers.internal.internal.InternalMemberDetails;
+import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
+import org.sopt.makers.internal.resolution.dto.response.LuckyPickResponse;
+import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
+import org.sopt.makers.internal.resolution.dto.response.ResolutionValidResponse;
+import org.sopt.makers.internal.resolution.service.LuckyPickService;
+import org.sopt.makers.internal.resolution.service.UserResolutionService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+>>>>>>> 595d9e717d19f299586664158a8fb5a4f32b6183
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
