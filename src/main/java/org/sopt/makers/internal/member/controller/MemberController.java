@@ -87,6 +87,8 @@ public class MemberController {
    }
 
 
+   // 프론트 연결 되면 삭제 예정
+    @Deprecated
     @Operation(summary = "유저 프로필 생성 API",
             description =
                     """

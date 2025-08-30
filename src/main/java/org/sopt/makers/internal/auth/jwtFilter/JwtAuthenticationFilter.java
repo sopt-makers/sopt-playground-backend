@@ -11,7 +11,6 @@ import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -19,7 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.sopt.makers.internal.auth.jwt.code.JwtFailure.JWT_MISSING_AUTH_HEADER;
+import static org.sopt.makers.internal.auth.jwt.code.JwtFailure.*;
 
 /**
  * JwtAuthenticationFilter : 매 요청마다 실행되는 JWT 필터
@@ -45,7 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || uri.startsWith("/swagger-resources")
                 || uri.startsWith("/webjars")
                 || uri.startsWith("/makers")
-                || uri.startsWith("/internal/api/v1")) {
+                || uri.startsWith("/internal/api/v1")
+                || (uri.startsWith("/api/v1/projects") && "GET".equalsIgnoreCase(request.getMethod()))
+        ) {
             filterChain.doFilter(request, response);
             return;
         }

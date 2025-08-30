@@ -37,7 +37,6 @@ public interface MemberMapper {
             boolean isMine,
             List<MemberProfileProjectDao> projects,
             List<MemberProfileSpecificResponse.MemberActivityResponse> activities,
-            List<MemberProfileProjectVo> soptActivities,
             Boolean isCoffeeChatActivate
     );
 

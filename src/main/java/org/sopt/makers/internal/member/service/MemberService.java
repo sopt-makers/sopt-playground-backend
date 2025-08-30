@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
-import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -66,6 +65,7 @@ import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -145,14 +145,12 @@ public class MemberService {
         Member member = getMemberHasProfileById(profileId);
         InternalUserDetails userDetails = platformService.getInternalUser(profileId);
         List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
-
         val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
         val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
-
         List<MemberProfileProjectVo> soptActivityResponse = soptActivity.stream()
                 .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()),
                         m.projects()))
-                .collect(Collectors.toList());
+                .toList();
         List<MemberActivityResponse> activityResponses = activityMap.entrySet().stream()
                 .map(entry -> new MemberActivityResponse(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
@@ -160,10 +158,34 @@ public class MemberService {
         boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
         MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(
                 member, userDetails, isMine, memberProfileProjects,
-                activityResponses, soptActivityResponse, isCoffeeChatActivate
+                activityResponses, isCoffeeChatActivate
         );
 
-        return MemberProfileSpecificResponse.applyPhoneMasking(response, isMine, isCoffeeChatActivate);
+        Map<Integer, MemberProfileProjectVo> projectMap = soptActivityResponse.stream()
+                .collect(Collectors.toMap(MemberProfileProjectVo::generation, vo -> vo));
+
+        // soptActivities 갱신 (response.soptActivities()에 soptActivityResponse 붙히기)
+        List<MemberProfileSpecificResponse.SoptMemberActivityResponse> updatedActivities = response.soptActivities().stream()
+                .map(sa -> {
+                    MemberProfileProjectVo matched = projectMap.get(sa.generation());
+                    if (matched != null) {
+                        return new MemberProfileSpecificResponse.SoptMemberActivityResponse(
+                                sa.generation(),
+                                sa.part(),
+                                sa.team(),
+                                matched.projects()
+                        );
+                    }
+                    return sa;
+                }).toList();
+
+        // updatedActivities set 해주기
+        MemberProfileSpecificResponse updateResponse = new MemberProfileSpecificResponse(response.name(), response.profileImage(),
+                response.birthday(), response.isPhoneBlind(), response.phone(), response.email(), response.address(), response.university(),
+                response.major(), response.introduction(), response.skill(), response.mbti(), response.mbtiDescription(), response.sojuCapacity(),
+                response.interest(), response.userFavor(), response.idealType(), response.selfIntroduction(), response.activities(), updatedActivities,
+                response.links(), response.projects(), response.careers(), response.allowOfficial(), response.isCoffeeChatActivate(), response.isMine());
+        return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
     }
 
     @Transactional(readOnly = true)
@@ -292,8 +314,17 @@ public class MemberService {
                 }
 
                 if (search != null && !search.isBlank()) {
-                    boolean matchesLocal = member.getUniversity().contains(search) ||
-                        member.getCareers().stream().anyMatch(c -> c.getCompanyName().contains(search));
+                    boolean universityContain = false;
+                    boolean companyContain = false;
+
+                    if (member.getUniversity() != null ) {
+                        universityContain = member.getUniversity().contains(search);
+                    }
+                    if (member.getCareers() != null) {
+                        companyContain = member.getCareers().stream().anyMatch(c -> c.getCompanyName() != null && c.getCompanyName().contains(search));
+                    }
+
+                    boolean matchesLocal = universityContain || companyContain;
                     if (!userDetails.name().contains(search) && !matchesLocal) {
                         return false;
                     }
@@ -352,6 +383,43 @@ public class MemberService {
         else return team;
     }
 
+    public Member saveDefaultMemberProfile(Long userId) {
+        if (memberRepository.existsById(userId)) {
+            throw new DuplicateKeyException("이미 존재하는 유저입니다. userId=" + userId);
+        }
+
+        Member member = Member.builder()
+                .id(userId)
+                .address(null)
+                .university(null)
+                .major(null)
+                .introduction(null)
+                .mbti(null)
+                .mbtiDescription(null)
+                .sojuCapacity(null)
+                .interest(null)
+                .userFavor(null)
+                .idealType(null)
+                .selfIntroduction(null)
+                .skill(null)
+                .openToWork(null)
+                .openToSideProject(null)
+                .allowOfficial(false)
+                .hasProfile(true)
+                .editActivitiesAble(true)
+                .openToSoulmate(false)
+                .isPhoneBlind(true)
+                .links(null)
+                .careers(null)
+                .voteSelections(null)
+                .build();
+
+        memberRepository.save(member);
+        return member;
+    }
+
+    // 프론트 연결하면 삭제 예정
+    @Deprecated
     @Transactional
     public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {
         val userDetails = platformService.getInternalUser(userId);
@@ -694,4 +762,5 @@ public class MemberService {
                     return new MakersMemberProfileResponse(userDetail.userId(), userDetail.name(), userDetail.profileImage(), memberSoptActivityResponses, memberCareerResponses);
                 }).toList();
     }
+
 }

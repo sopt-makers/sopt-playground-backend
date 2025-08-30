@@ -1,19 +1,29 @@
 package org.sopt.makers.internal.common.exception;
 
+import feign.FeignException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.auth.dto.response.RegisterTokenBySmsResponse;
 import org.sopt.makers.internal.community.dto.response.SopticleResponse;
 import org.sopt.makers.internal.deprecated.soulmate.dto.SoulmateResponse;
-import org.sopt.makers.internal.exception.*;
+import org.sopt.makers.internal.exception.AuthFailureException;
+import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.ForbiddenClientException;
+import org.sopt.makers.internal.exception.SopticleException;
+import org.sopt.makers.internal.exception.SoulmateException;
+import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
+import org.sopt.makers.internal.exception.WrongAccessTokenException;
+import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.exception.WrongSecretHeaderException;
+import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.external.slack.MessageType;
 import org.sopt.makers.internal.external.slack.SlackService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -167,6 +177,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<String> handleDuplicateKey(DuplicateKeyException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
     private void sendErrorMessageToSlack(Exception exception, MessageType messageType, final HttpServletRequest request) {

@@ -348,7 +348,7 @@ public class CommunityPostService {
 
         String baseUrl = activeProfile.equals("prod")
                 ? "https://playground.sopt.org/?feed="
-                : "https://dev.playground.sopt.org/?feed=";
+                : "https://sopt-internal-dev.pages.dev/?feed=";
 
         return IntStream.range(0, posts.size())
                 .mapToObj(idx -> {
@@ -444,7 +444,7 @@ public class CommunityPostService {
 
         String baseUrl = activeProfile.equals("prod")
                 ? "https://playground.sopt.org/?feed="
-                : "https://dev.playground.sopt.org/?feed=";
+                : "https://sopt-internal-dev.pages.dev/?feed=";
 
         for (Long categoryId : topLevelCategoryIds) {
             List<Long> allCategoryIds = categoryRetriever.findAllDescendantIds(categoryId);

@@ -2,6 +2,9 @@ package org.sopt.makers.internal.internal;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URLDecoder;
@@ -21,28 +24,27 @@ import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.internal.dto.CardinalInfoResponse;
+import org.sopt.makers.internal.internal.dto.CreateDefaultUserProfileRequest;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileListResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProfileResponse;
 import org.sopt.makers.internal.internal.dto.InternalMemberProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.internal.dto.InternalRecommendMemberListRequest;
 import org.sopt.makers.internal.internal.dto.InternalRecommendMemberListResponse;
 import org.sopt.makers.internal.internal.dto.SearchContent;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberService;
-import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.service.ProjectService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -68,20 +70,6 @@ public class InternalOpenApiController {
     public ResponseEntity<ProjectDetailResponse> getProject (@PathVariable Long id) {
         ProjectDetailResponse response = projectService.getProjectDetailResponseById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @Operation(summary = "Project 전체 조회 - 공홈")
-    @GetMapping("/projects")
-    public ResponseEntity<List<InternalProjectResponse>> getProjects () {
-        Map<Long, Project> projectMap = internalApiService.fetchAll().stream()
-                .collect(Collectors.toMap(Project::getId, Function.identity()));
-        Map<Long, List<ProjectLinkDao>> projectLinkMap = internalApiService.fetchAllLinks().stream()
-                .collect(Collectors.groupingBy(ProjectLinkDao::id, Collectors.toList()));
-        val projectIds = projectMap.keySet();
-        val responses = projectIds.stream()
-                .map(id -> projectMapper.toInternalProjectResponse(projectMap.get(id), projectLinkMap.getOrDefault(id, List.of())))
-                .toList();
-        return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
     @Operation(summary = "솝트에서 진행한 프로젝트 개수 조회 - 앱팀")
@@ -193,5 +181,30 @@ public class InternalOpenApiController {
         Set<Long> memberIdsSet = new HashSet<>(memberIds);
         val response = new InternalRecommendMemberListResponse(memberIdsSet);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "기본 유저 프로필 생성 - 플랫폼팀")
+    @PostMapping("/members/profile")
+    public ResponseEntity<String> createUserProfile(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "플그 기본 유저 프로필 생성 요청",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = CreateDefaultUserProfileRequest.class))
+            )
+            @org.springframework.web.bind.annotation.RequestBody
+            CreateDefaultUserProfileRequest request,
+            @RequestHeader("apiKey") String apiKey,
+            @Value("${internal.platform.api-key}") String internalApiKey
+    ) {
+        if (!internalApiKey.equals(apiKey)) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("잘못된 api key 입니다.");
+        }
+
+        Member member = memberService.saveDefaultMemberProfile(request.userId());
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("기본 유저 프로필이 성공적으로 생성되었습니다. user id: " + member.getId());
     }
 }
