@@ -1,8 +1,7 @@
 package org.sopt.makers.internal.member.domain;
 
-import lombok.Getter;
-
 import java.util.List;
+import lombok.Getter;
 
 public class MakersMemberId {
     @Getter
@@ -20,6 +19,9 @@ public class MakersMemberId {
             585L, 635L, 646L, 647L, 688L,
             70L, 84L, 89L, 172L, 198L, 233L, 381L, 423L, 429L, 623L, 666L,
             673L, 748L, 752L, 760L, 784L, 826L, 857L, 858L, 859L, 860L,
-            867L, 870L, 871L, 892L, 896L, 309L, 661L, 744L, 812L
+            867L, 870L, 871L, 892L, 896L, 309L, 661L, 744L, 812L,
+            794L, 419L, 1031L, 982L, 371L, 813L, 918L, 989L,
+            809L, 797L, 792L, 221L, 793L, 823L, 795L, 741L, 689L,
+            312L, 803L, 899L, 771L, 778L, 871L, 952L, 861L
     );
 }

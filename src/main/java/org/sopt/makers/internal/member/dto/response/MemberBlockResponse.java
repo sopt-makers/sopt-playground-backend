@@ -1,6 +1,6 @@
 package org.sopt.makers.internal.member.dto.response;
 
-import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
 
 public record MemberBlockResponse(
         Boolean status,
@@ -13,11 +13,11 @@ public record MemberBlockResponse(
           String name
   ) { }
 
-  public static MemberBlockResponse of (Boolean status, Member blockingMember, Member blockedMember) {
+  public static MemberBlockResponse of (Boolean status, InternalUserDetails blockingMember, InternalUserDetails blockedMember) {
     return new MemberBlockResponse(
             status,
-            new BlockMemberInfo(blockingMember.getId(), blockingMember.getName()),
-            new BlockMemberInfo(blockedMember.getId(), blockedMember.getName())
+            new BlockMemberInfo(blockingMember.userId(), blockingMember.name()),
+            new BlockMemberInfo(blockedMember.userId(), blockedMember.name())
     );
   }
 }

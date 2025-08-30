@@ -6,12 +6,13 @@ import lombok.Builder;
 import org.sopt.makers.internal.common.util.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 
 @Builder
 public record InternalLatestPostResponse(
         Long id,
+        Long userId,
         String profileImage,
         String name,
         String generationAndPart,
@@ -23,35 +24,40 @@ public record InternalLatestPostResponse(
 ) {
     public static InternalLatestPostResponse of(
             CommunityPost post,
-            MemberSoptActivity latestActivity,
+            SoptActivity latestActivity,
+            InternalUserDetails userDetails,
             String categoryName,
-            Optional<AnonymousPostProfile> anonymousPostProfile
+            Optional<AnonymousPostProfile> anonymousPostProfile,
+            String baseUrl
             ) {
         String generationAndPart = "";
-        if (latestActivity != null) {
-            generationAndPart = String.format("%d기 %s", latestActivity.getGeneration(), latestActivity.getPart());
+        if (!post.getIsBlindWriter() && latestActivity != null) {
+            generationAndPart = String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
         }
 
-        String finalName = post.getMember().getName();
-        String finalProfileImage = post.getMember().getProfileImage();
+        String finalName = userDetails.name();
+        String finalProfileImage = userDetails.profileImage();
+        Long finalUserId = userDetails.userId();
 
         if (post.getIsBlindWriter() && anonymousPostProfile.isPresent()) {
             AnonymousPostProfile anonymousProfile = anonymousPostProfile.get();
             finalName = anonymousProfile.getNickname().getNickname();
             finalProfileImage = anonymousProfile.getProfileImg().getImageUrl();
+            finalUserId = null;
         }
 
         String cleanedContent = MentionCleaner.removeMentionIds(post.getContent());
 
         return new InternalLatestPostResponse(
                 post.getId(),
+                finalUserId,
                 finalProfileImage,
                 finalName,
                 generationAndPart,
                 categoryName,
                 post.getTitle(),
                 cleanedContent,
-                "https://playground.sopt.org/?feed=" + post.getId(),
+                baseUrl + post.getId(),
                 post.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))
         );
     }

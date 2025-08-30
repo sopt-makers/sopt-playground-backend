@@ -1,67 +1,80 @@
 package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.community.domain.category.Category;
-import org.sopt.makers.internal.community.dto.request.MentionRequest;
-import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
-import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
-import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
-import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
-import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
-import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
-import org.sopt.makers.internal.community.service.SopticleScrapedService;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
-import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
-import org.sopt.makers.internal.external.slack.SlackMessageUtil;
-import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
-import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
-import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
-import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
-import org.sopt.makers.internal.community.dto.response.SopticleScrapedResponse;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.domain.ReportPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.dto.*;
-import org.sopt.makers.internal.community.repository.*;
+import org.sopt.makers.internal.community.domain.category.Category;
+import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
+import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
+import org.sopt.makers.internal.community.dto.MemberVo;
+import org.sopt.makers.internal.community.dto.PostCategoryDao;
+import org.sopt.makers.internal.community.dto.PostDetailData;
+import org.sopt.makers.internal.community.dto.request.MentionRequest;
+import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
+import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
+import org.sopt.makers.internal.community.dto.response.PopularPostResponse;
+import org.sopt.makers.internal.community.dto.response.PostAllResponse;
+import org.sopt.makers.internal.community.dto.response.PostResponse;
+import org.sopt.makers.internal.community.dto.response.PostSaveResponse;
+import org.sopt.makers.internal.community.dto.response.PostUpdateResponse;
+import org.sopt.makers.internal.community.dto.response.RecentPostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
+import org.sopt.makers.internal.community.dto.response.SopticleScrapedResponse;
+import org.sopt.makers.internal.community.mapper.CommunityMapper;
+import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
+import org.sopt.makers.internal.community.repository.ReportPostRepository;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
-import org.sopt.makers.internal.community.service.anonymous.*;
+import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
+import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
+import org.sopt.makers.internal.community.service.SopticleScrapedService;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
-import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.external.makers.CrewPostListResponse;
+import org.sopt.makers.internal.external.makers.MakersCrewClient;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.external.slack.SlackClient;
-import org.sopt.makers.internal.community.mapper.CommunityMapper;
-import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
-import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
+import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
+import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.IntStream;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -72,12 +85,15 @@ public class CommunityPostService {
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
     private final PushNotificationService pushNotificationService;
+    private final PlatformService platformService;
+    private final MakersCrewClient makersCrewClient;
 
     private final CommunityPostModifier communityPostModifier;
 
     private final MemberRetriever memberRetriever;
     private final CategoryRetriever categoryRetriever;
     private final CommunityPostRetriever communityPostRetriever;
+    private final MemberCareerRetriever memberCareerRetriever;
 
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
@@ -101,36 +117,63 @@ public class CommunityPostService {
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
     private static final long SOPTICLE_CATEGORY_ID = 21;
+    private static final long MEETING_CATEGORY_ID = 24L;
+
+    @Transactional(readOnly = true)
+    public PostAllResponse getMeetingPosts(Long userId, Integer page, Integer take) {
+        CrewPostListResponse crewResponse = makersCrewClient.getPosts(userId, page, take);
+
+        List<PostResponse> postResponses = crewResponse.posts().stream()
+                .map(crewPost -> communityResponseMapper.toPostResponse(crewPost, userId))
+                .collect(Collectors.toList());
+
+        return new PostAllResponse(
+                MEETING_CATEGORY_ID,
+                crewResponse.pageMeta().hasNextPage(),
+                postResponses
+        );
+    }
 
     @Transactional(readOnly = true)
     public List<CommunityPostMemberVo> getAllPosts(Long categoryId, Boolean isBlockedOn, Long memberId, Integer limit, Long cursor) {
         if (limit == null || limit >= 50) limit = 50;
-
         categoryRetriever.checkExistsCategoryById(categoryId);
+
         List<CategoryPostMemberDao> posts = communityQueryRepository.findAllParentCategoryPostByCursor(categoryId, limit, cursor, memberId, isBlockedOn);
 
         return posts.stream()
                 .map(postDao -> {
-                    VoteResponse voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
-                    return communityResponseMapper.toCommunityVo(postDao, voteResponse);
-                }).toList();
+                    val authorDetails = platformService.getInternalUser(postDao.member().getId());
+                    val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(postDao.member().getId());
+                    val voteResponse = voteService.getVoteByPostId(postDao.post().getId(), memberId);
+                    val memberVo = MemberVo.of(authorDetails, authorCareer);
+                    val categoryVo = communityResponseMapper.toCategoryResponse(postDao.category());
+                    val postVo = communityResponseMapper.toPostVo(postDao.post(), voteResponse);
+                    return new CommunityPostMemberVo(memberVo, postVo, categoryVo);
+                })
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public CommunityPostMemberVo getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
+    public PostDetailData getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
         val postDao = communityQueryRepository.getPostById(postId);
         if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
 
-        val blocker = memberRetriever.findMemberById(memberId);
-        val blockedMember = memberRetriever.findMemberById(postDao.member().getId());
+        val authorId = postDao.member().getId();
+        if (isBlockedOn && !Objects.equals(memberId, authorId)) {
+            val blocker = memberRetriever.findMemberById(memberId);
+            val blockedMember = memberRetriever.findMemberById(authorId);
 
-        if (isBlockedOn && memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
-            memberRetriever.checkBlockedMember(blocker, blockedMember);
+            if (memberBlockRepository.existsByBlockerAndBlockedMember(blocker, blockedMember)) {
+                memberRetriever.checkBlockedMember(blocker, blockedMember);
+            }
         }
 
-        VoteResponse voteResponse = voteService.getVoteByPostId(postId, memberId);
+        val authorDetails = platformService.getInternalUser(authorId);
+        val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(authorId);
+        val voteResponse = voteService.getVoteByPostId(postId, memberId);
 
-        return communityResponseMapper.toCommunityVo(postDao, voteResponse);
+        return new PostDetailData(postDao.post(), authorDetails, authorCareer, postDao.category(), voteResponse);
     }
 
     @Transactional
@@ -186,9 +229,8 @@ public class CommunityPostService {
 
     @Transactional
     public void deletePost(Long postId, Long memberId) {
-        Member member = memberRetriever.findMemberById(memberId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
-        validatePostOwner(member.getId(), post.getMember().getId());
+        validatePostOwner(memberId, post.getMember().getId());
 
         val deletedPost = communityMapper.toDeleteCommunityPost(post);
         deletedCommunityPostRepository.save(deletedPost);
@@ -205,12 +247,12 @@ public class CommunityPostService {
 
     @Transactional
     public void reportPost(Long memberId, Long postId) {
-        Member member = memberRetriever.findMemberById(memberId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
+        InternalUserDetails userDetails = platformService.getInternalUser(memberId);
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createReportSlackRequest(post.getId(), member.getName());
+                val slackRequest = createReportSlackRequest(post.getId(), userDetails.name());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
@@ -236,9 +278,7 @@ public class CommunityPostService {
 
     @Transactional
     public void unlikePost(Long memberId, Long postId) {
-        memberRetriever.checkExistsMemberById(memberId);
         CommunityPostLike communityPostLike = communityPostRetriever.findCommunityPostLike(memberId, postId);
-
         communityPostLikeRepository.delete(communityPostLike);
     }
 
@@ -284,15 +324,18 @@ public class CommunityPostService {
     public List<PopularPostResponse> getPopularPosts(int limitCount) {
         List<CommunityPost> posts = getPopularPostsBase(limitCount);
 
-        Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
-        Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
+        Map<Long, String> categoryNameMap = categoryRetriever.getAllCategories().stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
 
         return posts.stream()
-                .map(post -> communityResponseMapper.toPopularPostResponse(
-                        post,
-                        anonymousProfileMap.get(post.getId()),
-                        categoryNameMap.get(post.getCategoryId())
-                ))
+                .map(post -> {
+                    val authorDetails = platformService.getInternalUser(post.getMember().getId());
+                    val anonymousProfile = post.getIsBlindWriter()
+                            ? anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId()).orElse(null)
+                            : null;
+                    String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
+                    return communityResponseMapper.toPopularPostResponse(post, anonymousProfile, authorDetails, categoryName);
+                })
                 .toList();
     }
 
@@ -303,14 +346,21 @@ public class CommunityPostService {
         Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
         Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
+        String baseUrl = activeProfile.equals("prod")
+                ? "https://playground.sopt.org/?feed="
+                : "https://dev.playground.sopt.org/?feed=";
+
         return IntStream.range(0, posts.size())
                 .mapToObj(idx -> {
                     CommunityPost post = posts.get(idx);
+                    InternalUserDetails userDetails = platformService.getInternalUser(post.getMember().getId());
                     return communityResponseMapper.toInternalPopularPostResponse(
                             post,
                             anonymousProfileMap.get(post.getId()),
+                            userDetails,
                             categoryNameMap.get(post.getCategoryId()),
-                            idx + 1
+                            idx + 1,
+                            baseUrl
                     );
                 })
                 .toList();
@@ -345,7 +395,12 @@ public class CommunityPostService {
     public List<SopticlePostResponse> getRecentSopticlePosts() {
         List<CommunityPost> posts = communityPostRepository.findTop5ByCategoryIdOrderByCreatedAtDesc(SOPTICLE_CATEGORY_ID);
         return posts.stream()
-                .map(communityResponseMapper::toSopticlePostResponse)
+                .map(post -> {
+                    val authorDetails = platformService.getInternalUser(post.getMember().getId());
+                    val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(post.getMember().getId());
+                    val memberVo = MemberVo.of(authorDetails, authorCareer);
+                    return communityResponseMapper.toSopticlePostResponse(post, memberVo);
+                })
                 .toList();
     }
 
@@ -383,9 +438,13 @@ public class CommunityPostService {
         final List<Long> topLevelCategoryIds = List.of(1L, 22L, 4L, 2L, 21L);
 
         Map<Long, String> categoryNameMap = categoryRetriever.findAllByIds(topLevelCategoryIds).stream()
-                .collect(Collectors.toMap(Category::getId, Category::getName));
+                .collect(toMap(Category::getId, Category::getName));
 
         List<InternalLatestPostResponse> responses = new ArrayList<>();
+
+        String baseUrl = activeProfile.equals("prod")
+                ? "https://playground.sopt.org/?feed="
+                : "https://dev.playground.sopt.org/?feed=";
 
         for (Long categoryId : topLevelCategoryIds) {
             List<Long> allCategoryIds = categoryRetriever.findAllDescendantIds(categoryId);
@@ -393,9 +452,9 @@ public class CommunityPostService {
             Optional<CommunityPost> postOptional = communityPostRepository.findFirstByCategoryIdInOrderByCreatedAtDesc(allCategoryIds);
 
             postOptional.ifPresent(post -> {
-                Member member = post.getMember();
-                MemberSoptActivity latestActivity = member.getActivities().stream()
-                        .max(Comparator.comparing(MemberSoptActivity::getGeneration))
+                InternalUserDetails userDetails = platformService.getInternalUser(post.getMember().getId());
+                SoptActivity latestActivity = userDetails.soptActivities().stream()
+                        .max(Comparator.comparing(SoptActivity::generation))
                         .orElse(null);
 
                 String categoryName = categoryNameMap.getOrDefault(categoryId, "");
@@ -405,7 +464,7 @@ public class CommunityPostService {
                     anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
                 }
 
-                responses.add(InternalLatestPostResponse.of(post, latestActivity, categoryName, anonymousProfile));
+                responses.add(InternalLatestPostResponse.of(post, latestActivity, userDetails, categoryName, anonymousProfile, baseUrl));
             });
         }
         return responses;
@@ -530,6 +589,6 @@ public class CommunityPostService {
         }
 
         return categoryRetriever.findAllByIds(categoryIds).stream()
-                .collect(Collectors.toMap(Category::getId, category -> category));
+                .collect(toMap(Category::getId, category -> category));
     }
 }

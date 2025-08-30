@@ -3,7 +3,7 @@ package org.sopt.makers.internal.external.message.gabia;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import okhttp3.*;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaAuthResponse;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaSMSResponse;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaSMSResponseData;

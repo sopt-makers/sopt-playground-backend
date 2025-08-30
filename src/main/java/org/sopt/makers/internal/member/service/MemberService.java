@@ -1,73 +1,87 @@
 package org.sopt.makers.internal.member.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
-import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
+import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
+import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.MemberCareer;
-import org.sopt.makers.internal.member.domain.MemberLink;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
-import org.sopt.makers.internal.member.domain.UserFavor;
-import org.sopt.makers.internal.member.domain.MemberBlock;
-import org.sopt.makers.internal.member.domain.MemberReport;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.MemberHasNotProfileException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.PlatformUserUpdateRequest;
+import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.external.slack.SlackClient;
+import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.MemberBlock;
+import org.sopt.makers.internal.member.domain.MemberCareer;
+import org.sopt.makers.internal.member.domain.MemberLink;
+import org.sopt.makers.internal.member.domain.MemberReport;
+import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
+import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
-import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.dto.response.MemberCareerResponse;
+import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse.MemberActivityResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
+import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.sopt.makers.internal.member.repository.MemberLinkRepository;
 import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
+import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
-import org.sopt.makers.internal.coffeechat.dto.request.InternalCoffeeChatMemberDto;
-import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
-import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
-import org.sopt.makers.internal.member.repository.MemberBlockRepository;
-import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class MemberService {
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
     private final MemberRetriever memberRetriever;
     private final CoffeeChatRetriever coffeeChatRetriever;
     private final MemberCareerRetriever memberCareerRetriever;
     private final MemberResponseMapper memberResponseMapper;
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
     private final MemberRepository memberRepository;
     private final MemberLinkRepository memberLinkRepository;
-    private final MemberSoptActivityRepository memberSoptActivityRepository;
     private final CommunityPostRepository communityPostRepository;
     private final MemberCareerRepository memberCareerRepository;
     private final MemberProfileQueryRepository memberProfileQueryRepository;
@@ -77,10 +91,92 @@ public class MemberService {
     private final SlackClient slackClient;
     private final SlackMessageUtil slackMessageUtil;
     private final ReviewService reviewService;
+    private final PlatformService platformService;
+
+    @Transactional(readOnly = true)
+    public MemberInfoResponse getMyInformation(Long userId) {
+        Member member = getMemberById(userId);
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        boolean isCoffeeChatActive = coffeeChatRetriever.existsCoffeeChat(member);
+        return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberResponse> getMemberByName(String name) {
+        val orderBy = OrderByCondition.LATEST_GENERATION.name();
+        UserSearchResponse searchResponse = platformService.searchInternalUsers(
+            null, null, null, name, 30, 0, orderBy
+        );
+
+        List<InternalUserDetails> userDetailsList = searchResponse.profiles();
+        if (userDetailsList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> userIds = userDetailsList.stream()
+            .map(InternalUserDetails::userId)
+            .toList();
+
+        Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds).stream()
+            .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+
+        return userDetailsList.stream()
+            .map(userDetails -> {
+                Member member = memberMap.get(userDetails.userId());
+
+                boolean hasProfile = (member != null) && member.getHasProfile();
+                boolean editActivitiesAble = (member != null) ? member.getEditActivitiesAble() : true;
+
+                return new MemberResponse(
+                    userDetails.userId(),
+                    userDetails.name(),
+                    userDetails.lastGeneration(),
+                    userDetails.profileImage(),
+                    hasProfile,
+                    editActivitiesAble
+                );
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
+        Member member = getMemberHasProfileById(profileId);
+        InternalUserDetails userDetails = platformService.getInternalUser(profileId);
+        List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
+
+        val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
+        val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
+
+        List<MemberProfileProjectVo> soptActivityResponse = soptActivity.stream()
+                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()),
+                        m.projects()))
+                .collect(Collectors.toList());
+        List<MemberActivityResponse> activityResponses = activityMap.entrySet().stream()
+                .map(entry -> new MemberActivityResponse(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+        boolean isMine = Objects.equals(profileId, viewerId);
+        boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+        MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(
+                member, userDetails, isMine, memberProfileProjects,
+                activityResponses, soptActivityResponse, isCoffeeChatActivate
+        );
+
+        return MemberProfileSpecificResponse.applyPhoneMasking(response, isMine, isCoffeeChatActivate);
+    }
 
     @Transactional(readOnly = true)
     public Member getMemberById(Long id) {
-        return memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+        return memberRetriever.findMemberById(id);
+    }
+
+    public MemberResponse getMemberResponseById(Long id) {
+        InternalUserDetails user = platformService.getInternalUser(id);
+        Member member = getMemberById(id);
+
+        return new MemberResponse(id, user.name(), user.lastGeneration(), user.profileImage(),
+                member.getHasProfile(), member.getEditActivitiesAble());
     }
 
     @Transactional(readOnly = true)
@@ -92,10 +188,10 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getMemberProfileListById(String idList) {
+    public List<Member> getMemberProfileListById(List<Long> idList) {
         List<Member> members = new ArrayList<>();
 
-        for (Long id : Arrays.stream(URLDecoder.decode(idList, StandardCharsets.UTF_8).split(",")).mapToLong(Long::parseLong).toArray()) {
+        for (Long id : idList) {
             Member member = memberRepository.findById(id).orElse(null);
 
             if (member != null && member.getHasProfile()) {
@@ -112,46 +208,32 @@ public class MemberService {
     }
 
     public Map<String, List<ActivityVo>> getMemberProfileActivity(
-            List<MemberSoptActivity> memberActivities,
+            List<SoptActivity> soptActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
-        if (memberActivities.isEmpty()) {
+        if (soptActivities.isEmpty()) {
             throw new NotFoundDBEntityException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
         }
 
-        val cardinalInfoMap = memberActivities.stream()
+        val cardinalInfoMap = soptActivities.stream()
                 .collect(Collectors.toMap(
-                        MemberSoptActivity::getGeneration,
-                        MemberSoptActivity::getPart,
+                        SoptActivity::generation,
+                        SoptActivity::part,
                         (p1, p2) -> p1)
                 );
-        val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+
+        val activities = soptActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+
         val projects = memberProfileProjects.stream()
                 .filter(p -> p.generation() != null)
                 .map(p -> {
                     val part = cardinalInfoMap.getOrDefault(p.generation(), "");
                     return memberMapper.toActivityInfoVo(p, true, part);
                 });
+
         val genActivityMap = Stream.concat(activities, projects)
                 .collect(Collectors.groupingBy(ActivityVo::generation));
-        return genActivityMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
-                        Map.Entry::getValue
-                ));
-    }
 
-    public Map<String, List<ActivityVo>> getMemberProfileList(
-            List<MemberSoptActivity> memberActivities
-    ) {
-        val cardinalInfoMap = memberActivities.stream()
-                .collect(Collectors.toMap(
-                        MemberSoptActivity::getGeneration,
-                        MemberSoptActivity::getPart,
-                        (p1, p2) -> p1)
-                );
-        val activities = memberActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
-        val genActivityMap = activities.collect(Collectors.groupingBy(ActivityVo::generation));
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
@@ -160,14 +242,14 @@ public class MemberService {
     }
 
     public List<MemberProfileProjectVo> getMemberProfileProjects(
-            List<MemberSoptActivity> memberActivities,
+            List<SoptActivity> soptActivities,
             List<MemberProfileProjectDao> memberProfileProjects
     ) {
-        return memberActivities.stream()
+        return soptActivities.stream()
                 .map(m -> {
                     val projects = memberProfileProjects.stream()
                             .filter(p -> p.generation() != null)
-                            .filter(p -> p.generation().equals(m.getGeneration()))
+                            .filter(p -> p.generation().equals(m.generation()))
                             .map(memberMapper::toActivityInfoVo).collect(Collectors.toList());
                     return memberMapper.toSoptMemberProfileProjectVo(m, projects);
                 })
@@ -175,27 +257,67 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> getAllMakersMemberProfiles() {
-        return memberRepository.findAllByHasProfileTrueAndIdIn(MakersMemberId.getMakersMember());
-    }
+    public MemberAllProfileResponse getMemberProfiles(
+            Integer filter, Integer limit, Integer cursor, String search,
+            Integer generation, Integer employed, Integer orderBy, String mbti, String team
+    ) {
+        String part = getMemberPart(filter);
+        String orderByString = convertOrderBy(orderBy);
 
-    @Transactional(readOnly = true)
-    public int getMemberProfilesCount(Integer filter, String search, Integer generation,
-                                      Integer employed, String mbti, String team) {
-        val part = getMemberPart(filter);
-        return memberProfileQueryRepository.countAllMemberProfile(part, search, generation, employed, mbti, team);
-    }
+        UserSearchResponse searchResponse = platformService.searchInternalUsers(
+            generation, part, team, search, limit, cursor, orderByString
+        );
 
-    @Transactional(readOnly = true)
-    public List<Member> getMemberProfiles(Integer filter, Integer limit, Integer cursor, String search, Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
-        val part = getMemberPart(filter);
-        if (limit != null) {
-            return memberProfileQueryRepository.findAllLimitedMemberProfile(part, limit, cursor, search, generation,
-                    employed, orderBy, mbti, team);
-        } else {
-            return memberProfileQueryRepository.findAllMemberProfile(part, search, generation,
-                    employed, orderBy, mbti, team);
+        List<InternalUserDetails> userDetailsFromPlatform = searchResponse.profiles();
+        if (userDetailsFromPlatform.isEmpty()) {
+            return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
         }
+
+        List<Long> userIds = userDetailsFromPlatform.stream().map(InternalUserDetails::userId).toList();
+        Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds).stream()
+            .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+        List<InternalUserDetails> finalFilteredUserDetails = userDetailsFromPlatform.stream()
+            .filter(userDetails -> {
+                Member member = memberMap.get(userDetails.userId());
+
+                if (member == null) return false;
+
+                if (mbti != null && !mbti.equals(member.getMbti())) {
+                    return false;
+                }
+
+                if (employed != null && !isCurrentlyEmployed(member.getCareers(), employed)) {
+                    return false;
+                }
+
+                if (search != null && !search.isBlank()) {
+                    boolean matchesLocal = member.getUniversity().contains(search) ||
+                        member.getCareers().stream().anyMatch(c -> c.getCompanyName().contains(search));
+                    if (!userDetails.name().contains(search) && !matchesLocal) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .toList();
+
+        List<MemberProfileResponse> memberList = finalFilteredUserDetails.stream().map(userDetails -> {
+            Member member = memberMap.get(userDetails.userId());
+            boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+            return memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
+        }).toList();
+
+        return new MemberAllProfileResponse(
+            memberList,
+            searchResponse.hasNext(),
+            searchResponse.totalCount()
+        );
+    }
+
+    private boolean isCurrentlyEmployed(List<MemberCareer> careers, int employedStatus) {
+        boolean isWorking = careers.stream().anyMatch(MemberCareer::getIsCurrent);
+        return (employedStatus == 1) == isWorking;
     }
 
     private String getMemberPart(Integer filter) {
@@ -211,6 +333,17 @@ public class MemberService {
         };
     }
 
+    private String convertOrderBy(Integer orderBy) {
+        if (orderBy == null) return OrderByCondition.LATEST_REGISTERED.name();
+        return switch (orderBy) {
+            case 1 -> OrderByCondition.LATEST_REGISTERED.name();
+            case 2 -> OrderByCondition.OLDEST_REGISTERED.name();
+            case 3 -> OrderByCondition.LATEST_GENERATION.name();
+            case 4 -> OrderByCondition.OLDEST_GENERATION.name();
+            default -> OrderByCondition.LATEST_REGISTERED.name();
+        };
+    }
+
     private String checkActivityTeamConditions(String team) {
         Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
@@ -219,20 +352,40 @@ public class MemberService {
         else return team;
     }
 
-    @Transactional(readOnly = true)
-    public List<InternalCoffeeChatMemberDto> getAllMemberByCoffeeChatActivate() {
-        List<Member> members = memberRetriever.findAllMembersByCoffeeChatActivate();
-        return members.stream().map(member -> InternalCoffeeChatMemberDto.of(
-                member, memberRetriever.concatPartAndGeneration(member.getId())
-        )).toList();
-    }
-
     @Transactional
-    public Member saveMemberProfile(Long id, MemberProfileSaveRequest request) {
-        val member = memberRepository.findById(id).orElseThrow(() -> new NotFoundDBEntityException("Member"));
-        val memberId = member.getId();
-        if (memberId == null) throw new NotFoundDBEntityException("Member id is null");
-        val memberLinkEntities = request.links().stream().map(link ->
+    public Member saveMemberProfile(Long userId, MemberProfileSaveRequest request) {
+        val userDetails = platformService.getInternalUser(userId);
+        val activityTeamMap = request.activities().stream()
+                .collect(Collectors.toMap(
+                        MemberProfileSaveRequest.MemberSoptActivitySaveRequest::generation,
+                        MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team,
+                        (team1, team2) -> team1
+                ));
+
+        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities().stream()
+                .map(activity -> new PlatformUserUpdateRequest.SoptActivityRequest(
+                        activity.activityId(),
+                        activityTeamMap.get(activity.generation())
+                ))
+                .toList();
+
+        val platformRequest = new PlatformUserUpdateRequest(
+                request.name(),
+                request.profileImage(),
+                request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
+                request.phone(),
+                request.email(),
+                soptActivitiesForPlatform
+        );
+
+        platformService.updateInternalUser(userId, platformRequest);
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(
+                        () -> new NotFoundDBEntityException("Member")
+                );
+        Long memberId = member.getId();
+        if (Objects.isNull(memberId)) throw new NotFoundDBEntityException("Member id is null");
+        List<MemberLink> memberLinkEntities = request.links().stream().map(link ->
                 MemberLink.builder()
                         .memberId(memberId)
                         .title(link.title())
@@ -240,28 +393,6 @@ public class MemberService {
                         .build()).collect(Collectors.toList());
         memberLinkEntities.forEach(link -> link.setMemberId(memberId));
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
-
-        val memberActivities = memberSoptActivityRepository.findAllByMemberId(memberId).stream().map(activity -> {
-            val sameGenerationInActivity = request.activities().stream()
-                    .filter(activitySaveRequest -> Objects.equals(activitySaveRequest.generation(), activity.getGeneration())).findFirst();
-            if (sameGenerationInActivity.isPresent()) {
-                val team = sameGenerationInActivity.map(MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team).orElse(null);
-                return MemberSoptActivity.builder()
-                        .memberId(activity.getMemberId())
-                        .part(activity.getPart())
-                        .generation(activity.getGeneration())
-                        .team(checkActivityTeamConditions(team)).build();
-            }
-            return MemberSoptActivity.builder()
-                    .memberId(activity.getMemberId())
-                    .part(activity.getPart())
-                    .generation(activity.getGeneration())
-                    .team(checkActivityTeamConditions(activity.getTeam())).build();
-        }).collect(Collectors.toList());
-
-        val nnActivities = memberActivities.stream().filter(l -> l.getMemberId() != null).count();
-        if (nnActivities == 0) throw new NotFoundDBEntityException("There's no activities with memberId");
-
         val memberCareerEntities = request.careers().stream().map(career -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             try {
@@ -292,12 +423,11 @@ public class MemberService {
                 .build();
 
         member.saveMemberProfile(
-                request.name(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers, request.isPhoneBlind()
+                memberLinks, memberCareers, request.isPhoneBlind()
         );
 
         try {
@@ -333,14 +463,33 @@ public class MemberService {
 
     @Transactional
     public Member updateMemberProfile(Long id, MemberProfileUpdateRequest request) {
+        val userDetails = platformService.getInternalUser(id);
+        val activityTeamMap = request.activities().stream()
+                .collect(Collectors.toMap(
+                        MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::generation,
+                        MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::team,
+                        (team1, team2) -> team1
+                ));
+
+        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities().stream()
+                .map(activity -> new PlatformUserUpdateRequest.SoptActivityRequest(
+                        activity.activityId(),
+                        activityTeamMap.get(activity.generation())
+                ))
+                .toList();
+
+        val platformRequest = new PlatformUserUpdateRequest(
+                request.name(),
+                request.profileImage(),
+                request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
+                request.phone(),
+                request.email(),
+                soptActivitiesForPlatform
+        );
+
+        platformService.updateInternalUser(id, platformRequest);
+
         val member = getMemberById(id);
-
-        if (!member.getEditActivitiesAble()) {
-            if (!request.compareProfileActivities(request.activities(), member.getActivities())) {
-                throw new ClientBadRequestException("이미 프로필을 수정한 적이 있는 유저입니다.");
-            }
-        }
-
         val memberId = member.getId();
         val memberLinks = memberLinkRepository.saveAll(
                 request.links().stream().map(link ->
@@ -349,16 +498,6 @@ public class MemberService {
                                 .memberId(memberId)
                                 .title(link.title())
                                 .url(link.url())
-                                .build()).collect(Collectors.toList())
-        );
-
-        val memberActivities = memberSoptActivityRepository.saveAll(
-                request.activities().stream().map(activity ->
-                        MemberSoptActivity.builder()
-                                .memberId(memberId)
-                                .part(activity.part())
-                                .generation(activity.generation())
-                                .team(checkActivityTeamConditions(activity.team()))
                                 .build()).collect(Collectors.toList())
         );
 
@@ -392,12 +531,11 @@ public class MemberService {
                 .build();
 
         member.saveMemberProfile(
-                member.getName(), request.profileImage(), request.birthday(), request.phone(), request.email(),
                 request.address(), request.university(), request.major(), request.introduction(),
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberActivities, memberLinks, memberCareers, request.isPhoneBlind()
+                memberLinks, memberCareers, request.isPhoneBlind()
         );
 
         return member;
@@ -405,31 +543,24 @@ public class MemberService {
 
     @Transactional
     public void deleteUserProfileLink(Long linkId, Long memberId) {
-        val link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
+        MemberLink link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Link"));
         memberLinkRepository.delete(link);
     }
 
-    @Transactional
-    public void deleteUserProfileActivity(Long activityId, Long memberId) {
-        val activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
-                .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
-        memberSoptActivityRepository.delete(activity);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Member> getRandomMembers(int limit) {
-        return memberProfileQueryRepository.findRandomMembers(limit);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Member> getMembersByNameSorted(String name) {
-        return memberProfileQueryRepository.findByNameContainingOrderByLatestActivity(name);
-    }
+    /*
+        플랫폼 팀에서 멤버 활동을 관리하고 있기 때문에, 내부에서 삭제 불가
+     */
+    // @Transactional
+    // public void deleteUserProfileActivity(Long activityId, Long memberId) {
+    //     MemberSoptActivity activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
+    //             .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
+    //     memberSoptActivityRepository.delete(activity);
+    // }
 
     @Transactional
     public void checkActivities(Long memberId, Boolean isCheck) {
-        val member = memberRepository.findById(memberId)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundDBEntityException("Member"));
 
         member.editActivityChange(isCheck);
@@ -437,27 +568,29 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberBlockResponse getBlockStatus(Long memberId, Long blockedMemberId) {
-        val blocker = memberRetriever.findMemberById(memberId);
-        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
+        Member blocker = memberRetriever.findMemberById(memberId);
+        Member blockedMember = memberRetriever.findMemberById(blockedMemberId);
+        InternalUserDetails blockerDetail = platformService.getInternalUser(memberId);
+        InternalUserDetails blockedMemberDetail = platformService.getInternalUser(blockedMemberId);
 
-        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         return blockHistory.map(memberBlock ->
-                MemberBlockResponse.of(memberBlock.getIsBlocked(), blocker, blockedMember)
-        ).orElseGet(() -> MemberBlockResponse.of(false, blocker, blockedMember));
+                MemberBlockResponse.of(memberBlock.getIsBlocked(), blockerDetail, blockedMemberDetail)
+        ).orElseGet(() -> MemberBlockResponse.of(false, blockerDetail, blockedMemberDetail));
     }
 
     @Transactional
     public void blockUser(Long memberId, Long blockedMemberId) {
-        val blocker = memberRetriever.findMemberById(memberId);
-        val blockedMember = memberRetriever.findMemberById(blockedMemberId);
+        Member blocker = memberRetriever.findMemberById(memberId);
+        Member blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
-        val blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
         if (blockHistory.isPresent()) {
-            val block = blockHistory.get();
+            MemberBlock block = blockHistory.get();
             block.updateIsBlocked(true);
             memberBlockRepository.save(block);
         } else {
-            val newBlock = MemberBlock.builder()
+            MemberBlock newBlock = MemberBlock.builder()
                     .blocker(blocker)
                     .blockedMember(blockedMember).build();
             memberBlockRepository.save(newBlock);
@@ -466,10 +599,13 @@ public class MemberService {
 
     @Transactional
     public void reportUser(Long memberId, Long reportedMemberId) {
-        val reporter = memberRetriever.findMemberById(memberId);
-        val reportedMember = memberRetriever.findMemberById(reportedMemberId);
+        InternalUserDetails reporterDetails = platformService.getInternalUser(memberId);
+        InternalUserDetails reportedDetails = platformService.getInternalUser(reportedMemberId);
 
-        sendReportToSlack(reporter, reportedMember);
+        sendReportToSlack(reporterDetails, reportedDetails);
+
+        Member reporter = memberRetriever.findMemberById(memberId);
+        Member reportedMember = memberRetriever.findMemberById(reportedMemberId);
 
         memberReportRepository.save(MemberReport.builder()
                 .reporter(reporter)
@@ -480,22 +616,23 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberPropertiesResponse getMemberProperties(Long memberId) {
         Member member = memberRetriever.findMemberById(memberId);
+        InternalUserDetails userDetails = platformService.getInternalUser(memberId);
         MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(memberId);
         MemberCoffeeChatPropertyDto coffeeChatProperty = coffeeChatRetriever.getMemberCoffeeChatProperty(member);
-        List<String> activitiesAndGeneration = memberRetriever.concatPartAndGeneration(memberId);
+        List<String> activitiesAndGeneration = platformService.getPartAndGenerationList(memberId);
 
         long uploadSopticleCount = communityPostRepository.countSopticleByMemberId(memberId);
-        long uploadReviewCount = reviewService.fetchReviewCountByUsername(member.getName());
+        long uploadReviewCount = reviewService.fetchReviewCountByUsername(userDetails.name());
 
         return memberResponseMapper.toMemberPropertiesResponse(
                 member, memberCareer, coffeeChatProperty,
                 activitiesAndGeneration, uploadSopticleCount, uploadReviewCount);
     }
 
-    private void sendReportToSlack(Member reporter, Member reportedMember) {
+    private void sendReportToSlack(InternalUserDetails reporter, InternalUserDetails reportedMember) {
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createReportSlackRequest(reporter.getId(), reporter.getName(), reportedMember.getId(), reportedMember.getName());
+                val slackRequest = createReportSlackRequest(reporter.userId(), reporter.name(), reportedMember.userId(), reportedMember.name());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
@@ -520,5 +657,41 @@ public class MemberService {
         blocks.add(contentNode);
         rootNode.set("blocks", blocks);
         return rootNode;
+    }
+
+    private String checkTeamNullCondition (String team) {
+        val teamNullCondition = (team == null || team.equals("해당 없음"));
+        if (teamNullCondition) {
+            team = null;
+        }
+        return team;
+    }
+
+    public List<MakersMemberProfileResponse> getAllMakersMembersProfiles() {
+        List<Long> makerMemberIds = MakersMemberId.getMakersMember();
+        List<Member> members = memberRepository.findAllByHasProfileTrueAndIdIn(makerMemberIds);
+        List<InternalUserDetails> userDetails = platformService.getInternalUsers(makerMemberIds);
+
+        Map<Long, List<MemberCareer>> careerMap = members.stream()
+                .collect(Collectors.toMap(Member::getId, Member::getCareers, (a,b) -> a));
+
+        return userDetails.stream()
+                .map(userDetail -> {
+                    List<MemberSoptActivityResponse> memberSoptActivityResponses = userDetail.soptActivities().stream()
+                            .map(activity -> new MemberSoptActivityResponse(
+                                    (long)activity.activityId(),
+                                    activity.generation()))
+                            .toList();
+                    List<MemberCareer> memberCareers = careerMap.getOrDefault(userDetail.userId(), Collections.emptyList());
+                    List<MemberCareerResponse> memberCareerResponses = memberCareers.stream()
+                            .map(memberCareer -> new MemberCareerResponse(
+                                    memberCareer.getId(),
+                                    memberCareer.getCompanyName(),
+                                    memberCareer.getTitle(),
+                                    memberCareer.getIsCurrent()))
+                            .toList();
+
+                    return new MakersMemberProfileResponse(userDetail.userId(), userDetail.name(), userDetail.profileImage(), memberSoptActivityResponses, memberCareerResponses);
+                }).toList();
     }
 }

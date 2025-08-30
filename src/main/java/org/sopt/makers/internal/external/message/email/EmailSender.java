@@ -2,7 +2,7 @@ package org.sopt.makers.internal.external.message.email;
 
 import lombok.AllArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;

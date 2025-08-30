@@ -1,11 +1,10 @@
 package org.sopt.makers.internal.internal.dto;
 
-import java.util.List;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Set;
 
 public record InternalRecommendMemberListResponse(
 
 	@Schema(required = true)
-	List<Long> userIds
+    Set<Long> userIds
 ) {}

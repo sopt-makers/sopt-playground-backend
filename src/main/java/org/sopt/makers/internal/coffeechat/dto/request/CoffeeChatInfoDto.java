@@ -1,10 +1,9 @@
 package org.sopt.makers.internal.coffeechat.dto.request;
 
-import org.sopt.makers.internal.coffeechat.domain.enums.Career;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import org.sopt.makers.internal.coffeechat.domain.enums.Career;
+import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 
 public record CoffeeChatInfoDto(
 
@@ -14,10 +13,6 @@ public record CoffeeChatInfoDto(
 
         List<CoffeeChatTopicType> topicTypeList,
 
-        String profileImage,
-
-        String name,
-
         Career career,
 
         String university,
@@ -26,6 +21,8 @@ public record CoffeeChatInfoDto(
 
         Boolean isMine,
 
-        Boolean isBlind
+        Boolean isBlind,
+
+        String companyName
 ) {
 }

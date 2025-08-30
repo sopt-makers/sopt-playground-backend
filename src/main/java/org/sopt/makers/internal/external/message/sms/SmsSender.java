@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.val;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.sopt.makers.internal.common.auth.AuthConfig;
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.naver.NaverSmsRequest;
 import org.sopt.makers.internal.external.naver.NaverSmsResponse;
 import org.springframework.http.HttpEntity;

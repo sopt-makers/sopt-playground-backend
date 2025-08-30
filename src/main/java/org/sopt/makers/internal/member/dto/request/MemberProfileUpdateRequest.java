@@ -3,11 +3,9 @@ package org.sopt.makers.internal.member.dto.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
 
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
 
 import static org.sopt.makers.internal.common.Constant.PHONE_NUMBER_REGEX;
@@ -61,9 +59,6 @@ public record MemberProfileUpdateRequest (
             String part,
             String team
     ){
-        private boolean equalsInfo (MemberSoptActivity activity) {
-            return generation.equals(activity.getGeneration()) && part.equals(activity.getPart());
-        }
     }
 
     public record MemberCareerUpdateRequest(
@@ -76,24 +71,5 @@ public record MemberProfileUpdateRequest (
             String endDate,
             Boolean isCurrent
     ){}
-
-
-    public boolean compareProfileActivities (List<MemberSoptActivityUpdateRequest> requests, List<MemberSoptActivity> activities) {
-        Comparator<MemberSoptActivityUpdateRequest> requestComparator = Comparator.comparingInt(r -> r.generation);
-        requests.sort(requestComparator);
-
-        Comparator<MemberSoptActivity> activityComparator = Comparator.comparingInt(MemberSoptActivity::getGeneration);
-        activities.sort(activityComparator);
-
-        if (requests.size() != activities.size()) {
-            return false;
-        }
-        for (int i=0; i<requests.size(); i++) {
-            if (!requests.get(i).equalsInfo(activities.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
 }

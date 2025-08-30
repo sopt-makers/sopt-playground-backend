@@ -1,32 +1,35 @@
 package org.sopt.makers.internal.internal.dto;
 
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Objects;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 public record InternalRecommendMemberListRequest(
 
-	@Schema(required = true)
-	List<Integer> generations,
-
-	List<SearchContentResponse> filters
+        @Schema(required = true, description = "세대 필터", example = "[32, 33, 34, 35, 36]")
+        List<Integer> generations,
+		@Schema(description = "추천 조건 필터", example = "[{\"key\": \"UNIVERSITY\", \"value\": \"하버드\"}, {\"key\": \"MBTI\", \"value\": \"ENTJ\"}]")
+        List<SearchContentResponse> filters
 
 ) {
-	public record SearchContentResponse(
-		String key,
-		String value
-	){
-	}
+    public record SearchContentResponse(
+            @Schema(description = "필터 키", example = "MBTI")
+            String key,
 
-	public String getValueByKey(SearchContent key) {
-		if (filters == null || key == null) {
-			return null;
-		}
-		return filters.stream()
-			.filter(content -> Objects.equals(SearchContent.of(content.key()), key))
-			.map(SearchContentResponse::value)
-			.findFirst()
-			.orElse(null);
-	}
+			@Schema(description = "필터 값", example = "ENTJ")
+            String value
+    ) {
+    }
+
+    public String getValueByKey(SearchContent key) {
+        if (filters == null || key == null) {
+            return null;
+        }
+        return filters.stream()
+                .filter(content -> Objects.equals(SearchContent.of(content.key()), key))
+                .map(SearchContentResponse::value)
+                .findFirst()
+                .orElse(null);
+    }
 }

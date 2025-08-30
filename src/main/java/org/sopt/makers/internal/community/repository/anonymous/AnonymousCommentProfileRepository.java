@@ -11,4 +11,6 @@ public interface AnonymousCommentProfileRepository extends JpaRepository<Anonymo
 	List<AnonymousCommentProfile> findAllByCommunityCommentPostId(Long postId);
 
 	Optional<AnonymousCommentProfile> findByMemberIdAndCommunityCommentPostId(Long memberId, Long postId);
+
+	Optional<AnonymousCommentProfile> findByCommunityCommentId(Long commentId);
 }

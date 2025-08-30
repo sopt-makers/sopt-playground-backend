@@ -1,14 +1,27 @@
 package org.sopt.makers.internal.member.domain;
 
-import lombok.*;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.vote.domain.VoteSelection;
 
-import javax.persistence.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 @Entity
 @Getter
@@ -23,30 +36,6 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "auth_user_id")
-    private String authUserId;
-
-    @Column(name = "idp_type")
-    private String idpType;
-
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "generation")
-    private Integer generation;
-
-    @Column(name = "profile_image")
-    private String profileImage;
-
-    @Column
-    private LocalDate birthday;
-
-    @Column
-    private String phone;
-
     @Column
     private String address;
 
@@ -58,11 +47,6 @@ public class Member {
 
     @Column
     private String introduction;
-
-    @Builder.Default
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private List<MemberSoptActivity> activities = new ArrayList<>();
 
     @Column
     private String mbti;
@@ -133,29 +117,7 @@ public class Member {
         this.editActivitiesAble = isCheck;
     }
 
-    public void updateMemberAuth(String authUserId, String idpType) {
-        this.authUserId = authUserId;
-        this.idpType = idpType;
-    }
-
-    public void agreeToUseSoulmate() {
-        this.openToSoulmate = true;
-    }
-
-    public void disagreeToUseSoulmate() {
-        this.openToSoulmate = false;
-    }
-
-    public void changeEmail(String email) {
-        this.email = email;
-    }
-
     public void saveMemberProfile(
-            String name,
-            String profileImage,
-            LocalDate birthday,
-            String phone,
-            String email,
             String address,
             String university,
             String major,
@@ -169,16 +131,10 @@ public class Member {
             String idealType,
             String selfIntroduction,
             Boolean allowOfficial,
-            List<MemberSoptActivity> activities,
             List<MemberLink> links,
             List<MemberCareer> careers,
             Boolean isPhoneBlind
     ) {
-        this.name = name;
-        this.profileImage = profileImage;
-        this.birthday = birthday;
-        this.phone = phone;
-        this.email = email;
         this.address = address;
         this.university = university;
         this.major = major;
@@ -192,8 +148,6 @@ public class Member {
         this.idealType = idealType;
         this.selfIntroduction = selfIntroduction;
         this.allowOfficial = allowOfficial;
-        this.activities.clear();
-        this.activities.addAll(activities);
         this.links.clear();
         this.links.addAll(links);
         this.careers.clear();

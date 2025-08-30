@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
@@ -33,8 +35,12 @@ public class UserResolutionService {
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
 	private final UserResolutionServiceUtil userResolutionServiceUtil;
 
+	private final PlatformService platformService;
+
 	@Transactional(readOnly = true)
 	public ResolutionResponse getResolution(Long memberId) {
+		InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+
 		Member member = getMemberById(memberId);
 		return userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
 				.map(r -> userResolutionResponseMapper.toResolutionResponse(
@@ -56,8 +62,9 @@ public class UserResolutionService {
 	@Transactional
 	public void createResolution(Long writerId, ResolutionSaveRequest request) {
 		Member member = getMemberById(writerId);
-		validateMemberHasGeneration(member);
-		validateGeneration(member);
+		InternalUserDetails userDetails = platformService.getInternalUser(writerId);
+		validateMemberHasActivities(userDetails);
+		validateGeneration(userDetails);
 		validateExistingResolution(member);
 
 		UserResolution resolution = userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
@@ -67,8 +74,9 @@ public class UserResolutionService {
 	@Transactional
 	public void deleteResolution(Long memberId) {
 		Member member = getMemberById(memberId);
-		validateMemberHasGeneration(member);
-		validateGeneration(member);
+		InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+		validateMemberHasActivities(userDetails);
+		validateGeneration(userDetails);
 
 		UserResolution resolution = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
 				.orElseThrow(() -> new NotFoundDBEntityException("Not exists resolution message"));
@@ -76,14 +84,14 @@ public class UserResolutionService {
 		userResolutionRepository.delete(resolution);
 	}
 
-	private void validateMemberHasGeneration(Member member) {
-		if (member.getGeneration() == null) {
-			throw new ClientBadRequestException("Not exists profile info");
+	private void validateMemberHasActivities(InternalUserDetails userDetails) {
+		if (userDetails.soptActivities() == null) {
+			throw new ClientBadRequestException("Not exists sopt activities");
 		}
 	}
 
-	private void validateGeneration(Member member) {
-		if (!member.getGeneration().equals(CURRENT_GENERATION)) {
+	private void validateGeneration(InternalUserDetails userDetails) {
+		if (userDetails.lastGeneration() != CURRENT_GENERATION) {
 			throw new ClientBadRequestException("Only new generation can enroll resolution");
 		}
 	}

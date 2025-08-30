@@ -1,28 +1,5 @@
 package org.sopt.makers.internal.project.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.sopt.makers.internal.exception.WrongImageInputException;
-import org.sopt.makers.internal.member.domain.MemberSoptActivity;
-import org.sopt.makers.internal.project.domain.ProjectLink;
-import org.sopt.makers.internal.project.domain.MemberProjectRelation;
-import org.sopt.makers.internal.project.domain.Project;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.project.mapper.ProjectMapper;
-import org.sopt.makers.internal.member.repository.soptactivity.MemberSoptActivityRepository;
-import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
-import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
-import org.sopt.makers.internal.project.dto.response.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.response.ProjectMemberDao;
-import org.sopt.makers.internal.project.dto.response.ProjectMemberVo;
-import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
-import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
-import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
-import org.sopt.makers.internal.project.repository.ProjectRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,16 +7,46 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.external.platform.InternalUserDetails;
+import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
+import org.sopt.makers.internal.external.platform.PlatformClient;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.repository.MemberRepository;
+import org.sopt.makers.internal.project.domain.MemberProjectRelation;
+import org.sopt.makers.internal.project.domain.Project;
+import org.sopt.makers.internal.project.domain.ProjectLink;
+import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
+import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
+import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
+import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
+import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
+import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
+import org.sopt.makers.internal.project.repository.ProjectQueryRepository;
+import org.sopt.makers.internal.project.repository.ProjectRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectLinkRepository projectLinkRepository;
-    private final MemberProjectRelationRepository relationRepository;
+    private final MemberProjectRelationRepository memberProjectRelationRepository;
     private final ProjectQueryRepository projectQueryRepository;
-    private final MemberSoptActivityRepository soptActivityRepository;
-    private final ProjectMapper projectMapper;
+    private final MemberRepository memberRepository;
+
+    private final ProjectResponseMapper projectResponseMapper;
+
+    private final PlatformClient platformClient;
+    private final AuthConfig authConfig;
 
     @Transactional
     public void createProject (ProjectSaveRequest request) {
@@ -65,7 +72,7 @@ public class ProjectService {
                         .build()
         );
 
-        relationRepository.saveAll(request.members().stream().map(memberRequest -> MemberProjectRelation.builder()
+        memberProjectRelationRepository.saveAll(request.members().stream().map(memberRequest -> MemberProjectRelation.builder()
                 .projectId(project.getId())
                 .userId(memberRequest.memberId())
                 .role(memberRequest.memberRole())
@@ -98,7 +105,7 @@ public class ProjectService {
     }
 
     private void updateProjectMembers(Long projectId, ProjectUpdateRequest request) {
-        List<MemberProjectRelation> existingRelations = relationRepository.findAllByProjectId(projectId);
+        List<MemberProjectRelation> existingRelations = memberProjectRelationRepository.findAllByProjectId(projectId);
         Map<Long, MemberProjectRelation> relationMap = existingRelations.stream()
                 .collect(Collectors.toMap(MemberProjectRelation::getUserId, Function.identity()));
 
@@ -110,7 +117,7 @@ public class ProjectService {
                 .filter(id -> !requestedUserIds.contains(id))
                 .map(relationMap::get)
                 .toList();
-        relationRepository.deleteAll(relationsToRemove);
+        memberProjectRelationRepository.deleteAll(relationsToRemove);
 
         List<MemberProjectRelation> relationsToSave = request.members().stream()
                 .map(memberRequest -> {
@@ -133,7 +140,7 @@ public class ProjectService {
                 })
                 .toList();
 
-        relationRepository.saveAll(relationsToSave);
+        memberProjectRelationRepository.saveAll(relationsToSave);
     }
 
     private void updateProjectLinks(Long projectId, ProjectUpdateRequest request) {
@@ -156,48 +163,48 @@ public class ProjectService {
         validateWriter(project, writerId);
 
         projectLinkRepository.deleteAllByProjectId(projectId);
-        relationRepository.deleteAllByProjectId(projectId);
+        memberProjectRelationRepository.deleteAllByProjectId(projectId);
         projectRepository.delete(project);
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectLinkDao> fetchAllLinks () {
-        return projectQueryRepository.findAllLinks();
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProjectMemberVo> fetchById (Long id) {
-        val project = projectQueryRepository.findById(id);
-        if (project.isEmpty()) throw new NotFoundDBEntityException("잘못된 프로젝트 조회입니다.");
-
-        val projectMemberIds = project.stream()
-                .filter(ProjectMemberDao::memberHasProfile)
-                .map(ProjectMemberDao::memberId)
-                .collect(Collectors.toList());
-        val memberActivityMap = soptActivityRepository.findAllByMemberIdIn(projectMemberIds)
-                .stream().collect(Collectors.groupingBy(MemberSoptActivity::getMemberId, Collectors.toList()));
-        val memberGenerationMap = memberActivityMap.entrySet().stream().collect(Collectors.toMap(
-                Map.Entry::getKey, e -> e.getValue().stream().map(MemberSoptActivity::getGeneration).collect(Collectors.toList())
-        ));
-        return project.stream().map(p -> projectMapper.projectMemberDaoToProjectMemberVo(
-                p, memberGenerationMap.getOrDefault(p.memberId(), List.of())
-                )).collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProjectLinkDao> fetchLinksById (Long id) {
-        return projectQueryRepository.findLinksById(id);
-    }
-
-    @Transactional(readOnly = true)
     public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding) {
-        if(limit != null && name != null) return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
-        else if(limit != null) {
+        if(limit != null && name != null) {
+            return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
+        } else if(limit != null) {
             return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding);
         } else if(name != null) {
             return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding);
         }
         return projectRepository.findAll();
+    }
+
+    public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
+        return projectList.stream()
+                .map(project -> {
+                    List<Long> userIds = getProjectUserIdsByProjectId(project.getId());
+                    List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                            authConfig.getPlatformServiceName(), userIds).getBody()).getData();
+                    List<MemberSimpleResonse> memberResponses = projectUsersDetails.stream()
+                            .map(p-> new MemberSimpleResonse(p.userId(), p.name(), p.profileImage())).toList();
+
+                    return projectResponseMapper.toProjectResponse(project, memberResponses);
+                }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectDetailResponse getProjectDetailResponseById(Long projectId) {
+        Project project = getProjectById(projectId);
+        List<MemberProjectRelation> projectUsers = memberProjectRelationRepository.findAllByProjectId(projectId);
+        List<ProjectLink> projectLinks = projectLinkRepository.findAllByProjectId(projectId);
+
+        List<Long> userIds = projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
+        List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(), userIds).getBody()).getData();
+        List<Member> hasProfileList = memberRepository.findAllByIdIn(userIds);
+
+        List<ProjectDetailMemberResponse> memberResponse = projectResponseMapper.toListProjectMemberResponse(projectUsers, projectUsersDetails, hasProfileList);
+        return projectResponseMapper.toProjectDetailResponse(project, memberResponse, projectLinks);
     }
 
     @Transactional(readOnly = true)
@@ -213,6 +220,11 @@ public class ProjectService {
     private Project getProjectById(Long projectId) {
         return projectRepository.findById(projectId)
                 .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
+    }
+
+    public List<Long> getProjectUserIdsByProjectId(Long projectId) {
+        List<MemberProjectRelation> projectUsers = memberProjectRelationRepository.findAllByProjectId(projectId);
+        return projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
     }
 
     private void validateImageCount(int imageCount) {
