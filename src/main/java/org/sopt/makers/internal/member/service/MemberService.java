@@ -532,27 +532,32 @@ public class MemberService {
     @Transactional
     public Member updateMemberProfile(Long id, MemberProfileUpdateRequest request) {
         val userDetails = platformService.getInternalUser(id);
-        val activityTeamMap = request.activities().stream()
-                .collect(Collectors.toMap(
-                        MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::generation,
-                        MemberProfileUpdateRequest.MemberSoptActivityUpdateRequest::team,
-                        (team1, team2) -> team1
-                ));
 
-        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities().stream()
-                .map(activity -> new PlatformUserUpdateRequest.SoptActivityRequest(
-                        activity.activityId(),
-                        activityTeamMap.get(activity.generation())
-                ))
-                .toList();
+        Map<Integer, SoptActivity> dbActivityMap = userDetails.soptActivities().stream()
+            .collect(Collectors.toMap(SoptActivity::generation, Function.identity()));
+
+        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = request.activities().stream()
+            .map(requestActivity -> {
+                SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
+
+                if (dbActivity == null) {
+                    throw new ClientBadRequestException("요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
+                }
+
+                return new PlatformUserUpdateRequest.SoptActivityRequest(
+                    dbActivity.activityId(),
+                    requestActivity.team()
+                );
+            })
+            .toList();
 
         val platformRequest = new PlatformUserUpdateRequest(
-                request.name(),
-                request.profileImage(),
-                request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
-                request.phone(),
-                request.email(),
-                soptActivitiesForPlatform
+            request.name(),
+            request.profileImage(),
+            request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
+            request.phone() != null && !request.phone().isBlank() ? request.phone() : userDetails.phone(),
+            request.email(),
+            soptActivitiesForPlatform
         );
 
         platformService.updateInternalUser(id, platformRequest);
