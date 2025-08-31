@@ -154,6 +154,8 @@ public class CoffeeChatService {
         List<CoffeeChatInfoDto> response =
             coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
 
+        response = response.stream().distinct().toList();
+
         List<Long> userIds = response.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
         Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
 
