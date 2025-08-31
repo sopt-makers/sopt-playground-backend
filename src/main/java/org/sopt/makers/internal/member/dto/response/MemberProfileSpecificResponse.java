@@ -96,7 +96,7 @@ public record MemberProfileSpecificResponse(
             response.profileImage(),
             response.birthday(),
             response.isPhoneBlind(),
-            response.isPhoneBlind() ? null : response.phone(),
+            isMine || !response.isPhoneBlind() ? response.phone() : null,
             response.email(),
             response.address(),
             response.university(),
