@@ -3,7 +3,10 @@ package org.sopt.makers.internal.coffeechat.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -154,7 +157,9 @@ public class CoffeeChatService {
         List<CoffeeChatInfoDto> response =
             coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
 
-        response = response.stream().distinct().toList();
+        response = response.stream()
+            .filter(distinctByKey(CoffeeChatInfoDto::memberId))
+            .toList();
 
         List<Long> userIds = response.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
         Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
@@ -292,5 +297,10 @@ public class CoffeeChatService {
                     review.getContent()
             );
         }).toList();
+    }
+
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
     }
 }
