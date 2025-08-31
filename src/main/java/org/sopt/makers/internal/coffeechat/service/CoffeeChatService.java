@@ -151,46 +151,39 @@ public class CoffeeChatService {
     }
 
     private List<CoffeeChatInfoDto> getSearchCoffeeChatInfoList(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
-        List<CoffeeChatInfoDto> dbResult =
-                coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
+        List<CoffeeChatInfoDto> response =
+            coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
 
-        List<Long> userIds =  dbResult.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
+        List<Long> userIds = response.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
         Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
 
-        List<CoffeeChatInfoDto> response =  dbResult;
-
+        // 1. '파트' 필터 적용
         if (part != null) {
             response = response.stream()
-                    .filter(dto -> {
-                        InternalUserDetails userDetails = userMap.get(dto.memberId());
-                        return userDetails.soptActivities().stream()
-                                .anyMatch(activity -> part.equalsIgnoreCase(activity.part()));
-                    })
-                    .toList();
+                .filter(dto -> {
+                    InternalUserDetails userDetails = userMap.get(dto.memberId());
+                    // userDetails가 null이 아닐 경우에만 soptActivities를 확인하도록 방어 코드 추가
+                    return userDetails != null && userDetails.soptActivities().stream()
+                        .anyMatch(activity -> part.equalsIgnoreCase(activity.part()));
+                })
+                .toList();
         }
 
-        // 검색어 처리
+        // 2. '파트' 필터링이 적용된 결과에 '검색어' 필터 적용
         if (search != null && !search.isBlank()) {
-            // DB에서 검색되는 company/university 조건
-            List<CoffeeChatInfoDto> dbMatched = dbResult.stream()
-                    .filter(dto ->
-                            (dto.university() != null && dto.university().contains(search))
-                                    || (dto.companyName() != null && dto.companyName().contains(search))
-                    )
-                    .toList();
+            response = response.stream()
+                .filter(dto -> {
+                    // DB 필드(회사명, 대학교) 검색 조건
+                    boolean dbFieldMatch = (dto.university() != null && dto.university().contains(search))
+                        || (dto.companyName() != null && dto.companyName().contains(search));
 
-            // 외부 API에서 검색되는 name 조건
-            List<CoffeeChatInfoDto> nameMatched = response.stream()
-                    .filter(dto -> {
-                        InternalUserDetails userDetails = userMap.get(dto.memberId());
-                        return userDetails != null && userDetails.name().contains(search);
-                    })
-                    .toList();
+                    // 외부 API 필드(이름) 검색 조건
+                    InternalUserDetails userDetails = userMap.get(dto.memberId());
+                    boolean nameFieldMatch = userDetails != null && userDetails.name().contains(search);
 
-            // 합집합
-            response = Stream.concat(dbMatched.stream(), nameMatched.stream())
-                    .distinct()
-                    .toList();
+                    return dbFieldMatch || nameFieldMatch;
+                })
+                .toList();
         }
 
         return response;
