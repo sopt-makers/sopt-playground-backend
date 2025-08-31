@@ -354,12 +354,12 @@ public class MemberService {
     private String getMemberPart(Integer filter) {
         if (filter == null) return null;
         return switch (filter) {
-            case 1 -> "기획";
-            case 2 -> "디자인";
-            case 3 -> "웹";
-            case 4 -> "서버";
-            case 5 -> "안드로이드";
-            case 6 -> "iOS";
+            case 1 -> "PLAN";
+            case 2 -> "DESIGN";
+            case 3 -> "WEB";
+            case 4 -> "SERVER";
+            case 5 -> "ANDROID";
+            case 6 -> "IOS";
             default -> null;
         };
     }
