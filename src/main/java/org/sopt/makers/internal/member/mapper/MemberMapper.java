@@ -20,6 +20,7 @@ public interface MemberMapper {
     @Mapping(target = "birthday", source = "userDetails.birthday")
     @Mapping(target = "phone", source = "userDetails.phone")
     @Mapping(target = "email", source = "userDetails.email")
+    @Mapping(target = "activities", source = "userDetails.soptActivities")
     MemberProfileResponse toProfileResponse (Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActivate);
 
     @Mapping(target = "projects", source = "projects")
