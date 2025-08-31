@@ -3,9 +3,11 @@ package org.sopt.makers.internal.coffeechat.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
@@ -77,8 +79,8 @@ public class CoffeeChatService {
 
     private String getReplyInfo(CoffeeChatRequest request, InternalUserDetails sender) {
         return request.category().equals(ChatCategory.COFFEE_CHAT)
-                ? applyDefaultPhone(request.senderPhone(), sender.phone())
-                : applyDefaultEmail(request.senderEmail(), sender.email());
+            ? applyDefaultPhone(request.senderPhone(), sender.phone())
+            : applyDefaultEmail(request.senderEmail(), sender.email());
     }
 
     private void createHistoryByCategory(CoffeeChatRequest request, Long senderId, String senderEmail) {
@@ -154,7 +156,9 @@ public class CoffeeChatService {
         List<CoffeeChatInfoDto> response =
             coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
 
-        response = response.stream().distinct().toList();
+        response = response.stream()
+            .filter(distinctByKey(CoffeeChatInfoDto::memberId))
+            .toList();
 
         List<Long> userIds = response.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
         Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
@@ -197,11 +201,11 @@ public class CoffeeChatService {
 
         List<Long> userIds = response.stream().map(CoffeeChatHistoryResponse::memberId).toList();
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(userIds).stream()
-                .collect(Collectors.toMap(
-                        InternalUserDetails::userId,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
+            .collect(Collectors.toMap(
+                InternalUserDetails::userId,
+                Function.identity(),
+                (existing, replacement) -> existing
+            ));
 
         return response.stream().map(r -> {
             InternalUserDetails userDetails = userDetailsMap.get(r.memberId());
@@ -237,14 +241,14 @@ public class CoffeeChatService {
 
         CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
         coffeeChat.updateCoffeeChatInfo(
-                request.memberInfo().career(),
-                request.memberInfo().introduction(),
-                request.coffeeChatInfo().sections(),
-                request.coffeeChatInfo().bio(),
-                request.coffeeChatInfo().topicTypes(),
-                request.coffeeChatInfo().topic(),
-                request.coffeeChatInfo().meetingType(),
-                request.coffeeChatInfo().guideline()
+            request.memberInfo().career(),
+            request.memberInfo().introduction(),
+            request.coffeeChatInfo().sections(),
+            request.coffeeChatInfo().bio(),
+            request.coffeeChatInfo().topicTypes(),
+            request.coffeeChatInfo().topic(),
+            request.coffeeChatInfo().meetingType(),
+            request.coffeeChatInfo().guideline()
         );
     }
 
@@ -271,11 +275,11 @@ public class CoffeeChatService {
     public Map<Long, InternalUserDetails> getUserMapFromUserIds(List<Long> userIds) {
         List<InternalUserDetails> usersDetails = platformService.getInternalUsers(userIds);
         return usersDetails.stream()
-                .collect(Collectors.toMap(
-                        InternalUserDetails::userId,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
+            .collect(Collectors.toMap(
+                InternalUserDetails::userId,
+                Function.identity(),
+                (existing, replacement) -> existing
+            ));
     }
 
     @Transactional(readOnly = true)
@@ -285,12 +289,17 @@ public class CoffeeChatService {
         return reviews.stream().map(review -> {
             CoffeeChat coffeeChat = review.getCoffeeChat();
             return new CoffeeChatReviewInfo(
-                    review.getAnonymousProfileImage().getImageUrl(),
-                    review.getNickname(),
-                    platformService.getPartAndGenerationList(review.getReviewer().getId()),
-                    coffeeChat.getCoffeeChatTopicType(),
-                    review.getContent()
+                review.getAnonymousProfileImage().getImageUrl(),
+                review.getNickname(),
+                platformService.getPartAndGenerationList(review.getReviewer().getId()),
+                coffeeChat.getCoffeeChatTopicType(),
+                review.getContent()
             );
         }).toList();
+    }
+
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
     }
 }
