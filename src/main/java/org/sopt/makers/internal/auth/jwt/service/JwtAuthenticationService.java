@@ -70,6 +70,12 @@ public class JwtAuthenticationService {
         } catch (JwkException e) {
             log.warn("JWT 서명 검증 실패: {}", e.getMessage());
             throw new JwtException(JwtFailure.JWT_VERIFICATION_FAILED);
+        } catch (JwtException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            // jwkProvider 내부 NPE 등 예기치 못한 런타임 에러만 VERIFICATION_FAILED 로 변환
+            log.warn("Unexpected runtime during JWT auth: {}", e.getMessage(), e);
+            throw new JwtException(JwtFailure.JWT_VERIFICATION_FAILED);
         }
     }
 
