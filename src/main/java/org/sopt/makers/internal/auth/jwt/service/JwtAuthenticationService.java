@@ -1,24 +1,23 @@
 package org.sopt.makers.internal.auth.jwt.service;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
+import org.sopt.makers.internal.auth.jwt.code.JwtFailure;
 import org.sopt.makers.internal.auth.jwt.exception.JwkException;
 import org.sopt.makers.internal.auth.jwt.exception.JwtException;
-import org.sopt.makers.internal.auth.jwt.code.JwtFailure;
+import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.security.PublicKey;
-import java.text.ParseException;
-import java.util.List;
 
 @Slf4j
 @Component
@@ -46,7 +45,21 @@ public class JwtAuthenticationService {
     public MakersAuthentication authenticate(String token) {
         try {
             SignedJWT jwt = SignedJWT.parse(token);
-            String kid = jwt.getHeader().getKeyID();
+
+            // 헤더 선검증: alg / kid
+            var header = jwt.getHeader();
+            String alg = header.getAlgorithm() != null ? header.getAlgorithm().getName() : null;
+            if (alg == null || !"RS256".equals(alg)) {
+                // RS256만 허용
+                throw new JwtException(JwtFailure.JWT_ALG_MISMATCH);
+            }
+
+            String kid = header.getKeyID();
+            if (kid == null || kid.isBlank()) {
+                // kid 없으면 공개키 조회 전에 바로 401 처리 → Caffeine NPE 예방
+                throw new JwtException(JwtFailure.JWT_KID_MISSING);
+            }
+
             PublicKey key = jwkProvider.getPublicKey(kid);
             JWTClaimsSet claims = verifyWithRetry(jwt, kid, key);
 
