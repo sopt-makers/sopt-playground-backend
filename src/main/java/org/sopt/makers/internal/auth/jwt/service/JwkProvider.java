@@ -10,10 +10,10 @@ import java.security.PublicKey;
 import java.text.ParseException;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.auth.external.auth.AuthClient;
 import org.sopt.makers.internal.auth.external.exception.ClientException;
 import org.sopt.makers.internal.auth.jwt.code.JwkFailure;
 import org.sopt.makers.internal.auth.jwt.exception.JwkException;
-import org.sopt.makers.internal.auth.external.auth.AuthClient;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -32,6 +32,10 @@ public class JwkProvider {
     }
 
     public PublicKey getPublicKey(String kid) {
+        if (kid == null || kid.isBlank()) {
+            throw new JwkException(JwkFailure.JWK_KID_MISSING);
+        }
+
         // 캐시에서 public key 조회, 없으면 resolvePublicKey를 통해 새로 조회
         return keyCache.get(kid, this::resolvePublicKey);
     }
@@ -48,8 +52,12 @@ public class JwkProvider {
                     .findFirst()
                     .orElseThrow(() -> new JwkException(JwkFailure.JWK_KID_NOT_FOUND));
 
-            // JWK를 실제 공개키 객체로 변환
-            return convertToPublicKey(matchedJwk);
+            // JWK -> PublicKey 변환 (로더는 절대 null 반환 금지)
+            PublicKey pk = convertToPublicKey(matchedJwk);
+            if (pk == null) {
+                throw new JwkException(JwkFailure.JWK_INVALID_FORMAT);
+            }
+            return pk;
         }  catch (JwkException | ClientException e) {
             throw e;
         } catch (RuntimeException | ParseException e) {
