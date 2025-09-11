@@ -69,7 +69,6 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -105,8 +104,7 @@ public class MemberService {
     public List<MemberResponse> getMemberByName(String name) {
         val orderBy = OrderByCondition.LATEST_GENERATION.name();
         UserSearchResponse searchResponse = platformService.searchInternalUsers(
-            null, null, null, name, 30, 0, orderBy
-        );
+                null, null, null, name, 30, 0, orderBy);
 
         List<InternalUserDetails> userDetailsList = searchResponse.profiles();
         if (userDetailsList.isEmpty()) {
@@ -114,30 +112,28 @@ public class MemberService {
         }
 
         List<Long> userIds = userDetailsList.stream()
-            .map(InternalUserDetails::userId)
-            .toList();
+                .map(InternalUserDetails::userId)
+                .toList();
 
         Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds).stream()
-            .collect(Collectors.toMap(Member::getId, Function.identity()));
-
+                .collect(Collectors.toMap(Member::getId, Function.identity()));
 
         return userDetailsList.stream()
-            .map(userDetails -> {
-                Member member = memberMap.get(userDetails.userId());
+                .map(userDetails -> {
+                    Member member = memberMap.get(userDetails.userId());
 
-                boolean hasProfile = (member != null) && member.getHasProfile();
-                boolean editActivitiesAble = (member != null) ? member.getEditActivitiesAble() : true;
+                    boolean hasProfile = (member != null) && member.getHasProfile();
+                    boolean editActivitiesAble = (member != null) ? member.getEditActivitiesAble() : true;
 
-                return new MemberResponse(
-                    userDetails.userId(),
-                    userDetails.name(),
-                    userDetails.lastGeneration(),
-                    userDetails.profileImage(),
-                    hasProfile,
-                    editActivitiesAble
-                );
-            })
-            .collect(Collectors.toList());
+                    return new MemberResponse(
+                            userDetails.userId(),
+                            userDetails.name(),
+                            userDetails.lastGeneration(),
+                            userDetails.profileImage(),
+                            hasProfile,
+                            editActivitiesAble);
+                })
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -158,14 +154,14 @@ public class MemberService {
         boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
         MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(
                 member, userDetails, isMine, memberProfileProjects,
-                activityResponses, isCoffeeChatActivate
-        );
+                activityResponses, isCoffeeChatActivate);
 
         Map<Integer, MemberProfileProjectVo> projectMap = soptActivityResponse.stream()
                 .collect(Collectors.toMap(MemberProfileProjectVo::generation, vo -> vo));
 
         // soptActivities 갱신 (response.soptActivities()에 soptActivityResponse 붙히기)
-        List<MemberProfileSpecificResponse.SoptMemberActivityResponse> updatedActivities = response.soptActivities().stream()
+        List<MemberProfileSpecificResponse.SoptMemberActivityResponse> updatedActivities = response.soptActivities()
+                .stream()
                 .map(sa -> {
                     MemberProfileProjectVo matched = projectMap.get(sa.generation());
                     if (matched != null) {
@@ -173,18 +169,22 @@ public class MemberService {
                                 sa.generation(),
                                 sa.part(),
                                 sa.team(),
-                                matched.projects()
-                        );
+                                matched.projects());
                     }
                     return sa;
                 }).toList();
 
         // updatedActivities set 해주기
-        MemberProfileSpecificResponse updateResponse = new MemberProfileSpecificResponse(response.name(), response.profileImage(),
-                response.birthday(), response.isPhoneBlind(), response.phone(), response.email(), response.address(), response.university(),
-                response.major(), response.introduction(), response.skill(), response.mbti(), response.mbtiDescription(), response.sojuCapacity(),
-                response.interest(), response.userFavor(), response.idealType(), response.selfIntroduction(), response.activities(), updatedActivities,
-                response.links(), response.projects(), response.careers(), response.allowOfficial(), response.isCoffeeChatActivate(), response.isMine());
+        MemberProfileSpecificResponse updateResponse = new MemberProfileSpecificResponse(response.name(),
+                response.profileImage(),
+                response.birthday(), response.isPhoneBlind(), response.phone(), response.email(), response.address(),
+                response.university(),
+                response.major(), response.introduction(), response.skill(), response.mbti(),
+                response.mbtiDescription(), response.sojuCapacity(),
+                response.interest(), response.userFavor(), response.idealType(), response.selfIntroduction(),
+                response.activities(), updatedActivities,
+                response.links(), response.projects(), response.careers(), response.allowOfficial(),
+                response.isCoffeeChatActivate(), response.isMine());
         return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
     }
 
@@ -205,8 +205,10 @@ public class MemberService {
     public Member getMemberHasProfileById(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다."));
-        if (member.getHasProfile()) return member;
-        else throw new MemberHasNotProfileException("해당 Member는 프로필이 없습니다.");
+        if (member.getHasProfile())
+            return member;
+        else
+            throw new MemberHasNotProfileException("해당 Member는 프로필이 없습니다.");
     }
 
     @Transactional(readOnly = true)
@@ -231,8 +233,7 @@ public class MemberService {
 
     public Map<String, List<ActivityVo>> getMemberProfileActivity(
             List<SoptActivity> soptActivities,
-            List<MemberProfileProjectDao> memberProfileProjects
-    ) {
+            List<MemberProfileProjectDao> memberProfileProjects) {
         if (soptActivities.isEmpty()) {
             throw new NotFoundDBEntityException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
         }
@@ -241,8 +242,7 @@ public class MemberService {
                 .collect(Collectors.toMap(
                         SoptActivity::generation,
                         SoptActivity::part,
-                        (p1, p2) -> p1)
-                );
+                        (p1, p2) -> p1));
 
         val activities = soptActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
 
@@ -259,14 +259,12 @@ public class MemberService {
         return genActivityMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
-                        Map.Entry::getValue
-                ));
+                        Map.Entry::getValue));
     }
 
     public List<MemberProfileProjectVo> getMemberProfileProjects(
             List<SoptActivity> soptActivities,
-            List<MemberProfileProjectDao> memberProfileProjects
-    ) {
+            List<MemberProfileProjectDao> memberProfileProjects) {
         return soptActivities.stream()
                 .map(m -> {
                     val projects = memberProfileProjects.stream()
@@ -281,14 +279,12 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberAllProfileResponse getMemberProfiles(
             Integer filter, Integer limit, Integer cursor, String search,
-            Integer generation, Integer employed, Integer orderBy, String mbti, String team
-    ) {
+            Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
         String part = getMemberPart(filter);
         String orderByString = convertOrderBy(orderBy);
 
         UserSearchResponse searchResponse = platformService.searchInternalUsers(
-            generation, part, team, search, limit, cursor, orderByString
-        );
+                generation, part, team, search, limit, cursor, orderByString);
 
         List<InternalUserDetails> userDetailsFromPlatform = searchResponse.profiles();
         if (userDetailsFromPlatform.isEmpty()) {
@@ -297,41 +293,43 @@ public class MemberService {
 
         List<Long> userIds = userDetailsFromPlatform.stream().map(InternalUserDetails::userId).toList();
         Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds).stream()
-            .collect(Collectors.toMap(Member::getId, Function.identity()));
+                .collect(Collectors.toMap(Member::getId, Function.identity()));
 
         List<InternalUserDetails> finalFilteredUserDetails = userDetailsFromPlatform.stream()
-            .filter(userDetails -> {
-                Member member = memberMap.get(userDetails.userId());
+                .filter(userDetails -> {
+                    Member member = memberMap.get(userDetails.userId());
 
-                if (member == null) return false;
+                    if (member == null)
+                        return false;
 
-                if (mbti != null && !mbti.equals(member.getMbti())) {
-                    return false;
-                }
-
-                if (employed != null && !isCurrentlyEmployed(member.getCareers(), employed)) {
-                    return false;
-                }
-
-                if (search != null && !search.isBlank()) {
-                    boolean universityContain = false;
-                    boolean companyContain = false;
-
-                    if (member.getUniversity() != null ) {
-                        universityContain = member.getUniversity().contains(search);
-                    }
-                    if (member.getCareers() != null) {
-                        companyContain = member.getCareers().stream().anyMatch(c -> c.getCompanyName() != null && c.getCompanyName().contains(search));
-                    }
-
-                    boolean matchesLocal = universityContain || companyContain;
-                    if (!userDetails.name().contains(search) && !matchesLocal) {
+                    if (mbti != null && !mbti.equals(member.getMbti())) {
                         return false;
                     }
-                }
-                return true;
-            })
-            .toList();
+
+                    if (employed != null && !isCurrentlyEmployed(member.getCareers(), employed)) {
+                        return false;
+                    }
+
+                    if (search != null && !search.isBlank()) {
+                        boolean universityContain = false;
+                        boolean companyContain = false;
+
+                        if (member.getUniversity() != null) {
+                            universityContain = member.getUniversity().contains(search);
+                        }
+                        if (member.getCareers() != null) {
+                            companyContain = member.getCareers().stream()
+                                    .anyMatch(c -> c.getCompanyName() != null && c.getCompanyName().contains(search));
+                        }
+
+                        boolean matchesLocal = universityContain || companyContain;
+                        if (!userDetails.name().contains(search) && !matchesLocal) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .toList();
 
         List<MemberProfileResponse> memberList = finalFilteredUserDetails.stream().map(userDetails -> {
             Member member = memberMap.get(userDetails.userId());
@@ -340,10 +338,9 @@ public class MemberService {
         }).toList();
 
         return new MemberAllProfileResponse(
-            memberList,
-            searchResponse.hasNext(),
-            searchResponse.totalCount()
-        );
+                memberList,
+                searchResponse.hasNext(),
+                searchResponse.totalCount());
     }
 
     private boolean isCurrentlyEmployed(List<MemberCareer> careers, int employedStatus) {
@@ -352,7 +349,8 @@ public class MemberService {
     }
 
     private String getMemberPart(Integer filter) {
-        if (filter == null) return null;
+        if (filter == null)
+            return null;
         return switch (filter) {
             case 1 -> "PLAN";
             case 2 -> "DESIGN";
@@ -365,7 +363,8 @@ public class MemberService {
     }
 
     private String convertOrderBy(Integer orderBy) {
-        if (orderBy == null) return OrderByCondition.LATEST_REGISTERED.name();
+        if (orderBy == null)
+            return OrderByCondition.LATEST_REGISTERED.name();
         return switch (orderBy) {
             case 1 -> OrderByCondition.LATEST_REGISTERED.name();
             case 2 -> OrderByCondition.OLDEST_REGISTERED.name();
@@ -379,8 +378,10 @@ public class MemberService {
         Predicate<String> teamIsEmpty = Objects::isNull;
         Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
         val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
-        if (isNullResult) return null;
-        else return team;
+        if (isNullResult)
+            return null;
+        else
+            return team;
     }
 
     public Member saveDefaultMemberProfile(Long userId) {
@@ -418,6 +419,14 @@ public class MemberService {
         return member;
     }
 
+    @Transactional
+    public void deleteDefaultMemberProfile(Long userId) {
+        if (!memberRepository.existsById(userId)) {
+            return;
+        }
+        memberRepository.deleteById(userId);
+    }
+
     // 프론트 연결하면 삭제 예정
     @Deprecated
     @Transactional
@@ -427,14 +436,13 @@ public class MemberService {
                 .collect(Collectors.toMap(
                         MemberProfileSaveRequest.MemberSoptActivitySaveRequest::generation,
                         MemberProfileSaveRequest.MemberSoptActivitySaveRequest::team,
-                        (team1, team2) -> team1
-                ));
+                        (team1, team2) -> team1));
 
-        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities().stream()
+        List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = userDetails.soptActivities()
+                .stream()
                 .map(activity -> new PlatformUserUpdateRequest.SoptActivityRequest(
                         activity.activityId(),
-                        activityTeamMap.get(activity.generation())
-                ))
+                        activityTeamMap.get(activity.generation())))
                 .toList();
 
         val platformRequest = new PlatformUserUpdateRequest(
@@ -443,22 +451,20 @@ public class MemberService {
                 request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
                 request.phone(),
                 request.email(),
-                soptActivitiesForPlatform
-        );
+                soptActivitiesForPlatform);
 
         platformService.updateInternalUser(userId, platformRequest);
         Member member = memberRepository.findById(userId)
                 .orElseThrow(
-                        () -> new NotFoundDBEntityException("Member")
-                );
+                        () -> new NotFoundDBEntityException("Member"));
         Long memberId = member.getId();
-        if (Objects.isNull(memberId)) throw new NotFoundDBEntityException("Member id is null");
-        List<MemberLink> memberLinkEntities = request.links().stream().map(link ->
-                MemberLink.builder()
-                        .memberId(memberId)
-                        .title(link.title())
-                        .url(link.url())
-                        .build()).collect(Collectors.toList());
+        if (Objects.isNull(memberId))
+            throw new NotFoundDBEntityException("Member id is null");
+        List<MemberLink> memberLinkEntities = request.links().stream().map(link -> MemberLink.builder()
+                .memberId(memberId)
+                .title(link.title())
+                .url(link.url())
+                .build()).collect(Collectors.toList());
         memberLinkEntities.forEach(link -> link.setMemberId(memberId));
         val memberLinks = memberLinkRepository.saveAll(memberLinkEntities);
         val memberCareerEntities = request.careers().stream().map(career -> {
@@ -467,7 +473,8 @@ public class MemberService {
                 val start = YearMonth.parse(career.startDate(), formatter);
                 if (!career.isCurrent()) {
                     val end = YearMonth.parse(career.endDate(), formatter);
-                    if (start.isAfter(end)) throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+                    if (start.isAfter(end))
+                        throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
                 }
             } catch (DateTimeParseException e) {
                 throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
@@ -495,8 +502,7 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberLinks, memberCareers, request.isPhoneBlind()
-        );
+                memberLinks, memberCareers, request.isPhoneBlind());
 
         try {
             if (Objects.equals(activeProfile, "prod")) {
@@ -519,7 +525,8 @@ public class MemberService {
 
         val fields = slackMessageUtil.getArrayNode();
         fields.add(slackMessageUtil.createTextFieldNode("*이름:*\n" + name));
-        fields.add(slackMessageUtil.createTextFieldNode("*프로필링크:*\n<https://playground.sopt.org/members/" + id + "|멤버프로필>"));
+        fields.add(slackMessageUtil
+                .createTextFieldNode("*프로필링크:*\n<https://playground.sopt.org/members/" + id + "|멤버프로필>"));
         fields.add(slackMessageUtil.createTextFieldNode("*이상형:*\n" + idealType));
         contentNode.set("fields", fields);
 
@@ -534,45 +541,42 @@ public class MemberService {
         val userDetails = platformService.getInternalUser(id);
 
         Map<Integer, SoptActivity> dbActivityMap = userDetails.soptActivities().stream()
-            .collect(Collectors.toMap(SoptActivity::generation, Function.identity()));
+                .collect(Collectors.toMap(SoptActivity::generation, Function.identity()));
 
         List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = request.activities().stream()
-            .map(requestActivity -> {
-                SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
+                .map(requestActivity -> {
+                    SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
 
-                if (dbActivity == null) {
-                    throw new ClientBadRequestException("요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
-                }
+                    if (dbActivity == null) {
+                        throw new ClientBadRequestException(
+                                "요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
+                    }
 
-                return new PlatformUserUpdateRequest.SoptActivityRequest(
-                    dbActivity.activityId(),
-                    requestActivity.team()
-                );
-            })
-            .toList();
+                    return new PlatformUserUpdateRequest.SoptActivityRequest(
+                            dbActivity.activityId(),
+                            requestActivity.team());
+                })
+                .toList();
 
         val platformRequest = new PlatformUserUpdateRequest(
-            request.name(),
-            request.profileImage(),
-            request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
-            request.phone() != null && !request.phone().isBlank() ? request.phone() : userDetails.phone(),
-            request.email(),
-            soptActivitiesForPlatform
-        );
+                request.name(),
+                request.profileImage(),
+                request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
+                request.phone() != null && !request.phone().isBlank() ? request.phone() : userDetails.phone(),
+                request.email(),
+                soptActivitiesForPlatform);
 
         platformService.updateInternalUser(id, platformRequest);
 
         val member = getMemberById(id);
         val memberId = member.getId();
         val memberLinks = memberLinkRepository.saveAll(
-                request.links().stream().map(link ->
-                        MemberLink.builder()
-                                .id(link.id())
-                                .memberId(memberId)
-                                .title(link.title())
-                                .url(link.url())
-                                .build()).collect(Collectors.toList())
-        );
+                request.links().stream().map(link -> MemberLink.builder()
+                        .id(link.id())
+                        .memberId(memberId)
+                        .title(link.title())
+                        .url(link.url())
+                        .build()).collect(Collectors.toList()));
 
         val memberCareers = request.careers().stream().map(career -> {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
@@ -580,7 +584,8 @@ public class MemberService {
                 val start = YearMonth.parse(career.startDate(), formatter);
                 if (!career.isCurrent()) {
                     val end = YearMonth.parse(career.endDate(), formatter);
-                    if (start.isAfter(end)) throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+                    if (start.isAfter(end))
+                        throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
                 }
             } catch (DateTimeParseException e) {
                 throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
@@ -608,8 +613,7 @@ public class MemberService {
                 request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(),
                 request.interest(), userFavor, request.idealType(),
                 request.selfIntroduction(), request.allowOfficial(),
-                memberLinks, memberCareers, request.isPhoneBlind()
-        );
+                memberLinks, memberCareers, request.isPhoneBlind());
 
         return member;
     }
@@ -622,13 +626,14 @@ public class MemberService {
     }
 
     /*
-        플랫폼 팀에서 멤버 활동을 관리하고 있기 때문에, 내부에서 삭제 불가
+     * 플랫폼 팀에서 멤버 활동을 관리하고 있기 때문에, 내부에서 삭제 불가
      */
     // @Transactional
     // public void deleteUserProfileActivity(Long activityId, Long memberId) {
-    //     MemberSoptActivity activity = memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
-    //             .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
-    //     memberSoptActivityRepository.delete(activity);
+    // MemberSoptActivity activity =
+    // memberSoptActivityRepository.findByIdAndMemberId(activityId, memberId)
+    // .orElseThrow(() -> new NotFoundDBEntityException("Member Profile Activity"));
+    // memberSoptActivityRepository.delete(activity);
     // }
 
     @Transactional
@@ -646,10 +651,11 @@ public class MemberService {
         InternalUserDetails blockerDetail = platformService.getInternalUser(memberId);
         InternalUserDetails blockedMemberDetail = platformService.getInternalUser(blockedMemberId);
 
-        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
-        return blockHistory.map(memberBlock ->
-                MemberBlockResponse.of(memberBlock.getIsBlocked(), blockerDetail, blockedMemberDetail)
-        ).orElseGet(() -> MemberBlockResponse.of(false, blockerDetail, blockedMemberDetail));
+        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker,
+                blockedMember);
+        return blockHistory.map(
+                memberBlock -> MemberBlockResponse.of(memberBlock.getIsBlocked(), blockerDetail, blockedMemberDetail))
+                .orElseGet(() -> MemberBlockResponse.of(false, blockerDetail, blockedMemberDetail));
     }
 
     @Transactional
@@ -657,7 +663,8 @@ public class MemberService {
         Member blocker = memberRetriever.findMemberById(memberId);
         Member blockedMember = memberRetriever.findMemberById(blockedMemberId);
 
-        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker, blockedMember);
+        Optional<MemberBlock> blockHistory = memberBlockRepository.findByBlockerAndBlockedMember(blocker,
+                blockedMember);
         if (blockHistory.isPresent()) {
             MemberBlock block = blockHistory.get();
             block.updateIsBlocked(true);
@@ -682,8 +689,7 @@ public class MemberService {
 
         memberReportRepository.save(MemberReport.builder()
                 .reporter(reporter)
-                .reportedMember(reportedMember).build()
-        );
+                .reportedMember(reportedMember).build());
     }
 
     @Transactional(readOnly = true)
@@ -705,7 +711,8 @@ public class MemberService {
     private void sendReportToSlack(InternalUserDetails reporter, InternalUserDetails reportedMember) {
         try {
             if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createReportSlackRequest(reporter.userId(), reporter.name(), reportedMember.userId(), reportedMember.name());
+                val slackRequest = createReportSlackRequest(reporter.userId(), reporter.name(), reportedMember.userId(),
+                        reportedMember.name());
                 slackClient.postReportMessage(slackRequest.toString());
             }
         } catch (RuntimeException ex) {
@@ -713,7 +720,8 @@ public class MemberService {
         }
     }
 
-    private JsonNode createReportSlackRequest(Long blockerId, String blockerName, Long blockedMemberId, String blockedMemberName) {
+    private JsonNode createReportSlackRequest(Long blockerId, String blockerName, Long blockedMemberId,
+            String blockedMemberName) {
         val rootNode = slackMessageUtil.getObjectNode();
         rootNode.put("text", "🚨유저 신고 발생!🚨");
 
@@ -723,7 +731,8 @@ public class MemberService {
 
         val fields = slackMessageUtil.getArrayNode();
         fields.add(slackMessageUtil.createTextFieldNode("*신고자:*\n" + blockerName + "(id: " + blockerId + ")"));
-        fields.add(slackMessageUtil.createTextFieldNode("*신고 당한 유저:*\n" + blockedMemberName + "(id: " + blockedMemberId + ")" + "<https://playground.sopt.org/members/" + blockedMemberId + ">"));
+        fields.add(slackMessageUtil.createTextFieldNode("*신고 당한 유저:*\n" + blockedMemberName + "(id: " + blockedMemberId
+                + ")" + "<https://playground.sopt.org/members/" + blockedMemberId + ">"));
         contentNode.set("fields", fields);
 
         blocks.add(textField);
@@ -732,7 +741,7 @@ public class MemberService {
         return rootNode;
     }
 
-    private String checkTeamNullCondition (String team) {
+    private String checkTeamNullCondition(String team) {
         val teamNullCondition = (team == null || team.equals("해당 없음"));
         if (teamNullCondition) {
             team = null;
@@ -746,16 +755,17 @@ public class MemberService {
         List<InternalUserDetails> userDetails = platformService.getInternalUsers(makerMemberIds);
 
         Map<Long, List<MemberCareer>> careerMap = members.stream()
-                .collect(Collectors.toMap(Member::getId, Member::getCareers, (a,b) -> a));
+                .collect(Collectors.toMap(Member::getId, Member::getCareers, (a, b) -> a));
 
         return userDetails.stream()
                 .map(userDetail -> {
                     List<MemberSoptActivityResponse> memberSoptActivityResponses = userDetail.soptActivities().stream()
                             .map(activity -> new MemberSoptActivityResponse(
-                                    (long)activity.activityId(),
+                                    (long) activity.activityId(),
                                     activity.generation()))
                             .toList();
-                    List<MemberCareer> memberCareers = careerMap.getOrDefault(userDetail.userId(), Collections.emptyList());
+                    List<MemberCareer> memberCareers = careerMap.getOrDefault(userDetail.userId(),
+                            Collections.emptyList());
                     List<MemberCareerResponse> memberCareerResponses = memberCareers.stream()
                             .map(memberCareer -> new MemberCareerResponse(
                                     memberCareer.getId(),
@@ -764,7 +774,8 @@ public class MemberService {
                                     memberCareer.getIsCurrent()))
                             .toList();
 
-                    return new MakersMemberProfileResponse(userDetail.userId(), userDetail.name(), userDetail.profileImage(), memberSoptActivityResponses, memberCareerResponses);
+                    return new MakersMemberProfileResponse(userDetail.userId(), userDetail.name(),
+                            userDetail.profileImage(), memberSoptActivityResponses, memberCareerResponses);
                 }).toList();
     }
 
