@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.internal.auth.ApiKeyValidator;
 import org.sopt.makers.internal.internal.dto.CardinalInfoResponse;
 import org.sopt.makers.internal.internal.dto.CreateDefaultUserProfileRequest;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
@@ -29,7 +30,6 @@ import org.sopt.makers.internal.member.service.MemberService;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.service.ProjectService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -67,6 +67,7 @@ public class InternalOpenApiController {
 	private final CommunityPostService communityPostService;
 
 	private final ProjectResponseMapper projectMapper;
+	private final ApiKeyValidator apiKeyValidator;
 
 	@Operation(summary = "Project id로 조회 - 공홈")
 	@GetMapping("/projects/{id}")
@@ -95,6 +96,7 @@ public class InternalOpenApiController {
 	@GetMapping("/community/posts/popular")
 	public ResponseEntity<List<InternalPopularPostResponse>> getPopularPosts() {
 		int limit = 3;
+
 		List<InternalPopularPostResponse> response = communityPostService.getPopularPostsForInternal(limit);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
@@ -106,9 +108,9 @@ public class InternalOpenApiController {
 		Member member = memberService.getMemberById(Long.valueOf(memberId));
 		InternalUserDetails userDetails = platformService.getInternalUser(Long.valueOf(memberId));
 
-		List<CardinalInfoResponse> activityResponses = userDetails.soptActivities().stream()
-			.map(activity -> new CardinalInfoResponse(
-				activity.generation() + "," + activity.part()))
+		List<CardinalInfoResponse> activityResponses = userDetails.soptActivities()
+			.stream()
+			.map(activity -> new CardinalInfoResponse(activity.generation() + "," + activity.part()))
 			.toList();
 
 		InternalMemberProfileResponse response = InternalMemberProfileResponse.builder()
@@ -136,16 +138,14 @@ public class InternalOpenApiController {
 		List<Member> members = memberService.getMemberProfileListById(userIds);
 		List<InternalUserDetails> internalMembers = platformService.getInternalUsers(userIds);
 		Map<Long, InternalUserDetails> internalUserDetailsMap = internalMembers.stream()
-			.collect(Collectors.toMap(
-				InternalUserDetails::userId,
-				Function.identity(),
+			.collect(Collectors.toMap(InternalUserDetails::userId, Function.identity(),
 				(existing, replacement) -> existing));
 
 		for (Member member : members) {
 			InternalUserDetails userDetails = internalUserDetailsMap.get(member.getId());
-			List<CardinalInfoResponse> activityResponses = userDetails.soptActivities().stream()
-				.map(activity -> new CardinalInfoResponse(
-					activity.generation() + "," + activity.part()))
+			List<CardinalInfoResponse> activityResponses = userDetails.soptActivities()
+				.stream()
+				.map(activity -> new CardinalInfoResponse(activity.generation() + "," + activity.part()))
 				.toList();
 
 			responseArray.add(InternalMemberProfileListResponse.builder()
@@ -167,10 +167,8 @@ public class InternalOpenApiController {
 	@PostMapping("/members/profile/recommend")
 	public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList(
 		@RequestBody InternalRecommendMemberListRequest request) {
-		val memberIds = internalApiService.getMembersIdByRecommendFilter(
-			request.generations(),
-			request.getValueByKey(SearchContent.UNIVERSITY),
-			request.getValueByKey(SearchContent.MBTI));
+		val memberIds = internalApiService.getMembersIdByRecommendFilter(request.generations(),
+			request.getValueByKey(SearchContent.UNIVERSITY), request.getValueByKey(SearchContent.MBTI));
 		Set<Long> memberIdsSet = new HashSet<>(memberIds);
 		val response = new InternalRecommendMemberListResponse(memberIdsSet);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -180,35 +178,20 @@ public class InternalOpenApiController {
 	@PostMapping("/members")
 	public ResponseEntity<String> createUserProfile(
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "플그 기본 유저 프로필 생성 요청", required = true, content = @Content(schema = @Schema(implementation = CreateDefaultUserProfileRequest.class))) @RequestBody CreateDefaultUserProfileRequest request,
-		@RequestHeader("apiKey") String apiKey,
-		@Value("${internal.platform.api-key}") String internalApiKey) {
-		if (!internalApiKey.equals(apiKey)) {
-			return ResponseEntity
-				.status(HttpStatus.UNAUTHORIZED)
-				.body("잘못된 api key 입니다.");
-		}
+		@RequestHeader("apiKey") String apiKey) {
+		apiKeyValidator.validate(apiKey);
 
 		Member member = memberService.saveDefaultMemberProfile(request.userId());
-		return ResponseEntity
-			.status(HttpStatus.CREATED)
-			.body("기본 유저 프로필이 성공적으로 생성되었습니다. user id: " + member.getId());
+		return ResponseEntity.status(HttpStatus.CREATED).body("기본 유저 프로필이 성공적으로 생성되었습니다. user id: " + member.getId());
 	}
 
 	@Operation(summary = "기본 유저 프로필 삭제 - 플랫폼팀")
 	@DeleteMapping("/members/{memberId}")
-	public ResponseEntity<String> deleteUserProfile(
-		@PathVariable Long memberId,
-		@RequestHeader("apiKey") String apiKey,
-		@Value("${internal.platform.api-key}") String internalApiKey) {
-		if (!internalApiKey.equals(apiKey)) {
-			return ResponseEntity
-				.status(HttpStatus.UNAUTHORIZED)
-				.body("잘못된 api key 입니다.");
-		}
+	public ResponseEntity<String> deleteUserProfile(@PathVariable Long memberId,
+		@RequestHeader("apiKey") String apiKey) {
+		apiKeyValidator.validate(apiKey);
 
 		memberService.deleteDefaultMemberProfile(memberId);
-		return ResponseEntity
-			.status(HttpStatus.OK)
-			.body("기본 유저 프로필이 성공적으로 삭제되었습니다. user id: " + memberId);
+		return ResponseEntity.status(HttpStatus.OK).body("기본 유저 프로필이 성공적으로 삭제되었습니다. user id: " + memberId);
 	}
 }
