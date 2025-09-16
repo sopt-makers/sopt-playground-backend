@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class PlatformService {
 
@@ -78,7 +80,8 @@ public class PlatformService {
                 .toList();
 
         if (!missingIds.isEmpty()) {
-            throw new NotFoundDBEntityException( "[INTERNAL-404-PARTIAL] 플랫폼에 일부 유저 정보가 없습니다.\n요청 ID: " + userIds + "\n누락 ID: " + missingIds);
+            // Log 만 남기도록 수정
+            log.warn("[INTERNAL-PLATFORM] 일부 유저 정보 누락. 요청 ID: {}, 누락 ID: {}", userIds, missingIds);
         }
 
         return users;

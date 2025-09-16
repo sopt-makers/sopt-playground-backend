@@ -259,62 +259,72 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public MemberAllProfileResponse getMemberProfiles(Integer filter, Integer limit, Integer cursor, String search,
 		Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
-		String part = getMemberPart(filter);
-		String orderByString = convertOrderBy(orderBy);
-
-		UserSearchResponse searchResponse = platformService.searchInternalUsers(generation, part, team, search, limit,
-			cursor, orderByString);
-
-		List<InternalUserDetails> userDetailsFromPlatform = searchResponse.profiles();
-		if (userDetailsFromPlatform.isEmpty()) {
+		// 1) DB에서 먼저 서버 필터(mbti, employed, university/company)로 해당하는 모든 userId 조회
+		List<Long> allFilteredIds = memberProfileQueryRepository.findAllMemberIdsByDbFilters(mbti, employed, search);
+		if (allFilteredIds.isEmpty()) {
 			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
 		}
 
-		List<Long> userIds = userDetailsFromPlatform.stream().map(InternalUserDetails::userId).toList();
-		Map<Long, Member> memberMap = memberRepository.findAllByIdIn(userIds)
-			.stream()
-			.collect(Collectors.toMap(Member::getId, Function.identity()));
+		// 2) part/team/generation, name 정렬/검색은 플랫폼 데이터로 보정 필요 → 해당 ID 리스트로 플랫폼 조회
+		List<InternalUserDetails> internalUsers = platformService.getInternalUsers(allFilteredIds);
 
-		List<InternalUserDetails> finalFilteredUserDetails = userDetailsFromPlatform.stream().filter(userDetails -> {
+		// part/team/generation, name 필터 적용
+		String part = getMemberPart(filter);
+		String checkedTeam = checkActivityTeamConditions(team);
+		List<InternalUserDetails> filteredByPlatform = internalUsers.stream()
+			.filter(u -> filterPlatformConditions(u, part, checkedTeam, generation, search))
+			.toList();
+
+		if (filteredByPlatform.isEmpty()) {
+			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
+		}
+
+		// 3) DB 멤버 로드 및 응답 매핑
+		Map<Long, Member> memberMap = memberRepository.findAllByIdIn(
+			filteredByPlatform.stream().map(InternalUserDetails::userId).toList()
+		).stream().collect(Collectors.toMap(Member::getId, Function.identity()));
+
+		// 3-1) 서버에서 페이지네이션 처리 (cursor: id 커서, limit: 개수)
+		// 입력 cursor가 있으면 해당 id보다 작은(id < cursor) 최신순 기준으로 슬라이스, 없으면 최신순 기준 상위 limit
+		Long cursorId = (cursor == null || cursor == 0) ? null : cursor.longValue();
+		List<InternalUserDetails> pagedByServer = filteredByPlatform.stream()
+			.sorted((a, b) -> Long.compare(b.userId(), a.userId()))
+			.filter(u -> cursorId == null || u.userId() < cursorId)
+			.limit(limit == null || limit <= 0 ? 30 : limit)
+			.toList();
+
+		if (pagedByServer.isEmpty()) {
+			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
+		}
+
+		List<MemberProfileResponse> memberList = pagedByServer.stream().map(userDetails -> {
 			Member member = memberMap.get(userDetails.userId());
-
-			if (member == null)
-				return false;
-
-			if (mbti != null && !mbti.equals(member.getMbti())) {
-				return false;
-			}
-
-			if (employed != null && !isCurrentlyEmployed(member.getCareers(), employed)) {
-				return false;
-			}
-
-			if (search != null && !search.isBlank()) {
-				boolean universityContain = false;
-				boolean companyContain = false;
-
-				if (member.getUniversity() != null) {
-					universityContain = member.getUniversity().contains(search);
-				}
-				if (member.getCareers() != null) {
-					companyContain = member.getCareers()
-						.stream()
-						.anyMatch(c -> c.getCompanyName() != null && c.getCompanyName().contains(search));
-				}
-
-				boolean matchesLocal = universityContain || companyContain;
-				return userDetails.name().contains(search) || matchesLocal;
-			}
-			return true;
-		}).toList();
-
-		List<MemberProfileResponse> memberList = finalFilteredUserDetails.stream().map(userDetails -> {
-			Member member = memberMap.get(userDetails.userId());
-			boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+			boolean isCoffeeChatActivate = member != null && coffeeChatRetriever.existsCoffeeChat(member);
 			return memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
 		}).toList();
 
-		return new MemberAllProfileResponse(memberList, searchResponse.hasNext(), searchResponse.totalCount());
+		// 4) hasNext 및 totalCount 계산 (서버 기준)
+		boolean hasNext = filteredByPlatform.stream()
+			.anyMatch(u -> u.userId() < pagedByServer.get(pagedByServer.size() - 1).userId());
+		int totalCount = filteredByPlatform.size();
+
+		return new MemberAllProfileResponse(memberList, hasNext, totalCount);
+	}
+
+	private boolean filterPlatformConditions(InternalUserDetails userDetails, String part, String team, Integer generation, String nameSearch) {
+		// 이름 검색은 플랫폼 이름에도 적용
+		if (nameSearch != null && !nameSearch.isBlank()) {
+			if (!userDetails.name().contains(nameSearch)) {
+				return false;
+			}
+		}
+		if (part == null && team == null && generation == null) return true;
+		List<SoptActivity> activities = userDetails.soptActivities();
+		return activities.stream().anyMatch(a ->
+				(generation == null || Objects.equals(a.generation(), generation)) &&
+				(part == null || Objects.equals(a.part(), part)) &&
+				(team == null || Objects.equals(a.team(), team))
+		);
 	}
 
 	private boolean isCurrentlyEmployed(List<MemberCareer> careers, int employedStatus) {
