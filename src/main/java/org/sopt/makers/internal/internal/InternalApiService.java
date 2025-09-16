@@ -1,9 +1,13 @@
 package org.sopt.makers.internal.internal;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.project.domain.Project;
 import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
@@ -21,6 +25,8 @@ public class InternalApiService {
 
     private final PlatformService platformService;
 
+    private final static int PAGE_SIZE = 30;
+
     @Transactional(readOnly = true)
     public List<Project> fetchAll () {
         return projectRepository.findAll();
@@ -32,21 +38,37 @@ public class InternalApiService {
     }
 
     @Transactional(readOnly = true)
-    public List<Long> getMembersIdByRecommendFilter (List<Integer> generations, String university, String mbti) {
+    public Set<Long> getMemberIdsByRecommendFilter (List<Integer> generations, String university, String mbti) {
         if (generations == null || generations.isEmpty()) {
             throw new IllegalArgumentException("generation 필터는 비어 있을 수 없습니다.");
         }
 
         List<Long> userIds =  memberProfileQueryRepository.findAllMemberIdsByRecommendFilter(university, mbti);
-        if (userIds.isEmpty()) return List.of();
+        if (userIds.isEmpty()) return Set.of();
 
-        List<InternalUserDetails> internalUserDetails = platformService.getInternalUsers(userIds);
+        Set<Long> generationUserIds = new HashSet<>();
+        for (int generation : generations) {
+            int offset = 0;
+            while (true) {
+                UserSearchResponse response = platformService.searchInternalUsers(
+                        generation, null, null, null, PAGE_SIZE, offset, null
+                );
 
-        return internalUserDetails.stream()
-                .filter(user -> user.soptActivities().stream()
-                        .anyMatch(activity -> generations.contains(activity.generation()))
-                )
-                .map(InternalUserDetails::userId)
-                .toList();
+                List<InternalUserDetails> profiles = response.profiles();
+                if (profiles == null || profiles.isEmpty()) break;
+
+                for (InternalUserDetails userInfo : profiles) {
+                    generationUserIds.add(userInfo.userId());
+                }
+
+                if (!response.hasNext()) break;
+
+                offset += profiles.size();
+            }
+        }
+
+        Set<Long> result = new HashSet<>(userIds);
+        result.retainAll(generationUserIds);
+        return result;
     }
 }
