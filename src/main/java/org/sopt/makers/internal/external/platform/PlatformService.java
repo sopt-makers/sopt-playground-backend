@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.external.platform;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -28,11 +29,35 @@ public class PlatformService {
     }
 
     /**
-     * 다중 내부 사용자 조회
+     * 다중 내부 사용자 조회 (배치 처리로 414 에러 방지)
      */
     public List<InternalUserDetails> getInternalUsers(List<Long> userIds) {
         validateUserIds(userIds);
-        return fetchInternalUsers(userIds);
+        
+        // 배치 크기 설정
+        final int BATCH_SIZE = 50;
+        
+        if (userIds.size() <= BATCH_SIZE) {
+            return fetchInternalUsers(userIds);
+        }
+        
+        // 큰 리스트를 배치로 나누어 처리
+        List<InternalUserDetails> allUsers = new ArrayList<>();
+        
+        for (int i = 0; i < userIds.size(); i += BATCH_SIZE) {
+            int endIndex = Math.min(i + BATCH_SIZE, userIds.size());
+            List<Long> batch = userIds.subList(i, endIndex);
+            
+            try {
+                List<InternalUserDetails> batchUsers = fetchInternalUsers(batch);
+                allUsers.addAll(batchUsers);
+            } catch (Exception e) {
+                log.warn("[INTERNAL-PLATFORM] 배치 처리 중 일부 실패. 배치: {}, 에러: {}", batch, e.getMessage());
+                // 일부 배치가 실패해도 다른 배치는 계속 처리
+            }
+        }
+        
+        return allUsers;
     }
 
     /**

@@ -359,13 +359,7 @@ public class MemberService {
 	}
 
 	private String checkActivityTeamConditions(String team) {
-		Predicate<String> teamIsEmpty = Objects::isNull;
-		Predicate<String> teamIsNullString = s -> s.equals("해당 없음");
-		val isNullResult = teamIsEmpty.or(teamIsNullString).test(team);
-		if (isNullResult)
-			return null;
-		else
-			return team;
+		return (team == null || team.equals("해당 없음")) ? null : team;
 	}
 
 	public Member saveDefaultMemberProfile(Long userId) {
