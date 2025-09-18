@@ -25,7 +25,7 @@ public class InternalApiService {
 
     private final PlatformService platformService;
 
-    private final static int PAGE_SIZE = 30;
+    private final static int PAGE_SIZE = 200;
 
     @Transactional(readOnly = true)
     public List<Project> fetchAll () {
@@ -39,31 +39,24 @@ public class InternalApiService {
 
     @Transactional(readOnly = true)
     public Set<Long> getMemberIdsByRecommendFilter (List<Integer> generations, String university, String mbti) {
+        System.out.println(mbti);
         if (generations == null || generations.isEmpty()) {
             throw new IllegalArgumentException("generation 필터는 비어 있을 수 없습니다.");
         }
 
         List<Long> userIds =  memberProfileQueryRepository.findAllMemberIdsByRecommendFilter(university, mbti);
+        System.out.println(userIds);
         if (userIds.isEmpty()) return Set.of();
 
         Set<Long> generationUserIds = new HashSet<>();
         for (int generation : generations) {
-            int offset = 0;
-            while (true) {
-                UserSearchResponse response = platformService.searchInternalUsers(
-                        generation, null, null, null, PAGE_SIZE, offset, null
-                );
+            UserSearchResponse response = platformService.searchInternalUsers(generation, null, null, null, PAGE_SIZE, 0, null);
 
-                List<InternalUserDetails> profiles = response.profiles();
-                if (profiles == null || profiles.isEmpty()) break;
+            List<InternalUserDetails> profiles = response.profiles();
+            if (profiles == null || profiles.isEmpty()) break;
 
-                for (InternalUserDetails userInfo : profiles) {
-                    generationUserIds.add(userInfo.userId());
-                }
-
-                if (!response.hasNext()) break;
-
-                offset += profiles.size();
+            for (InternalUserDetails userInfo : profiles) {
+                generationUserIds.add(userInfo.userId());
             }
         }
 
