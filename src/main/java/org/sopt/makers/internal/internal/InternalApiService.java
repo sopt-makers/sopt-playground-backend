@@ -39,13 +39,11 @@ public class InternalApiService {
 
     @Transactional(readOnly = true)
     public Set<Long> getMemberIdsByRecommendFilter (List<Integer> generations, String university, String mbti) {
-        System.out.println(mbti);
         if (generations == null || generations.isEmpty()) {
             throw new IllegalArgumentException("generation 필터는 비어 있을 수 없습니다.");
         }
 
         List<Long> userIds =  memberProfileQueryRepository.findAllMemberIdsByRecommendFilter(university, mbti);
-        System.out.println(userIds);
         if (userIds.isEmpty()) return Set.of();
 
         Set<Long> generationUserIds = new HashSet<>();
