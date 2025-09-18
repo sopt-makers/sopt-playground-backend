@@ -28,7 +28,7 @@ public class MemberProfileQueryRepository {
     }
 
     private BooleanExpression checkMemberMbti(String mbti) {
-        val isMbtiEmpty = !StringUtils.hasText(mbti);
+        boolean isMbtiEmpty = !StringUtils.hasText(mbti);
         return isMbtiEmpty ? null : QMember.member.mbti.eq(mbti);
     }
 
@@ -57,19 +57,19 @@ public class MemberProfileQueryRepository {
     }
 
     public List<Long> findAllMemberIdsByRecommendFilter(String university, String mbti) {
-        val member = QMember.member;
+        QMember member = QMember.member;
 
-        return queryFactory.select(member.id)
-            .from(member)
-            .where(checkMemberHasProfile(),
-                    checkMemberMbti(mbti),
-                    checkMemberUniversity(university))
-            .groupBy(member.id)
-            .fetch();
+        return queryFactory
+                .selectDistinct(member.id)
+                .from(member)
+                .where(checkMemberHasProfile(),
+                        checkMemberMbti(mbti),
+                        checkMemberUniversity(university))
+                .fetch();
     }
 
     private BooleanExpression checkMemberUniversity(String university) {
-        val isUniversityEmpty = !StringUtils.hasText(university);
+        boolean isUniversityEmpty = !StringUtils.hasText(university);
         return isUniversityEmpty ? null : QMember.member.university.contains(university);
     }
 
