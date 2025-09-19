@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Playground Backend DEV - Spring Boot on AWS Lambda Container
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 1024
+    
+Parameters:
+  ImageUri:
+    Type: String
+    Description: ECR Image URI (need to be overridden)
+
+Resources:
+  PlaygroundApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "playground-api-dev"
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      AutoPublishAlias: live
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - '*'
+          AllowMethods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+          AllowHeaders:
+            - '*'
+          AllowCredentials: false
+      
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunctionUrl
+                - lambda:GetFunctionUrl
+              Resource: "*"
+        # Warmer:
+        #   Type: Schedule
+        #   Properties:
+        #     Schedule: rate(5 minutes)
+
+Outputs:
+  FunctionUrl:
+    Description: "Lambda Function URL"
+    Value: !GetAtt PlaygroundApiFunctionUrl.FunctionUrl
