@@ -1,10 +1,12 @@
 package org.sopt.makers.internal.external.platform;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.auth.common.code.BaseResponse;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class PlatformService {
 
@@ -32,7 +35,15 @@ public class PlatformService {
      */
     public List<InternalUserDetails> getInternalUsers(List<Long> userIds) {
         validateUserIds(userIds);
-        return fetchInternalUsers(userIds);
+        
+        try {
+            List<InternalUserDetails> batchUsers = fetchInternalUsersBatch(userIds);
+            return batchUsers;
+        } catch (Exception e) {
+            log.warn("[INTERNAL-PLATFORM] 유저 정보 조회 실패. 요청 ID 리스트: {}, 에러: {}", userIds, e.getMessage());
+        }
+
+        return Collections.emptyList();
     }
 
     /**
@@ -48,6 +59,43 @@ public class PlatformService {
         if (userId == null) {
             throw new IllegalArgumentException("[INTERNAL-400-NULL-ID] 요청한 userId 파라미터는 null일 수 없습니다.");
         }
+    }
+
+    /**
+     * 플랫폼 API 호출 및 응답 처리하는 공통 로직
+     */
+    private List<InternalUserDetails> fetchInternalUsersBatch(List<Long> userIds) {
+        val result = platformClient.getBatchInternalUserDetails(
+                authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(),
+                new GetPlatformUserBatchRequest(userIds)
+        );
+
+        var body = result.getBody();
+        if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
+            throw new NotFoundDBEntityException( "[INTERNAL-500] 플랫폼 API 호출 실패 또는 인증 오류. 요청 ID: " + userIds);
+        }
+
+        var users = body.getData();
+        if (users == null || users.isEmpty()) {
+            throw new NotFoundDBEntityException( "[INTERNAL-404-ALL] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userIds);
+        }
+
+        // 누락된 userId 탐색
+        Set<Long> foundIds = users.stream()
+                .map(InternalUserDetails::userId)
+                .collect(Collectors.toSet());
+
+        List<Long> missingIds = userIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            // Log 만 남기도록 수정
+            log.warn("[INTERNAL-PLATFORM] 일부 유저 정보 누락. 요청 ID: {}, 누락 ID: {}", userIds, missingIds);
+        }
+
+        return users;
     }
 
     /**
@@ -80,7 +128,8 @@ public class PlatformService {
                 .toList();
 
         if (!missingIds.isEmpty()) {
-            throw new NotFoundDBEntityException( "[INTERNAL-404-PARTIAL] 플랫폼에 일부 유저 정보가 없습니다.\n요청 ID: " + userIds + "\n누락 ID: " + missingIds);
+            // Log 만 남기도록 수정
+            log.warn("[INTERNAL-PLATFORM] 일부 유저 정보 누락. 요청 ID: {}, 누락 ID: {}", userIds, missingIds);
         }
 
         return users;
