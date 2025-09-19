@@ -284,11 +284,16 @@ public class MemberService {
 		).stream().collect(Collectors.toMap(Member::getId, Function.identity()));
 
 		// 3-1) Member 정보를 포함한 정렬 및 페이지네이션 처리
-		Long cursorId = (cursor == null || cursor == 0) ? null : cursor.longValue();
-		List<InternalUserDetails> pagedByServer = filteredByPlatform.stream()
+		int offsetValue = (cursor == null || cursor < 0) ? 0 : cursor;
+		int limitValue = (limit == null || limit <= 0) ? 30 : limit;
+		
+		List<InternalUserDetails> sortedUsers = filteredByPlatform.stream()
 			.sorted((a, b) -> compareForSortingWithMember(a, b, memberMap))
-			.filter(u -> cursorId == null || u.userId() < cursorId)
-			.limit(limit == null || limit <= 0 ? 30 : limit)
+			.toList();
+		
+		List<InternalUserDetails> pagedByServer = sortedUsers.stream()
+			.skip(offsetValue)
+			.limit(limitValue)
 			.toList();
 
 		if (pagedByServer.isEmpty()) {
@@ -302,9 +307,8 @@ public class MemberService {
 		}).toList();
 
 		// 4) hasNext 및 totalCount 계산 (서버 기준)
-		boolean hasNext = filteredByPlatform.stream()
-			.anyMatch(u -> u.userId() < pagedByServer.get(pagedByServer.size() - 1).userId());
-		int totalCount = filteredByPlatform.size();
+		boolean hasNext = (offsetValue + limitValue) < sortedUsers.size();
+		int totalCount = sortedUsers.size();
 
 		return new MemberAllProfileResponse(memberList, hasNext, totalCount);
 	}
