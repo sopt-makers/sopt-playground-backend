@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+// 현재 쓰이는 서비스 없음 => Deprecated for now
 @Service
 @RequiredArgsConstructor
 public class GoogleSheetsService {
