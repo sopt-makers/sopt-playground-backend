@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.auth.common.code.BaseResponse;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -155,14 +157,14 @@ public class PlatformService {
         Integer generation, String part, String team, String name,
         Integer limit, Integer offset, String orderBy
     ) {
-        val result = platformClient.searchUsers(
+        ResponseEntity<BaseResponse<UserSearchResponse>> result = platformClient.searchUsers(
             authConfig.getPlatformApiKey(),
             authConfig.getPlatformServiceName(),
             generation, part, team, name, limit, offset, orderBy
         );
 
-        val body = result.getBody();
-        if (body == null || !Boolean.TRUE.equals(body.isSuccess()) || body.getData() == null) {
+        BaseResponse<UserSearchResponse> body = result.getBody();
+        if (body == null || !body.isSuccess() || body.getData() == null) {
             throw new RuntimeException("플랫폼 검색 API 호출 실패 또는 인증 오류.");
         }
         return body.getData();

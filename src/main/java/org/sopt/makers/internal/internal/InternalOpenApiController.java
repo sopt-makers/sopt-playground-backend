@@ -4,7 +4,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +49,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -165,13 +165,14 @@ public class InternalOpenApiController {
 		- UNIVERSITY
 		""")
 	@PostMapping("/members/profile/recommend")
-	public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList(
-		@RequestBody InternalRecommendMemberListRequest request) {
-		val memberIds = internalApiService.getMembersIdByRecommendFilter(request.generations(),
-			request.getValueByKey(SearchContent.UNIVERSITY), request.getValueByKey(SearchContent.MBTI));
-		Set<Long> memberIdsSet = new HashSet<>(memberIds);
-		val response = new InternalRecommendMemberListResponse(memberIdsSet);
-		return ResponseEntity.status(HttpStatus.OK).body(response);
+	public ResponseEntity<InternalRecommendMemberListResponse> getMyRecommendList(@RequestBody @Valid InternalRecommendMemberListRequest request) {
+		Set<Long> memberIds = internalApiService.getMemberIdsByRecommendFilter(
+				request.generations(),
+				request.getValueByKey(SearchContent.UNIVERSITY),
+				request.getValueByKey(SearchContent.MBTI)
+		);
+		InternalRecommendMemberListResponse response = new InternalRecommendMemberListResponse(memberIds);
+		return ResponseEntity.ok(response);
 	}
 
 	@Operation(summary = "기본 유저 프로필 생성 - 플랫폼팀")
