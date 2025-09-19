@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -279,16 +278,15 @@ public class MemberService {
 			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
 		}
 
-		// 3) DB 멤버 로드 및 응답 매핑
+		// 3) DB 멤버 로드
 		Map<Long, Member> memberMap = memberRepository.findAllByIdIn(
 			filteredByPlatform.stream().map(InternalUserDetails::userId).toList()
 		).stream().collect(Collectors.toMap(Member::getId, Function.identity()));
 
-		// 3-1) 서버에서 페이지네이션 처리 (cursor: id 커서, limit: 개수)
-		// 입력 cursor가 있으면 해당 id보다 작은(id < cursor) 최신순 기준으로 슬라이스, 없으면 최신순 기준 상위 limit
+		// 3-1) Member 정보를 포함한 정렬 및 페이지네이션 처리
 		Long cursorId = (cursor == null || cursor == 0) ? null : cursor.longValue();
 		List<InternalUserDetails> pagedByServer = filteredByPlatform.stream()
-			.sorted((a, b) -> Long.compare(b.userId(), a.userId()))
+			.sorted((a, b) -> compareForSortingWithMember(a, b, memberMap))
 			.filter(u -> cursorId == null || u.userId() < cursorId)
 			.limit(limit == null || limit <= 0 ? 30 : limit)
 			.toList();
@@ -327,9 +325,79 @@ public class MemberService {
 		);
 	}
 
-	private boolean isCurrentlyEmployed(List<MemberCareer> careers, int employedStatus) {
-		boolean isWorking = careers.stream().anyMatch(MemberCareer::getIsCurrent);
-		return (employedStatus == 1) == isWorking;
+	/**
+	 * 멤버 정렬 비교 메서드 (Member 정보 포함)
+	 * 1순위: 최신 기수 (lastGeneration 내림차순)
+	 * 2순위: 프로필 정보 완성도 (내림차순)
+	 * 3순위: 이름 ㄱㄴㄷ 순 (오름차순)
+	 */
+	private int compareForSortingWithMember(InternalUserDetails a, InternalUserDetails b, Map<Long, Member> memberMap) {
+		// 1순위: 최신 기수 비교 (내림차순)
+		int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
+		if (generationCompare != 0) {
+			return generationCompare;
+		}
+
+		// 2순위: 프로필 정보 완성도 비교 (내림차순)
+		Member memberA = memberMap.get(a.userId());
+		Member memberB = memberMap.get(b.userId());
+		int profileCompletenessA = calculateProfileCompletenessWithMember(a, memberA);
+		int profileCompletenessB = calculateProfileCompletenessWithMember(b, memberB);
+		int completenessCompare = Integer.compare(profileCompletenessB, profileCompletenessA);
+		if (completenessCompare != 0) {
+			return completenessCompare;
+		}
+
+		// 3순위: 이름 ㄱㄴㄷ 순 비교 (오름차순)
+		return a.name().compareTo(b.name());
+	}
+
+
+
+	/**
+	 * Member 정보를 포함한 프로필 정보 완성도 계산
+	 * null이 아닌 필드의 개수를 반환
+	 */
+	private int calculateProfileCompletenessWithMember(InternalUserDetails userDetails, Member member) {
+		int count = 0;
+		
+		// 기본 정보 필드들 (InternalUserDetails에서)
+		if (userDetails.profileImage() != null && !userDetails.profileImage().isBlank()) count+=5; // 프로필사진 5점
+		if (userDetails.birthday() != null && !userDetails.birthday().isBlank()) count++;
+		if (userDetails.phone() != null && !userDetails.phone().isBlank()) count++;
+		if (userDetails.email() != null && !userDetails.email().isBlank()) count++;
+		
+		// Member 정보가 있는 경우 추가 필드들
+		if (member != null) {
+			if (member.getAddress() != null && !member.getAddress().isBlank()) count++;
+			if (member.getUniversity() != null && !member.getUniversity().isBlank()) count++;
+			if (member.getMajor() != null && !member.getMajor().isBlank()) count++;
+			if (member.getIntroduction() != null && !member.getIntroduction().isBlank()) count+=3; // 자기소개 3점
+			if (member.getSkill() != null && !member.getSkill().isBlank()) count++;
+			if (member.getMbti() != null && !member.getMbti().isBlank()) count++;
+			if (member.getMbtiDescription() != null && !member.getMbtiDescription().isBlank()) count++;
+			if (member.getSojuCapacity() != null) count++;
+			if (member.getInterest() != null && !member.getInterest().isBlank()) count++;
+			if (member.getIdealType() != null && !member.getIdealType().isBlank()) count++;
+			if (member.getSelfIntroduction() != null && !member.getSelfIntroduction().isBlank()) count++;
+			
+			// UserFavor 정보
+			if (member.getUserFavor() != null) {
+				UserFavor favor = member.getUserFavor();
+				if (favor.getIsPourSauceLover() != null) count++;
+				if (favor.getIsHardPeachLover() != null) count++;
+				if (favor.getIsMintChocoLover() != null) count++;
+				if (favor.getIsRedBeanFishBreadLover() != null) count++;
+				if (favor.getIsSojuLover() != null) count++;
+				if (favor.getIsRiceTteokLover() != null) count++;
+			}
+			
+			// Links와 Careers 개수
+			if (member.getLinks() != null && !member.getLinks().isEmpty()) count += member.getLinks().size();
+			if (member.getCareers() != null && !member.getCareers().isEmpty()) count += member.getCareers().size() * 3; // 커리어 개당 3점
+		}
+		
+		return count;
 	}
 
 	private String getMemberPart(Integer filter) {
@@ -346,17 +414,6 @@ public class MemberService {
 		};
 	}
 
-	private String convertOrderBy(Integer orderBy) {
-		if (orderBy == null)
-			return OrderByCondition.LATEST_REGISTERED.name();
-		return switch (orderBy) {
-			case 1 -> OrderByCondition.LATEST_REGISTERED.name();
-			case 2 -> OrderByCondition.OLDEST_REGISTERED.name();
-			case 3 -> OrderByCondition.LATEST_GENERATION.name();
-			case 4 -> OrderByCondition.OLDEST_GENERATION.name();
-			default -> OrderByCondition.LATEST_REGISTERED.name();
-		};
-	}
 
 	private String checkActivityTeamConditions(String team) {
 		return (team == null || team.equals("해당 없음")) ? null : team;

@@ -85,7 +85,6 @@ public class MemberProfileQueryRepository {
                         checkEmployed(employed),
                         checkSearchUniversityOrCompany(search)
                 )
-                .orderBy(member.id.desc())
                 .fetch();
     }
 

@@ -31,35 +31,19 @@ public class PlatformService {
     }
 
     /**
-     * 다중 내부 사용자 조회 (배치 처리로 414 에러 방지)
+     * 다중 내부 사용자 조회
      */
     public List<InternalUserDetails> getInternalUsers(List<Long> userIds) {
         validateUserIds(userIds);
         
-        // 배치 크기 설정
-        final int BATCH_SIZE = 50;
-        
-        if (userIds.size() <= BATCH_SIZE) {
-            return fetchInternalUsers(userIds);
+        try {
+            List<InternalUserDetails> batchUsers = fetchInternalUsersBatch(userIds);
+            return batchUsers;
+        } catch (Exception e) {
+            log.warn("[INTERNAL-PLATFORM] 유저 정보 조회 실패. 요청 ID 리스트: {}, 에러: {}", userIds, e.getMessage());
         }
-        
-        // 큰 리스트를 배치로 나누어 처리
-        List<InternalUserDetails> allUsers = new ArrayList<>();
-        
-        for (int i = 0; i < userIds.size(); i += BATCH_SIZE) {
-            int endIndex = Math.min(i + BATCH_SIZE, userIds.size());
-            List<Long> batch = userIds.subList(i, endIndex);
-            
-            try {
-                List<InternalUserDetails> batchUsers = fetchInternalUsers(batch);
-                allUsers.addAll(batchUsers);
-            } catch (Exception e) {
-                log.warn("[INTERNAL-PLATFORM] 배치 처리 중 일부 실패. 배치: {}, 에러: {}", batch, e.getMessage());
-                // 일부 배치가 실패해도 다른 배치는 계속 처리
-            }
-        }
-        
-        return allUsers;
+
+        return Collections.emptyList();
     }
 
     /**
@@ -75,6 +59,43 @@ public class PlatformService {
         if (userId == null) {
             throw new IllegalArgumentException("[INTERNAL-400-NULL-ID] 요청한 userId 파라미터는 null일 수 없습니다.");
         }
+    }
+
+    /**
+     * 플랫폼 API 호출 및 응답 처리하는 공통 로직
+     */
+    private List<InternalUserDetails> fetchInternalUsersBatch(List<Long> userIds) {
+        val result = platformClient.getBatchInternalUserDetails(
+                authConfig.getPlatformApiKey(),
+                authConfig.getPlatformServiceName(),
+                new GetPlatformUserBatchRequest(userIds)
+        );
+
+        var body = result.getBody();
+        if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
+            throw new NotFoundDBEntityException( "[INTERNAL-500] 플랫폼 API 호출 실패 또는 인증 오류. 요청 ID: " + userIds);
+        }
+
+        var users = body.getData();
+        if (users == null || users.isEmpty()) {
+            throw new NotFoundDBEntityException( "[INTERNAL-404-ALL] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userIds);
+        }
+
+        // 누락된 userId 탐색
+        Set<Long> foundIds = users.stream()
+                .map(InternalUserDetails::userId)
+                .collect(Collectors.toSet());
+
+        List<Long> missingIds = userIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            // Log 만 남기도록 수정
+            log.warn("[INTERNAL-PLATFORM] 일부 유저 정보 누락. 요청 ID: {}, 누락 ID: {}", userIds, missingIds);
+        }
+
+        return users;
     }
 
     /**
