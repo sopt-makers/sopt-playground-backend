@@ -324,6 +324,20 @@ public class MemberService {
 		if (part == null && team == null && generation == null) return true;
 		List<SoptActivity> activities = userDetails.soptActivities();
 		
+		// 임원진 필터링 (team이 "미디어팀", "운영팀"이 아닌데 team이 있는 경우)
+		if ("임원진".equals(team)) {
+			boolean hasExecutiveRole = activities.stream()
+				.anyMatch(a -> {
+					String activityTeam = a.team();
+					return activityTeam != null && 
+						   !activityTeam.isEmpty() && 
+						   !"미디어팀".equals(activityTeam) && 
+						   !"운영팀".equals(activityTeam);
+				});
+			return hasExecutiveRole;
+		}
+		
+		// 일반 team 필터링 (OPERATION, MEDIA)
 		boolean matches = activities.stream().anyMatch(a -> {
 			boolean genMatch = (generation == null || Objects.equals(a.generation(), generation));
 			boolean partMatch = (part == null || Objects.equals(a.part(), part));
