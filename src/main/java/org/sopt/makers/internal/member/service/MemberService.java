@@ -287,8 +287,9 @@ public class MemberService {
 		int offsetValue = (cursor == null || cursor < 0) ? 0 : cursor;
 		int limitValue = (limit == null || limit <= 0) ? 30 : limit;
 		
+		OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
 		List<InternalUserDetails> sortedUsers = filteredByPlatform.stream()
-			.sorted((a, b) -> compareForSortingWithMember(a, b, memberMap))
+			.sorted((a, b) -> compareByOrderCondition(a, b, memberMap, orderByCondition))
 			.toList();
 		
 		List<InternalUserDetails> pagedByServer = sortedUsers.stream()
@@ -356,6 +357,49 @@ public class MemberService {
 		return a.name().compareTo(b.name());
 	}
 
+	/**
+	 * OrderByCondition에 따른 정렬 비교 메서드
+	 */
+	private int compareByOrderCondition(InternalUserDetails a, InternalUserDetails b, Map<Long, Member> memberMap, OrderByCondition orderBy) {
+		if (orderBy == null) {
+			return compareForSortingWithMember(a, b, memberMap);
+		}
+
+		Member memberA = memberMap.get(a.userId());
+		Member memberB = memberMap.get(b.userId());
+
+		return switch (orderBy) {
+			case LATEST_REGISTERED -> {
+				// 최신 등록순: ID 내림차순 (ID가 클수록 최근)
+				if (memberA == null && memberB == null) yield 0;
+				if (memberA == null) yield 1;
+				if (memberB == null) yield -1;
+				yield Long.compare(memberB.getId(), memberA.getId());
+			}
+			case OLDEST_REGISTERED -> {
+				// 오래된 등록순: ID 오름차순 (ID가 작을수록 오래됨)
+				if (memberA == null && memberB == null) yield 0;
+				if (memberA == null) yield 1;
+				if (memberB == null) yield -1;
+				yield Long.compare(memberA.getId(), memberB.getId());
+			}
+			case LATEST_GENERATION -> {
+				// 최신 기수순: 기수 내림차순
+				int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
+				if (generationCompare != 0) yield generationCompare;
+				// 기수가 같으면 이름 오름차순
+				yield a.name().compareTo(b.name());
+			}
+			case OLDEST_GENERATION -> {
+				// 오래된 기수순: 기수 오름차순
+				int generationCompare = Integer.compare(a.lastGeneration(), b.lastGeneration());
+				if (generationCompare != 0) yield generationCompare;
+				// 기수가 같으면 이름 오름차순
+				yield a.name().compareTo(b.name());
+			}
+		};
+	}
+
 
 
 	/**
@@ -403,6 +447,7 @@ public class MemberService {
 		
 		return count;
 	}
+
 
 	private String getMemberPart(Integer filter) {
 		if (filter == null)
