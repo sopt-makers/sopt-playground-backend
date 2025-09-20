@@ -18,10 +18,39 @@ mode=$(echo $mode | tr '[:upper:]' '[:lower:]')
 
 echo "=== 컨테이너 이미지 기반 람다 배포 시작 ==="
 cd lambda
+
+# 환경별 리전 및 리포지토리 설정
+REGION="ap-northeast-2"
+ACCOUNT_ID="379013966998"
+if [ "$mode" = "prod" ]; then
+  REPOSITORY_NAME="playground-prod"
+else
+  REPOSITORY_NAME="playground-dev"
+fi
+
+REPO_URI="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY_NAME"
+
+echo "ECR latest 태그의 digest 조회 중... ($REPOSITORY_NAME)"
+IMAGE_DIGEST=$(aws ecr describe-images \
+  --region "$REGION" \
+  --profile "$profile" \
+  --repository-name "$REPOSITORY_NAME" \
+  --image-ids imageTag=latest \
+  --query 'imageDetails[0].imageDigest' \
+  --output text || true)
+
+if [ -z "$IMAGE_DIGEST" ] || [ "$IMAGE_DIGEST" = "None" ]; then
+  echo "❌ latest 태그의 이미지 digest를 찾을 수 없습니다. 이미지가 존재하는지 확인해주세요."
+  exit 1
+fi
+
+IMAGE_URI_WITH_DIGEST="$REPO_URI@$IMAGE_DIGEST"
+echo "배포 대상 이미지: $IMAGE_URI_WITH_DIGEST"
+
 sam deploy \
   --config-env "$mode" \
   --profile "$profile" \
-  --parameter-overrides ImageUri="379013966998.dkr.ecr.ap-northeast-2.amazonaws.com/playground-dev:latest"
+  --parameter-overrides ImageUri="$IMAGE_URI_WITH_DIGEST"
 
 
 # echo "Private ECR 이미지 정리: latest 태그 제거"
@@ -51,11 +80,11 @@ sam deploy \
 
 echo "✅ 람다 배포 성공"
 
-# API Gateway URL 출력
+# 배포 결과 URL 출력
 echo "=== 배포 완료 정보 ==="
 API_URL=$(aws cloudformation describe-stacks \
     --stack-name "playground-$mode" \
-    --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
+    --query 'Stacks[0].Outputs[?OutputKey==`FunctionUrl`].OutputValue' \
     --output text \
     --profile $profile)
 
