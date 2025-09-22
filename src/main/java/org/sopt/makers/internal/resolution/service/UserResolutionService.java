@@ -1,9 +1,5 @@
 package org.sopt.makers.internal.resolution.service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
@@ -11,7 +7,6 @@ import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberRepository;
-import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.dto.request.ResolutionSaveRequest;
 import org.sopt.makers.internal.resolution.dto.response.ResolutionResponse;
@@ -33,7 +28,6 @@ public class UserResolutionService {
 	private final MemberRepository memberRepository;
 
 	private final UserResolutionResponseMapper userResolutionResponseMapper;
-	private final UserResolutionServiceUtil userResolutionServiceUtil;
 
 	private final PlatformService platformService;
 
@@ -67,8 +61,7 @@ public class UserResolutionService {
 		validateGeneration(userDetails);
 		validateExistingResolution(member);
 
-		UserResolution resolution = userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
-        writeToGoogleSheets(writerId, resolution);
+		userResolutionRepository.save(request.toDomain(member, CURRENT_GENERATION));
 	}
 
 	@Transactional
@@ -110,17 +103,4 @@ public class UserResolutionService {
 		return memberRepository.findById(userId).orElseThrow(
 			() -> new NotFoundDBEntityException("Is not a Member"));
 	}
-
-    private void writeToGoogleSheets(Long writerId, UserResolution resolution) {
-        List<Object> rowData = List.of(
-                writerId,
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                resolution.getResolutionTags().stream()
-                        .map(ResolutionTag::getDescription)
-                        .collect(Collectors.joining(", ")),
-                resolution.getContent()
-        );
-
-		userResolutionServiceUtil.safeWriteToSheets(writerId, List.of(rowData));
-    }
 }

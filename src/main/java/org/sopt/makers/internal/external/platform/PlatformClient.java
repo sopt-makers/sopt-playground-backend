@@ -6,6 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -19,6 +20,13 @@ public interface PlatformClient{
             @RequestHeader(name = "X-Api-Key") String apiKey,
             @RequestHeader(name = "X-Service-Name") String serviceName,
             @RequestParam(name = "userIds") List<Long> userIds
+    );
+
+    @PostMapping(value = "/api/v1/users")
+    ResponseEntity<BaseResponse<List<InternalUserDetails>>> getBatchInternalUserDetails(
+            @RequestHeader(name = "X-Api-Key") String apiKey,
+            @RequestHeader(name = "X-Service-Name") String serviceName,
+            @RequestBody GetPlatformUserBatchRequest body
     );
 
     @PutMapping(value = "/api/v1/users/{userId}")
