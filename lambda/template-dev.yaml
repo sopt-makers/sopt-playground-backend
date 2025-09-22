@@ -5,8 +5,8 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 300
-    MemorySize: 1024
+    Timeout: 180
+    MemorySize: 512
     
 Parameters:
   ImageUri:
@@ -23,34 +23,45 @@ Resources:
       Architectures:
         - arm64
       AutoPublishAlias: live
-      FunctionUrlConfig:
-        AuthType: NONE
-        Cors:
-          AllowOrigins:
-            - '*'
-          AllowMethods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-          AllowHeaders:
-            - '*'
-          AllowCredentials: false
-      
       Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - lambda:InvokeFunctionUrl
-                - lambda:GetFunctionUrl
-              Resource: "*"
-        # Warmer:
-        #   Type: Schedule
-        #   Properties:
-        #     Schedule: rate(5 minutes)
+        - AWSLambdaBasicExecutionRole
+      Events:
+        Warmer:
+          Type: Schedule
+          Properties:
+            Schedule: rate(3 minutes)
+            Enabled: true
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PlaygroundHttpApi
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PlaygroundHttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  PlaygroundHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
 
 Outputs:
-  FunctionUrl:
-    Description: "Lambda Function URL"
-    Value: !GetAtt PlaygroundApiFunctionUrl.FunctionUrl
+  ApiEndpoint:
+    Description: "HTTP API Gateway endpoint URL"
+    Value: !Sub "https://${PlaygroundHttpApi}.execute-api.${AWS::Region}.amazonaws.com"

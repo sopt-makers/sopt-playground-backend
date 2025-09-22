@@ -158,7 +158,7 @@ echo "✅ 람다 배포 성공"
 echo "=== 배포 완료 정보 ==="
 API_URL=$(aws cloudformation describe-stacks \
     --stack-name "playground-$mode" \
-    --query 'Stacks[0].Outputs[?OutputKey==`FunctionUrl`].OutputValue' \
+    --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
     --output text \
     --profile $profile)
 
