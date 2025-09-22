@@ -81,15 +81,13 @@ jobs:
       - name: 'ECR Public: keep only latest 3 images'
         run: |
           set -euo pipefail
-          REGION="ap-northeast-2"
-          REPO_NAME="$ECR_APP_NAME"
 
           # 최신 순 정렬 후 3개 건너뛰고 나머지 digest 추출
           DIGESTS_JSON=$(
             aws ecr-public describe-images \
-              --region "$REGION" \
-              --repository-name "$REPO_NAME" \
-              --query 'sort_by(imageDetails,&imagePushedAt)[::-1][3:].[].imageDigest' \
+              --region us-east-1 \
+              --repository-name sopt-makers/playground-dev \
+              --query 'reverse(sort_by(imageDetails, &imagePushedAt))[3:].imageDigest' \
               --output json
           )
 
@@ -101,9 +99,9 @@ jobs:
           IMAGE_IDS=$(echo "$DIGESTS_JSON" | jq '[.[] | {imageDigest: .}]')
 
           aws ecr-public batch-delete-image \
-            --region "$REGION" \
-            --repository-name "$REPO_NAME" \
-            --image-ids "$IMAGE_IDS"
+            --region us-east-1 \
+            --repository-name sopt-makers/playground-dev \
+            --image-ids $IMAGE_IDS
 
           echo "Old images deleted."
 
