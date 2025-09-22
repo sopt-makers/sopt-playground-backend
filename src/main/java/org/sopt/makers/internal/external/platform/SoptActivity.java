@@ -4,5 +4,6 @@ public record SoptActivity(
         int activityId,
         int generation,
         String part,
-        String team
+        String team,
+        String role
 ) {}

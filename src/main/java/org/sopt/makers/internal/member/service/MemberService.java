@@ -266,7 +266,7 @@ public class MemberService {
 
 		// 2) part/team/generation, name 정렬/검색은 플랫폼 데이터로 보정 필요 → 해당 ID 리스트로 플랫폼 조회
 		List<InternalUserDetails> internalUsers = platformService.getInternalUsers(allFilteredIds);
-
+		
 		// part/team/generation, name 필터 적용
 		String part = getMemberPart(filter);
 		String checkedTeam = checkActivityTeamConditions(team);
@@ -323,11 +323,30 @@ public class MemberService {
 		}
 		if (part == null && team == null && generation == null) return true;
 		List<SoptActivity> activities = userDetails.soptActivities();
-		return activities.stream().anyMatch(a ->
-				(generation == null || Objects.equals(a.generation(), generation)) &&
-				(part == null || Objects.equals(a.part(), part)) &&
-				(team == null || Objects.equals(a.team(), team))
-		);
+		
+		// 임원진 필터링 (team이 "미디어팀", "운영팀"이 아닌데 team이 있는 경우)
+		if ("임원진".equals(team)) {
+			boolean hasExecutiveRole = activities.stream()
+				.anyMatch(a -> {
+					String activityTeam = a.team();
+					return activityTeam != null && 
+						   !activityTeam.isEmpty() && 
+						   !"미디어팀".equals(activityTeam) && 
+						   !"운영팀".equals(activityTeam);
+				});
+			return hasExecutiveRole;
+		}
+		
+		// 일반 team 필터링 (OPERATION, MEDIA)
+		boolean matches = activities.stream().anyMatch(a -> {
+			boolean genMatch = (generation == null || Objects.equals(a.generation(), generation));
+			boolean partMatch = (part == null || Objects.equals(a.part(), part));
+			boolean teamMatch = (team == null || Objects.equals(a.team(), team));
+			
+			return genMatch && partMatch && teamMatch;
+		});
+		
+		return matches;
 	}
 
 	/**
@@ -453,19 +472,33 @@ public class MemberService {
 		if (filter == null)
 			return null;
 		return switch (filter) {
-			case 1 -> "PLAN";
-			case 2 -> "DESIGN";
-			case 3 -> "WEB";
-			case 4 -> "SERVER";
-			case 5 -> "ANDROID";
-			case 6 -> "IOS";
+			case 1 -> "기획";
+			case 2 -> "디자인";
+			case 3 -> "웹";
+			case 4 -> "서버";
+			case 5 -> "안드로이드";
+			case 6 -> "iOS";
 			default -> null;
 		};
 	}
 
 
 	private String checkActivityTeamConditions(String team) {
-		return (team == null || team.equals("해당 없음")) ? null : team;
+		if (team == null || team.equals("해당 없음")) {
+			return null;
+		}
+
+		if (team.equals("MAKERS")) {
+			return "임원진";
+		}
+		if (team.equals("OPERATION")) {
+			return "운영팀";
+		}
+		if (team.equals("MEDIA")) {
+			return "미디어팀";
+		}
+
+		return null;
 	}
 
 	public Member saveDefaultMemberProfile(Long userId) {

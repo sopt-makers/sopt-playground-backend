@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.external.platform;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +26,8 @@ public class PlatformService {
      */
     public InternalUserDetails getInternalUser(Long userId) {
         validateUserId(userId);
-        return fetchInternalUsers(Collections.singletonList(userId)).get(0);
+        List<InternalUserDetails> users = fetchInternalUsers(Collections.singletonList(userId));
+        return convertUserDetailsWithRoleToTeam(users.get(0));
     }
 
     /**
@@ -38,7 +38,10 @@ public class PlatformService {
         
         try {
             List<InternalUserDetails> batchUsers = fetchInternalUsersBatch(userIds);
-            return batchUsers;
+            // role을 team으로 변환하여 반환
+            return batchUsers.stream()
+                .map(this::convertUserDetailsWithRoleToTeam)
+                .toList();
         } catch (Exception e) {
             log.warn("[INTERNAL-PLATFORM] 유저 정보 조회 실패. 요청 ID 리스트: {}, 에러: {}", userIds, e.getMessage());
         }
@@ -133,6 +136,64 @@ public class PlatformService {
         }
 
         return users;
+    }
+
+    /**
+     * SoptActivity의 role을 team으로 변환
+     */
+    private SoptActivity convertRoleToTeam(SoptActivity activity) {
+        String teamValue = convertRoleToTeamValue(activity.role(), activity.part(), activity.team());
+        return new SoptActivity(
+            activity.activityId(),
+            activity.generation(),
+            activity.part(),
+            teamValue,
+            activity.role()
+        );
+    }
+
+    /**
+     * role을 team 값으로 변환하는 로직
+     */
+    private String convertRoleToTeamValue(String role, String part, String originalTeam) {
+        if (role == null) {
+            return originalTeam;
+        }
+
+        // MEMBER이고 team 정보가 있으면 기존 team 정보 반환
+        if ("MEMBER".equals(role) && originalTeam != null && !originalTeam.isEmpty()) {
+            return originalTeam;
+        }
+
+        return switch (role) {
+            case "MEMBER" -> null; // 일반 회원이고 team 정보가 없는 경우
+            case "PRESIDENT" -> "회장";
+            case "VICE_PRESIDENT" -> "부회장";
+            case "GENERAL_AFFAIRS" -> "총무";
+            case "PART_LEADER" -> part + " 파트장"; // 예: "기획 파트장", "디자인 파트장"
+            case "TEAM_LEADER" -> originalTeam + " 팀장"; // 예: "운영팀 팀장", "미디어팀 팀장"
+            default -> originalTeam;
+        };
+    }
+
+    /**
+     * InternalUserDetails의 soptActivities를 role 기반으로 team 변환
+     */
+    private InternalUserDetails convertUserDetailsWithRoleToTeam(InternalUserDetails userDetails) {
+        List<SoptActivity> convertedActivities = userDetails.soptActivities().stream()
+            .map(this::convertRoleToTeam)
+            .toList();
+        
+        return new InternalUserDetails(
+            userDetails.userId(),
+            userDetails.name(),
+            userDetails.profileImage(),
+            userDetails.birthday(),
+            userDetails.phone(),
+            userDetails.email(),
+            userDetails.lastGeneration(),
+            convertedActivities
+        );
     }
 
     /**
