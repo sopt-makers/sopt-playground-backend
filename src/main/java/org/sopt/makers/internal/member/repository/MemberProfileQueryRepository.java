@@ -82,12 +82,13 @@ public class MemberProfileQueryRepository {
                 .where(
                         checkMemberHasProfile(),
                         checkMemberMbti(mbti),
-                        checkEmployed(employed),
-                        checkSearchUniversityOrCompany(search)
+                        checkEmployed(employed)
+                        // checkSearchUniversityOrCompany(search)
                 )
                 .fetch();
     }
 
+    // TODO. 현재 이름 검색과 겹치므로 조건에서 제외
     private BooleanExpression checkSearchUniversityOrCompany(String search) {
         Boolean isEmpty = !StringUtils.hasText(search);
         if (isEmpty) return null;
