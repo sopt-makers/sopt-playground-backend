@@ -20,6 +20,8 @@ Resources:
       FunctionName: !Sub "playground-api-dev"
       PackageType: Image
       ImageUri: !Ref ImageUri
+      Architectures:
+        - arm64
       AutoPublishAlias: live
       FunctionUrlConfig:
         AuthType: NONE
