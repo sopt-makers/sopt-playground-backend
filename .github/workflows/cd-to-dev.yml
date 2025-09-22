@@ -101,7 +101,7 @@ jobs:
           aws ecr-public batch-delete-image \
             --region us-east-1 \
             --repository-name sopt-makers/playground-dev \
-            --image-ids $IMAGE_IDS
+            --image-ids "$IMAGE_IDS"
 
           echo "Old images deleted."
 
