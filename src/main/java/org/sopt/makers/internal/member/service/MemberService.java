@@ -258,7 +258,7 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public MemberAllProfileResponse getMemberProfiles(Integer filter, Integer limit, Integer cursor, String search,
 		Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
-		// 1) DB에서 먼저 서버 필터(mbti, employed, university/company)로 해당하는 모든 userId 조회
+		// 1) DB에서 먼저 서버 필터(mbti, employed)로 해당하는 모든 userId 조회
 		List<Long> allFilteredIds = memberProfileQueryRepository.findAllMemberIdsByDbFilters(mbti, employed, search);
 		if (allFilteredIds.isEmpty()) {
 			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
@@ -271,7 +271,7 @@ public class MemberService {
 		String part = getMemberPart(filter);
 		String checkedTeam = checkActivityTeamConditions(team);
 		List<InternalUserDetails> filteredByPlatform = internalUsers.stream()
-			.filter(u -> filterPlatformConditions(u, part, checkedTeam, generation, search))
+			.filter(u -> filterPlatformConditions(u, part, checkedTeam, generation))
 			.toList();
 
 		if (filteredByPlatform.isEmpty()) {
@@ -283,12 +283,21 @@ public class MemberService {
 			filteredByPlatform.stream().map(InternalUserDetails::userId).toList()
 		).stream().collect(Collectors.toMap(Member::getId, Function.identity()));
 
+		// 검색어가 이름/대학교/회사 모두에 적용되도록 추가 필터링 (토큰 AND, 필드 OR)
+		List<InternalUserDetails> filteredBySearch = filteredByPlatform.stream()
+			.filter(u -> matchesSearchAcrossFields(u, memberMap.get(u.userId()), search))
+			.toList();
+
+		if (filteredBySearch.isEmpty()) {
+			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
+		}
+
 		// 3-1) Member 정보를 포함한 정렬 및 페이지네이션 처리
 		int offsetValue = (cursor == null || cursor < 0) ? 0 : cursor;
 		int limitValue = (limit == null || limit <= 0) ? 30 : limit;
 		
 		OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
-		List<InternalUserDetails> sortedUsers = filteredByPlatform.stream()
+		List<InternalUserDetails> sortedUsers = filteredBySearch.stream()
 			.sorted((a, b) -> compareByOrderCondition(a, b, memberMap, orderByCondition))
 			.toList();
 		
@@ -314,13 +323,7 @@ public class MemberService {
 		return new MemberAllProfileResponse(memberList, hasNext, totalCount);
 	}
 
-	private boolean filterPlatformConditions(InternalUserDetails userDetails, String part, String team, Integer generation, String nameSearch) {
-		// 이름 검색은 플랫폼 이름에도 적용
-		if (nameSearch != null && !nameSearch.isBlank()) {
-			if (!userDetails.name().contains(nameSearch)) {
-				return false;
-			}
-		}
+	private boolean filterPlatformConditions(InternalUserDetails userDetails, String part, String team, Integer generation) {
 		if (part == null && team == null && generation == null) return true;
 		List<SoptActivity> activities = userDetails.soptActivities();
 		
@@ -347,6 +350,28 @@ public class MemberService {
 		});
 		
 		return matches;
+	}
+
+	/**
+	 * 검색어 기반 필터링
+	 */
+	private boolean matchesSearchAcrossFields(InternalUserDetails userDetails, Member member, String search) {
+		if (search == null || search.isBlank()) {
+			return true;
+		}
+		String keyword = search.trim();
+		String name = userDetails != null ? userDetails.name() : null;
+		String university = (member != null && member.getUniversity() != null) ? member.getUniversity() : null;
+		List<MemberCareer> careers = (member != null && member.getCareers() != null) ? member.getCareers() : Collections.emptyList();
+
+		boolean inName = name != null && name.contains(keyword);
+		boolean inUniv = university != null && university.contains(keyword);
+		boolean inCompany = careers.stream()
+			.map(MemberCareer::getCompanyName)
+			.filter(Objects::nonNull)
+			.anyMatch(c -> c.contains(keyword));
+
+		return inName || inUniv || inCompany;
 	}
 
 	/**
