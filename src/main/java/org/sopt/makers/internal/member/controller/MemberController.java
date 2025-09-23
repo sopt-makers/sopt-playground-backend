@@ -185,7 +185,7 @@ public class MemberController {
     public ResponseEntity<MemberAllProfileResponse> getUserProfiles (
             @RequestParam(required = false, name = "filter") Integer filter,
             @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Integer cursor,
+            @RequestParam(required = false, name = "offset") Integer offset,
             @RequestParam(required = false, name = "search") String search,
             @RequestParam(required = false, name = "generation") Integer generation,
             @RequestParam(required = false, name = "employed") Integer employed,
@@ -193,7 +193,7 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, cursor, search, generation, employed, orderBy, mbti, team);
+        MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, offset, search, generation, employed, orderBy, mbti, team);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
