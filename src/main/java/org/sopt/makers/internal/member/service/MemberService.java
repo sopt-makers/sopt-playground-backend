@@ -131,8 +131,12 @@ public class MemberService {
 
 	@Transactional(readOnly = true)
 	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
+		boolean isMine = Objects.equals(profileId, viewerId);
 		Member member = getMemberHasProfileById(profileId);
-		InternalUserDetails userDetails = platformService.getInternalUser(profileId);
+		// 내 프로필 조회인 경우 원본 team 정보 사용, 다른 사람 프로필 조회인 경우 role 변환된 team 정보 사용
+		InternalUserDetails userDetails = isMine
+			? platformService.getInternalUserWithOriginalTeam(profileId)
+			: platformService.getInternalUser(profileId);
 		List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
 		val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
 		val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
@@ -144,7 +148,6 @@ public class MemberService {
 			.stream()
 			.map(entry -> new MemberActivityResponse(entry.getKey(), entry.getValue()))
 			.collect(Collectors.toList());
-		boolean isMine = Objects.equals(profileId, viewerId);
 		boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
 		MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(member, userDetails, isMine,
 			memberProfileProjects, activityResponses, isCoffeeChatActivate);
