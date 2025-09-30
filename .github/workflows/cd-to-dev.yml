@@ -78,6 +78,34 @@ jobs:
           docker tag $ECR_APP_NAME:latest $ECR_REPO
           docker push $ECR_REPO
 
+      - name: 'ECR Public: keep only latest 3 images'
+        run: |
+          set -euo pipefail
+
+          # 최신 순 정렬 후 3개 건너뛰고 나머지 digest 추출
+          DIGESTS_JSON=$(
+            aws ecr-public describe-images \
+              --region us-east-1 \
+              --repository-name sopt-makers/playground-dev \
+              --query 'reverse(sort_by(imageDetails, &imagePushedAt))[3:].imageDigest' \
+              --output json
+          )
+
+          if [[ "$DIGESTS_JSON" == "null" || "$DIGESTS_JSON" == "[]" ]]; then
+            echo "No old images to delete (<= 3 images present)."
+            exit 0
+          fi
+
+          IMAGE_IDS=$(echo "$DIGESTS_JSON" | jq '[.[] | {imageDigest: .}]')
+
+          aws ecr-public batch-delete-image \
+            --region us-east-1 \
+            --repository-name sopt-makers/playground-dev \
+            --image-ids "$IMAGE_IDS"
+
+          echo "Old images deleted."
+
+
       - name: 'Send docker-compose.yml to EC2 Instance'
         uses: appleboy/scp-action@master
         with:
