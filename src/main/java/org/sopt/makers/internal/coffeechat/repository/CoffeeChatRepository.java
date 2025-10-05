@@ -11,6 +11,7 @@ public interface CoffeeChatRepository extends JpaRepository<CoffeeChat, Long>, C
 
     // READ
     Boolean existsCoffeeChatByMember(Member member);
+    Boolean existsCoffeeChatByMemberAndIsCoffeeChatActivate(Member member, Boolean isCoffeeChatActivate);
     Optional<CoffeeChat> findCoffeeChatByMember(Member member);
 
     // UPDATE
