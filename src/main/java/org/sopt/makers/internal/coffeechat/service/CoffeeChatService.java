@@ -68,7 +68,7 @@ public class CoffeeChatService {
     @Transactional
     public void sendCoffeeChatRequest(CoffeeChatRequest request, Long senderId) {
         InternalUserDetails senderUserDetails = platformService.getInternalUser(senderId);
-        InternalUserDetails receiverUserDetails = platformService.getInternalUser(senderId);
+        InternalUserDetails receiverUserDetails = platformService.getInternalUser(request.receiverId());
         String replyInfo = getReplyInfo(request, senderUserDetails);
 
         MessageSender senderStrategy = messageSenderFactory.getSender(request.senderEmail(), request.senderPhone());
