@@ -5,9 +5,9 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 180
-    MemorySize: 512
-    
+    Timeout: 300
+    MemorySize: 1024
+
 Parameters:
   ImageUri:
     Type: String
@@ -50,9 +50,9 @@ Resources:
       StageName: $default
       CorsConfiguration:
         AllowOrigins:
-          - '*'
+          - "*"
         AllowHeaders:
-          - '*'
+          - "*"
         AllowMethods:
           - GET
           - POST

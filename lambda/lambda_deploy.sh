@@ -166,6 +166,68 @@ if [ -n "$API_URL" ] && [ "$API_URL" != "None" ]; then
     echo "🚀 API 접속 URL: $API_URL"
 else
     echo "❌ API URL을 찾을 수 없습니다."
+    exit 1
+fi
+
+echo "=== 7단계: Lambda Health Check ==="
+echo "Lambda가 정상적으로 동작하는지 확인합니다..."
+echo "15초마다 체크하여 총 5분간 모니터링합니다."
+
+# Health Check 설정
+HEALTH_CHECK_URL="$API_URL/actuator/health"
+CHECK_INTERVAL=15  # 15초
+MAX_CHECKS=20      # 5분 = 300초 / 15초 = 20번
+SUCCESS_COUNT=0
+FAIL_COUNT=0
+AUTH_HEADER="Authorization: Bearer e"
+echo "Health Check URL: $HEALTH_CHECK_URL"
+echo "체크 간격: ${CHECK_INTERVAL}초"
+echo "최대 체크 횟수: ${MAX_CHECKS}회"
+echo ""
+
+
+for i in $(seq 1 $MAX_CHECKS); do
+    echo "[$i/$MAX_CHECKS] Health Check 시도 중... ($(date '+%H:%M:%S'))"
+    
+    # HTTP 상태 코드와 응답 시간 측정 (Bearer 토큰 포함)
+    RESPONSE=$(curl -s -H "$AUTH_HEADER" -w "\n%{http_code}\n%{time_total}" "$HEALTH_CHECK_URL" 2>/dev/null || echo -e "\n000\n0")
+    
+    HTTP_CODE=$(echo "$RESPONSE" | tail -n 2 | head -n 1)
+    RESPONSE_TIME=$(echo "$RESPONSE" | tail -n 1)
+    BODY=$(echo "$RESPONSE" | sed '$d' | sed '$d')
+    
+    if [ "$HTTP_CODE" = "200" ]; then
+        SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        echo "✅ Health Check 성공 (${RESPONSE_TIME}s) - 응답: $BODY"
+        
+        # 한 번이라도 성공하면 조기 종료
+        echo "🎉 Lambda가 정상적으로 동작합니다! (1회 성공)"
+        break
+    else
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        echo "❌ Health Check 실패 (HTTP: $HTTP_CODE, 시간: ${RESPONSE_TIME}s)"
+    fi
+    
+    # 마지막 체크가 아니면 대기
+    if [ $i -lt $MAX_CHECKS ]; then
+        echo "⏳ ${CHECK_INTERVAL}초 대기 중..."
+        sleep $CHECK_INTERVAL
+    fi
+done
+
+echo ""
+echo "=== Health Check 결과 요약 ==="
+echo "✅ 성공: $SUCCESS_COUNT회"
+echo "❌ 실패: $FAIL_COUNT회"
+echo "📊 성공률: $(( SUCCESS_COUNT * 100 / (SUCCESS_COUNT + FAIL_COUNT) ))%"
+
+if [ $SUCCESS_COUNT -gt 0 ]; then
+    echo "🎉 Lambda 배포 및 Health Check 완료!"
+    echo "🚀 API URL: $API_URL"
+else
+    echo "💥 5분 동안 Lambda Health Check 실패"
+    echo "CloudWatch Logs를 확인하여 문제를 해결해주세요."
+    exit 1
 fi
 
 exit
