@@ -41,7 +41,7 @@ public class CoffeeChatRetriever {
     }
 
     public boolean existsCoffeeChat(Member member) {
-        return coffeeChatRepository.existsCoffeeChatByMember(member);
+        return coffeeChatRepository.existsCoffeeChatByMemberAndIsCoffeeChatActivate(member, true);
     }
 
     public CoffeeChat findCoffeeChatAndCheckIsActivated(Member member, Boolean isMine) {
