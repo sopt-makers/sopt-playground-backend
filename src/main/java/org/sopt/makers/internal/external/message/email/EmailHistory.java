@@ -2,7 +2,7 @@ package org.sopt.makers.internal.external.message.email;
 
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity

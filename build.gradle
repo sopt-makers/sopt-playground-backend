@@ -1,7 +1,8 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.4'
-	id 'io.spring.dependency-management' version '1.0.14.RELEASE'
+	id 'org.springframework.boot' version '3.2.0'
+	id 'io.spring.dependency-management' version '1.1.4'
 	id 'java'
+	id 'org.graalvm.buildtools.native' version '0.10.2'
 }
 
 group = 'org.sopt.makers'
@@ -22,7 +23,7 @@ repositories {
 }
 
 ext {
-	set('springCloudVersion', "2021.0.4")
+	set('springCloudVersion', "2023.0.0")
 }
 
 dependencies {
@@ -35,12 +36,12 @@ dependencies {
 	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
 	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 	implementation 'com.google.code.gson:gson:2.9.0'
-	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
 	implementation 'net.minidev:json-smart'
 
 	// Postgresql Array type
-	implementation('com.vladmihalcea:hibernate-types-52:2.19.2')
+	implementation('io.hypersistence:hypersistence-utils-hibernate-62:3.5.0')
 
 	// S3
 	implementation('software.amazon.awssdk:s3:2.17.285')
@@ -63,8 +64,8 @@ dependencies {
 	testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
 	// QueryDsl
-	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
-	annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jpa"
+	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
+	annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 
@@ -93,6 +94,10 @@ dependencies {
 
 	// Mac M1/M2 ARM 환경에서 Netty DNS Resolver
 	implementation "io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64"
+
+	// BouncyCastle for Apple JWT
+	implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+	implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
 }
 
 dependencyManagement {
@@ -103,4 +108,14 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// GraalVM 네이티브 컴파일을 위한 설정
+graalvmNative {
+	binaries {
+		main {
+			imageName = 'internal'
+			mainClass = 'org.sopt.makers.internal.InternalApplication'
+		}
+	}
 }

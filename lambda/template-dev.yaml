@@ -6,7 +6,7 @@ Description: >
 Globals:
   Function:
     Timeout: 300
-    MemorySize: 1024
+    MemorySize: 512  # 네이티브 바이너리는 메모리 사용량이 적음
 
 Parameters:
   ImageUri:
@@ -29,7 +29,7 @@ Resources:
         Warmer:
           Type: Schedule
           Properties:
-            Schedule: rate(3 minutes)
+            Schedule: rate(5 minutes)  # 네이티브 바이너리는 Cold Start가 빠르므로 워밍업 간격 증가
             Enabled: true
         ApiRoot:
           Type: HttpApi

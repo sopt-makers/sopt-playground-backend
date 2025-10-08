@@ -1,0 +1,8 @@
+[
+  {
+    "name": "org.sopt.makers.internal.InternalApplication",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  }
+]

@@ -1,10 +1,11 @@
 package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.sopt.makers.internal.member.domain.Member;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,7 +38,7 @@ public class DeletedCommunityPost {
     @Column
     private Integer hits = 0;
 
-    @Type(type = "string-array")
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "images", columnDefinition = "text[]")
     private String[] images;
 

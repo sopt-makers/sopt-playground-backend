@@ -2,7 +2,7 @@ package org.sopt.makers.internal.wordchaingame.domain;
 
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

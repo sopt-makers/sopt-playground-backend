@@ -24,7 +24,7 @@ import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.repository.VoteOptionRepository;
 import org.sopt.makers.internal.vote.repository.VoteRepository;
 import org.sopt.makers.internal.vote.repository.VoteSelectionRepository;
-import org.webjars.NotFoundException;
+import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -183,9 +183,9 @@ class VoteServiceTest {
         @DisplayName("실패: 게시글 없음")
         void selectVote_fail_postNotFound() {
             when(communityPostRetriever.findCommunityPostById(anyLong()))
-                    .thenThrow(new NotFoundException("게시글이 존재하지 않습니다."));
+                    .thenThrow(new NotFoundDBEntityException("게시글이 존재하지 않습니다."));
             assertThatThrownBy(() -> voteService.selectVote(1L, 2L, List.of(1L)))
-                    .isInstanceOf(NotFoundException.class)
+                    .isInstanceOf(NotFoundDBEntityException.class)
                     .hasMessageContaining("게시글이 존재하지 않습니다.");
         }
 
@@ -194,9 +194,9 @@ class VoteServiceTest {
         void selectVote_fail_userNotFound() {
             when(communityPostRetriever.findCommunityPostById(anyLong())).thenReturn(post);
             when(memberRetriever.findMemberById(anyLong()))
-                    .thenThrow(new NotFoundException("유저가 존재하지 않습니다."));
+                    .thenThrow(new NotFoundDBEntityException("유저가 존재하지 않습니다."));
             assertThatThrownBy(() -> voteService.selectVote(1L, 2L, List.of(1L)))
-                    .isInstanceOf(NotFoundException.class)
+                    .isInstanceOf(NotFoundDBEntityException.class)
                     .hasMessageContaining("유저가 존재하지 않습니다.");
         }
     }

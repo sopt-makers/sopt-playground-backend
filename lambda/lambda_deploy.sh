@@ -36,13 +36,14 @@ echo "  - Region: $REGION"
 echo "  - Repository: $REPOSITORY_NAME"
 echo "  - ECR URI: $REPO_URI"
 
-echo "=== 1단계: Gradle 빌드 ==="
-./gradlew clean build -x test
+echo "=== 1단계: Docker를 사용한 GraalVM 네이티브 빌드 ==="
+echo "Docker를 사용하여 GraalVM 네이티브 컴파일을 수행합니다..."
+docker build -t "$REPOSITORY_NAME:$IMAGE_TAG" .
 if [ $? -ne 0 ]; then
-    echo "❌ Gradle 빌드 실패"
+    echo "❌ Docker 네이티브 빌드 실패"
     exit 1
 fi
-echo "✅ Gradle 빌드 완료"
+echo "✅ Docker 네이티브 빌드 완료"
 
 echo "=== 2단계: ECR 리포지토리 확인/생성 ==="
 echo "리포지토리 확인 중: $REPOSITORY_NAME"
@@ -79,13 +80,8 @@ echo "✅ ECR 로그인 완료"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 IMAGE_TAG="build-$TIMESTAMP"
 
-echo "=== 4단계: Docker 이미지 빌드 ==="
-docker build -t "$REPOSITORY_NAME:$IMAGE_TAG" .
-if [ $? -ne 0 ]; then
-    echo "❌ Docker 이미지 빌드 실패"
-    exit 1
-fi
-echo "✅ Docker 이미지 빌드 완료"
+echo "=== 4단계: ECR에 이미지 푸시 준비 ==="
+# 이미 1단계에서 빌드된 이미지를 사용
 
 echo "=== 5단계: ECR에 이미지 푸시 ==="
 # 고유 태그로 이미지 푸시
