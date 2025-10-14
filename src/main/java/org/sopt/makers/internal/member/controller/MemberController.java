@@ -149,7 +149,7 @@ public class MemberController {
             @PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        MemberProfileSpecificResponse response = memberService.getMemberProfile(id, userId);
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(id, false);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -159,7 +159,7 @@ public class MemberController {
     public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        MemberProfileSpecificResponse response = memberService.getMemberProfile(userId, userId);
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(userId, true);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
