@@ -29,16 +29,7 @@ public class PlatformService {
         List<InternalUserDetails> users = fetchInternalUsers(Collections.singletonList(userId));
         return convertUserDetailsWithRoleToTeam(users.get(0));
     }
-
-    /**
-     * 단일 내부 사용자 조회 (role 변환 없이 원본 team 정보 반환)
-     */
-    public InternalUserDetails getInternalUserWithOriginalTeam(Long userId) {
-        validateUserId(userId);
-        List<InternalUserDetails> users = fetchInternalUsers(Collections.singletonList(userId));
-        return users.get(0);
-    }
-
+    
     /**
      * 다중 내부 사용자 조회
      */

@@ -34,6 +34,7 @@ import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
 import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
@@ -130,13 +131,10 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
-	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId ,Boolean isForUpdate) {
+	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
 		Member member = getMemberHasProfileById(profileId);
 		boolean isMine = Objects.equals(profileId, viewerId);
-		// 내 프로필 조회 (수정 목적)인 경우 원본 team 정보 사용, 일반 프로필 조회인 경우 role 변환된 team 정보 사용
-		InternalUserDetails userDetails = isForUpdate
-			? platformService.getInternalUserWithOriginalTeam(profileId)
-			: platformService.getInternalUser(profileId);
+		InternalUserDetails userDetails = platformService.getInternalUser(profileId);
 		List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
 		val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
 		val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
@@ -671,6 +669,56 @@ public class MemberService {
 		return rootNode;
 	}
 
+	/**
+	 * 임원진 직책 여부 확인
+	 * - "회장", "부회장", "총무"와 정확히 일치하거나
+	 * - "파트장"을 포함하거나 (예: "기획 파트장", "디자인 파트장")
+	 * - "팀장"을 포함하면 (예: "운영팀 팀장", "미디어팀 팀장")
+	 * 임원진으로 간주
+	 */
+	private boolean isExecutivePosition(String team) {
+		if (team == null || team.isEmpty()) {
+			return false;
+		}
+		return team.equals("회장")
+			|| team.equals("부회장")
+			|| team.equals("총무")
+			|| team.contains("파트장")
+			|| team.contains("팀장");
+	}
+
+	/**
+	 * 가공된 team 값을 Platform 원본 team 값으로 역변환
+	 * PlatformService.convertRoleToTeamValue의 역변환
+	 *
+	 * - "회장", "부회장", "총무", "파트장" 포함 → null
+	 * - "팀장" 포함 (예: "운영팀 팀장") → "운영팀"
+	 * - 그 외 → 원본 그대로 반환
+	 */
+	private String convertTeamToOriginalValue(String team) {
+		if (team == null || team.isEmpty()) {
+			return null;
+		}
+
+		// 회장, 부회장, 총무는 원본 team이 null
+		if (team.equals("회장") || team.equals("부회장") || team.equals("총무")) {
+			return null;
+		}
+
+		// "기획 파트장", "디자인 파트장" 등 → 원본 team은 null
+		if (team.contains("파트장")) {
+			return null;
+		}
+
+		// "운영팀 팀장", "미디어팀 팀장" 등 → " 팀장" 제거
+		if (team.contains("팀장")) {
+			return team.replace(" 팀장", "");
+		}
+
+		// 일반 팀 (미디어팀, 운영팀 등)은 그대로 반환
+		return team;
+	}
+
 	@Transactional
 	public Member updateMemberProfile(Long id, MemberProfileUpdateRequest request) {
 		val userDetails = platformService.getInternalUser(id);
@@ -679,21 +727,40 @@ public class MemberService {
 			.stream()
 			.collect(Collectors.toMap(SoptActivity::generation, Function.identity()));
 
-		List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = request.activities()
-			.stream()
-			.map(requestActivity -> {
-				SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
+		List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = new ArrayList<>();
 
-				if (dbActivity == null) {
-					throw new ClientBadRequestException(
-						"요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
-				}
+		for (val requestActivity : request.activities()) {
+			SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
 
-				return new PlatformUserUpdateRequest.SoptActivityRequest(dbActivity.activityId(),
-					requestActivity.team());
-			})
-			.toList();
+			if (dbActivity == null) {
+				throw new ClientBadRequestException(
+					"요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
+			}
 
+			// 임원진 기수는 원본 team 값으로 역변환하여 전송 (업데이트하지 않음)
+			if (isExecutivePosition(dbActivity.team())) {
+				String originalTeam = convertTeamToOriginalValue(dbActivity.team());
+				soptActivitiesForPlatform.add(
+					new PlatformUserUpdateRequest.SoptActivityRequest(
+						dbActivity.activityId(),
+						originalTeam // Platform 원본 team 값으로 역변환
+					)
+				);
+				continue;
+			}
+
+			// 일반 팀만 ActivityTeam 검증
+			if (!ActivityTeam.hasActivityTeam(requestActivity.team())) {
+				throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+			}
+
+			soptActivitiesForPlatform.add(
+				new PlatformUserUpdateRequest.SoptActivityRequest(
+					dbActivity.activityId(),
+					requestActivity.team()
+				)
+			);
+		}
 		val platformRequest = new PlatformUserUpdateRequest(request.name(), request.profileImage(),
 			request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
 			request.phone() != null && !request.phone().isBlank() ? request.phone() : userDetails.phone(),
