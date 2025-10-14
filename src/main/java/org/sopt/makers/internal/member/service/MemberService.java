@@ -130,10 +130,11 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
-	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Boolean isMine) {
+	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId ,Boolean isForUpdate) {
 		Member member = getMemberHasProfileById(profileId);
+		boolean isMine = Objects.equals(profileId, viewerId);
 		// 내 프로필 조회 (수정 목적)인 경우 원본 team 정보 사용, 일반 프로필 조회인 경우 role 변환된 team 정보 사용
-		InternalUserDetails userDetails = isMine
+		InternalUserDetails userDetails = isForUpdate
 			? platformService.getInternalUserWithOriginalTeam(profileId)
 			: platformService.getInternalUser(profileId);
 		List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
