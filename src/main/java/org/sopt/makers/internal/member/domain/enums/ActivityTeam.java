@@ -8,7 +8,7 @@ public enum ActivityTeam {
     NO_TEAM("해당 없음"),
     MEDIA_TEAM("미디어팀"),
     OPERATION_TEAM("운영팀"),
-    MAKERS("메이커스팀");
+    MAKERS("메이커스");
 
     final String teamName;
     ActivityTeam(String teamName) {
