@@ -34,7 +34,7 @@ public class Category {
     @JoinColumn(name = "parent")
     private Category parent;
 
-    @OneToMany(mappedBy = "parent")
+    @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
     private List<Category> children = new ArrayList<>();
 
     @Column

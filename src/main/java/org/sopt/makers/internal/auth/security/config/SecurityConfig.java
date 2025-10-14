@@ -33,6 +33,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                        "/actuator/**",
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
                         "/webjars/swagger-ui/**",
@@ -41,7 +42,9 @@ public class SecurityConfig {
                         "/internal/api/v1/**",
                         "/api/v1/admin/**",
                         "/api/v1/projects/"
-                ).permitAll()
+                )
+                .permitAll()
+                .anyRequest().permitAll()
                 // .requestMatchers(
                 //         "/internal/api/v1/projects/**",
                 //         "/internal/api/v1/members/**",

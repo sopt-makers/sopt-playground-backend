@@ -1,5 +1,5 @@
 # GraalVM 네이티브 컴파일을 위한 멀티스테이지 빌드
-FROM --platform=linux/arm64 ghcr.io/graalvm/graalvm-community:21.0.1 as builder
+FROM ghcr.io/graalvm/native-image-community:17.0.9 as builder
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -10,11 +10,18 @@ COPY . .
 # Gradle Wrapper 실행 권한 부여
 RUN chmod +x ./gradlew
 
-# 네이티브 컴파일 실행
-RUN ./gradlew clean nativeCompile -x test
+# 필요한 빌드 도구 설치
+RUN microdnf install -y findutils
 
-# 최종 Lambda 이미지
-FROM --platform=linux/arm64 amazoncorretto:17-alpine
+# 네이티브 컴파일 실행 (메모리 최적화)
+ENV SPRING_PROFILES_ACTIVE=lambda-dev
+ENV GRADLE_OPTS="-Xmx3g"
+RUN ./gradlew clean nativeCompile -x test --no-daemon \
+    -Dorg.gradle.jvmargs="-Xmx3g" \
+    && ls -lah /app/build/native/nativeCompile/
+
+# 최종 이미지 - glibc 호환을 위해 amazonlinux 사용
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 # Lambda adapter 복사 (ECR 공식 이미지에서)
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter

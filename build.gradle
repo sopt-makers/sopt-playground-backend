@@ -1,13 +1,20 @@
 plugins {
 	id 'org.springframework.boot' version '3.2.0'
-	id 'io.spring.dependency-management' version '1.1.4'
+	id 'io.spring.dependency-management' version '1.1.7'
 	id 'java'
-	id 'org.graalvm.buildtools.native' version '0.10.2'
+	id 'org.graalvm.buildtools.native' version '0.10.4'
+	id 'org.springframework.boot.aot' version '3.2.0' apply false
+	id 'org.hibernate.orm' version '6.2.13.Final'
 }
 
 group = 'org.sopt.makers'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
 
 def queryDslVersion = "5.0.0"
 def mapstructVersion = "1.5.2.Final"
@@ -35,7 +42,7 @@ dependencies {
 	implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
 	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
 	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
-	implementation 'com.google.code.gson:gson:2.9.0'
+	implementation 'com.google.code.gson:gson:2.10.1'
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
 	implementation 'net.minidev:json-smart'
@@ -96,8 +103,11 @@ dependencies {
 	implementation "io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64"
 
 	// BouncyCastle for Apple JWT
-	implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
-	implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
+	implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+	implementation 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+
+	// ArchUnit for Native Image compatibility tests
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.2.1'
 }
 
 dependencyManagement {
@@ -110,12 +120,63 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+// Native Image 호환성 체크 태스크
+tasks.register('checkNativeImageCompatibility') {
+	group = 'verification'
+	description = 'Native Image 호환성을 체크합니다'
+
+	doLast {
+		println "🔍 Native Image 호환성 체크 중..."
+
+		def warnings = []
+
+		// @QueryProjection 사용 체크
+		fileTree('src/main/java').matching {
+			include '**/*.java'
+		}.each { file ->
+			if (file.text.contains('@QueryProjection') && file.text.contains('record ')) {
+				warnings.add("⚠️  ${file.name}: Record + @QueryProjection 사용 (Projections.constructor() 권장)")
+			}
+
+			// LAZY 없이 @OneToMany 체크
+			if (file.text.contains('@OneToMany') && !file.text.contains('FetchType.EAGER') && !file.text.contains('fetch = FetchType')) {
+				warnings.add("ℹ️  ${file.name}: @OneToMany에 fetch type 명시 권장")
+			}
+		}
+
+		if (warnings.isEmpty()) {
+			println "✅ Native Image 호환성 문제 없음!"
+		} else {
+			println "\n경고 사항:"
+			warnings.each { println it }
+		}
+	}
+}
+
+// Hibernate bytecode enhancement 설정 (Native Image 지원)
+hibernate {
+	enhancement {
+		enableLazyInitialization = true
+		enableDirtyTracking = true
+		enableAssociationManagement = true
+		enableExtendedEnhancement = false
+	}
+}
+
 // GraalVM 네이티브 컴파일을 위한 설정
 graalvmNative {
 	binaries {
 		main {
 			imageName = 'internal'
 			mainClass = 'org.sopt.makers.internal.InternalApplication'
+			buildArgs.add('--verbose')
+            buildArgs.add('-H:+ReportExceptionStackTraces')
+            buildArgs.add('--initialize-at-run-time=io.netty')
+            buildArgs.add('-H:+AddAllCharsets')
+            buildArgs.add('-H:+AllowDeprecatedBuilderClassesOnImageClasspath')
 		}
+	}
+	metadataRepository {
+		enabled = true
 	}
 }

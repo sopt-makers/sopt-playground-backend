@@ -1,7 +1,8 @@
 package org.sopt.makers.internal.member.dto;
 
-import com.querydsl.core.annotations.QueryProjection;
+import org.springframework.aot.hint.annotation.Reflective;
 
+@Reflective
 public record MemberProfileProjectDao(
         Long id,
         Long writerId,
@@ -13,6 +14,5 @@ public record MemberProfileProjectDao(
         String thumbnailImage,
         String[] serviceType
 ) {
-    @QueryProjection
-    public MemberProfileProjectDao {}
+    // @QueryProjection 제거하고 Projections.constructor() 사용
 }

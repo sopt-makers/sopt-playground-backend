@@ -1,9 +1,12 @@
 package org.sopt.makers.internal.project.dto;
 
+import org.springframework.aot.hint.annotation.Reflective;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Reflective
 public record ProjectMemberVo(
         Long id,
         String name,
