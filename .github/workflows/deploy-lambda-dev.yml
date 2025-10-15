@@ -2,6 +2,9 @@ name: Deploy Lambda to Dev
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ "feat/#766-spring3-update" ]
+
 
 jobs:
   deploy:
