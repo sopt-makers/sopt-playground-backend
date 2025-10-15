@@ -28,6 +28,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY_TEMP }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Set up QEMU for multi-platform builds
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
