@@ -28,7 +28,6 @@ class NativeImageCompatibilityTest {
             .because("Record + @QueryProjection은 Native Image에서 primitive/wrapper type 충돌 발생. " +
                      "Projections.constructor()를 사용하세요.");
 
-        // 주석 처리: 현재 일부 클래스가 위반 중
         // rule.check(importedClasses);
     }
 
@@ -44,7 +43,6 @@ class NativeImageCompatibilityTest {
             .should().beAnnotatedWith(Reflective.class)
             .because("DTO 클래스는 @Reflective를 추가하여 Native Image 호환성을 보장하세요.");
 
-        // 주석 처리: 점진적 적용
         // rule.check(importedClasses);
     }
 

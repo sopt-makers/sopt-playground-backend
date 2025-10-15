@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.community.dto.response;
 
-import com.querydsl.core.annotations.QueryProjection;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.aot.hint.annotation.Reflective;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
@@ -24,6 +23,4 @@ public record PostDetailResponse(
         @Schema(required = false)
         AnonymousProfileVo anonymousProfile
 ) {
-    @QueryProjection
-    public PostDetailResponse {}
 }

@@ -14,5 +14,4 @@ public record MemberProfileProjectDao(
         String thumbnailImage,
         String[] serviceType
 ) {
-    // @QueryProjection 제거하고 Projections.constructor() 사용
 }

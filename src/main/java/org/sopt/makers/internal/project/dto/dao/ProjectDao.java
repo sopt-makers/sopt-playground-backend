@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.project.dto.dao;
 
-import com.querydsl.core.annotations.QueryProjection;
 import org.springframework.aot.hint.annotation.Reflective;
 
 import java.time.LocalDate;
@@ -38,6 +37,4 @@ public record ProjectDao (
         String linkTitle,
         String linkUrl
 ) {
-    @QueryProjection
-    public ProjectDao {}
 }

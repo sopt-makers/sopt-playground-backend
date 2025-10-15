@@ -2,6 +2,8 @@ package org.sopt.makers.internal.member.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import jakarta.persistence.FetchType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -106,7 +108,7 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
 
     public void editActivityChange(Boolean isCheck) {

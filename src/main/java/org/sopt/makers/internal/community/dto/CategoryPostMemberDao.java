@@ -1,6 +1,5 @@
 package org.sopt.makers.internal.community.dto;
 
-import com.querydsl.core.annotations.QueryProjection;
 import org.springframework.aot.hint.annotation.Reflective;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.community.domain.category.Category;
@@ -12,6 +11,4 @@ public record CategoryPostMemberDao(
         Member member,
         Category category
 ) {
-    @QueryProjection
-    public CategoryPostMemberDao {}
 }
