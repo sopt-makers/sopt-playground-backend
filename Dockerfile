@@ -4,20 +4,30 @@ FROM ghcr.io/graalvm/native-image-community:17.0.9 as builder
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 소스 코드 복사
-COPY . .
+# 필요한 빌드 도구 설치
+RUN microdnf install -y findutils
+
+# Gradle Wrapper와 빌드 설정 파일만 먼저 복사 (dependency 캐싱용)
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
 
 # Gradle Wrapper 실행 권한 부여
 RUN chmod +x ./gradlew
 
-# 필요한 빌드 도구 설치
-RUN microdnf install -y findutils
+# Dependency 다운로드 (이 레이어는 build.gradle이 변경되지 않으면 캐시됨)
+RUN ./gradlew dependencies --no-daemon || true
 
-# 네이티브 컴파일 실행 (메모리 최적화)
+# 소스 코드 복사 (dependency 다운로드 후)
+COPY src ./src
+COPY src/main/resources ./src/main/resources
+
+# 네이티브 컴파일 실행 (메모리 및 병렬 처리 최적화)
 ENV SPRING_PROFILES_ACTIVE=lambda-dev
 ENV GRADLE_OPTS="-Xmx3g"
-RUN ./gradlew clean nativeCompile -x test --no-daemon \
+RUN ./gradlew nativeCompile -x test --no-daemon --parallel \
     -Dorg.gradle.jvmargs="-Xmx3g" \
+    -Dorg.gradle.parallel=true \
     && ls -lah /app/build/native/nativeCompile/
 
 # 최종 이미지 - glibc 호환을 위해 amazonlinux 사용

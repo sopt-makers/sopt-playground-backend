@@ -21,12 +21,34 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
 
+      - name: Setup Gradle cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_TEMP }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY_TEMP }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Get application-lambda-dev.yml from AWS S3
+        run: |
+          aws s3 cp \
+            --region ap-northeast-2 \
+            s3://sopt-makers-internal/dev/deploy/application-lambda-dev.yml src/main/resources/application-lambda-dev.yml
+
+      - name: Get Apple key from AWS S3
+        run: |
+          aws s3 cp \
+            --region ap-northeast-2 \
+            s3://sopt-makers-internal/dev/deploy/${{ secrets.APPLE_KEY }} src/main/resources/static/${{ secrets.APPLE_KEY }}
 
       - name: Set up QEMU for multi-platform builds
         uses: docker/setup-qemu-action@v2
@@ -53,9 +75,12 @@ jobs:
 
       - name: Build Docker image with GraalVM native compilation
         run: |
-          docker build \
+          docker buildx build \
             --platform=linux/arm64 \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
             -t ${{ secrets.AWS_LAMBDA_DEV_ECR_REPO }}:${{ steps.timestamp.outputs.IMAGE_TAG }} \
+            --load \
             .
 
       - name: Tag and push Docker image to ECR

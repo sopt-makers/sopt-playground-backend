@@ -51,7 +51,7 @@ public class SecurityConfig {
                 //         "/internal/api/v1/sopticles/**",
                 //         "/internal/api/v1/profile",
                 //         "/api/v1/presigned-url"
-                // ).hasAuthority("MEMBER")
+                // ).hasAuㅇthority("MEMBER")
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);

@@ -169,6 +169,14 @@ graalvmNative {
 		main {
 			imageName = 'internal'
 			mainClass = 'org.sopt.makers.internal.InternalApplication'
+
+			// 빌드 속도 최적화
+			buildArgs.add('-J-Xmx4g')  // 빌더 자체 메모리 증가
+			buildArgs.add('--no-fallback')  // fallback 이미지 생성 안 함
+			buildArgs.add('--gc=G1')  // G1 GC 사용
+			buildArgs.add('-march=compatibility')  // 호환성 우선
+
+			// 기존 설정
 			buildArgs.add('--verbose')
             buildArgs.add('-H:+ReportExceptionStackTraces')
             buildArgs.add('--initialize-at-run-time=io.netty')
