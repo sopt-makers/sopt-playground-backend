@@ -21,12 +21,11 @@ RUN ./gradlew dependencies --no-daemon || true
 # 소스 코드 복사 (dependency 다운로드 후)
 COPY src ./src
 
-# 네이티브 컴파일 실행 (메모리 및 병렬 처리 최적화)
+# 네이티브 컴파일 실행 (메모리 최적화)
 ENV SPRING_PROFILES_ACTIVE=lambda-dev
 ENV GRADLE_OPTS="-Xmx4g"
-RUN ./gradlew nativeCompile -x test --no-daemon --parallel \
+RUN ./gradlew clean nativeCompile -x test --no-daemon \
     -Dorg.gradle.jvmargs="-Xmx4g" \
-    -Dorg.gradle.parallel=true \
     && ls -lah /app/build/native/nativeCompile/
 
 # 최종 이미지 - glibc 호환을 위해 amazonlinux 사용

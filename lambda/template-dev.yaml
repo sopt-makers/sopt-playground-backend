@@ -6,7 +6,7 @@ Description: >
 Globals:
   Function:
     Timeout: 300
-    MemorySize: 512  # 네이티브 바이너리는 메모리 사용량이 적음
+    MemorySize: 1024
 
 Parameters:
   ImageUri:
