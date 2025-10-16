@@ -20,13 +20,12 @@ RUN ./gradlew dependencies --no-daemon || true
 
 # 소스 코드 복사 (dependency 다운로드 후)
 COPY src ./src
-COPY src/main/resources ./src/main/resources
 
 # 네이티브 컴파일 실행 (메모리 및 병렬 처리 최적화)
 ENV SPRING_PROFILES_ACTIVE=lambda-dev
-ENV GRADLE_OPTS="-Xmx3g"
+ENV GRADLE_OPTS="-Xmx4g"
 RUN ./gradlew nativeCompile -x test --no-daemon --parallel \
-    -Dorg.gradle.jvmargs="-Xmx3g" \
+    -Dorg.gradle.jvmargs="-Xmx4g" \
     -Dorg.gradle.parallel=true \
     && ls -lah /app/build/native/nativeCompile/
 
