@@ -15,6 +15,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Slf4j
@@ -29,18 +30,20 @@ public class HttpLoggingAspect {
     @Around("execution(* org.sopt.makers.internal..controller..*Controller.*(..))")
     public Object logApiCall(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();
-        String requestId = MDC.get("requestId");
-
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
                 .currentRequestAttributes()).getRequest();
 
         logRequest(request, joinPoint);
-
         Object result = null;
-        result = joinPoint.proceed();
-        logResponse(request, result, startTime);
+        try {
+            result = joinPoint.proceed();
+            logResponse(request, result, startTime);
 
-        return result;
+            return result;
+        } catch (Exception e) {
+            logError(e, request, startTime);
+            throw e;
+        }
     }
 
     private void logRequest(HttpServletRequest request, ProceedingJoinPoint joinPoint) {
@@ -63,8 +66,8 @@ public class HttpLoggingAspect {
                 for (Object arg : args) {
                     if (
                             arg != null &&
-                            !arg.getClass().getName().startsWith("javax.servlet") &&
-                            !arg.getClass().getName().startsWith("org.springframework")
+                                    !arg.getClass().getName().startsWith("javax.servlet") &&
+                                    !arg.getClass().getName().startsWith("org.springframework")
                     ) {
                         String bodyJson = objectMapper.writeValueAsString(arg);
                         requestLog.put("body", sensitiveDataMasker.maskJsonString(bodyJson));
@@ -73,8 +76,7 @@ public class HttpLoggingAspect {
                 }
             }
 
-            log.info(Markers.append("REQUEST", "REQUEST"),
-                    objectMapper.writeValueAsString(requestLog));
+            log.info(Markers.append("REQUEST", "REQUEST"), objectMapper.writeValueAsString(requestLog));
 
         } catch (Exception e) {
             log.error("Request logging failed", e);
@@ -93,15 +95,41 @@ public class HttpLoggingAspect {
 
             if (result != null) {
                 String responseJson = objectMapper.writeValueAsString(result);
-                responseLog.put("body",
-                        sensitiveDataMasker.maskJsonString(responseJson));
+                responseLog.put("body", sensitiveDataMasker.maskJsonString(responseJson));
             }
 
-            log.info(Markers.append("RESPONSE", "RESPONSE"),
-                    objectMapper.writeValueAsString(responseLog));
+            log.info(Markers.append("RESPONSE", "RESPONSE"), objectMapper.writeValueAsString(responseLog));
 
         } catch (Exception e) {
             log.error("Response logging failed", e);
+        }
+    }
+
+    private void logError(Exception exception, HttpServletRequest request, long startTime) {
+        try {
+            long duration = System.currentTimeMillis() - startTime;
+            Map<String, Object> errorLog = new LinkedHashMap<>();
+
+            errorLog.put("requestId", MDC.get("requestId"));
+            errorLog.put("method", request.getMethod());
+            errorLog.put("uri", request.getRequestURI());
+            errorLog.put("duration", duration + "ms");
+            errorLog.put("exceptionClass", exception.getClass().getSimpleName());
+            errorLog.put("exceptionMessage", exception.getMessage());
+
+            StackTraceElement firstTrace = exception.getStackTrace()[0];
+            errorLog.put("errorLocation",
+                    String.format("%s.%s:%d",
+                            firstTrace.getClassName(),
+                            firstTrace.getMethodName(),
+                            firstTrace.getLineNumber()
+                    )
+            );
+
+            log.error(Markers.append("ERROR", "ERROR"), objectMapper.writeValueAsString(errorLog));
+
+        } catch (Exception e) {
+            log.error("Error logging failed", e);
         }
     }
 
