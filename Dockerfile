@@ -23,9 +23,9 @@ COPY src ./src
 
 # 네이티브 컴파일 실행 (메모리 최적화)
 ENV SPRING_PROFILES_ACTIVE=lambda-dev
-ENV GRADLE_OPTS="-Xmx4g"
+ENV GRADLE_OPTS="-Xmx3g"
 RUN ./gradlew clean nativeCompile -x test --no-daemon \
-    -Dorg.gradle.jvmargs="-Xmx4g" \
+    -Dorg.gradle.jvmargs="-Xmx3g" \
     && ls -lah /app/build/native/nativeCompile/
 
 # 최종 이미지 - glibc 호환을 위해 amazonlinux 사용
