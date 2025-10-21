@@ -3,11 +3,12 @@ package org.sopt.makers.internal.common.logging;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.marker.Markers;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.MDC;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -26,6 +27,10 @@ public class HttpLoggingAspect {
 
     private final ObjectMapper objectMapper;
     private final SensitiveDataMasker sensitiveDataMasker;
+
+    private static final Marker REQUEST_MARKER = MarkerFactory.getMarker("REQUEST");
+    private static final Marker RESPONSE_MARKER = MarkerFactory.getMarker("RESPONSE");
+    private static final Marker ERROR_MARKER = MarkerFactory.getMarker("ERROR");
 
     @Around("execution(* org.sopt.makers.internal..controller..*Controller.*(..))")
     public Object logApiCall(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -76,7 +81,7 @@ public class HttpLoggingAspect {
                 }
             }
 
-            log.info(Markers.append("REQUEST", "REQUEST"), objectMapper.writeValueAsString(requestLog));
+            log.info(REQUEST_MARKER, objectMapper.writeValueAsString(requestLog));
 
         } catch (Exception e) {
             log.error("Request logging failed", e);
@@ -98,7 +103,7 @@ public class HttpLoggingAspect {
                 responseLog.put("body", sensitiveDataMasker.maskJsonString(responseJson));
             }
 
-            log.info(Markers.append("RESPONSE", "RESPONSE"), objectMapper.writeValueAsString(responseLog));
+            log.info(RESPONSE_MARKER, objectMapper.writeValueAsString(responseLog));
 
         } catch (Exception e) {
             log.error("Response logging failed", e);
@@ -126,7 +131,7 @@ public class HttpLoggingAspect {
                     )
             );
 
-            log.error(Markers.append("ERROR", "ERROR"), objectMapper.writeValueAsString(errorLog));
+            log.error(ERROR_MARKER, objectMapper.writeValueAsString(errorLog));
 
         } catch (Exception e) {
             log.error("Error logging failed", e);
