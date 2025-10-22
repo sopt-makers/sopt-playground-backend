@@ -47,11 +47,42 @@ Member findByIdWithItems(Long id);
 private List<Item> items;
 ```
 
-#### Rule 3: 모든 DTO에 @Reflective 추가
+#### Rule 3: @Reflective는 QueryDSL Projection 사용 DTO에만 추가
+
+**왜 @Reflective가 필요한가?**
+
+Native Image는 **빌드 타임에 사용되는 모든 클래스를 분석**하여 바이너리에 포함시킵니다 (Closed World Assumption).
+런타임에 리플렉션으로 클래스를 생성하려면 **빌드 타임에 미리 알려줘야** 합니다.
+
 ```java
-@Reflective  // ← 이거 하나면 자동!
-public record UserResponse(Long id, String name) {}
+// ✅ @Reflective 필요: QueryDSL Projections.constructor() 사용
+@Reflective
+public record ProjectDao(
+    String name,
+    String[] serviceType,  // 복잡한 타입 (배열, List 등)
+    Long memberId
+) {}
+
+// Repository에서 사용
+Projections.constructor(ProjectDao.class, project.name, project.serviceType, member.id)
+// ↑ 런타임에 리플렉션으로 생성자 호출 → @Reflective 필수!
 ```
+
+```java
+// ❌ @Reflective 불필요: 일반 Request/Response (Jackson 직렬화)
+public record LoginRequest(String email, String password) {}
+public record LoginResponse(String accessToken) {}
+// ↑ Spring Boot AOT가 Controller 스캔 시 자동으로 감지
+```
+
+**📌 적용 기준**
+
+| DTO 종류 | @Reflective | 이유 |
+|---------|-------------|------|
+| **Dao** (QueryDSL 결과) | ✅ **필수** | `Projections.constructor()` 사용 |
+| **Vo** (QueryDSL 결과) | ✅ **필수** | `Projections.constructor()` 사용 |
+| **Request** (Controller 입력) | ❌ 불필요 | Spring Boot AOT 자동 감지 |
+| **Response** (Controller 출력) | ❌ 불필요 | Spring Boot AOT 자동 감지 |
 
 ### 3. 프로젝트별 RuntimeHints 템플릿
 
@@ -73,14 +104,12 @@ private void registerProjectSpecificTypes(RuntimeHints hints) {
 
 ### Gradle Task: Native Image 빌드 전 체크
 ```bash
+# build.gradle 설정 참고
 ./gradlew checkNativeImageCompatibility
 ```
 
 ### 실행 시 자동 검증
 ```bash
-# 로컬에서 빠르게 테스트
-./gradlew nativeTest
-
 # 전체 빌드
 ./gradlew nativeCompile
 ```
@@ -92,7 +121,7 @@ private void registerProjectSpecificTypes(RuntimeHints hints) {
 새로운 기능 추가 시:
 
 - [ ] QueryDSL Projection은 `Projections.constructor()` 사용
-- [ ] DTO에 `@Reflective` 추가
+- [ ] **QueryDSL 사용하는 Dao/Vo**에만 `@Reflective` 추가 (Request/Response는 불필요)
 - [ ] Lazy Loading이 필요하면 EAGER 또는 Fetch Join
 - [ ] 외부 라이브러리 사용 시 Native Image 호환성 확인
 
@@ -101,13 +130,14 @@ private void registerProjectSpecificTypes(RuntimeHints hints) {
 ## 🚨 트러블슈팅
 
 ### 에러: "No constructor found"
-→ DTO에 `@Reflective` 추가 또는 `Projections.constructor()` 사용
+→ QueryDSL 사용하는 **Dao/Vo**에 `@Reflective` 추가
+→ Repository에서 `Projections.constructor()` 사용 확인
 
 ### 에러: "could not initialize proxy"
 → `FetchType.EAGER` 또는 Fetch Join 사용
 
 ### 에러: "ClassNotFoundException"
-→ `NativeImageRuntimeHintsRegistrar`에 클래스 추가
+→ 외부 라이브러리 사용 시 `build.gradle`의 RuntimeHints에 추가
 
 ---
 
@@ -115,3 +145,4 @@ private void registerProjectSpecificTypes(RuntimeHints hints) {
 
 - [Spring Boot Native Image 공식 문서](https://docs.spring.io/spring-boot/docs/current/reference/html/native-image.html)
 - [GraalVM Native Image 가이드](https://www.graalvm.org/latest/reference-manual/native-image/)
+- [Spring Boot AOT 컴파일: 성능 최적화의 새로운 패러다임](https://digitalbourgeois.tistory.com/324)
