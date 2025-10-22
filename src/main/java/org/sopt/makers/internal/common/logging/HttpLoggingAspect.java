@@ -122,14 +122,18 @@ public class HttpLoggingAspect {
             errorLog.put("exceptionClass", exception.getClass().getSimpleName());
             errorLog.put("exceptionMessage", exception.getMessage());
 
-            StackTraceElement firstTrace = exception.getStackTrace()[0];
-            errorLog.put("errorLocation",
-                    String.format("%s.%s:%d",
-                            firstTrace.getClassName(),
-                            firstTrace.getMethodName(),
-                            firstTrace.getLineNumber()
-                    )
-            );
+            if (exception.getStackTrace().length > 0) {
+                StackTraceElement firstTrace = exception.getStackTrace()[0];
+                errorLog.put("errorLocation",
+                        String.format("%s.%s:%d",
+                                firstTrace.getClassName(),
+                                firstTrace.getMethodName(),
+                                firstTrace.getLineNumber()
+                        )
+                );
+            } else {
+                errorLog.put("errorLocation", "Stack trace not available");
+            }
 
             log.error(ERROR_MARKER, objectMapper.writeValueAsString(errorLog));
 
