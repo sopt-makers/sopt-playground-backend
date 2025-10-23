@@ -69,10 +69,12 @@ public class SlackService {
     private String generateErrorPointMessage(HttpServletRequest request) {
         StringBuilder sb = new StringBuilder();
 
-        sb.setLength(0);
-        sb.append("Request URL: " + request.getRequestURL().toString() + NEW_LINE);
-        sb.append("Request Method: " + request.getMethod() + NEW_LINE);
-        sb.append("Request Time : " + new Date() + NEW_LINE);
+        sb.append("🔗 *").append(request.getMethod()).append(" ").append(request.getRequestURI()).append("*").append(NEW_LINE);
+        sb.append("⏰ ").append(new Date()).append(NEW_LINE);
+
+        if (request.getQueryString() != null) {
+            sb.append("🔍 Query: ").append(request.getQueryString());
+        }
 
         return sb.toString();
     }

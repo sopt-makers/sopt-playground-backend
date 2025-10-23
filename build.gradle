@@ -28,6 +28,7 @@ ext {
 dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+	implementation "org.springframework.boot:spring-boot-starter-aop"
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-mail"
 	implementation "org.springframework.boot:spring-boot-starter-security"
@@ -38,6 +39,9 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
 	implementation 'net.minidev:json-smart'
+
+	// log
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
 
 	// Postgresql Array type
 	implementation('com.vladmihalcea:hibernate-types-52:2.19.2')
