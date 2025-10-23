@@ -187,18 +187,23 @@ public class GlobalExceptionHandler {
     private void sendErrorMessageToSlack(Exception exception, MessageType messageType, final HttpServletRequest request) {
         LinkedHashMap<String, String> content = new LinkedHashMap<>();
 
-        content.put("Environment", activeProfile);
-        content.put("Exception Class", exception.getClass().getName());
-        content.put("Exception Message", exception.getMessage());
-        content.put("Stack Trace", getStackTraceAsString(exception));
+        content.put("🌍 Environment", activeProfile);
+        content.put("📍 Error Location", getErrorLocation(exception));
+        content.put("⚠️ Exception Type", exception.getClass().getSimpleName());
+        content.put("💬 Error Message", exception.getMessage());
         slackService.sendMessage(messageType.getTitle(), content, messageType, request);
     }
 
-    private String getStackTraceAsString(Throwable throwable) {
-        StringBuilder sb = new StringBuilder();
-        for (StackTraceElement element : throwable.getStackTrace()) {
-            sb.append(element.toString()).append("\n");
+    private String getErrorLocation(Throwable throwable) {
+        if (throwable.getStackTrace().length == 0) {
+            return "Unknown location";
         }
-        return sb.toString();
+
+        StackTraceElement firstTrace = throwable.getStackTrace()[0];
+        return String.format("%s.%s() (Line %d)",
+                firstTrace.getClassName(),
+                firstTrace.getMethodName(),
+                firstTrace.getLineNumber()
+        );
     }
 }
