@@ -5,11 +5,11 @@
 ### 1. 자동으로 처리되는 것들 (Spring Boot AOT)
 다음은 **코드 변경 없이** 자동으로 Native Image에 포함됩니다:
 
-✅ `@Entity` 클래스
-✅ `@Component`, `@Service`, `@Repository`, `@Controller`
-✅ `@Configuration` 클래스
-✅ Spring Bean의 모든 메서드/필드
-✅ `@ConfigurationProperties`
+✅ `@Entity` 클래스  
+✅ `@Component`, `@Service`, `@Repository`, `@Controller`  
+✅ `@Configuration` 클래스  
+✅ Spring Bean의 모든 메서드/필드  
+✅ `@ConfigurationProperties`  
 ✅ Hibernate Enhancement (build.gradle 설정 시)
 
 ### 2. 규칙 기반으로 처리 (수동 작업 최소화)
@@ -51,7 +51,7 @@ private List<Item> items;
 
 **왜 @Reflective가 필요한가?**
 
-Native Image는 **빌드 타임에 사용되는 모든 클래스를 분석**하여 바이너리에 포함시킵니다 (Closed World Assumption).
+Native Image는 **빌드 타임에 사용되는 모든 클래스를 분석**하여 바이너리에 포함시킵니다 (Closed World Assumption).  
 런타임에 리플렉션으로 클래스를 생성하려면 **빌드 타임에 미리 알려줘야** 합니다.
 
 ```java

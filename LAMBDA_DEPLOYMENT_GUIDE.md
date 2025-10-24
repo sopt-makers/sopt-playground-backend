@@ -2,7 +2,7 @@
 
 ## 개요
 
-이 문서는 SOPT Playground Backend를 AWS Lambda로 배포하는 프로세스를 설명합니다.
+이 문서는 SOPT Playground Backend를 AWS Lambda로 배포하는 프로세스를 설명합니다.  
 Spring Boot 애플리케이션을 GraalVM Native Image로 컴파일하여 AWS Lambda Container로 배포합니다.
 
 ---
