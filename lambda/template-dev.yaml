@@ -6,7 +6,7 @@ Description: >
 Globals:
   Function:
     Timeout: 300
-    MemorySize: 3072 # 속도 개선을 위해 기본 스펙 높게 설정
+    MemorySize: 4096 # 속도 개선을 위해 기본 스펙 높게 설정
 
 Parameters:
   ImageUri:
