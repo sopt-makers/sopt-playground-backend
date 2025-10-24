@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.member.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -11,7 +12,6 @@ import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
-import org.sopt.makers.internal.member.dto.QMemberProfileProjectDao;
 import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.project.domain.QProject;
 import org.springframework.stereotype.Repository;
@@ -41,7 +41,7 @@ public class MemberProfileQueryRepository {
 
     public List<MemberProfileProjectDao> findMemberProfileProjectsByMemberId (Long memberId) {
         return queryFactory.select(
-                        new QMemberProfileProjectDao(
+                        Projections.constructor(MemberProfileProjectDao.class,
                                 project.id, project.writerId, project.name, project.summary, project.generation,
                                 project.category, project.logoImage, project.thumbnailImage, project.serviceType
                         )).from(project)

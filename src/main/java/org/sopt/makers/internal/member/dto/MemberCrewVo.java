@@ -1,9 +1,12 @@
 package org.sopt.makers.internal.member.dto;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.aot.hint.annotation.Reflective;
+
 import java.time.LocalDateTime;
 
+@Reflective
 public record MemberCrewVo(
 
         @NotNull

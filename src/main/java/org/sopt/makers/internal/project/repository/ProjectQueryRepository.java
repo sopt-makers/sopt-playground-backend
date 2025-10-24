@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.project.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -13,7 +14,6 @@ import org.sopt.makers.internal.project.domain.QMemberProjectRelation;
 import org.sopt.makers.internal.project.domain.QProject;
 import org.sopt.makers.internal.project.domain.QProjectLink;
 import org.sopt.makers.internal.project.dto.dao.ProjectLinkDao;
-import org.sopt.makers.internal.project.dto.dao.QProjectLinkDao;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -44,7 +44,7 @@ public class ProjectQueryRepository {
         val projectLink = QProjectLink.projectLink;
 
         return queryFactory.select(
-                        new QProjectLinkDao(
+                        Projections.constructor(ProjectLinkDao.class,
                                 project.id, project.name,
                                 projectLink.id, projectLink.title, projectLink.url
                         )).from(project)

@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Getter

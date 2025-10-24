@@ -16,10 +16,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
-import net.minidev.json.parser.JSONParser;
-import net.minidev.json.parser.ParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
@@ -245,21 +243,28 @@ public class WordChainGameService {
             e.printStackTrace();
         }
 
-        // TODO - deprecated된 메소드 사용
-        JSONParser parser = new JSONParser();
-        JSONObject object = null;
+        // Jackson ObjectMapper 사용 (deprecated JSONParser 대체)
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = null;
         try {
-            object = (JSONObject) parser.parse(String.valueOf(result));
-        } catch (ParseException e) {
+            rootNode = objectMapper.readTree(String.valueOf(result));
+        } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        JSONObject head = (JSONObject) object.get("channel");
-        JSONArray jsonArray = (JSONArray) head.get("item");
-        if (Objects.isNull(jsonArray)) return false;
-        JSONObject index = (JSONObject) jsonArray.get(0);
-        JSONArray sense = (JSONArray) index.get("sense");
-        JSONObject senseObject = (JSONObject) sense.get(0);
-        String pos = senseObject.get("pos").toString();
+        JsonNode channelNode = rootNode.get("channel");
+        if (channelNode == null) return false;
+        JsonNode itemArray = channelNode.get("item");
+        if (itemArray == null || !itemArray.isArray()) return false;
+        JsonNode index = itemArray.get(0);
+        if (index == null) return false;
+        JsonNode senseArray = index.get("sense");
+        if (senseArray == null || !senseArray.isArray()) return false;
+        JsonNode senseObject = senseArray.get(0);
+        if (senseObject == null) return false;
+        JsonNode posNode = senseObject.get("pos");
+        if (posNode == null) return false;
+        String pos = posNode.asText();
         return pos.equals("명사");
     }
 

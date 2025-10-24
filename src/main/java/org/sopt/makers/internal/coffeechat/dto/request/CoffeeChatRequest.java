@@ -6,10 +6,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import static org.sopt.makers.internal.common.Constant.PHONE_NUMBER_REGEX;
 

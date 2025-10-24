@@ -1,10 +1,11 @@
 package org.sopt.makers.internal.project.dto.dao;
 
-import com.querydsl.core.annotations.QueryProjection;
+import org.springframework.aot.hint.annotation.Reflective;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Reflective
 public record ProjectMemberDao (
         Long id,
         String name,
@@ -34,6 +35,4 @@ public record ProjectMemberDao (
         String memberDesc,
         Boolean isTeamMember
 ) {
-    @QueryProjection
-    public ProjectMemberDao {}
 }

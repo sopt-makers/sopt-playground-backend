@@ -2,7 +2,7 @@ package org.sopt.makers.internal.member.domain;
 
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Getter

@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.community.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -13,8 +14,6 @@ import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.community.domain.comment.QCommunityComment;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
 import org.sopt.makers.internal.community.dto.CommentDao;
-import org.sopt.makers.internal.community.dto.QCategoryPostMemberDao;
-import org.sopt.makers.internal.community.dto.QCommentDao;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberBlock;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
@@ -44,7 +43,7 @@ public class CommunityQueryRepository {
 
         JPAQuery<CategoryPostMemberDao> query;
         if (categoryId == CATEGORY_PART_TALK || categoryId == CATEGORY_PROMOTION) {
-            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+            query = queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
                     .from(posts)
                     .innerJoin(posts.member, member)
                     .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
@@ -54,7 +53,7 @@ public class CommunityQueryRepository {
                     .distinct()
                     .orderBy(posts.createdAt.desc());
         } else {
-            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+            query = queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
                     .from(posts)
                     .innerJoin(posts.member, member)
                     .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
@@ -82,7 +81,7 @@ public class CommunityQueryRepository {
         val category = QCategory.category;
         val member = QMember.member;
 
-        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+        return queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
                 .from(posts)
                 .innerJoin(posts.member, member)
                 .innerJoin(category).on(posts.categoryId.eq(category.id))
@@ -132,7 +131,7 @@ public class CommunityQueryRepository {
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
 
-        JPAQuery<CommentDao> query = queryFactory.select(new QCommentDao(member, comment))
+        JPAQuery<CommentDao> query = queryFactory.select(Projections.constructor(CommentDao.class, member, comment))
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
                 .leftJoin(member.careers, careers)

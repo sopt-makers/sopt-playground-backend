@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.member.domain.Member;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "vote_option_id"}))
 @Entity

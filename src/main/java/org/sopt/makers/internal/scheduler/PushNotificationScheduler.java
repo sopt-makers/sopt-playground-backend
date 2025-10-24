@@ -2,9 +2,9 @@ package org.sopt.makers.internal.scheduler;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.PessimisticLockException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PessimisticLockException;
 
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.community.domain.CommunityPost;

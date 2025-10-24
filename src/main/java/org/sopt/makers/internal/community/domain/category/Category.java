@@ -2,7 +2,7 @@ package org.sopt.makers.internal.community.domain.category;
 
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class Category {
     @JoinColumn(name = "parent")
     private Category parent;
 
-    @OneToMany(mappedBy = "parent")
+    @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
     private List<Category> children = new ArrayList<>();
 
     @Column

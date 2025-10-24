@@ -23,7 +23,8 @@ import org.sopt.makers.internal.vote.repository.VoteRepository;
 import org.sopt.makers.internal.vote.repository.VoteSelectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.webjars.NotFoundException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +50,7 @@ public class VoteService {
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
         Member member = memberRetriever.findMemberById(userId);
         Vote vote = voteRepository.findByPost(post)
-                .orElseThrow(() -> new NotFoundException("해당 게시글에는 투표가 존재하지 않습니다."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 게시글에는 투표가 존재하지 않습니다."));
 
         List<VoteOption> selectedOptions = voteOptionRepository.findAllById(selectedOptionIds);
 

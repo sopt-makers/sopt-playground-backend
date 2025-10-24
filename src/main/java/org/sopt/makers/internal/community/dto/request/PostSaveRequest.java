@@ -3,8 +3,8 @@ package org.sopt.makers.internal.community.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
 

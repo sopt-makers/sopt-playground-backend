@@ -1,12 +1,12 @@
 package org.sopt.makers.internal.community.repository.post;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.QCommunityPost;
 import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.community.dto.PostCategoryDao;
-import org.sopt.makers.internal.community.dto.QPostCategoryDao;
 
 @RequiredArgsConstructor
 public class CommunityPostRepositoryCustomImpl implements CommunityPostRepositoryCustom {
@@ -24,7 +24,7 @@ public class CommunityPostRepositoryCustomImpl implements CommunityPostRepositor
 		QCategory category = QCategory.category;
 
 		return queryFactory
-				.select(new QPostCategoryDao(posts, category))
+				.select(Projections.constructor(PostCategoryDao.class, posts, category))
 				.from(posts)
 				.innerJoin(category).on(posts.categoryId.eq(category.id))
 				.where(checkCategoryEqualsName(categoryName))

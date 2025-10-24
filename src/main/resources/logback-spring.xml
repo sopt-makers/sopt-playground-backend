@@ -81,11 +81,20 @@
     <!-- 로거 설정: INFO 레벨 이상만 기록 -->
     <logger name="org.sopt.makers.internal" level="INFO"/>
 
-    <!-- Root 로거: 모든 appender에 연결 -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="REQUEST_FILE"/>
-        <appender-ref ref="RESPONSE_FILE"/>
-        <appender-ref ref="ERROR_FILE"/>
-    </root>
+    <!-- Lambda 환경: 콘솔 로깅만 사용 (CloudWatch Logs로 자동 수집) -->
+    <springProfile name="lambda-dev,lambda-prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- 로컬/일반 환경: 콘솔 + 파일 로깅 사용 -->
+    <springProfile name="!lambda-dev &amp; !lambda-prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="REQUEST_FILE"/>
+            <appender-ref ref="RESPONSE_FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
+        </root>
+    </springProfile>
 </configuration>

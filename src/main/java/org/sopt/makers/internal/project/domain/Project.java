@@ -1,18 +1,12 @@
 package org.sopt.makers.internal.project.domain;
 
-import com.vladmihalcea.hibernate.type.array.StringArrayType;
 import lombok.*;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-@TypeDefs({
-        @TypeDef(name = "string-array", typeClass = StringArrayType.class)
-})
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -42,7 +36,7 @@ public class Project {
     @Column(name = "end_at")
     private LocalDate endAt;
 
-    @Type(type = "string-array")
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "service_type", columnDefinition = "text[]")
     private String[] serviceType;
 
@@ -62,7 +56,7 @@ public class Project {
     @Column(name = "thumbnail_image")
     private String thumbnailImage;
 
-    @Type(type = "string-array")
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "images", columnDefinition = "text[]")
     private String[] images;
 
