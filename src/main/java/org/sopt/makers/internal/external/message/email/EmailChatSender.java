@@ -9,7 +9,7 @@ import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.springframework.stereotype.Service;
 
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 
 @Slf4j

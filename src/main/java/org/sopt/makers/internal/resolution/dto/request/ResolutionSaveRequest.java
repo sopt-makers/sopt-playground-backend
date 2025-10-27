@@ -7,7 +7,7 @@ import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.resolution.domain.ResolutionTag;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 public record ResolutionSaveRequest(
 	List<String> tags,

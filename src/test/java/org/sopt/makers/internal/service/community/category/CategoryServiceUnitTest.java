@@ -43,7 +43,6 @@ public class CategoryServiceUnitTest {
 
     @InjectMocks
     private CategoryService categoryService;
-
     @Mock private CategoryRetriever categoryRetriever;
 
     @Test
@@ -82,7 +81,7 @@ public class CategoryServiceUnitTest {
                 .hasAll(true)
                 .hasBlind(true)
                 .hasQuestion(true)
-                .parent(parentOneCategory)
+                .parent(null)  // Spring Boot 3: enableAssociationManagement로 인해 parent 설정 시 자동 추가되므로 null로 설정
                 .children(new ArrayList<>())
                 .displayOrder(3)
                 .build();

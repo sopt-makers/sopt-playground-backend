@@ -1,11 +1,13 @@
 package org.sopt.makers.internal.community.dto;
 
+import org.springframework.aot.hint.annotation.Reflective;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 
 import java.util.Comparator;
 
+@Reflective
 public record MemberVo(
         Long id,
         String name,

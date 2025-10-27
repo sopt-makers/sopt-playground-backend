@@ -5,7 +5,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Getter
