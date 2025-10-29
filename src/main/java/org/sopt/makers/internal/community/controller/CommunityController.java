@@ -151,31 +151,6 @@ public class CommunityController {
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 글 삭제 성공", true));
     }
 
-    @Operation(summary = "커뮤니티 댓글 생성 API")
-    @PostMapping("/{postId}/comment")
-    public ResponseEntity<Map<String, Boolean>> createComment(
-            @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @RequestBody @Valid CommentSaveRequest request
-    ) {
-        communityCommentService.createComment(userId, postId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("댓글 생성 성공", true));
-    }
-
-    @Operation(summary = "커뮤니티 댓글 조회 API")
-    @GetMapping("/{postId}/comment")
-    public ResponseEntity<List<CommentResponse>> getComments(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @PathVariable("postId") Long postId,
-            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
-    ) {
-        val comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
-        val response = comments.stream().
-                map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
-                .toList();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
     @Operation(summary = "커뮤니티 댓글 삭제 API")
     @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<Map<String, Boolean>> deleteComment(
@@ -184,16 +159,6 @@ public class CommunityController {
     ) {
         communityCommentService.deleteComment(commentId, userId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("댓글 삭제 성공", true));
-    }
-
-    @Operation(summary = "커뮤니티 댓글 신고 API")
-    @PostMapping("/comment/{commentId}/report")
-    public ResponseEntity<Map<String, Boolean>> reportComment(
-            @PathVariable("commentId") Long commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
-    ) {
-        communityCommentService.reportComment(userId, commentId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
     }
 
     @Operation(summary = "커뮤니티 게시글 좋아요 API")

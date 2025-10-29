@@ -1,0 +1,66 @@
+package org.sopt.makers.internal.community.controller.comment;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.response.CommentResponse;
+import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.community.service.CommunityCommentService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/community/posts/{postId}/comments")
+@SecurityRequirement(name = "Authorization")
+@Tag(name = "Community Comment 관련 API", description = "커뮤니티 댓글 관련 API")
+public class CommunityCommentController {
+
+    private final CommunityCommentService communityCommentService;
+    private final CommunityResponseMapper communityResponseMapper;
+
+    @Operation(summary = "커뮤니티 댓글 생성 API")
+    @PostMapping
+    public ResponseEntity<Map<String, Boolean>> createComment(
+            @PathVariable("postId") Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid CommentSaveRequest request
+    ) {
+        communityCommentService.createComment(userId, postId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("댓글 생성 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 댓글 조회 API")
+    @GetMapping
+    public ResponseEntity<List<CommentResponse>> getComments(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable("postId") Long postId,
+            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
+    ) {
+        val comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
+        val response = comments.stream().
+                map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
+                .toList();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 댓글 신고 API")
+    @PostMapping("/report")
+    public ResponseEntity<Map<String, Boolean>> reportComment(
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        communityCommentService.reportComment(userId, commentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
+    }
+}
