@@ -4,8 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+import java.io.IOException;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -16,6 +22,52 @@ public class S3ImageService {
 
     @Value("${cloud.aws.bucket.image}")
     private String imageBucketName;
+
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
+    /**
+     * MultipartFile을 S3에 업로드합니다.
+     * @param file 업로드할 파일
+     * @param type 이미지 타입 (popup, project, profile 등)
+     * @return S3 이미지 URL
+     */
+    public String uploadImage(MultipartFile file, String type) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+
+        // 파일명 생성
+        String originalFilename = file.getOriginalFilename();
+        String filename = UUID.randomUUID() + "-" + originalFilename;
+
+        // S3 키 생성 (환경별 경로)
+        String key = "/" + activeProfile + "/image/" + type + "/" + filename;
+
+        // Content-Type 설정
+        String contentType = file.getContentType();
+        if (contentType == null || contentType.isEmpty()) {
+            contentType = "application/octet-stream";
+        }
+
+        // S3에 업로드
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(imageBucketName)
+                    .key(key)
+                    .contentType(contentType)
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+            // path-style URL 반환
+            String imageUrl = "https://s3.ap-northeast-2.amazonaws.com/" + imageBucketName + "/" + key;
+            return imageUrl;
+        } catch (Exception e) {
+            log.error("Failed to upload image to S3: {}", filename, e);
+            throw new IOException("S3 업로드 실패", e);
+        }
+    }
 
     /**
      * S3에서 이미지를 삭제합니다.

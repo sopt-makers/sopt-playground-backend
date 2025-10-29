@@ -105,31 +105,25 @@
                 }
             }
 
-            async function uploadImageToS3(file) {
+            async function uploadImageToServer(file, adminKey) {
                 try {
-                    // 1. presigned URL 요청
-                    const presignedResponse = await fetch(`/api/v1/presigned-url?filename=${encodeURIComponent(file.name)}&type=popup`);
-                    if (!presignedResponse.ok) {
-                        throw new Error('Presigned URL 생성 실패');
-                    }
-                    const presignedData = await presignedResponse.json();
+                    const formData = new FormData();
+                    formData.append('file', file);
 
-                    // 2. S3에 이미지 업로드
-                    const uploadResponse = await fetch(presignedData.signedUrl, {
-                        method: 'PUT',
-                        body: file,
+                    const response = await fetch('/admin/popups/upload-image', {
+                        method: 'POST',
                         headers: {
-                            'Content-Type': file.type
-                        }
+                            'Admin-Key': adminKey
+                        },
+                        body: formData
                     });
 
-                    if (!uploadResponse.ok) {
+                    if (!response.ok) {
                         throw new Error('이미지 업로드 실패');
                     }
 
-                    // 3. S3 URL 반환 (path-style URL)
-                    const bucketUrl = 'https://s3.ap-northeast-2.amazonaws.com/sopt-makers-internal/';
-                    return bucketUrl + presignedData.filename;
+                    const data = await response.json();
+                    return data.imageUrl;
                 } catch (error) {
                     console.error('Upload error:', error);
                     throw error;
@@ -157,10 +151,10 @@
 
                     // 새 파일이 선택되었으면 업로드
                     if (pcImageFile) {
-                        pcImageUrl = await uploadImageToS3(pcImageFile);
+                        pcImageUrl = await uploadImageToServer(pcImageFile, adminKey);
                     }
                     if (mobileImageFile) {
-                        mobileImageUrl = await uploadImageToS3(mobileImageFile);
+                        mobileImageUrl = await uploadImageToServer(mobileImageFile, adminKey);
                     }
 
                     // 필수 이미지 URL 체크

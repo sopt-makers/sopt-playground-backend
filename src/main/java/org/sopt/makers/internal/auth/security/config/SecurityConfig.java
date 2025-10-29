@@ -43,7 +43,6 @@ public class SecurityConfig {
                         "/api/v1/admin/**",
                         "/api/v1/projects/",
                         "/api/v1/popups/**",
-                        "/api/v1/presigned-url",
                         "/admin/**",
                         "/css/**"
                 )
