@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
+import org.sopt.makers.internal.community.dto.CommentInfo;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/community/posts/{postId}/comments")
+@RequestMapping("/api/v1/community/posts/{postId}/comment")
 @SecurityRequirement(name = "Authorization")
 @Tag(name = "Community Comment 관련 API", description = "커뮤니티 댓글 관련 API")
 public class CommunityCommentController {
@@ -47,11 +47,21 @@ public class CommunityCommentController {
             @PathVariable("postId") Long postId,
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
-        val comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
-        val response = comments.stream().
+        List<CommentInfo> comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
+        List<CommentResponse> response = comments.stream().
                 map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
                 .toList();
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "커뮤니티 댓글 삭제 API")
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<Map<String, Boolean>> deleteComment(
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        communityCommentService.deleteComment(commentId, userId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("댓글 삭제 성공", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 신고 API")
