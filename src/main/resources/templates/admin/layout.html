@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Playground Admin</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 좌측 사이드바 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Playground Admin</h1>
+                <span class="env-badge" th:text="${environment}" th:classappend="${environment == 'prod' ? 'env-prod' : 'env-dev'}">DEV</span>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a th:href="@{/admin/popups}" class="active">
+                            홈팝업
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="main-content">
+            <div th:replace="${content}"></div>
+        </main>
+    </div>
+</body>
+</html>

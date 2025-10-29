@@ -41,7 +41,11 @@ public class SecurityConfig {
                         "/makers/**",
                         "/internal/api/v1/**",
                         "/api/v1/admin/**",
-                        "/api/v1/projects/"
+                        "/api/v1/projects/",
+                        "/api/v1/popups/**",
+                        "/api/v1/presigned-url",
+                        "/admin/**",
+                        "/css/**"
                 )
                 .permitAll()
                 .anyRequest().permitAll()
@@ -49,8 +53,7 @@ public class SecurityConfig {
                 //         "/internal/api/v1/projects/**",
                 //         "/internal/api/v1/members/**",
                 //         "/internal/api/v1/sopticles/**",
-                //         "/internal/api/v1/profile",
-                //         "/api/v1/presigned-url"
+                //         "/internal/api/v1/profile"
                 // ).hasAuㅇthority("MEMBER")
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
