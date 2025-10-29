@@ -4,22 +4,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.sopt.makers.internal.community.dto.request.comment.AnonymousMentionRequest;
 
 public record CommentSaveRequest (
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank String content,
 
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull Boolean isBlindWriter,
 
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull Boolean isChildComment,
 
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull String webLink,
 
-    @Schema(required = false)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     Long parentCommentId,
 
-    MentionRequest mention
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    MentionRequest mention,
+
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    AnonymousMentionRequest anonymousMentionRequest
 ) {}
