@@ -2,6 +2,8 @@ package org.sopt.makers.internal.common.image;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,12 +21,10 @@ import java.util.UUID;
 public class S3ImageService {
 
     private final S3Client s3Client;
+    private final AuthConfig authConfig;
 
     @Value("${cloud.aws.bucket.image}")
     private String imageBucketName;
-
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
 
     /**
      * MultipartFile을 S3에 업로드합니다.
@@ -42,7 +42,7 @@ public class S3ImageService {
         String filename = UUID.randomUUID() + "-" + originalFilename;
 
         // S3 키 생성 (환경별 경로)
-        String key = "/" + activeProfile + "/image/" + type + "/" + filename;
+        String key = "/" + authConfig.getActiveProfile() + "/image/" + type + "/" + filename;
 
         // Content-Type 설정
         String contentType = file.getContentType();
