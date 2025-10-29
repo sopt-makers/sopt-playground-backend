@@ -19,10 +19,11 @@ public class S3ImageService {
 
     /**
      * S3에서 이미지를 삭제합니다.
-     * @param imageUrl S3 이미지 URL (예: https://s3.ap-northeast-2.amazonaws.com/sopt-makers-internal//lambda-dev/image/popup/xxx.jpg)
+     * @param imageUrl S3 이미지 URL
      */
     public void deleteImage(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
+            log.warn("이미지 URL이 비어 있습니다.");
             return;
         }
 
@@ -50,8 +51,6 @@ public class S3ImageService {
 
     /**
      * S3 URL에서 키를 추출합니다.
-     * 예: https://s3.ap-northeast-2.amazonaws.com/sopt-makers-internal//lambda-dev/image/popup/xxx.jpg
-     * -> /lambda-dev/image/popup/xxx.jpg
      */
     private String extractKeyFromUrl(String imageUrl) {
         try {

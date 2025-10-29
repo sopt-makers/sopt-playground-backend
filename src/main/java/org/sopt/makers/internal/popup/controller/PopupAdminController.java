@@ -1,6 +1,8 @@
 package org.sopt.makers.internal.popup.controller;
 
 import lombok.RequiredArgsConstructor;
+
+import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.popup.dto.response.PopupResponse;
 import org.sopt.makers.internal.popup.service.PopupService;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,9 +18,7 @@ import java.util.List;
 public class PopupAdminController {
 
     private final PopupService popupService;
-
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
+    private final AuthConfig authConfig;
 
     @GetMapping
     public String adminLogin() {
@@ -29,7 +29,7 @@ public class PopupAdminController {
     public String listPopups(Model model) {
         List<PopupResponse> popups = popupService.getAllPopups();
         model.addAttribute("popups", popups);
-        model.addAttribute("environment", activeProfile);
+        model.addAttribute("environment", authConfig.getActiveProfile());
         return "admin/popup-list";
     }
 
@@ -37,7 +37,7 @@ public class PopupAdminController {
     public String newPopupForm(Model model) {
         model.addAttribute("popup", new PopupResponse(null, "", "", "", "", "", null, null));
         model.addAttribute("isEdit", false);
-        model.addAttribute("environment", activeProfile);
+        model.addAttribute("environment", authConfig.getActiveProfile());
         return "admin/popup-form";
     }
 
@@ -46,7 +46,7 @@ public class PopupAdminController {
         PopupResponse popup = popupService.getPopupById(id);
         model.addAttribute("popup", popup);
         model.addAttribute("isEdit", true);
-        model.addAttribute("environment", activeProfile);
+        model.addAttribute("environment", authConfig.getActiveProfile());
         return "admin/popup-form";
     }
 }
