@@ -11,12 +11,9 @@
         </div>
 
         <div class="env-warning" th:classappend="${environment == 'prod' ? 'env-warning-prod' : 'env-warning-dev'}">
-            <strong>
-                <span th:text="${environment == 'prod' ? '⚠️ Production' : 'ℹ️ Development'}"></span>
-            </strong>
             <span th:text="${environment == 'prod' ?
-                ' 환경의 팝업을 수정하고 있습니다. 저장 시 실제 서비스에 반영됩니다.' :
-                ' 환경의 팝업을 수정하고 있습니다. 저장 시 개발 환경에만 반영됩니다.'}">
+                '저장 시 실제 서비스에 반영됩니다.' :
+                '저장 시 개발 환경에만 반영됩니다.'}">
             </span>
         </div>
 
@@ -39,8 +36,8 @@
                     <label for="pcImageFile">PC 이미지 *</label>
                     <input type="file" id="pcImageFile" accept="image/*" onchange="handleFileSelect('pc')">
                     <input type="hidden" id="pcImageUrl" th:value="${popup.pcImageUrl}">
-                    <div id="pcImagePreview" class="image-preview" th:if="${popup.pcImageUrl}">
-                        <small>현재 이미지: <span th:text="${popup.pcImageUrl}"></span></small>
+                    <div id="pcImagePreview" class="image-preview-container">
+                        <img th:if="${popup.pcImageUrl}" th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-preview-large">
                     </div>
                 </div>
 
@@ -48,8 +45,8 @@
                     <label for="mobileImageFile">모바일 이미지 *</label>
                     <input type="file" id="mobileImageFile" accept="image/*" onchange="handleFileSelect('mobile')">
                     <input type="hidden" id="mobileImageUrl" th:value="${popup.mobileImageUrl}">
-                    <div id="mobileImagePreview" class="image-preview" th:if="${popup.mobileImageUrl}">
-                        <small>현재 이미지: <span th:text="${popup.mobileImageUrl}"></span></small>
+                    <div id="mobileImagePreview" class="image-preview-container">
+                        <img th:if="${popup.mobileImageUrl}" th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-preview-large">
                     </div>
                 </div>
 
@@ -91,11 +88,18 @@
             function handleFileSelect(type) {
                 const fileInput = document.getElementById(`${type}ImageFile`);
                 const preview = document.getElementById(`${type}ImagePreview`);
+                const file = fileInput.files[0];
 
-                if (fileInput.files.length > 0) {
-                    const fileName = fileInput.files[0].name;
-                    preview.innerHTML = `<small>선택된 파일: ${fileName}</small>`;
-                    preview.style.display = 'block';
+                if (file) {
+                    // 파일을 읽어서 이미지 미리보기 표시
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="${type} 이미지" class="image-preview-large">
+                        `;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
                 } else {
                     preview.style.display = 'none';
                 }

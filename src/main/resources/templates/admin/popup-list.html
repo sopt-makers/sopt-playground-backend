@@ -11,12 +11,9 @@
         </div>
 
         <div class="env-warning" th:classappend="${environment == 'prod' ? 'env-warning-prod' : 'env-warning-dev'}">
-            <strong>
-                <span th:text="${environment == 'prod' ? '⚠️ Production' : 'ℹ️ Develepment'}"></span>
-            </strong>
             <span th:text="${environment == 'prod' ?
-                ' 환경입니다. 이 페이지에서 관리하는 팝업은 실제 서비스에 반영됩니다.' :
-                ' 환경입니다. 이 페이지에서 관리하는 팝업은 개발 환경에만 표시됩니다.'}">
+                '해당 페이지에서 관리하는 팝업은 실제 서비스에 반영됩니다.' :
+                '해당 페이지에서 관리하는 팝업은 개발 환경에만 표시됩니다.'}">
             </span>
         </div>
 
@@ -44,10 +41,14 @@
                         <td th:text="${popup.startDate}">2024-01-01</td>
                         <td th:text="${popup.endDate}">2024-01-31</td>
                         <td class="image-cell">
-                            <a th:href="${popup.pcImageUrl}" target="_blank" th:text="${popup.pcImageUrl}">URL</a>
+                            <a th:href="${popup.pcImageUrl}" target="_blank">
+                                <img th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-thumbnail">
+                            </a>
                         </td>
                         <td class="image-cell">
-                            <a th:href="${popup.mobileImageUrl}" target="_blank" th:text="${popup.mobileImageUrl}">URL</a>
+                            <a th:href="${popup.mobileImageUrl}" target="_blank">
+                                <img th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-thumbnail">
+                            </a>
                         </td>
                         <td th:text="${popup.linkUrl}">-</td>
                         <td th:text="${popup.openInNewTab != null ? (popup.openInNewTab ? 'O' : 'X') : '-'}">-</td>

@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.popup.service;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.common.image.S3ImageService;
 import org.sopt.makers.internal.popup.domain.Popup;
 import org.sopt.makers.internal.popup.dto.request.PopupRequest;
 import org.sopt.makers.internal.popup.dto.response.PopupResponse;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class PopupService {
 
     private final PopupRepository popupRepository;
+    private final S3ImageService s3ImageService;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Transactional
@@ -66,6 +68,10 @@ public class PopupService {
 
         validateDateRange(startDate, endDate);
 
+        // 이미지가 변경된 경우 기존 이미지 삭제
+        String oldPcImageUrl = popup.getPcImageUrl();
+        String oldMobileImageUrl = popup.getMobileImageUrl();
+
         popup.update(
                 startDate,
                 endDate,
@@ -76,12 +82,25 @@ public class PopupService {
                 request.showOnlyToRecentGeneration()
         );
 
+        // 기존 이미지와 다르면 S3에서 삭제
+        if (!oldPcImageUrl.equals(request.pcImageUrl())) {
+            s3ImageService.deleteImage(oldPcImageUrl);
+        }
+        if (!oldMobileImageUrl.equals(request.mobileImageUrl())) {
+            s3ImageService.deleteImage(oldMobileImageUrl);
+        }
+
         return PopupResponse.from(popup);
     }
 
     @Transactional
     public void deletePopup(Long id) {
         Popup popup = findPopupById(id);
+
+        // S3에서 이미지 삭제
+        s3ImageService.deleteImage(popup.getPcImageUrl());
+        s3ImageService.deleteImage(popup.getMobileImageUrl());
+
         popupRepository.delete(popup);
     }
 
