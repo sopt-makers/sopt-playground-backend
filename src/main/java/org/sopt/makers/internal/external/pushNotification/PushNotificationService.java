@@ -2,9 +2,9 @@ package org.sopt.makers.internal.external.pushNotification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.external.ExternalConfig;
 import org.sopt.makers.internal.external.pushNotification.dto.PushNotificationRequest;
 import org.sopt.makers.internal.external.pushNotification.message.PushNotificationMessageBuilder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -15,15 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PushNotificationService {
 
-    @Value("${push-notification.action}")
-    private String action;
-
-    @Value("${push-notification.x-api-key}")
-    private String pushNotificationApiKey;
-
-    @Value("${push-notification.service}")
-    private String service;
-
+    private final ExternalConfig externalConfig;
     private final PushServerClient pushServerClient;
 
     public void sendPushNotification(PushNotificationMessageBuilder messageBuilder) {
@@ -41,10 +33,10 @@ public class PushNotificationService {
                     .build();
 
             pushServerClient.sendPushNotification(
-                    pushNotificationApiKey,
-                    action,
+                    externalConfig.getPushNotificationApiKey(),
+                    externalConfig.getAction(),
                     UUID.randomUUID().toString(),
-                    service,
+                    externalConfig.getService(),
                     pushNotificationRequest
             );
 
@@ -73,10 +65,10 @@ public class PushNotificationService {
                     .category("NEWS").build();
 
             pushServerClient.sendPushNotification(
-                    pushNotificationApiKey,
-                    action,
+                    externalConfig.getPushNotificationApiKey(),
+                    externalConfig.getAction(),
                     UUID.randomUUID().toString(),
-                    service,
+                    externalConfig.getService(),
                     pushNotificationRequest
             );
         } catch (Exception error) {
@@ -86,10 +78,10 @@ public class PushNotificationService {
 
     public void sendAllPushNotification(PushNotificationRequest request) {
         pushServerClient.sendPushNotification(
-                pushNotificationApiKey,
+                externalConfig.getPushNotificationApiKey(),
                 "sendAll",
                 UUID.randomUUID().toString(),
-                service,
+                externalConfig.getService(),
                 request
         );
     }
