@@ -19,6 +19,7 @@ public class CommunityCommentModifier {
                 .postId(postId)
                 .writerId(memberId)
                 .isBlindWriter(request.isBlindWriter())
+                .parentCommentId(request.parentCommentId())
                 .build());
     }
 }
