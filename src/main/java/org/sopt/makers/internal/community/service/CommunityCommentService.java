@@ -7,19 +7,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.dto.CommentInfo;
 import org.sopt.makers.internal.community.dto.MemberVo;
-import org.sopt.makers.internal.community.service.comment.CommunityCommentModifier;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousCommentProfileRetriever;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentsModifier;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentsRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.external.slack.SlackNotificationService;
+import org.sopt.makers.internal.external.slack.message.community.CommentReportSlackMessage;
+import org.sopt.makers.internal.external.pushNotification.message.community.CommentNotificationMessage;
+import org.sopt.makers.internal.external.pushNotification.message.community.MentionNotificationMessage;
+import org.sopt.makers.internal.external.pushNotification.message.community.ReplyNotificationMessage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
@@ -28,7 +33,6 @@ import org.sopt.makers.internal.community.domain.comment.ReportComment;
 import org.sopt.makers.internal.community.dto.CommentDao;
 import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousCommentProfileRepository;
@@ -39,13 +43,9 @@ import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCom
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
-import org.sopt.makers.internal.common.util.MentionCleaner;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,9 +55,6 @@ import lombok.val;
 @Service
 @Slf4j
 public class CommunityCommentService {
-
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
 
     private final PlatformService platformService;
     private final MemberCareerRetriever memberCareerRetriever;
@@ -71,42 +68,44 @@ public class CommunityCommentService {
 
     private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
     private final AnonymousNicknameRetriever anonymousNicknameRetriever;
+    private final AnonymousCommentProfileRetriever anonymousCommentProfileRetriever;
     private final CommunityPostRetriever communityPostRetriever;
     private final CommunityCommentsRetriever communityCommentsRetriever;
     private final MemberRetriever memberRetriever;
 
-    private final CommunityCommentModifier communityCommentModifier;
+    private final CommunityCommentsModifier communityCommentsModifier;
 
     private final CommunityMapper communityMapper;
 
     private final PushNotificationService pushNotificationService;
     private final SlackMessageUtil slackMessageUtil;
-    private final SlackClient slackClient;
+    private final SlackNotificationService slackNotificationService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Transactional
     public void createComment(Long writerId, Long postId, CommentSaveRequest request) {
         Member member = memberRetriever.findMemberById(writerId);
-        InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
-        CommunityComment comment = communityCommentModifier.createCommunityComment(postId, member.getId(), request);
+
+        if (request.isChildComment()) {
+            communityCommentsRetriever.checkExistsCommunityCommentById(request.parentCommentId());
+            validateAnonymousNickname(request, postId);
+        }
+
+        InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
+        CommunityComment comment = communityCommentsModifier.createCommunityComment(postId, member.getId(), request);
 
         if (request.isBlindWriter()) {
             Optional<AnonymousCommentProfile> existingCommentProfile =
                     anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(member.getId(), post.getId());
-            if (existingCommentProfile.isEmpty() ) {
+            if (existingCommentProfile.isEmpty()) {
                 saveAnonymousProfile(member, post, comment);
             }
         }
 
-        if (!post.getMember().getId().equals(writerId)) {
-            sendCommentPushNotification(post.getMember().getId(), request, writerDetails.name());
-        }
-
-        if(Objects.nonNull(request.mention())) {
-            sendMentionPushNotification(request.content(), request);
-        }
+        // 푸시 알림 전송
+        sendNotifications(writerId, post, request, writerDetails.name());
     }
 
     @Transactional(readOnly = true)
@@ -125,7 +124,7 @@ public class CommunityCommentService {
 
     @Transactional(readOnly = true)
     public AnonymousCommentProfile getAnonymousCommentProfile(CommunityComment comment) {
-        return anonymousCommentProfileRepository.findByCommunityCommentId(comment.getId()).orElse(null);
+        return anonymousCommentProfileRetriever.findByCommunityCommentId(comment.getId());
     }
 
     @Transactional
@@ -145,14 +144,14 @@ public class CommunityCommentService {
         CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
         InternalUserDetails userDetails = platformService.getInternalUser(memberId);
 
-        try {
-            if (Objects.equals(activeProfile, "prod")) {
-                val slackRequest = createSlackRequest(comment.getPostId(), userDetails.name(), comment.getContent());
-                slackClient.postReportMessage(slackRequest.toString());
-            }
-        } catch (RuntimeException ex) {
-            log.error("슬랙 요청이 실패했습니다 : " + ex.getMessage());
-        }
+        // 슬랙 알림 전송 (SOLID 원칙 적용)
+        CommentReportSlackMessage slackMessage = CommentReportSlackMessage.of(
+                slackMessageUtil,
+                comment.getPostId(),
+                userDetails.name(),
+                comment.getContent()
+        );
+        slackNotificationService.sendCommentReport(slackMessage);
 
         reportCommentRepository.save(ReportComment.builder()
                 .reporterId(memberId)
@@ -161,29 +160,9 @@ public class CommunityCommentService {
                 .build());
     }
 
-    private JsonNode createSlackRequest(Long id, String name, String comment) {
-        val rootNode = slackMessageUtil.getObjectNode();
-        rootNode.put("text", "🚨댓글 신고 발생!🚨");
-
-        val blocks = slackMessageUtil.getArrayNode();
-        val textField = slackMessageUtil.createTextField("댓글 신고가 들어왔어요!");
-        val contentNode = slackMessageUtil.createSection();
-
-        val fields = slackMessageUtil.getArrayNode();
-        fields.add(slackMessageUtil.createTextFieldNode("*신고자:*\n" + name));
-        fields.add(slackMessageUtil.createTextFieldNode("*댓글 내용:*\n" + comment));
-        fields.add(slackMessageUtil.createTextFieldNode("*링크:*\n<https://playground.sopt.org/feed/" + id + "|글>"));
-        contentNode.set("fields", fields);
-
-        blocks.add(textField);
-        blocks.add(contentNode);
-        rootNode.set("blocks", blocks);
-        return rootNode;
-    }
-
     private void saveAnonymousProfile(Member member, CommunityPost post, CommunityComment comment) {
         List<AnonymousNickname> excludeNicknames = new ArrayList<>();
-        for (AnonymousCommentProfile profile : anonymousCommentProfileRepository.findAllByCommunityCommentPostId(post.getId())) {
+        for (AnonymousCommentProfile profile : anonymousCommentProfileRetriever.findAllByPostId(post.getId())) {
             excludeNicknames.add(profile.getNickname());
         }
 
@@ -206,21 +185,57 @@ public class CommunityCommentService {
         );
     }
 
-    private void sendCommentPushNotification(Long userId, CommentSaveRequest request, String commentWriterName) {
-        String title = "💬나의 게시글에 새로운 댓글이 달렸어요.";
-        String writerName = request.isBlindWriter() ? "익명" : commentWriterName;
-        String content = "[" + writerName + "의 댓글] : \""
-                + StringUtils.abbreviate(MentionCleaner.removeMentionIds(request.content()), 100) + "\"";
-        Long[] userIds = new Long[]{userId};
+    private void validateAnonymousNickname(CommentSaveRequest request, Long postId) {
+        if (
+                request.anonymousMentionRequest() == null
+                || request.anonymousMentionRequest().anonymousNicknames() == null
+                || request.anonymousMentionRequest().anonymousNicknames().length == 0
+        ) {
+            return;
+        }
 
-        pushNotificationService.sendPushNotification(title, content, userIds, request.webLink());
+        String[] anonymousNicknames = request.anonymousMentionRequest().anonymousNicknames();
+        anonymousNicknameRetriever.validateAnonymousNicknames(anonymousNicknames);
+        anonymousCommentProfileRetriever.validateAnonymousNicknamesInPost(postId, anonymousNicknames);
     }
 
-    private void sendMentionPushNotification(String commentContent, CommentSaveRequest request) {
-        String writerName = request.isBlindWriter() ? "익명" : request.mention().writerName();
-        String title = "💬" + writerName + "님이 회원님을 언급했어요.";
-        String content = "\"" + StringUtils.abbreviate(MentionCleaner.removeMentionIds(commentContent), 100) + "\"";
+    private void sendNotifications(Long writerId, CommunityPost post, CommentSaveRequest request, String writerName) {
+        if (!post.getMember().getId().equals(writerId)) {
+            CommentNotificationMessage message = CommentNotificationMessage.of(
+                    post.getMember().getId(),
+                    writerName,
+                    request.content(),
+                    request.isBlindWriter(),
+                    request.webLink()
+            );
+            pushNotificationService.sendPushNotification(message);
+        }
 
-        pushNotificationService.sendPushNotification(title, content, request.mention().userIds(), request.webLink());
+        if (request.isChildComment()) {
+            CommunityComment parentComment = communityCommentsRetriever.findCommunityCommentById(request.parentCommentId());
+            Long parentCommentAuthorId = parentComment.getWriterId();
+
+            if (!parentCommentAuthorId.equals(writerId) && !parentCommentAuthorId.equals(post.getMember().getId())) {
+                ReplyNotificationMessage message = ReplyNotificationMessage.of(
+                        parentCommentAuthorId,
+                        writerName,
+                        request.content(),
+                        request.isBlindWriter(),
+                        request.webLink()
+                );
+                pushNotificationService.sendPushNotification(message);
+            }
+        }
+
+        if (Objects.nonNull(request.mention())) {
+            MentionNotificationMessage message = MentionNotificationMessage.of(
+                    request.mention().userIds(),
+                    writerName,
+                    request.content(),
+                    request.isBlindWriter(),
+                    request.webLink()
+            );
+            pushNotificationService.sendPushNotification(message);
+        }
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommunityCommentModifier {
+public class CommunityCommentsModifier {
 
     private final CommunityCommentRepository communityCommentRepository;
 
