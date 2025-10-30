@@ -29,7 +29,18 @@ public class CommunityCommentController {
     private final CommunityCommentService communityCommentService;
     private final CommunityResponseMapper communityResponseMapper;
 
-    @Operation(summary = "커뮤니티 댓글 생성 API")
+    @Operation(
+            summary = "댓글/답글 생성 API",
+            description = """
+              댓글 또는 답글을 생성합니다.
+              - parentCommentId가 null: 댓글
+              - parentCommentId가 있음: 답글
+
+              멘션:
+              - 일반 사용자 멘션: mention.userIds에 포함
+              - 익명 사용자 멘션: anonymousMentionRequest.anonymousNickname에 닉네임만 포함
+              """
+    )
     @PostMapping
     public ResponseEntity<Map<String, Boolean>> createComment(
             @PathVariable("postId") Long postId,
