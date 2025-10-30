@@ -61,6 +61,7 @@ import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
+import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -92,6 +93,7 @@ public class MemberService {
 	private final SlackMessageUtil slackMessageUtil;
 	private final ReviewService reviewService;
 	private final PlatformService platformService;
+	private final MemberSortingService memberSortingService;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -296,11 +298,21 @@ public class MemberService {
 		// 3-1) Member 정보를 포함한 정렬 및 페이지네이션 처리
 		int offsetValue = (offset == null || offset < 0) ? 0 : offset;
 		int limitValue = (limit == null || limit <= 0) ? 30 : limit;
-		
-		OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
-		List<InternalUserDetails> sortedUsers = filteredBySearch.stream()
-			.sorted((a, b) -> compareByOrderCondition(a, b, memberMap, orderByCondition))
-			.toList();
+
+		// orderBy 파라미터가 있으면 orderBy 우선, 없으면 필터별 정렬 정책 적용
+		List<InternalUserDetails> sortedUsers;
+		if (orderBy != null) {
+			// orderBy 파라미터가 있을 때: OrderByCondition 기준으로 정렬
+			OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
+			sortedUsers = filteredBySearch.stream()
+				.sorted(memberSortingService.createComparatorByOrderCondition(memberMap, orderByCondition, employed))
+				.toList();
+		} else {
+			// orderBy가 없을 때: 필터별 정렬 정책 적용
+			sortedUsers = filteredBySearch.stream()
+				.sorted(memberSortingService.createComparator(memberMap, employed, checkedTeam))
+				.toList();
+		}
 		
 		List<InternalUserDetails> pagedByServer = sortedUsers.stream()
 			.skip(offsetValue)
@@ -373,124 +385,6 @@ public class MemberService {
 			.anyMatch(c -> c.contains(keyword));
 
 		return inName || inUniv || inCompany;
-	}
-
-	/**
-	 * 멤버 정렬 비교 메서드 (Member 정보 포함)
-	 * 1순위: 최신 기수 (lastGeneration 내림차순)
-	 * 2순위: 프로필 정보 완성도 (내림차순)
-	 * 3순위: 이름 ㄱㄴㄷ 순 (오름차순)
-	 */
-	private int compareForSortingWithMember(InternalUserDetails a, InternalUserDetails b, Map<Long, Member> memberMap) {
-		// 1순위: 최신 기수 비교 (내림차순)
-		int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
-		if (generationCompare != 0) {
-			return generationCompare;
-		}
-
-		// 2순위: 프로필 정보 완성도 비교 (내림차순)
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
-		int profileCompletenessA = calculateProfileCompletenessWithMember(a, memberA);
-		int profileCompletenessB = calculateProfileCompletenessWithMember(b, memberB);
-		int completenessCompare = Integer.compare(profileCompletenessB, profileCompletenessA);
-		if (completenessCompare != 0) {
-			return completenessCompare;
-		}
-
-		// 3순위: 이름 ㄱㄴㄷ 순 비교 (오름차순)
-		return a.name().compareTo(b.name());
-	}
-
-	/**
-	 * OrderByCondition에 따른 정렬 비교 메서드
-	 */
-	private int compareByOrderCondition(InternalUserDetails a, InternalUserDetails b, Map<Long, Member> memberMap, OrderByCondition orderBy) {
-		if (orderBy == null) {
-			return compareForSortingWithMember(a, b, memberMap);
-		}
-
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
-
-		return switch (orderBy) {
-			case LATEST_REGISTERED -> {
-				// 최신 등록순: ID 내림차순 (ID가 클수록 최근)
-				if (memberA == null && memberB == null) yield 0;
-				if (memberA == null) yield 1;
-				if (memberB == null) yield -1;
-				yield Long.compare(memberB.getId(), memberA.getId());
-			}
-			case OLDEST_REGISTERED -> {
-				// 오래된 등록순: ID 오름차순 (ID가 작을수록 오래됨)
-				if (memberA == null && memberB == null) yield 0;
-				if (memberA == null) yield 1;
-				if (memberB == null) yield -1;
-				yield Long.compare(memberA.getId(), memberB.getId());
-			}
-			case LATEST_GENERATION -> {
-				// 최신 기수순: 기수 내림차순
-				int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
-				if (generationCompare != 0) yield generationCompare;
-				// 기수가 같으면 이름 오름차순
-				yield a.name().compareTo(b.name());
-			}
-			case OLDEST_GENERATION -> {
-				// 오래된 기수순: 기수 오름차순
-				int generationCompare = Integer.compare(a.lastGeneration(), b.lastGeneration());
-				if (generationCompare != 0) yield generationCompare;
-				// 기수가 같으면 이름 오름차순
-				yield a.name().compareTo(b.name());
-			}
-		};
-	}
-
-
-
-	/**
-	 * Member 정보를 포함한 프로필 정보 완성도 계산
-	 * null이 아닌 필드의 개수를 반환
-	 */
-	private int calculateProfileCompletenessWithMember(InternalUserDetails userDetails, Member member) {
-		int count = 0;
-		
-		// 기본 정보 필드들 (InternalUserDetails에서)
-		if (userDetails.profileImage() != null && !userDetails.profileImage().isBlank()) count+=5; // 프로필사진 5점
-		if (userDetails.birthday() != null && !userDetails.birthday().isBlank()) count++;
-		if (userDetails.phone() != null && !userDetails.phone().isBlank()) count++;
-		if (userDetails.email() != null && !userDetails.email().isBlank()) count++;
-		
-		// Member 정보가 있는 경우 추가 필드들
-		if (member != null) {
-			if (member.getAddress() != null && !member.getAddress().isBlank()) count++;
-			if (member.getUniversity() != null && !member.getUniversity().isBlank()) count++;
-			if (member.getMajor() != null && !member.getMajor().isBlank()) count++;
-			if (member.getIntroduction() != null && !member.getIntroduction().isBlank()) count+=3; // 자기소개 3점
-			if (member.getSkill() != null && !member.getSkill().isBlank()) count++;
-			if (member.getMbti() != null && !member.getMbti().isBlank()) count++;
-			if (member.getMbtiDescription() != null && !member.getMbtiDescription().isBlank()) count++;
-			if (member.getSojuCapacity() != null) count++;
-			if (member.getInterest() != null && !member.getInterest().isBlank()) count++;
-			if (member.getIdealType() != null && !member.getIdealType().isBlank()) count++;
-			if (member.getSelfIntroduction() != null && !member.getSelfIntroduction().isBlank()) count++;
-			
-			// UserFavor 정보
-			if (member.getUserFavor() != null) {
-				UserFavor favor = member.getUserFavor();
-				if (favor.getIsPourSauceLover() != null) count++;
-				if (favor.getIsHardPeachLover() != null) count++;
-				if (favor.getIsMintChocoLover() != null) count++;
-				if (favor.getIsRedBeanFishBreadLover() != null) count++;
-				if (favor.getIsSojuLover() != null) count++;
-				if (favor.getIsRiceTteokLover() != null) count++;
-			}
-			
-			// Links와 Careers 개수
-			if (member.getLinks() != null && !member.getLinks().isEmpty()) count += member.getLinks().size();
-			if (member.getCareers() != null && !member.getCareers().isEmpty()) count += member.getCareers().size() * 3; // 커리어 개당 3점
-		}
-		
-		return count;
 	}
 
 
