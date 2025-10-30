@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.community.repository.anonymous;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,8 @@ public interface AnonymousNicknameRepository extends JpaRepository<AnonymousNick
 
 	@Query(value = "SELECT * FROM internal_dev.anonymous_nickname ORDER BY RANDOM() LIMIT 1", nativeQuery = true)
 	AnonymousNickname findRandomOne();
+
+	List<AnonymousNickname> findAllByNicknameIn(List<String> nicknames);
 
 	// UPDATE
 
