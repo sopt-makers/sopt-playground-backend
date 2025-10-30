@@ -40,6 +40,7 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-web"
 	implementation "org.springframework.boot:spring-boot-starter-mail"
 	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 	implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
 	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
 	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
@@ -177,13 +178,15 @@ tasks.register('generateNativeImageHints') {
 		// 2. Feign Hints 생성 (정적 템플릿)
 		generateFeignHints(outputDir)
 
+		// 3. Admin Resources Hints 생성 (정적 템플릿)
+		generateAdminResourcesHints(outputDir)
+
 		println "\n✅ 모든 Hints 파일 생성 완료!"
 		println "ℹ️  이 파일들은 Native Image 빌드 시에만 사용되며 Git에 커밋되지 않습니다."
 	}
 }
 
-def generateQueryDslProjectionHints(File outputDir) {
-	println "\n🔍 [1/2] QueryDSL Projection Hints 생성..."
+def generateQueryDslProjectionHints(File outputDir) { println "\n🔍 [1/3] QueryDSL Projection Hints 생성..."
 
 	def complexDtos = []
 	def packagePattern = ~/package\s+([\w.]+);/
@@ -273,8 +276,67 @@ ${complexDtos.collect { "                \"${it}\"" }.join(',\n')}
 	println "  ✅ QueryDslProjectionNativeHints.java (${complexDtos.size()}개 DTO)"
 }
 
+def generateAdminResourcesHints(File outputDir) {
+	println "\n🔍 [3/3] Admin Resources Hints 생성..."
+
+	def hintsContent = """package org.sopt.makers.internal.graalVm.nativeImageHints;
+
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportRuntimeHints;
+
+/**
+ * Admin 페이지를 위한 GraalVM Native Image 힌트
+ *
+ * ⚠️ 자동 생성 파일 - 수정하지 마세요!
+ * 생성: Native Image 빌드 시 (./gradlew nativeCompile)
+ *
+ * Thymeleaf 템플릿과 정적 리소스(CSS)를 Native Image에 포함시킵니다.
+ */
+@Configuration
+@ImportRuntimeHints(AdminResourcesNativeHints.AdminResourcesRuntimeHints.class)
+public class AdminResourcesNativeHints {
+
+    static class AdminResourcesRuntimeHints implements RuntimeHintsRegistrar {
+
+        @Override
+        public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+            // Thymeleaf 템플릿 리소스 등록
+            hints.resources().registerPattern("templates/admin/*.html");
+
+            // 정적 리소스(CSS) 등록
+            hints.resources().registerPattern("static/css/*.css");
+
+            // Thymeleaf 관련 클래스 리플렉션 등록
+            hints.reflection().registerType(
+                org.thymeleaf.spring6.SpringTemplateEngine.class,
+                hint -> hint.withMembers(
+                    MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
+                    MemberCategory.INVOKE_PUBLIC_METHODS
+                )
+            );
+
+            hints.reflection().registerType(
+                org.thymeleaf.spring6.view.ThymeleafViewResolver.class,
+                hint -> hint.withMembers(
+                    MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
+                    MemberCategory.INVOKE_PUBLIC_METHODS
+                )
+            );
+        }
+    }
+}
+"""
+
+	def hintsFile = new File(outputDir, 'AdminResourcesNativeHints.java')
+	hintsFile.text = hintsContent
+	println "  ✅ AdminResourcesNativeHints.java"
+}
+
 def generateFeignHints(File outputDir) {
-	println "\n🔍 [2/2] Feign Hints 생성..."
+	println "\n🔍 [2/3] Feign Hints 생성..."
 
 	def hintsContent = """package org.sopt.makers.internal.graalVm.nativeImageHints;
 

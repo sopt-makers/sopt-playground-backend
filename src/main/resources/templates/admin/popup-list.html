@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>홈팝업 관리</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="content-header">
+            <h2>홈팝업 관리</h2>
+            <a th:href="@{/admin/popups/new}" class="btn btn-primary">새 팝업 추가</a>
+        </div>
+
+        <div class="env-warning" th:classappend="${environment == 'prod' ? 'env-warning-prod' : 'env-warning-dev'}">
+            <span th:text="${environment == 'prod' ?
+                '해당 페이지에서 관리하는 팝업은 실제 서비스에 반영됩니다.' :
+                '해당 페이지에서 관리하는 팝업은 개발 환경에만 표시됩니다.'}">
+            </span>
+        </div>
+
+        <div class="popup-list">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>시작 날짜</th>
+                        <th>종료 날짜</th>
+                        <th>PC 이미지</th>
+                        <th>모바일 이미지</th>
+                        <th>링크 URL</th>
+                        <th>새 탭</th>
+                        <th>최근 기수만</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${popups.empty}">
+                        <td colspan="9" class="empty-message">등록된 팝업이 없습니다.</td>
+                    </tr>
+                    <tr th:each="popup : ${popups}">
+                        <td th:text="${popup.id}">1</td>
+                        <td th:text="${popup.startDate}">2024-01-01</td>
+                        <td th:text="${popup.endDate}">2024-01-31</td>
+                        <td class="image-cell">
+                            <a th:href="${popup.pcImageUrl}" target="_blank">
+                                <img th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-thumbnail">
+                            </a>
+                        </td>
+                        <td class="image-cell">
+                            <a th:href="${popup.mobileImageUrl}" target="_blank">
+                                <img th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-thumbnail">
+                            </a>
+                        </td>
+                        <td th:text="${popup.linkUrl}">-</td>
+                        <td th:text="${popup.openInNewTab != null ? (popup.openInNewTab ? 'O' : 'X') : '-'}">-</td>
+                        <td th:text="${popup.showOnlyToRecentGeneration != null ? (popup.showOnlyToRecentGeneration ? 'O' : 'X') : '-'}">-</td>
+                        <td class="action-cell">
+                            <a th:href="@{/admin/popups/{id}/edit(id=${popup.id})}" class="btn btn-sm btn-secondary">수정</a>
+                            <button th:onclick="'deletePopup(' + ${popup.id} + ')'" class="btn btn-sm btn-danger">삭제</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <script th:inline="javascript">
+            // 로그인 확인
+            if (!localStorage.getItem('adminKey')) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/admin';
+            }
+
+            function deletePopup(id) {
+                if (!confirm('정말 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                const adminKey = localStorage.getItem('adminKey');
+
+                fetch(`/api/v1/popups/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'admin-key': adminKey
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('삭제되었습니다.');
+                        location.reload();
+                    } else if (response.status === 403) {
+                        alert('인증이 만료되었습니다. 다시 로그인해주세요.');
+                        localStorage.removeItem('adminKey');
+                        window.location.href = '/admin';
+                    } else {
+                        alert('삭제 실패: ' + response.statusText);
+                    }
+                })
+                .catch(error => {
+                    alert('오류 발생: ' + error.message);
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>
