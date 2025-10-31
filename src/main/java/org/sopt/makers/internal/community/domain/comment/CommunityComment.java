@@ -4,6 +4,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 
 import jakarta.persistence.*;
 
@@ -35,4 +36,12 @@ public class CommunityComment extends AuditingTimeEntity {
 
     @ColumnDefault("false")
     private Boolean isReported;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "anonymous_profile_id")
+    private AnonymousProfile anonymousProfile;
+
+    public void setAnonymousProfile(AnonymousProfile profile) {
+        this.anonymousProfile = profile;
+    }
 }
