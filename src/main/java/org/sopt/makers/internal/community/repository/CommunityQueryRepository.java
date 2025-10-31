@@ -13,7 +13,7 @@ import org.sopt.makers.internal.community.domain.anonymous.QAnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.community.domain.comment.QCommunityComment;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
-import org.sopt.makers.internal.community.dto.CommentDao;
+import org.sopt.makers.internal.community.dto.comment.CommentDao;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberBlock;
 import org.sopt.makers.internal.member.domain.QMemberCareer;

@@ -2,7 +2,7 @@ package org.sopt.makers.internal.community.service.comment;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
-import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.springframework.stereotype.Component;
 

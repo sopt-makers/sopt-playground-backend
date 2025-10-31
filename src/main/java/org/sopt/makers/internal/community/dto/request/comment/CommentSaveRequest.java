@@ -1,10 +1,10 @@
-package org.sopt.makers.internal.community.dto.request;
+package org.sopt.makers.internal.community.dto.request.comment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.sopt.makers.internal.community.dto.request.comment.AnonymousMentionRequest;
+import org.sopt.makers.internal.community.dto.request.MentionRequest;
 
 public record CommentSaveRequest (
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

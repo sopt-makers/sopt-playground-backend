@@ -15,7 +15,7 @@ import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
 import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.community.service.CommunityCommentService;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentService;
 import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;

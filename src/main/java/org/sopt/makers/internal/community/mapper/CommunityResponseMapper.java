@@ -13,7 +13,7 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
 import org.sopt.makers.internal.community.dto.CategoryVo;
-import org.sopt.makers.internal.community.dto.CommentInfo;
+import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
 import org.sopt.makers.internal.community.dto.CommunityPostVo;
 import org.sopt.makers.internal.community.dto.MemberVo;

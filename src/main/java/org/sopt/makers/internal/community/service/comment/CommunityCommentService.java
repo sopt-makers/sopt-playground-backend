@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.community.service;
+package org.sopt.makers.internal.community.service.comment;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -9,13 +9,11 @@ import java.util.Set;
 
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
-import org.sopt.makers.internal.community.dto.CommentInfo;
+import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.MemberVo;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
-import org.sopt.makers.internal.community.service.comment.CommunityCommentsModifier;
-import org.sopt.makers.internal.community.service.comment.CommunityCommentsRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
@@ -27,8 +25,8 @@ import org.sopt.makers.internal.external.pushNotification.message.community.Ment
 import org.sopt.makers.internal.external.pushNotification.message.community.ReplyNotificationMessage;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.ReportComment;
-import org.sopt.makers.internal.community.dto.CommentDao;
-import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.comment.CommentDao;
+import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.member.domain.Member;
