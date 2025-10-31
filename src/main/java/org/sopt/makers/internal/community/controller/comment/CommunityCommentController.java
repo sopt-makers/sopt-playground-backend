@@ -47,6 +47,7 @@ public class CommunityCommentController {
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody @Valid CommentSaveRequest request
     ) {
+        request.validate();
         communityCommentService.createComment(userId, postId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("댓글 생성 성공", true));
     }
