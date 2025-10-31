@@ -27,7 +27,7 @@ public record CommentSaveRequest (
     MentionRequest mention,
 
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-    AnonymousMentionRequest anonymousMentionRequest
+    AnonymousMentionRequest anonymousMention
 ) {
     public void validate() {
         validateChildCommentConsistency();

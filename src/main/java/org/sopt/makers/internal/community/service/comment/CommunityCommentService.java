@@ -152,14 +152,14 @@ public class CommunityCommentService {
 
     private void validateAnonymousNickname(CommentSaveRequest request, Long postId) {
         if (
-                request.anonymousMentionRequest() == null
-                || request.anonymousMentionRequest().anonymousNicknames() == null
-                || request.anonymousMentionRequest().anonymousNicknames().length == 0
+                request.anonymousMention() == null
+                || request.anonymousMention().anonymousNicknames() == null
+                || request.anonymousMention().anonymousNicknames().length == 0
         ) {
             return;
         }
 
-        String[] anonymousNicknames = request.anonymousMentionRequest().anonymousNicknames();
+        String[] anonymousNicknames = request.anonymousMention().anonymousNicknames();
 
         // 1. 익명 닉네임이 시스템에 존재하는지 검증
         anonymousNicknameRetriever.validateAnonymousNicknames(anonymousNicknames);
