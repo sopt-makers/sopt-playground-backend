@@ -326,13 +326,12 @@ public class CommunityPostService {
 
         Map<Long, String> categoryNameMap = categoryRetriever.getAllCategories().stream()
                 .collect(Collectors.toMap(Category::getId, Category::getName));
+        Map<Long, AnonymousProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
         return posts.stream()
                 .map(post -> {
                     val authorDetails = platformService.getInternalUser(post.getMember().getId());
-                    val anonymousProfile = post.getIsBlindWriter()
-                            ? anonymousProfileRetriever.findByPostId(post.getId()).orElse(null)
-                            : null;
+                    val anonymousProfile = anonymousProfileMap.get(post.getId());
                     String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
                     return communityResponseMapper.toPopularPostResponse(post, anonymousProfile, authorDetails, categoryName);
                 })

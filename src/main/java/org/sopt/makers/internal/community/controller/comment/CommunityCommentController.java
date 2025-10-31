@@ -21,7 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/community/posts/{postId}/comment")
+@RequestMapping("/api/v1/community/{postId}/comment")
 @SecurityRequirement(name = "Authorization")
 @Tag(name = "Community Comment 관련 API", description = "커뮤니티 댓글 관련 API")
 public class CommunityCommentController {

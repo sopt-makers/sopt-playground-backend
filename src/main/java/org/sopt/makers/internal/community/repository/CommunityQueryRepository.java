@@ -116,6 +116,9 @@ public class CommunityQueryRepository {
 
         return queryFactory
                 .selectFrom(anonymousProfile)
+                .leftJoin(anonymousProfile.post).fetchJoin()
+                .leftJoin(anonymousProfile.nickname).fetchJoin()
+                .leftJoin(anonymousProfile.profileImg).fetchJoin()
                 .where(anonymousProfile.post.id.in(postIds))
                 .fetch()
                 .stream()
@@ -130,11 +133,15 @@ public class CommunityQueryRepository {
         val member = QMember.member;
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
+        val anonymousProfile = QAnonymousProfile.anonymousProfile;
 
         JPAQuery<CommentDao> query = queryFactory.select(Projections.constructor(CommentDao.class, member, comment))
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
                 .leftJoin(member.careers, careers)
+                .leftJoin(comment.anonymousProfile, anonymousProfile).fetchJoin()
+                .leftJoin(anonymousProfile.nickname).fetchJoin()
+                .leftJoin(anonymousProfile.profileImg).fetchJoin()
                 .where(comment.postId.eq(postId))
                 .distinct()
                 .orderBy(comment.id.asc());
