@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.community.dto;
+package org.sopt.makers.internal.community.dto.comment;
 
 import org.springframework.aot.hint.annotation.Reflective;
 import org.sopt.makers.internal.member.domain.Member;

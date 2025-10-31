@@ -16,4 +16,10 @@ public class CommunityCommentsRetriever {
         return communityCommentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 댓글의 id값 입니다."));
     }
+
+    public void checkExistsCommunityCommentById(Long commentId) {
+        if (!communityCommentRepository.existsById(commentId)) {
+            throw new NotFoundDBEntityException("존재하지 않는 댓글의 id값 입니다.");
+        }
+    }
 }

@@ -4,17 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.val;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-
+@RequiredArgsConstructor
 public class SlackMessageUtil {
 
-    private final ObjectMapper jsonMapper = new ObjectMapper();
+    private final ObjectMapper jsonMapper;
 
     public JsonNode createTextFieldNode (String text) {
-        val textField = jsonMapper.createObjectNode();
+        ObjectNode textField = jsonMapper.createObjectNode();
         textField.put("type", "mrkdwn");
         textField.put("text", text);
         return textField;
@@ -29,13 +29,13 @@ public class SlackMessageUtil {
     }
 
     public ObjectNode createSection() {
-        val textField = getObjectNode();
+        ObjectNode textField = getObjectNode();
         textField.put("type", "section");
         return textField;
     }
 
     public ObjectNode createTextField(String message) {
-        val textField = createSection();
+        ObjectNode textField = createSection();
         textField.set("text", createTextFieldNode(message));
         return textField;
     }
