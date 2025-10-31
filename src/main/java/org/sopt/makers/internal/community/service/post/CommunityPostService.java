@@ -344,7 +344,7 @@ public class CommunityPostService {
         List<CommunityPost> posts = getPopularPostsBase(limitCount);
 
         Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
-        Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
+        Map<Long, AnonymousProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
         String baseUrl = activeProfile.equals("prod")
                 ? "https://playground.sopt.org/?feed="

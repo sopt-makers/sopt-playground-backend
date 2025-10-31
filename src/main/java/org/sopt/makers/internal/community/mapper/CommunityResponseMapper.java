@@ -120,14 +120,14 @@ public class CommunityResponseMapper {
         val comments = commentInfos.stream()
                 .map(info -> toCommentResponse(info, memberId))
                 .collect(toList());
-        val anonymousProfile = dao.post().isBlindWriter() && anonymousProfile != null ? toAnonymousProfileVo(anonymousProfile) : null;
+        val anonymousProfileVo = dao.post().isBlindWriter() && anonymousProfile != null ? toAnonymousProfileVo(anonymousProfile) : null;
         val createdAt = getRelativeTime(dao.post().createdAt());
 
         return new PostResponse(
                 post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
                 category.name(), post.title(), post.content(), post.hits(),
                 comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
-                post.sopticleUrl(), anonymousProfile, createdAt, comments, dao.post().vote(), null
+                post.sopticleUrl(), anonymousProfileVo, createdAt, comments, dao.post().vote(), null
         );
     }
 

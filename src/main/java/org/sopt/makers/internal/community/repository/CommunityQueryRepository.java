@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.QCommunityPost;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.domain.anonymous.QAnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
+import org.sopt.makers.internal.community.domain.anonymous.QAnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.community.domain.comment.QCommunityComment;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
@@ -107,20 +107,20 @@ public class CommunityQueryRepository {
                 ));
     }
 
-    public Map<Long, AnonymousPostProfile> getAnonymousPostProfilesByPostId(List<Long> postIds) {
+    public Map<Long, AnonymousProfile> getAnonymousProfilesByPostId(List<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        QAnonymousPostProfile anonymousPostProfile = QAnonymousPostProfile.anonymousPostProfile;
+        QAnonymousProfile anonymousProfile = QAnonymousProfile.anonymousProfile;
 
         return queryFactory
-                .selectFrom(anonymousPostProfile)
-                .where(anonymousPostProfile.communityPost.id.in(postIds))
+                .selectFrom(anonymousProfile)
+                .where(anonymousProfile.post.id.in(postIds))
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
-                        profile -> profile.getCommunityPost().getId(),
+                        profile -> profile.getPost().getId(),
                         profile -> profile
                 ));
     }
