@@ -2,9 +2,12 @@ package org.sopt.makers.internal.community.mapper;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.val;
 import org.sopt.makers.internal.common.util.MentionCleaner;
@@ -41,14 +44,45 @@ import static java.util.stream.Collectors.*;
 public class CommunityResponseMapper {
     public CommentResponse toCommentResponse(CommentInfo info, Long memberId) {
         val comment = info.commentDao().comment();
+
+        // 삭제된 댓글인 경우, 계층 구조 유지를 위한 필드만 남기고 나머지는 null 처리
+        if (Boolean.TRUE.equals(comment.getIsDeleted())) {
+            return new CommentResponse(
+                    comment.getId(),
+                    null,  // member
+                    null,  // isMine
+                    comment.getPostId(),
+                    comment.getParentCommentId(),
+                    null,  // content
+                    null,  // isBlindWriter
+                    null,  // anonymousProfile
+                    null,  // isReported
+                    null,  // createdAt
+                    true,  // isDeleted
+                    new ArrayList<>()  // replies
+            );
+        }
+
+        // 일반 댓글 처리
         val memberVo = comment.getIsBlindWriter() ? null : info.memberVo();
         val anonymousProfileVo = comment.getIsBlindWriter() && info.anonymousProfile() != null
                 ? toAnonymousProfileVo(info.anonymousProfile()) : null;
-
         val isMine = Objects.equals(info.commentDao().member().getId(), memberId);
 
-        return new CommentResponse(comment.getId(), memberVo, isMine, comment.getPostId(), comment.getParentCommentId(),
-                comment.getContent(), comment.getIsBlindWriter(), anonymousProfileVo, comment.getIsReported(), comment.getCreatedAt());
+        return new CommentResponse(
+                comment.getId(),
+                memberVo,
+                isMine,
+                comment.getPostId(),
+                comment.getParentCommentId(),
+                comment.getContent(),
+                comment.getIsBlindWriter(),
+                anonymousProfileVo,
+                comment.getIsReported(),
+                comment.getCreatedAt(),
+                false,  // isDeleted
+                new ArrayList<>()  // replies
+        );
     }
 
 //    public CommunityPostMemberVo toCommunityVo(CategoryPostMemberDao dao, VoteResponse voteResponse) {
@@ -293,6 +327,38 @@ public class CommunityResponseMapper {
 //                post.getHits()
 //        );
 //    }
+
+    /**
+     * 평평한 댓글 리스트를 계층 구조로 변환합니다.
+     * parentCommentId가 null인 댓글만 반환하며, 대댓글은 replies 필드에 포함됩니다.
+     */
+    public List<CommentResponse> buildCommentHierarchy(List<CommentResponse> flatComments) {
+        // 1. commentId를 키로 하는 Map을 만들어서 각 댓글을 빠르게 찾을 수 있도록 합니다
+        Map<Long, CommentResponse> commentMap = new HashMap<>();
+        List<CommentResponse> topLevelComments = new ArrayList<>();
+
+        // Map에 모든 댓글을 저장
+        for (CommentResponse comment : flatComments) {
+            commentMap.put(comment.id(), comment);
+        }
+
+        // 2. 모든 댓글을 순회하면서 계층 구조를 구성
+        for (CommentResponse comment : flatComments) {
+            if (comment.parentCommentId() == null) {
+                // parentCommentId가 null이면 최상위 댓글
+                topLevelComments.add(comment);
+            } else {
+                // parentCommentId가 있으면 부모 댓글의 replies 리스트에 추가
+                CommentResponse parentComment = commentMap.get(comment.parentCommentId());
+                if (parentComment != null) {
+                    parentComment.replies().add(comment);
+                }
+            }
+        }
+
+        // 3. 최상위 댓글 리스트만 반환
+        return topLevelComments;
+    }
 
     private String getRelativeTime(LocalDateTime createdAt) {
         Duration duration = Duration.between(createdAt, LocalDateTime.now());

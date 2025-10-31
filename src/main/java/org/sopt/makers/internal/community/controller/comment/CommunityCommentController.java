@@ -60,10 +60,11 @@ public class CommunityCommentController {
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
         List<CommentInfo> comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
-        List<CommentResponse> response = comments.stream().
-                map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
+        List<CommentResponse> flatComments = comments.stream()
+                .map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
                 .toList();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        List<CommentResponse> hierarchicalComments = communityResponseMapper.buildCommentHierarchy(flatComments);
+        return ResponseEntity.status(HttpStatus.OK).body(hierarchicalComments);
     }
 
     @Operation(summary = "커뮤니티 댓글 삭제 API")

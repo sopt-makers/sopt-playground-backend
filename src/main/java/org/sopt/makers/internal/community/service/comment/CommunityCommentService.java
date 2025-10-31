@@ -124,9 +124,13 @@ public class CommunityCommentService {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
 
+        // 감사 로그용으로 DeletedCommunityComment에 저장
         val deleteComment = communityMapper.toDeleteCommunityComment(comment);
         deletedCommunityCommentRepository.save(deleteComment);
-        communityCommentsRepository.delete(comment);
+
+        // Soft delete: isDeleted를 true로 설정
+        comment.markAsDeleted();
+        communityCommentsRepository.save(comment);
     }
 
     public void reportComment(Long memberId, Long commentId) {
