@@ -41,7 +41,7 @@ public class CommunityComment extends AuditingTimeEntity {
     @JoinColumn(name = "anonymous_profile_id")
     private AnonymousProfile anonymousProfile;
 
-    public void setAnonymousProfile(AnonymousProfile profile) {
+    public void registerAnonymousProfile(AnonymousProfile profile) {
         this.anonymousProfile = profile;
     }
 }

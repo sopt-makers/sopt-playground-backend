@@ -2,18 +2,18 @@ package org.sopt.makers.internal.community.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 
 import org.sopt.makers.internal.community.domain.CommunityPost;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.dto.CommentInfo;
 import org.sopt.makers.internal.community.dto.MemberVo;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousCommentProfileRetriever;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentsModifier;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentsRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
@@ -25,9 +25,6 @@ import org.sopt.makers.internal.external.slack.message.community.CommentReportSl
 import org.sopt.makers.internal.external.pushNotification.message.community.CommentNotificationMessage;
 import org.sopt.makers.internal.external.pushNotification.message.community.MentionNotificationMessage;
 import org.sopt.makers.internal.external.pushNotification.message.community.ReplyNotificationMessage;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousCommentProfile;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.ReportComment;
 import org.sopt.makers.internal.community.dto.CommentDao;
@@ -35,8 +32,6 @@ import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousCommentProfileRepository;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
@@ -59,16 +54,14 @@ public class CommunityCommentService {
     private final PlatformService platformService;
     private final MemberCareerRetriever memberCareerRetriever;
 
-    private final AnonymousCommentProfileRepository anonymousCommentProfileRepository;
-    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final CommunityCommentRepository communityCommentsRepository;
     private final ReportCommentRepository reportCommentRepository;
     private final CommunityQueryRepository communityQueryRepository;
 
-    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
+    private final AnonymousProfileService anonymousProfileService;
+    private final AnonymousProfileRetriever anonymousProfileRetriever;
     private final AnonymousNicknameRetriever anonymousNicknameRetriever;
-    private final AnonymousCommentProfileRetriever anonymousCommentProfileRetriever;
     private final CommunityPostRetriever communityPostRetriever;
     private final CommunityCommentsRetriever communityCommentsRetriever;
     private final MemberRetriever memberRetriever;
@@ -97,11 +90,9 @@ public class CommunityCommentService {
         CommunityComment comment = communityCommentsModifier.createCommunityComment(postId, member.getId(), request);
 
         if (request.isBlindWriter()) {
-            Optional<AnonymousCommentProfile> existingCommentProfile =
-                    anonymousCommentProfileRepository.findByMemberIdAndCommunityCommentPostId(member.getId(), post.getId());
-            if (existingCommentProfile.isEmpty()) {
-                saveAnonymousProfile(member, post, comment);
-            }
+            AnonymousProfile profile = anonymousProfileService.getOrCreateAnonymousProfile(member, post);
+            comment.registerAnonymousProfile(profile);
+            communityCommentsRepository.save(comment);
         }
 
         // 푸시 알림 전송
@@ -123,8 +114,8 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public AnonymousCommentProfile getAnonymousCommentProfile(CommunityComment comment) {
-        return anonymousCommentProfileRetriever.findByCommunityCommentId(comment.getId());
+    public AnonymousProfile getAnonymousCommentProfile(CommunityComment comment) {
+        return comment.getAnonymousProfile();
     }
 
     @Transactional
@@ -160,30 +151,6 @@ public class CommunityCommentService {
                 .build());
     }
 
-    private void saveAnonymousProfile(Member member, CommunityPost post, CommunityComment comment) {
-        List<AnonymousNickname> excludeNicknames = new ArrayList<>();
-        for (AnonymousCommentProfile profile : anonymousCommentProfileRetriever.findAllByPostId(post.getId())) {
-            excludeNicknames.add(profile.getNickname());
-        }
-
-        Optional<AnonymousPostProfile> anonymousPostProfile = anonymousPostProfileRepository.findByMemberAndCommunityPost(member, post);
-
-        AnonymousNickname nickname = anonymousPostProfile.isPresent()
-                ? anonymousPostProfile.get().getNickname()
-                : anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNicknames);
-        AnonymousProfileImage profileImg = anonymousPostProfile.isPresent()
-                ? anonymousPostProfile.get().getProfileImg()
-                : anonymousProfileImageRetriever.getAnonymousProfileImage();
-
-        anonymousCommentProfileRepository.save(
-                AnonymousCommentProfile.builder()
-                        .nickname(nickname)
-                        .profileImg(profileImg)
-                        .member(member)
-                        .communityComment(comment)
-                        .build()
-        );
-    }
 
     private void validateAnonymousNickname(CommentSaveRequest request, Long postId) {
         if (
@@ -195,8 +162,20 @@ public class CommunityCommentService {
         }
 
         String[] anonymousNicknames = request.anonymousMentionRequest().anonymousNicknames();
+
+        // 1. 익명 닉네임이 시스템에 존재하는지 검증
         anonymousNicknameRetriever.validateAnonymousNicknames(anonymousNicknames);
-        anonymousCommentProfileRetriever.validateAnonymousNicknamesInPost(postId, anonymousNicknames);
+
+        // 2. 해당 게시글에 존재하는 닉네임인지 검증
+        List<String> nicknameList = Arrays.asList(anonymousNicknames);
+        List<String> foundNicknames = anonymousProfileRetriever.findNicknamesByPostIdAndNicknamesIn(postId, nicknameList);
+        Set<String> foundNicknameSet = Set.copyOf(foundNicknames);
+
+        for (String nickname : anonymousNicknames) {
+            if (!foundNicknameSet.contains(nickname)) {
+                throw new ClientBadRequestException("해당 게시글에 존재하지 않는 익명 닉네임입니다: " + nickname);
+            }
+        }
     }
 
     private void sendNotifications(Long writerId, CommunityPost post, CommentSaveRequest request, String writerName) {

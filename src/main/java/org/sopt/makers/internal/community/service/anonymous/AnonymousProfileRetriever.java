@@ -43,4 +43,11 @@ public class AnonymousProfileRetriever {
 	public List<AnonymousProfile> getTopByOrderByCreatedAt(int limit) {
 		return anonymousProfileRepository.findTopByOrderByIdDescWithLimit(limit);
 	}
+
+	/**
+	 * 게시글에 존재하는 닉네임 목록 조회 (멘션 검증용)
+	 */
+	public List<String> findNicknamesByPostIdAndNicknamesIn(Long postId, List<String> nicknames) {
+		return anonymousProfileRepository.findNicknamesByPostIdAndNicknamesIn(postId, nicknames);
+	}
 }

@@ -20,7 +20,7 @@ import lombok.val;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.domain.ReportPost;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
@@ -42,14 +42,14 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.ReportPostRepository;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -81,7 +81,7 @@ import static java.util.stream.Collectors.*;
 @Service
 public class CommunityPostService {
 
-    private final AnonymousPostProfileService anonymousPostProfileService;
+    private final AnonymousProfileService anonymousProfileService;
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
     private final PushNotificationService pushNotificationService;
@@ -103,7 +103,7 @@ public class CommunityPostService {
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final ReportPostRepository reportPostRepository;
     private final MemberBlockRepository memberBlockRepository;
-    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final AnonymousProfileRetriever anonymousProfileRetriever;
 
     private final CommunityMapper communityMapper;
     private final CommunityResponseMapper communityResponseMapper;
@@ -298,8 +298,8 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public AnonymousPostProfile getAnonymousPostProfile(Long postId) {
-        return anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(postId).orElse(null);
+    public AnonymousProfile getAnonymousPostProfile(Long postId) {
+        return anonymousProfileRetriever.findByPostId(postId).orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -331,7 +331,7 @@ public class CommunityPostService {
                 .map(post -> {
                     val authorDetails = platformService.getInternalUser(post.getMember().getId());
                     val anonymousProfile = post.getIsBlindWriter()
-                            ? anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId()).orElse(null)
+                            ? anonymousProfileRetriever.findByPostId(post.getId()).orElse(null)
                             : null;
                     String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
                     return communityResponseMapper.toPopularPostResponse(post, anonymousProfile, authorDetails, categoryName);
@@ -459,9 +459,9 @@ public class CommunityPostService {
 
                 String categoryName = categoryNameMap.getOrDefault(categoryId, "");
 
-                Optional<AnonymousPostProfile> anonymousProfile = Optional.empty();
+                Optional<AnonymousProfile> anonymousProfile = Optional.empty();
                 if (post.getIsBlindWriter()) {
-                    anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
+                    anonymousProfile = anonymousProfileRetriever.findByPostId(post.getId());
                 }
 
                 responses.add(InternalLatestPostResponse.of(post, latestActivity, userDetails, categoryName, anonymousProfile, baseUrl));
@@ -523,7 +523,8 @@ public class CommunityPostService {
 
     private void handleBlindWriter(PostSaveRequest request, Member member, CommunityPost post) {
         if (request.isBlindWriter()) {
-            anonymousPostProfileService.createAnonymousPostProfile(member, post);
+            AnonymousProfile profile = anonymousProfileService.getOrCreateAnonymousProfile(member, post);
+            post.registerAnonymousProfile(profile);
         }
     }
 
@@ -570,12 +571,12 @@ public class CommunityPostService {
         return communityQueryRepository.getCategoryNamesByIds(categoryIds);
     }
 
-    private Map<Long, AnonymousPostProfile> getAnonymousProfileMap(List<CommunityPost> posts) {
+    private Map<Long, AnonymousProfile> getAnonymousProfileMap(List<CommunityPost> posts) {
         List<Long> postIds = posts.stream()
                 .map(CommunityPost::getId)
                 .distinct()
                 .toList();
-        return communityQueryRepository.getAnonymousPostProfilesByPostId(postIds);
+        return communityQueryRepository.getAnonymousProfilesByPostId(postIds);
     }
 
     private Map<Long, Category> getCategoryMap(List<CommunityPost> posts) {

@@ -88,4 +88,8 @@ public class CommunityPost extends AuditingTimeEntity {
         this.isBlindWriter = isBlindWriter;
         this.sopticleUrl = sopticleUrl;
     }
+
+    public void registerAnonymousProfile(AnonymousProfile profile) {
+        this.anonymousProfile = profile;
+    }
 }
