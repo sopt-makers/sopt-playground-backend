@@ -1,8 +1,8 @@
 package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import io.hypersistence.utils.hibernate.type.array.StringArrayType;
+import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.member.domain.Member;
 
 import jakarta.persistence.*;
@@ -38,7 +38,7 @@ public class DeletedCommunityPost {
     @Column
     private Integer hits = 0;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Type(StringArrayType.class)
     @Column(name = "images", columnDefinition = "text[]")
     private String[] images;
 

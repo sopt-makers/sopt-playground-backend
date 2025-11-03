@@ -2,13 +2,13 @@ package org.sopt.makers.internal.community.service.comment;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
-import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommunityCommentModifier {
+public class CommunityCommentsModifier {
 
     private final CommunityCommentRepository communityCommentRepository;
 
@@ -19,6 +19,7 @@ public class CommunityCommentModifier {
                 .postId(postId)
                 .writerId(memberId)
                 .isBlindWriter(request.isBlindWriter())
+                .parentCommentId(request.parentCommentId())
                 .build());
     }
 }
