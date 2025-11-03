@@ -142,7 +142,8 @@ public class CommunityQueryRepository {
                 .leftJoin(comment.anonymousProfile, anonymousProfile).fetchJoin()
                 .leftJoin(anonymousProfile.nickname).fetchJoin()
                 .leftJoin(anonymousProfile.profileImg).fetchJoin()
-                .where(comment.postId.eq(postId))
+                .where(comment.postId.eq(postId)
+                        .and(comment.isDeleted.isFalse()))
                 .distinct()
                 .orderBy(comment.id.asc());
 

@@ -78,7 +78,7 @@ public class CommunityCommentController {
     }
 
     @Operation(summary = "커뮤니티 댓글 신고 API")
-    @PostMapping("/report")
+    @PostMapping("/{commentId}/report")
     public ResponseEntity<Map<String, Boolean>> reportComment(
             @PathVariable("commentId") Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
