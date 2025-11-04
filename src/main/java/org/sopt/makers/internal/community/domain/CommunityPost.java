@@ -1,8 +1,8 @@
 package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
+import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.member.domain.Member;
@@ -42,9 +42,9 @@ public class CommunityPost extends AuditingTimeEntity {
     @Column(nullable = false)
     private Integer hits = 0;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Type(ListArrayType.class)
     @Column(name = "images", columnDefinition = "text[]")
-    private String[] images;
+    private List<String> images;
 
     @Column(nullable = false)
     private Boolean isQuestion;
@@ -79,7 +79,7 @@ public class CommunityPost extends AuditingTimeEntity {
     private AnonymousProfile anonymousProfile;
 
     public void updatePost(Long categoryId, String title, String content,
-                           String[] images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
+                           List<String> images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
         this.categoryId = categoryId;
         this.title = title;
         this.content = content;

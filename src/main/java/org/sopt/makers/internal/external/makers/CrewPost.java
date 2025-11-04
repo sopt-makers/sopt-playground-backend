@@ -1,13 +1,14 @@
 package org.sopt.makers.internal.external.makers;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CrewPost(
         long id,
         String title,
         String contents,
         LocalDateTime createdDate,
-        String[] images,
+        List<String> images,
         CrewUser user,
         int likeCount,
         boolean isLiked,

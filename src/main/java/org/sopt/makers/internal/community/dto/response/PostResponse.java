@@ -21,7 +21,7 @@ public record PostResponse(
         String content,
         Integer hits,
         Integer commentCount,
-        String[] images,
+        List<String> images,
         Boolean isQuestion,
         Boolean isBlindWriter,
         String sopticleUrl,

@@ -62,7 +62,7 @@ public record MemberProfileSpecificResponse(
             String category,
             String logoImage,
             String thumbnailImage,
-            String[] serviceType
+            List<String> serviceType
     ){}
 
     public record MemberActivityResponse (

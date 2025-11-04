@@ -22,6 +22,6 @@ public interface CommunityCommentLikeRepository extends JpaRepository<CommunityC
 
 	List<CommunityCommentLike> findAllByMemberIdAndCommentIdIn(Long memberId, List<Long> commentIds);
 
-	@Query(value = "SELECT c.comment.id, COUNT(c) FROM CommunityCommentLike c WHERE c.comment.id IN :commentIds GROUP BY c.comment.id", nativeQuery = true)
+	@Query(value = "SELECT c.comment.id, COUNT(c) FROM CommunityCommentLike c WHERE c.comment.id IN :commentIds GROUP BY c.comment.id")
 	List<Object[]> countLikesByCommentIds(@Param("commentIds") List<Long> commentIds);
 }

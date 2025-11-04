@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
 
+import java.util.List;
+
 @Builder
 public record PostSaveRequest(
         @Schema(required = true)
@@ -30,7 +32,7 @@ public record PostSaveRequest(
 
         @Schema(required = true)
         @NotNull(message = "이미지 필드는 필수 필드입니다.")
-        String[] images,
+        List<String> images,
 
         String link,
 
