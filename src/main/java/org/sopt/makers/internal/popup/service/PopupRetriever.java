@@ -6,6 +6,7 @@ import org.sopt.makers.internal.popup.domain.Popup;
 import org.sopt.makers.internal.popup.repository.PopupRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Component
@@ -21,5 +22,10 @@ public class PopupRetriever {
 
     public List<Popup> findAllPopups() {
         return popupRepository.findAll();
+    }
+
+    public Popup findCurrentPopup() {
+        List<Popup> currentPopups = popupRepository.findCurrentPopups(LocalDate.now());
+        return currentPopups.isEmpty() ? null : currentPopups.get(0);
     }
 }
