@@ -104,20 +104,22 @@ public class CommunityCommentController {
     @Operation(summary = "커뮤니티 댓글 좋아요 API")
     @PostMapping("/{commentId}/like")
     public ResponseEntity<Map<String, Boolean>> likeComment(
+            @PathVariable("postId")Long postId,
             @PathVariable("commentId") Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        commentLikeService.addCommentLike(userId, commentId);
+        commentLikeService.addCommentLike(userId, postId, commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 좋아요 성공", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 좋아요 취소 API")
     @DeleteMapping("/{commentId}/unlike")
     public ResponseEntity<Map<String, Boolean>> unlikeComment(
+            @PathVariable("postId")Long postId,
             @PathVariable("commentId") Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        commentLikeService.cancelCommentLike(userId, commentId);
+        commentLikeService.cancelCommentLike(userId, postId, commentId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 댓글 좋아요 취소 성공", true));
     }
 }

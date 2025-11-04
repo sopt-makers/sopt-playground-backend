@@ -1,8 +1,10 @@
 package org.sopt.makers.internal.community.service.comment;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.CommunityCommentLike;
+import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -17,14 +19,19 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CommunityCommentLikeService {
 
+	private final CommunityPostRetriever communityPostRetriever;
 	private final CommunityCommentLikeModifier commentLikeModifier;
 	private final CommunityCommentLikeRetriever commentLikeRetriever;
 	private final CommunityCommentsRetriever commentsRetriever;
 	private final MemberRetriever memberRetriever;
 
 	@Transactional
-	public void addCommentLike(Long memberId, Long commentId) {
+	public void addCommentLike(Long memberId, Long postId, Long commentId) {
+		CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
+		if (!post.getComments().contains(comment)) {
+			throw new ClientBadRequestException("해당 게시글의 댓글이 아닙니다.");
+		}
 		Member member = memberRetriever.findMemberById(memberId);
 
 		boolean alreadyLiked = commentLikeRetriever.isLiked(memberId, commentId);
@@ -36,7 +43,13 @@ public class CommunityCommentLikeService {
 	}
 
 	@Transactional
-	public void cancelCommentLike(Long memberId, Long commentId) {
+	public void cancelCommentLike(Long memberId, Long postId, Long commentId) {
+		CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
+		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
+		if (!post.getComments().contains(comment)) {
+			throw new ClientBadRequestException("해당 게시글의 댓글이 아닙니다.");
+		}
+
 		Optional<CommunityCommentLike> existingLike = commentLikeRetriever.findByMemberIdAndCommentId(memberId, commentId);
 		if (existingLike.isEmpty()) {
 			throw new ClientBadRequestException("좋아요를 누르지 않은 댓글입니다.");
