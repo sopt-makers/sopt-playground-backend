@@ -3,7 +3,7 @@ package org.sopt.makers.internal.community.domain;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
@@ -74,8 +74,9 @@ public class CommunityPost extends AuditingTimeEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<CommunityPostLike> likes = new ArrayList<>();
 
-    @OneToOne(mappedBy = "communityPost", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private AnonymousPostProfile anonymousProfile;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "anonymous_profile_id")
+    private AnonymousProfile anonymousProfile;
 
     public void updatePost(Long categoryId, String title, String content,
                            String[] images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
@@ -86,5 +87,9 @@ public class CommunityPost extends AuditingTimeEntity {
         this.isQuestion = isQuestion;
         this.isBlindWriter = isBlindWriter;
         this.sopticleUrl = sopticleUrl;
+    }
+
+    public void registerAnonymousProfile(AnonymousProfile profile) {
+        this.anonymousProfile = profile;
     }
 }
