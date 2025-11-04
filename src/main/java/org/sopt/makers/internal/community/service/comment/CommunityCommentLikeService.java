@@ -9,6 +9,8 @@ import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -51,5 +53,15 @@ public class CommunityCommentLikeService {
 	@Transactional(readOnly = true)
 	public Integer getLikeCount(Long commentId) {
 		return commentLikeRetriever.countLikes(commentId);
+	}
+
+	@Transactional(readOnly = true)
+	public Map<Long, Boolean> getLikedMapByCommentIds(Long memberId, List<Long> commentIds) {
+		return commentLikeRetriever.getLikedMapByCommentIds(memberId, commentIds);
+	}
+
+	@Transactional(readOnly = true)
+	public Map<Long, Integer> getLikeCountMapByCommentIds(List<Long> commentIds) {
+		return commentLikeRetriever.getLikeCountMapByCommentIds(commentIds);
 	}
 }

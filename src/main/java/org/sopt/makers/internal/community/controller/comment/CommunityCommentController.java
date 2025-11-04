@@ -62,9 +62,21 @@ public class CommunityCommentController {
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
         List<CommentInfo> comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
-        List<CommentResponse> flatComments = comments.stream()
-                .map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
+        List<Long> commentIds = comments.stream()
+                .map(c -> c.commentDao().comment().getId())
                 .toList();
+        Map<Long, Boolean> likedMap = commentLikeService.getLikedMapByCommentIds(userId, commentIds);
+        Map<Long, Integer> likeCountMap = commentLikeService.getLikeCountMapByCommentIds(commentIds);
+
+        List<CommentResponse> flatComments = comments.stream()
+                .map(comment -> {
+                    Long commentId = comment.commentDao().comment().getId();
+                    Boolean isLiked = likedMap.getOrDefault(commentId, false);
+                    Integer likeCount = likeCountMap.getOrDefault(commentId, 0);
+                    return communityResponseMapper.toCommentResponse(comment, userId, isLiked, likeCount);
+                })
+                .toList();
+
         List<CommentResponse> hierarchicalComments = communityResponseMapper.buildCommentHierarchy(flatComments);
         return ResponseEntity.status(HttpStatus.OK).body(hierarchicalComments);
     }
