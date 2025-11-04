@@ -123,3 +123,6 @@ external:
     service-name: test
     endpoints:
       jwk: /.well-known/jwks.json
+
+admin:
+  key: test-admin-key

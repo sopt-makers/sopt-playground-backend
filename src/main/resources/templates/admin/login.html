@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground Admin - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background-color: #fee;
+            color: #c33;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Playground Admin</h1>
+            <p>관리자 키를 입력하세요</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label for="adminKey">Admin Key</label>
+                <input type="password" id="adminKey" required placeholder="관리자 키를 입력하세요" autofocus>
+            </div>
+
+            <button type="submit" class="btn-login">로그인</button>
+        </form>
+    </div>
+
+    <script>
+        // 이미 로그인된 경우 리다이렉트
+        if (localStorage.getItem('adminKey')) {
+            window.location.href = '/admin/popups';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const adminKey = document.getElementById('adminKey').value;
+
+            // Admin Key 검증 API 호출
+            fetch('/api/v1/popups/validate-admin-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'admin-key': adminKey
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // 로컬 스토리지에 저장
+                    localStorage.setItem('adminKey', adminKey);
+                    // 팝업 관리 페이지로 이동
+                    window.location.href = '/admin/popups';
+                } else if (response.status === 403) {
+                    showError('잘못된 관리자 키입니다.');
+                } else {
+                    showError('오류가 발생했습니다. 다시 시도해주세요.');
+                }
+            })
+            .catch(error => {
+                showError('네트워크 오류가 발생했습니다.');
+                console.error('Login error:', error);
+            });
+
+            return false;
+        }
+    </script>
+</body>
+</html>
