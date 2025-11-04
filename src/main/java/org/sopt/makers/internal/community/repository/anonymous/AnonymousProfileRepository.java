@@ -17,7 +17,8 @@ public interface AnonymousProfileRepository extends JpaRepository<AnonymousProfi
 	Optional<AnonymousProfile> findByMemberAndPost(Member member, CommunityPost post);
 
 	@EntityGraph(attributePaths = {"nickname", "profileImg", "post"})
-	Optional<AnonymousProfile> findByPostId(Long postId);
+	@Query("SELECT ap FROM AnonymousProfile ap WHERE ap.post.id = :postId AND ap.member.id = ap.post.member.id")
+	Optional<AnonymousProfile> findByPostId(@Param("postId") Long postId);
 
 	@EntityGraph(attributePaths = {"nickname", "profileImg"})
 	List<AnonymousProfile> findAllByPostId(Long postId);
