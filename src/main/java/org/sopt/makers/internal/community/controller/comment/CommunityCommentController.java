@@ -10,6 +10,7 @@ import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import java.util.Map;
 public class CommunityCommentController {
 
     private final CommunityCommentService communityCommentService;
+    private final CommunityCommentLikeService commentLikeService;
     private final CommunityResponseMapper communityResponseMapper;
 
     @Operation(
@@ -85,5 +87,25 @@ public class CommunityCommentController {
     ) {
         communityCommentService.reportComment(userId, commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 댓글 좋아요 API")
+    @PostMapping("/{commentId}/like")
+    public ResponseEntity<Map<String, Boolean>> likeComment(
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        commentLikeService.addCommentLike(userId, commentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 좋아요 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 댓글 좋아요 취소 API")
+    @DeleteMapping("/{commentId}/unlike")
+    public ResponseEntity<Map<String, Boolean>> unlikeComment(
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        commentLikeService.cancelCommentLike(userId, commentId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 댓글 좋아요 취소 성공", true));
     }
 }
