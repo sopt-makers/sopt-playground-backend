@@ -23,12 +23,12 @@ public class CommunityCommentsModifier {
                 .build());
     }
 
-    public CommunityComment updateCommunityComment(
+    public void updateCommunityComment(
             CommunityComment comment,
             CommentUpdateRequest request
     ) {
         comment.updateContent(request.content());
         comment.updateIsBlindWriter(request.isBlindWriter());
-        return communityCommentRepository.save(comment);
+        communityCommentRepository.save(comment);
     }
 }

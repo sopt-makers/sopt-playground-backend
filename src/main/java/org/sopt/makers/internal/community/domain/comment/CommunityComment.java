@@ -7,6 +7,7 @@ import org.sopt.makers.internal.common.AuditingTimeEntity;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 
 import jakarta.persistence.*;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 
 @Entity
 @Getter
@@ -58,8 +59,14 @@ public class CommunityComment extends AuditingTimeEntity {
         this.isBlindWriter = isBlind;
     }
 
-    public boolean validateUpdatePermission(Long requestUserId) {
-        return this.writerId.equals(requestUserId) && !Boolean.TRUE.equals(this.isDeleted);
+    public void validateUpdatePermission(Long requestUserId) {
+        if (!this.writerId.equals(requestUserId)) {
+            throw new ClientBadRequestException("댓글 수정 권한이 없습니다.");
+        }
+
+        if (Boolean.TRUE.equals(this.isDeleted)) {
+            throw new ClientBadRequestException("삭제된 댓글은 수정할 수 없습니다.");
+        }
     }
 
     public void markAsDeleted() {

@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.domain.comment;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sopt.makers.internal.exception.ClientBadRequestException;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -28,7 +29,7 @@ public class CommunityCommentTest {
     }
 
     @Test
-    @DisplayName("다른 사용자가 댓글을 수정하려고 하면 false를 반환한다.")
+    @DisplayName("다른 사용자가 댓글을 수정하면 예외가 발생한다")
     void validateUpdatePermission_Fail_NoPermission() {
         // Given
         Long writerId = 1L;
@@ -40,11 +41,12 @@ public class CommunityCommentTest {
                 .build();
 
         // When & Then
-        assertThat(comment.validateUpdatePermission(otherUserId)).isFalse();
+        assertThatThrownBy(() -> comment.validateUpdatePermission(otherUserId))
+                .isInstanceOf(ClientBadRequestException.class);
     }
 
     @Test
-    @DisplayName("삭제된 댓글을 수정하려고 하면 false를 반환한다.")
+    @DisplayName("삭제된 댓글을 수정하면 예외가 발생한다")
     void validateUpdatePermission_Fail_DeletedComment() {
         // Given
         Long writerId = 1L;
@@ -56,7 +58,8 @@ public class CommunityCommentTest {
                 .build();
 
         // When & Then
-        assertThat(comment.validateUpdatePermission(writerId)).isFalse();
+        assertThatThrownBy(() -> comment.validateUpdatePermission(writerId))
+                .isInstanceOf(ClientBadRequestException.class);
     }
 
     @Test
