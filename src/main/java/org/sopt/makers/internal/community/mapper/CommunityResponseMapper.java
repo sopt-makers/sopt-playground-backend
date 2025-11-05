@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.val;
-import org.sopt.makers.internal.common.util.MentionCleaner;
+import org.sopt.makers.internal.community.utils.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
