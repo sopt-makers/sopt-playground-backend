@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
+import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
@@ -16,6 +17,7 @@ import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentService;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
 import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
@@ -25,6 +27,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,6 +42,7 @@ public class CommunityController {
     private final CommunityPostService communityPostService;
     private final VoteService voteService;
     private final CommunityCommentService communityCommentService;
+    private final CommunityCommentLikeService commentLikeService;
     private final CommunityResponseMapper communityResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
@@ -83,16 +87,30 @@ public class CommunityController {
 
         List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, userId,
                 infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
+        Boolean hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
+        Map<Long, List<CommentInfo>> postCommentsMap = posts.stream()
+                .collect(Collectors.toMap(
+                        post -> post.post().id(),
+                        post -> communityCommentService.getPostCommentList(post.post().id(), userId, isBlockOn)
+                ));
+        List<Long> allCommentIds = postCommentsMap.values().stream()
+                .flatMap(List::stream)
+                .map(c -> c.commentDao().comment().getId())
+                .collect(Collectors.toList());
+
+        Map<Long, Boolean> commentLikedMap = commentLikeService.getLikedMapByCommentIds(userId, allCommentIds);
+        Map<Long, Integer> commentLikeCountMap = commentLikeService.getLikeCountMapByCommentIds(allCommentIds);
+
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getPostCommentList(post.post().id(), userId, isBlockOn);
+            List<CommentInfo> comments = postCommentsMap.get(post.post().id());
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
             val isLiked = communityPostService.isLiked(userId, post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
 
             return communityResponseMapper.toPostResponse(post, comments, userId, anonymousPostProfile,
-                    isLiked, likes);
+                    isLiked, likes, commentLikedMap, commentLikeCountMap);
         }).collect(Collectors.toList());
+
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

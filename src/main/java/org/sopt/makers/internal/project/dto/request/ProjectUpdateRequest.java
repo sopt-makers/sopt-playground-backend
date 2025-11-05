@@ -15,7 +15,7 @@ public record ProjectUpdateRequest(
         @Schema(required = true)
         LocalDate startAt,
         LocalDate endAt,
-        String[] serviceType,
+        List<String> serviceType,
         Boolean isAvailable,
         Boolean isFounding,
         @Schema(required = true)
@@ -26,7 +26,7 @@ public record ProjectUpdateRequest(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
-        String[] images,
+        List<String> images,
         List<ProjectMemberUpdateRequest> members,
         List<ProjectLinkUpdateRequest> links
 ) {

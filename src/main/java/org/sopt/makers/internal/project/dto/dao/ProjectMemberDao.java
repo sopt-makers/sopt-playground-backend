@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.project.dto.dao;
 
+import java.util.List;
+
 import org.springframework.aot.hint.annotation.Reflective;
 
 import java.time.LocalDate;
@@ -14,14 +16,14 @@ public record ProjectMemberDao (
         String category,
         LocalDate startAt,
         LocalDate endAt,
-        String[] serviceType,
+        List<String> serviceType,
         Boolean isAvailable,
         Boolean isFounding,
         String summary,
         String detail,
         String logoImage,
         String thumbnailImage,
-        String[] images,
+        List<String> images,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
 

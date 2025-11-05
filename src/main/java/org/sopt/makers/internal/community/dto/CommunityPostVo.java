@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.community.dto;
 
+import java.util.List;
+
 import org.springframework.aot.hint.annotation.Reflective;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 
@@ -12,7 +14,7 @@ public record CommunityPostVo(
         String title,
         String content,
         Integer hits,
-        String[] images,
+        List<String> images,
         Boolean isQuestion,
         Boolean isBlindWriter,
         String sopticleUrl,

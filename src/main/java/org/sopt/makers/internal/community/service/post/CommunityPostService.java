@@ -211,7 +211,7 @@ public class CommunityPostService {
 
         if (isSopticleCategory(request.categoryId())) {
             SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.link());
-            post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), new String[] { scrapedResponse.thumbnailUrl() },
+            post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), List.of(scrapedResponse.thumbnailUrl()),
                             request.isQuestion(), request.isBlindWriter(), scrapedResponse.url());
         } else {
             post.updatePost(request.categoryId(), request.title(), request.content(), request.images(),
@@ -540,7 +540,7 @@ public class CommunityPostService {
             PostSaveRequest enrichedRequest = PostSaveRequest.builder()
                     .categoryId(request.categoryId())
                     .content(scrapedResponse.description())
-                    .images(new String[] { scrapedResponse.thumbnailUrl() })
+                    .images(List.of(scrapedResponse.thumbnailUrl()))
                     .link(scrapedResponse.url())
                     .title(scrapedResponse.title())
                     .isBlindWriter(false)
