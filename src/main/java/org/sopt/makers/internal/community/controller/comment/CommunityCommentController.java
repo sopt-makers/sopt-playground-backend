@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.request.comment.CommentUpdateRequest;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
@@ -79,6 +80,36 @@ public class CommunityCommentController {
 
         List<CommentResponse> hierarchicalComments = communityResponseMapper.buildCommentHierarchy(flatComments);
         return ResponseEntity.status(HttpStatus.OK).body(hierarchicalComments);
+    }
+
+    @Operation(
+            summary = "커뮤니티 댓글 수정 API",
+            description = """
+            댓글 또는 답글을 수정합니다.
+
+            수정 가능 항목:
+            - content: 댓글 내용
+            - isBlindWriter: 익명 여부 (일반 ↔ 익명 전환 가능)
+            - mention: 일반 사용자 멘션
+            - anonymousMention: 익명 사용자 멘션
+
+            권한:
+            - 본인이 작성한 댓글만 수정 가능
+            - 삭제된 댓글은 수정 불가
+
+            알림:
+            - 새롭게 추가된 멘션에게만 푸시알림 발송
+            - 기존 멘션 사용자에게는 알림 발송 안 함
+            """
+    )
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<Map<String, Boolean>> updateComment(
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid CommentUpdateRequest request
+    ) {
+        communityCommentService.updateComment(userId, commentId, request);
+        return ResponseEntity.ok(Map.of("댓글 수정 성공", true));
     }
 
     @Operation(summary = "커뮤니티 댓글 삭제 API")

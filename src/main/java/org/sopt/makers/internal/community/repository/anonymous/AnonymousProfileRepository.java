@@ -37,4 +37,17 @@ public interface AnonymousProfileRepository extends JpaRepository<AnonymousProfi
 		@Param("postId") Long postId,
 		@Param("nicknames") List<String> nicknames
 	);
+
+	@Query("""
+      SELECT DISTINCT ap
+      FROM AnonymousProfile ap
+      JOIN FETCH ap.member
+      JOIN FETCH ap.nickname
+      WHERE ap.post.id = :postId
+      AND ap.nickname.nickname IN :nicknames
+      """)
+	List<AnonymousProfile> findByPostIdAndNicknamesIn(
+			@Param("postId") Long postId,
+			@Param("nicknames") List<String> nicknames
+	);
 }

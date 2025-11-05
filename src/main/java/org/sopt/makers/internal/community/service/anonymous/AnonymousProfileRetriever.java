@@ -7,6 +7,7 @@ import org.sopt.makers.internal.community.repository.anonymous.AnonymousProfileR
 import org.sopt.makers.internal.member.domain.Member;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,38 +17,41 @@ public class AnonymousProfileRetriever {
 
 	private final AnonymousProfileRepository anonymousProfileRepository;
 
-	/**
-	 * Member + Post 조합으로 익명 프로필 조회
-	 */
 	public Optional<AnonymousProfile> findByMemberAndPost(Member member, CommunityPost post) {
 		return anonymousProfileRepository.findByMemberAndPost(member, post);
 	}
 
-	/**
-	 * Post ID로 단일 익명 프로필 조회 (게시글 작성자용)
-	 */
 	public Optional<AnonymousProfile> findByPostId(Long postId) {
 		return anonymousProfileRepository.findByPostId(postId);
 	}
 
-	/**
-	 * Post ID로 모든 익명 프로필 조회
-	 */
 	public List<AnonymousProfile> findAllByPostId(Long postId) {
 		return anonymousProfileRepository.findAllByPostId(postId);
 	}
 
-	/**
-	 * 최근 N개의 익명 프로필 조회
-	 */
 	public List<AnonymousProfile> getTopByOrderByCreatedAt(int limit) {
 		return anonymousProfileRepository.findTopByOrderByIdDescWithLimit(limit);
 	}
 
-	/**
-	 * 게시글에 존재하는 닉네임 목록 조회 (멘션 검증용)
-	 */
 	public List<String> findNicknamesByPostIdAndNicknamesIn(Long postId, List<String> nicknames) {
 		return anonymousProfileRepository.findNicknamesByPostIdAndNicknamesIn(postId, nicknames);
+	}
+
+	public List<AnonymousProfile> findByPostIdAndNicknames(Long postId, List<String> nicknames) {
+		if (nicknames == null || nicknames.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return anonymousProfileRepository.findByPostIdAndNicknamesIn(postId, nicknames);
+	}
+
+	public Long[] extractUserIds(List<AnonymousProfile> profiles) {
+		if (profiles == null || profiles.isEmpty()) {
+			return new Long[0];
+		}
+
+		return profiles.stream()
+				.map(profile -> profile.getMember().getId())
+				.distinct()
+				.toArray(Long[]::new);
 	}
 }

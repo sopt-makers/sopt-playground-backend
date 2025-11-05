@@ -8,14 +8,6 @@ public record MemberNameAndProfileImageResponse(
         String name,
         String profileImage
 ) {
-//    public static MemberNameAndProfileImageResponse from(Member member) {
-//        return new MemberNameAndProfileImageResponse(
-//                member.getId(),
-//                member.getName(),
-//                member.getProfileImage()
-//        );
-//    }
-
     public static MemberNameAndProfileImageResponse from(InternalUserDetails userDetails) {
         if (userDetails == null) return null;
         return new MemberNameAndProfileImageResponse(

@@ -3,7 +3,7 @@ package org.sopt.makers.internal.internal.dto;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import lombok.Builder;
-import org.sopt.makers.internal.common.util.MentionCleaner;
+import org.sopt.makers.internal.community.utils.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;

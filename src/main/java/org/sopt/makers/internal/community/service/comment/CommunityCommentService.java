@@ -9,12 +9,15 @@ import java.util.Set;
 
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
+import org.sopt.makers.internal.community.domain.comment.DeletedCommunityComment;
 import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.MemberVo;
+import org.sopt.makers.internal.community.dto.request.comment.CommentUpdateRequest;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
+import org.sopt.makers.internal.community.utils.MentionExtractor;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
@@ -124,20 +127,18 @@ public class CommunityCommentService {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
 
-        // 감사 로그용으로 DeletedCommunityComment에 저장
-        val deleteComment = communityMapper.toDeleteCommunityComment(comment);
+        DeletedCommunityComment deleteComment = communityMapper.toDeleteCommunityComment(comment);
         deletedCommunityCommentRepository.save(deleteComment);
 
-        // Soft delete: isDeleted를 true로 설정
         comment.markAsDeleted();
         communityCommentsRepository.save(comment);
     }
 
+    @Transactional
     public void reportComment(Long memberId, Long commentId) {
         CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
         InternalUserDetails userDetails = platformService.getInternalUser(memberId);
 
-        // 슬랙 알림 전송 (SOLID 원칙 적용)
         CommentReportSlackMessage slackMessage = CommentReportSlackMessage.of(
                 slackMessageUtil,
                 comment.getPostId(),
@@ -153,12 +154,29 @@ public class CommunityCommentService {
                 .build());
     }
 
+    @Transactional
+    public void updateComment(Long memberId, Long commentId, CommentUpdateRequest request) {
+        memberRetriever.checkExistsMemberById(memberId);
+        CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
+        comment.validateUpdatePermission(memberId);
+
+        String oldContent = comment.getContent();
+        Boolean oldIsBlind = comment.getIsBlindWriter();
+
+        communityCommentsModifier.updateCommunityComment(comment, request);
+
+        if (!oldIsBlind.equals(request.isBlindWriter())) {
+            handleAnonymousProfileUpdate(comment, request.isBlindWriter(), memberId);
+        }
+
+        sendNotificationsForNewMentions(oldContent, request, memberId, comment.getPostId());
+    }
 
     private void validateAnonymousNickname(CommentSaveRequest request, Long postId) {
         if (
                 request.anonymousMention() == null
-                || request.anonymousMention().anonymousNicknames() == null
-                || request.anonymousMention().anonymousNicknames().length == 0
+                        || request.anonymousMention().anonymousNicknames() == null
+                        || request.anonymousMention().anonymousNicknames().length == 0
         ) {
             return;
         }
@@ -177,6 +195,20 @@ public class CommunityCommentService {
             if (!foundNicknameSet.contains(nickname)) {
                 throw new ClientBadRequestException("해당 게시글에 존재하지 않는 익명 닉네임입니다: " + nickname);
             }
+        }
+    }
+
+    private void handleAnonymousProfileUpdate(CommunityComment comment, Boolean newIsBlind, Long userId) {
+        if (newIsBlind) {
+            Member member = memberRetriever.findMemberById(userId);
+            CommunityPost post = communityPostRetriever.findCommunityPostById(comment.getPostId());
+            AnonymousProfile profile = anonymousProfileService.getOrCreateAnonymousProfile(member, post);
+
+            comment.registerAnonymousProfile(profile);
+            communityCommentsRepository.save(comment);
+        } else {
+            comment.registerAnonymousProfile(null);
+            communityCommentsRepository.save(comment);
         }
     }
 
@@ -209,14 +241,81 @@ public class CommunityCommentService {
         }
 
         if (Objects.nonNull(request.mention())) {
-            MentionNotificationMessage message = MentionNotificationMessage.of(
+            sendMentionNotifications(
                     request.mention().userIds(),
                     writerName,
                     request.content(),
                     request.isBlindWriter(),
                     request.webLink()
             );
-            pushNotificationService.sendPushNotification(message);
+        }
+    }
+
+    private void sendMentionNotifications(
+            Long[] recipientIds,
+            String writerName,
+            String content,
+            Boolean isBlindWriter,
+            String webLink
+    ) {
+        if (recipientIds == null || recipientIds.length == 0) {
+            return;
+        }
+
+        MentionNotificationMessage message = MentionNotificationMessage.of(
+                recipientIds,
+                writerName,
+                content,
+                isBlindWriter,
+                webLink
+        );
+        pushNotificationService.sendPushNotification(message);
+    }
+
+    private void sendNotificationsForNewMentions(String oldContent, CommentUpdateRequest request, Long writerId, Long postId) {
+        if (request.mention() != null && request.mention().userIds() != null) {
+            Long[] newMentions = MentionExtractor.getNewlyAddedMentions(
+                    oldContent,
+                    request.mention().userIds()
+            );
+
+            if (newMentions.length > 0) {
+                InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
+                sendMentionNotifications(
+                        newMentions,
+                        writerDetails.name(),
+                        request.content(),
+                        request.isBlindWriter(),
+                        request.webLink()
+                );
+            }
+        }
+
+        if (request.anonymousMention() != null
+                && request.anonymousMention().anonymousNicknames() != null) {
+
+            String[] newAnonymousNicknames = MentionExtractor.getNewlyAddedAnonymousMentions(
+                    oldContent,
+                    request.anonymousMention().anonymousNicknames()
+            );
+
+            if (newAnonymousNicknames.length > 0) {
+                List<AnonymousProfile> profiles = anonymousProfileRetriever
+                        .findByPostIdAndNicknames(postId, Arrays.asList(newAnonymousNicknames));
+
+                Long[] newAnonymousUserIds = anonymousProfileRetriever.extractUserIds(profiles);
+
+                if (newAnonymousUserIds.length > 0) {
+                    InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
+                    sendMentionNotifications(
+                            newAnonymousUserIds,
+                            writerDetails.name(),
+                            request.content(),
+                            request.isBlindWriter(),
+                            request.webLink()
+                    );
+                }
+            }
         }
     }
 }
