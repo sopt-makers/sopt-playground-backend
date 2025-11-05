@@ -20,5 +20,7 @@ public record CommentResponse(
         Boolean isReported,
         LocalDateTime createdAt,
         Boolean isDeleted,
+        Boolean isLiked,
+        Integer likeCount,
         List<CommentResponse> replies
 ){}

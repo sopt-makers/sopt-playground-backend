@@ -18,7 +18,7 @@ public record ProjectSaveRequest(
         LocalDate startAt,
         LocalDate endAt,
         @Schema(required = true)
-        String[] serviceType,
+        List<String> serviceType,
         Boolean isAvailable,
         Boolean isFounding,
         @Schema(required = true)
@@ -29,7 +29,7 @@ public record ProjectSaveRequest(
         String logoImage,
         @Schema(required = true)
         String thumbnailImage,
-        String[] images,
+        List<String> images,
         List<ProjectMemberSaveRequest> members,
         List<ProjectLinkSaveRequest> links
 ) {

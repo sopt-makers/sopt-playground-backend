@@ -10,6 +10,7 @@ import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
 import org.sopt.makers.internal.community.dto.response.CommentResponse;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import java.util.Map;
 public class CommunityCommentController {
 
     private final CommunityCommentService communityCommentService;
+    private final CommunityCommentLikeService commentLikeService;
     private final CommunityResponseMapper communityResponseMapper;
 
     @Operation(
@@ -60,9 +62,21 @@ public class CommunityCommentController {
             @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
     ) {
         List<CommentInfo> comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
-        List<CommentResponse> flatComments = comments.stream()
-                .map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
+        List<Long> commentIds = comments.stream()
+                .map(c -> c.commentDao().comment().getId())
                 .toList();
+        Map<Long, Boolean> likedMap = commentLikeService.getLikedMapByCommentIds(userId, commentIds);
+        Map<Long, Integer> likeCountMap = commentLikeService.getLikeCountMapByCommentIds(commentIds);
+
+        List<CommentResponse> flatComments = comments.stream()
+                .map(comment -> {
+                    Long commentId = comment.commentDao().comment().getId();
+                    Boolean isLiked = likedMap.getOrDefault(commentId, false);
+                    Integer likeCount = likeCountMap.getOrDefault(commentId, 0);
+                    return communityResponseMapper.toCommentResponse(comment, userId, isLiked, likeCount);
+                })
+                .toList();
+
         List<CommentResponse> hierarchicalComments = communityResponseMapper.buildCommentHierarchy(flatComments);
         return ResponseEntity.status(HttpStatus.OK).body(hierarchicalComments);
     }
@@ -85,5 +99,27 @@ public class CommunityCommentController {
     ) {
         communityCommentService.reportComment(userId, commentId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 댓글 좋아요 API")
+    @PostMapping("/{commentId}/like")
+    public ResponseEntity<Map<String, Boolean>> likeComment(
+            @PathVariable("postId")Long postId,
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        commentLikeService.addCommentLike(userId, postId, commentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 좋아요 성공", true));
+    }
+
+    @Operation(summary = "커뮤니티 댓글 좋아요 취소 API")
+    @DeleteMapping("/{commentId}/unlike")
+    public ResponseEntity<Map<String, Boolean>> unlikeComment(
+            @PathVariable("postId")Long postId,
+            @PathVariable("commentId") Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        commentLikeService.cancelCommentLike(userId, postId, commentId);
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 댓글 좋아요 취소 성공", true));
     }
 }
