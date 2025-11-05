@@ -6,10 +6,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 
 public interface PopupRepository extends JpaRepository<Popup, Long> {
 
     @Query("SELECT p FROM Popup p WHERE :currentDate BETWEEN p.startDate AND p.endDate ORDER BY p.startDate ASC")
-    List<Popup> findCurrentPopups(@Param("currentDate") LocalDate currentDate);
+    Optional<Popup> findFirstCurrentPopup(@Param("currentDate") LocalDate currentDate, Pageable pageable);
 }
