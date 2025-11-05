@@ -50,6 +50,18 @@ public class CommunityComment extends AuditingTimeEntity {
         this.anonymousProfile = profile;
     }
 
+    public void updateContent(String newContent) {
+        this.content = newContent;
+    }
+
+    public void updateIsBlindWriter(Boolean isBlind) {
+        this.isBlindWriter = isBlind;
+    }
+
+    public boolean validateUpdatePermission(Long requestUserId) {
+        return this.writerId.equals(requestUserId) && !Boolean.TRUE.equals(this.isDeleted);
+    }
+
     public void markAsDeleted() {
         this.isDeleted = true;
     }
