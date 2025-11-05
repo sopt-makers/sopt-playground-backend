@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
 import org.sopt.makers.internal.popup.domain.Popup;
 import org.sopt.makers.internal.popup.repository.PopupRepository;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -26,6 +25,6 @@ public class PopupRetriever {
     }
 
     public Popup findCurrentPopup() {
-        return popupRepository.findFirstCurrentPopup(LocalDate.now(), PageRequest.of(0, 1)).orElse(null);
+        return popupRepository.findFirstCurrentPopup(LocalDate.now()).orElse(null);
     }
 }
