@@ -1,9 +1,8 @@
-package org.sopt.makers.internal.community.comment.utils;
+package org.sopt.makers.internal.community.utils;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sopt.makers.internal.community.utils.MentionExtractor;
 
 import java.util.Set;
 
