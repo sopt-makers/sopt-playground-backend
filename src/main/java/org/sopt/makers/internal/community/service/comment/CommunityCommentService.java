@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
+import org.sopt.makers.internal.community.domain.comment.DeletedCommunityComment;
 import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.MemberVo;
 import org.sopt.makers.internal.community.dto.request.comment.CommentUpdateRequest;
@@ -126,11 +127,9 @@ public class CommunityCommentService {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
 
-        // 감사 로그용으로 DeletedCommunityComment에 저장
-        val deleteComment = communityMapper.toDeleteCommunityComment(comment);
+        DeletedCommunityComment deleteComment = communityMapper.toDeleteCommunityComment(comment);
         deletedCommunityCommentRepository.save(deleteComment);
 
-        // Soft delete: isDeleted를 true로 설정
         comment.markAsDeleted();
         communityCommentsRepository.save(comment);
     }
