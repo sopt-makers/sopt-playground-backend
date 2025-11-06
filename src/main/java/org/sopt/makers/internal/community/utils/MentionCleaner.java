@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.common.util;
+package org.sopt.makers.internal.community.utils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,7 +8,7 @@ public class MentionCleaner {
 
     public static String removeMentionIds(String content) {
         Matcher matcher = mentionPattern.matcher(content);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         while (matcher.find()) {
             String nickname = matcher.group(1);

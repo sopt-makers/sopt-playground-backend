@@ -2,7 +2,7 @@ package org.sopt.makers.internal.external.pushNotification.message.community;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.sopt.makers.internal.common.util.MentionCleaner;
+import org.sopt.makers.internal.community.utils.MentionCleaner;
 import org.sopt.makers.internal.external.pushNotification.message.PushNotificationMessageBuilder;
 
 import static org.sopt.makers.internal.external.pushNotification.message.community.CommunityPushConstants.*;

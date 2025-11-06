@@ -113,13 +113,17 @@ public class CommunityQueryRepository {
         }
 
         QAnonymousProfile anonymousProfile = QAnonymousProfile.anonymousProfile;
+        QCommunityPost post = QCommunityPost.communityPost;
 
         return queryFactory
                 .selectFrom(anonymousProfile)
-                .leftJoin(anonymousProfile.post).fetchJoin()
+                .join(anonymousProfile.post, post).fetchJoin()
                 .leftJoin(anonymousProfile.nickname).fetchJoin()
                 .leftJoin(anonymousProfile.profileImg).fetchJoin()
-                .where(anonymousProfile.post.id.in(postIds))
+                .where(
+                        anonymousProfile.post.id.in(postIds),
+                        anonymousProfile.member.id.eq(post.member.id)
+                )
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
