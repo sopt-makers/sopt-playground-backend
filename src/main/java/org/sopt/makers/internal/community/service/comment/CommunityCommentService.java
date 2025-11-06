@@ -160,16 +160,7 @@ public class CommunityCommentService {
         CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
         comment.validateUpdatePermission(memberId);
 
-        String oldContent = comment.getContent();
-        Boolean oldIsBlind = comment.getIsBlindWriter();
-
         communityCommentsModifier.updateCommunityComment(comment, request);
-
-        if (!oldIsBlind.equals(request.isBlindWriter())) {
-            handleAnonymousProfileUpdate(comment, request.isBlindWriter(), memberId);
-        }
-
-        sendNotificationsForNewMentions(oldContent, request, memberId, comment.getPostId());
     }
 
     private void validateAnonymousNickname(CommentSaveRequest request, Long postId) {
@@ -195,20 +186,6 @@ public class CommunityCommentService {
             if (!foundNicknameSet.contains(nickname)) {
                 throw new ClientBadRequestException("해당 게시글에 존재하지 않는 익명 닉네임입니다: " + nickname);
             }
-        }
-    }
-
-    private void handleAnonymousProfileUpdate(CommunityComment comment, Boolean newIsBlind, Long userId) {
-        if (newIsBlind) {
-            Member member = memberRetriever.findMemberById(userId);
-            CommunityPost post = communityPostRetriever.findCommunityPostById(comment.getPostId());
-            AnonymousProfile profile = anonymousProfileService.getOrCreateAnonymousProfile(member, post);
-
-            comment.registerAnonymousProfile(profile);
-            communityCommentsRepository.save(comment);
-        } else {
-            comment.registerAnonymousProfile(null);
-            communityCommentsRepository.save(comment);
         }
     }
 
@@ -272,50 +249,4 @@ public class CommunityCommentService {
         pushNotificationService.sendPushNotification(message);
     }
 
-    private void sendNotificationsForNewMentions(String oldContent, CommentUpdateRequest request, Long writerId, Long postId) {
-        if (request.mention() != null && request.mention().userIds() != null) {
-            Long[] newMentions = MentionExtractor.getNewlyAddedMentions(
-                    oldContent,
-                    request.mention().userIds()
-            );
-
-            if (newMentions.length > 0) {
-                InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
-                sendMentionNotifications(
-                        newMentions,
-                        writerDetails.name(),
-                        request.content(),
-                        request.isBlindWriter(),
-                        request.webLink()
-                );
-            }
-        }
-
-        if (request.anonymousMention() != null
-                && request.anonymousMention().anonymousNicknames() != null) {
-
-            String[] newAnonymousNicknames = MentionExtractor.getNewlyAddedAnonymousMentions(
-                    oldContent,
-                    request.anonymousMention().anonymousNicknames()
-            );
-
-            if (newAnonymousNicknames.length > 0) {
-                List<AnonymousProfile> profiles = anonymousProfileRetriever
-                        .findByPostIdAndNicknames(postId, Arrays.asList(newAnonymousNicknames));
-
-                Long[] newAnonymousUserIds = anonymousProfileRetriever.extractUserIds(profiles);
-
-                if (newAnonymousUserIds.length > 0) {
-                    InternalUserDetails writerDetails = platformService.getInternalUser(writerId);
-                    sendMentionNotifications(
-                            newAnonymousUserIds,
-                            writerDetails.name(),
-                            request.content(),
-                            request.isBlindWriter(),
-                            request.webLink()
-                    );
-                }
-            }
-        }
-    }
 }

@@ -28,7 +28,6 @@ public class CommunityCommentsModifier {
             CommentUpdateRequest request
     ) {
         comment.updateContent(request.content());
-        comment.updateIsBlindWriter(request.isBlindWriter());
         communityCommentRepository.save(comment);
     }
 }
