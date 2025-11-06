@@ -70,4 +70,10 @@ public class PopupService {
         Popup popup = popupRetriever.findPopupById(id);
         popupModifier.deletePopup(popup);
     }
+
+    @Transactional(readOnly = true)
+    public PopupResponse getCurrentPopup() {
+        Popup popup = popupRetriever.findCurrentPopup();
+        return popup != null ? PopupResponse.from(popup) : null;
+    }
 }

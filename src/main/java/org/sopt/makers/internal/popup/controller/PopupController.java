@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.popup.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -85,5 +86,13 @@ public class PopupController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "현재 진행중인 팝업 조회 API", description = "현재 운영 기간에 포함되는 팝업 중 시작 날짜가 가장 빠른 팝업을 조회합니다. 없으면 null을 반환합니다.")
+    @SecurityRequirement(name = "Authorization")
+    @GetMapping("/current")
+    public ResponseEntity<PopupResponse> getCurrentPopup() {
+        PopupResponse response = popupService.getCurrentPopup();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

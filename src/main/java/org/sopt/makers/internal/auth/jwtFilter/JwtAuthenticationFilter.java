@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || uri.startsWith("/webjars")
                 || uri.startsWith("/makers")
                 || uri.startsWith("/internal/api/v1")
-                || uri.startsWith("/api/v1/popups")
+                || (uri.startsWith("/api/v1/popups") && !uri.equals("/api/v1/popups/current"))
                 || uri.startsWith("/admin")
                 || uri.startsWith("/css")
                 || (uri.startsWith("/api/v1/projects") && "GET".equalsIgnoreCase(request.getMethod()))
