@@ -55,10 +55,6 @@ public class CommunityComment extends AuditingTimeEntity {
         this.content = newContent;
     }
 
-    public void updateIsBlindWriter(Boolean isBlind) {
-        this.isBlindWriter = isBlind;
-    }
-
     public void validateUpdatePermission(Long requestUserId) {
         if (!this.writerId.equals(requestUserId)) {
             throw new ClientBadRequestException("댓글 수정 권한이 없습니다.");
