@@ -85,21 +85,14 @@ public class CommunityCommentController {
     @Operation(
             summary = "커뮤니티 댓글 수정 API",
             description = """
-            댓글 또는 답글을 수정합니다.
+            댓글 또는 답글의 내용을 수정합니다.
 
             수정 가능 항목:
             - content: 댓글 내용
-            - isBlindWriter: 익명 여부 (일반 ↔ 익명 전환 가능)
-            - mention: 일반 사용자 멘션
-            - anonymousMention: 익명 사용자 멘션
 
             권한:
             - 본인이 작성한 댓글만 수정 가능
             - 삭제된 댓글은 수정 불가
-
-            알림:
-            - 새롭게 추가된 멘션에게만 푸시알림 발송
-            - 기존 멘션 사용자에게는 알림 발송 안 함
             """
     )
     @PatchMapping("/{commentId}")

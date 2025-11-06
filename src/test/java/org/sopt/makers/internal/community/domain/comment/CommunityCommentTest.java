@@ -78,22 +78,4 @@ public class CommunityCommentTest {
         // Then
         assertThat(comment.getContent()).isEqualTo("수정된 내용");
     }
-
-    @Test
-    @DisplayName("익명 여부를 수정한다")
-    void updateIsBlindWriter_Success() {
-        // Given
-        CommunityComment comment = CommunityComment.builder()
-                .id(1L)
-                .writerId(1L)
-                .content("내용")
-                .isBlindWriter(false)
-                .build();
-
-        // When
-        comment.updateIsBlindWriter(true);
-
-        // Then
-        assertThat(comment.getIsBlindWriter()).isTrue();
-    }
 }
