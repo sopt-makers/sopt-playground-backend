@@ -17,7 +17,7 @@ public class PopupRetriever {
 
     public Popup findPopupById(Long id) {
         return popupRepository.findById(id)
-                .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 팝업입니다. id: [" + id + "]"));
+            .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 팝업입니다. id: [" + id + "]"));
     }
 
     public List<Popup> findAllPopups() {

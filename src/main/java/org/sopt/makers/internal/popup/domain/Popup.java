@@ -14,6 +14,7 @@ import org.sopt.makers.internal.common.AuditingTimeEntity;
 @Entity
 @Getter
 @Builder
+@Table(name = "popup")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Popup extends AuditingTimeEntity {
