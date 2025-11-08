@@ -10,6 +10,6 @@ import java.util.Optional;
 
 public interface PopupRepository extends JpaRepository<Popup, Long> {
 
-    @Query(value = "SELECT * FROM popup WHERE :currentDate BETWEEN start_date AND end_date ORDER BY start_date ASC LIMIT 1", nativeQuery = true)
+    @Query("SELECT p FROM Popup p WHERE :currentDate BETWEEN p.startDate AND p.endDate ORDER BY p.startDate ASC")
     Optional<Popup> findFirstCurrentPopup(@Param("currentDate") LocalDate currentDate);
 }
