@@ -245,7 +245,7 @@ public class MentionExtractorTest {
         @DisplayName("새롭게 추가된 익명 멘션만 추출한다")
         void getNewlyAddedAnonymousMentions_Success() {
             // Given
-            String oldContent = "안녕하세요 @오너십있는 츄러스 님";
+            String oldContent = "안녕하세요 @오너십있는 츄러스[-1] 님";
             String[] newAnonymousNicknames = {"오너십있는 츄러스", "도전하는 빙수", "열정적인 아이스크림"};
 
             // When
@@ -259,7 +259,7 @@ public class MentionExtractorTest {
         @DisplayName("모두 기존 익명 멘션이면 빈 배열을 반환한다")
         void getNewlyAddedAnonymousMentions_AllExisting() {
             // Given
-            String oldContent = "@오너십있는 츄러스 @도전하는 빙수";
+            String oldContent = "@오너십있는 츄러스[-1] @도전하는 빙수[-1]";
             String[] newAnonymousNicknames = {"오너십있는 츄러스", "도전하는 빙수"};
 
             // When
@@ -287,7 +287,7 @@ public class MentionExtractorTest {
         @DisplayName("새 익명 멘션이 null이면 빈 배열을 반환한다")
         void getNewlyAddedAnonymousMentions_NullNewMentions() {
             // Given
-            String oldContent = "@오너십있는 츄러스";
+            String oldContent = "@오너십있는 츄러스[-1]";
             String[] newAnonymousNicknames = null;
 
             // When
@@ -301,7 +301,7 @@ public class MentionExtractorTest {
         @DisplayName("새 익명 멘션이 빈 배열이면 빈 배열을 반환한다")
         void getNewlyAddedAnonymousMentions_EmptyNewMentions() {
             // Given
-            String oldContent = "@오너십있는 츄러스";
+            String oldContent = "@오너십있는 츄러스[-1]";
             String[] newAnonymousNicknames = {};
 
             // When
@@ -315,7 +315,7 @@ public class MentionExtractorTest {
         @DisplayName("새 익명 멘션 중 일부만 새로운 경우 새로운 것만 반환한다")
         void getNewlyAddedAnonymousMentions_PartialNew() {
             // Given
-            String oldContent = "@오너십있는 츄러스 님 안녕하세요";
+            String oldContent = "@오너십있는 츄러스[-1] 님 안녕하세요";
             String[] newAnonymousNicknames = {"오너십있는 츄러스", "도전하는 빙수", "열정적인 아이스크림"};
 
             // When
@@ -343,7 +343,7 @@ public class MentionExtractorTest {
         @DisplayName("일반 멘션과 익명 멘션이 섞여 있어도 익명 멘션만 추출한다")
         void getNewlyAddedAnonymousMentions_MixedMentions() {
             // Given
-            String oldContent = "@홍길동[123] @오너십있는 츄러스 안녕하세요";
+            String oldContent = "@홍길동[123] @오너십있는 츄러스[-1] 안녕하세요";
             String[] newAnonymousNicknames = {"오너십있는 츄러스", "도전하는 빙수"};
 
             // When
@@ -362,7 +362,7 @@ public class MentionExtractorTest {
         @DisplayName("댓글 수정 시 일반 멘션과 익명 멘션을 모두 처리한다")
         void updateComment_WithBothMentionTypes() {
             // Given
-            String oldContent = "@홍길동[123] @오너십있는 츄러스 님 안녕하세요";
+            String oldContent = "@홍길동[123] @오너십있는 츄러스[-1] 님 안녕하세요";
             Long[] newUserMentions = {123L, 456L};
             String[] newAnonymousMentions = {"오너십있는 츄러스", "도전하는 빙수"};
 
@@ -396,7 +396,7 @@ public class MentionExtractorTest {
         @DisplayName("모든 멘션이 기존 것이면 빈 배열을 반환한다")
         void updateComment_AllExistingMentions() {
             // Given
-            String oldContent = "@홍길동[123] @철수[456] @오너십있는 츄러스 @도전하는 빙수";
+            String oldContent = "@홍길동[123] @철수[456] @오너십있는 츄러스[-1] @도전하는 빙수[-1]";
             Long[] newUserMentions = {123L, 456L};
             String[] newAnonymousMentions = {"오너십있는 츄러스", "도전하는 빙수"};
 
