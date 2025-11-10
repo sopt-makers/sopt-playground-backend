@@ -7,7 +7,6 @@ public class CoffeeChatSmsConstants {
     }
 
     // 메시지 헤더
-    public static final String WEB_SENDER = "[Web발신]";
     public static final String MESSAGE_TITLE = "[SOPT makers] 쪽지가 도착했어요!";
 
     // 필드 레이블

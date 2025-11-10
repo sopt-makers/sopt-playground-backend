@@ -22,7 +22,6 @@ public class CoffeeChatRequestSmsMessage implements SmsMessageBuilder {
         StringBuilder message = new StringBuilder();
 
         // 헤더
-        message.append(WEB_SENDER).append("\n");
         message.append(MESSAGE_TITLE).append("\n\n");
 
         // 발신자 정보
