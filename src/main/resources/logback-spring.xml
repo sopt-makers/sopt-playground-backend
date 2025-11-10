@@ -81,6 +81,11 @@
     <!-- 로거 설정: INFO 레벨 이상만 기록 -->
     <logger name="org.sopt.makers.internal" level="INFO"/>
 
+    <!-- 일반 HTTP 요청/응답은 로깅하지 않고, 에러만 기록 -->
+    <springProfile name="dev,prod,lambda-dev,lambda-prod">
+        <logger name="org.sopt.makers.internal.common.logging.HttpLoggingAspect" level="WARN"/>
+    </springProfile>
+
     <!-- Lambda 환경: 콘솔 로깅만 사용 (CloudWatch Logs로 자동 수집) -->
     <springProfile name="lambda-dev,lambda-prod">
         <root level="INFO">
