@@ -68,6 +68,7 @@ public class CommunityCommentService {
     private final MemberRetriever memberRetriever;
 
     private final CommunityCommentsModifier communityCommentsModifier;
+    private final CommentMentionAnonymizer commentMentionAnonymizer;
 
     private final CommunityMapper communityMapper;
 
@@ -83,7 +84,10 @@ public class CommunityCommentService {
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 
         if (request.isChildComment()) {
-            communityCommentsRetriever.checkExistsCommunityCommentById(request.parentCommentId());
+            CommunityComment parentComment = communityCommentsRetriever.findCommunityCommentById(request.parentCommentId());
+            if (parentComment.getIsDeleted()) {
+                throw new ClientBadRequestException("삭제된 댓글에는 답글을 작성할 수 없습니다.");
+            }
             validateAnonymousNickname(request, postId);
         }
 
@@ -127,6 +131,7 @@ public class CommunityCommentService {
             throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
         }
 
+        commentMentionAnonymizer.anonymizeMentionsInReplies(comment);
         DeletedCommunityComment deleteComment = communityMapper.toDeleteCommunityComment(comment);
         deletedCommunityCommentRepository.save(deleteComment);
 

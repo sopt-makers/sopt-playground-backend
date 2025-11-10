@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 public class MentionExtractor {
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@.*?\\[(\\d+)]");
-    private static final Pattern ANONYMOUS_PATTERN = Pattern.compile("@([가-힣]+\\s+[가-힣]+)(?!\\[)");
+    private static final Pattern ANONYMOUS_PATTERN = Pattern.compile("@([가-힣]+\\s+[가-힣]+)\\[-1\\]");
 
     private MentionExtractor() {
         throw new AssertionError("유틸 클래스는 인스턴스화 될 수 없습니다.");
