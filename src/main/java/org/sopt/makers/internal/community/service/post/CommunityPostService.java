@@ -71,8 +71,12 @@ import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 
 import static java.util.stream.Collectors.*;
 
@@ -87,6 +91,7 @@ public class CommunityPostService {
     private final PushNotificationService pushNotificationService;
     private final PlatformService platformService;
     private final MakersCrewClient makersCrewClient;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -118,6 +123,9 @@ public class CommunityPostService {
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
     private static final long SOPTICLE_CATEGORY_ID = 21;
     private static final long MEETING_CATEGORY_ID = 24L;
+
+    private static final String VIEW_COUNT_PREFIX = "post:view:";
+    private static final Duration VIEW_COUNT_TTL = Duration.ofHours(24);
 
     @Transactional(readOnly = true)
     public PostAllResponse getMeetingPosts(Long userId, Integer page, Integer take) {
@@ -239,8 +247,16 @@ public class CommunityPostService {
         communityPostRepository.delete(post);
     }
 
-    public void increaseHit(List<Long> postIdList) {
+    public void increaseHit(Long userId, List<Long> postIdList) {
         for (Long postId : postIdList) {
+            String redisKey = generateRedisKey(userId, postId);
+            Boolean hasViewed = redisTemplate.hasKey(redisKey);
+
+            if (hasViewed) {
+                continue;
+            }
+
+            redisTemplate.opsForValue().set(redisKey, "1", VIEW_COUNT_TTL);
             communityPostModifier.increaseHitTransactional(postId);
         }
     }
@@ -590,5 +606,10 @@ public class CommunityPostService {
 
         return categoryRetriever.findAllByIds(categoryIds).stream()
                 .collect(toMap(Category::getId, category -> category));
+    }
+
+    private String generateRedisKey(Long userId, Long postId) {
+        String today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        return VIEW_COUNT_PREFIX + today + ":" + userId + ":" + postId;
     }
 }
