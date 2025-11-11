@@ -118,9 +118,10 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 글 조회수 증가")
     @PostMapping("/posts/hit")
     public ResponseEntity<Map<String, Boolean>> upPostHit(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody CommunityHitRequest request
     ) {
-        communityPostService.increaseHit(request.postIdList());
+        communityPostService.increaseHit(userId, request.postIdList());
 
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }

@@ -19,3 +19,16 @@ services:
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+
+  redis:
+    image: redis:7-alpine
+    container_name: sopt-playground-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  redis-data:

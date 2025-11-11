@@ -84,10 +84,7 @@ public class CommunityCommentService {
         CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 
         if (request.isChildComment()) {
-            CommunityComment parentComment = communityCommentsRetriever.findCommunityCommentById(request.parentCommentId());
-            if (parentComment.getIsDeleted()) {
-                throw new ClientBadRequestException("삭제된 댓글에는 답글을 작성할 수 없습니다.");
-            }
+            communityCommentsRetriever.checkExistsCommunityCommentById(request.parentCommentId());
             validateAnonymousNickname(request, postId);
         }
 
