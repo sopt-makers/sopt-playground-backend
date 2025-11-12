@@ -257,7 +257,14 @@ public class CommunityPostService {
             }
 
             redisTemplate.opsForValue().set(redisKey, "1", VIEW_COUNT_TTL);
-            communityPostModifier.increaseHitTransactional(postId);
+
+            try {
+                communityPostModifier.increaseHitTransactional(postId);
+            } catch (Exception e) {
+                log.error("조회수 증가 실패. Redis 키 삭제 수행 (보상 트랜잭션). postId: {}, userId: {}, redisKey: {}",
+                    postId, userId, redisKey, e);
+                redisTemplate.delete(redisKey);
+            }
         }
     }
 
