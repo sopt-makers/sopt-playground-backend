@@ -13,5 +13,7 @@ public interface CommunityCommentRepository extends JpaRepository<CommunityComme
 
     int countAllByPostId(Long postId);
 
+    int countAllByPostIdAndIsDeleted(Long postId, Boolean isDeleted);
+
     int countAllByWriterIdAndCreatedAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
 }

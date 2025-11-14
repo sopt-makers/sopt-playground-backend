@@ -435,7 +435,7 @@ public class CommunityPostService {
         return posts.stream()
                 .map(post -> {
                     int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
-                    int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+                    int commentCount = communityCommentRepository.countAllByPostIdAndIsDeleted(post.getId(), false);
                     VoteResponse vote = voteService.getVoteByPostId(post.getId(), memberId);
                     Integer totalVoteCount = Objects.nonNull(vote) ? vote.totalParticipants() : null;
                     Category category = categoryMap.get(post.getCategoryId());
@@ -493,7 +493,7 @@ public class CommunityPostService {
     }
 
     private PostWithPoints createPostWithPoints(CommunityPost post) {
-        int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+        int commentCount = communityCommentRepository.countAllByPostIdAndIsDeleted(post.getId(), false);
         int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
         int points = calculatePoints(commentCount, likeCount);
         return new PostWithPoints(post, points, post.getHits());

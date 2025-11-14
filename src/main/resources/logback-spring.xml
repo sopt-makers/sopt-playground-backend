@@ -21,7 +21,7 @@
         <!-- 파일 롤링 정책: 월별로 새 파일 생성 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 롤링된 파일 이름 패턴: request-2025-01.log -->
-            <fileNamePattern>${LOG_PATH}/request-%d{yyyy-MM}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/request-%d{yyyy-MM}.log.gz</fileNamePattern>
             <!-- 최대 12개월치 보관 (1년) -->
             <maxHistory>12</maxHistory>
         </rollingPolicy>
