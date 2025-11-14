@@ -20,10 +20,10 @@
 
         <!-- 파일 롤링 정책: 월별로 새 파일 생성 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 롤링된 파일 이름 패턴: request-2025-01.log -->
+            <!-- 롤링된 파일 이름 패턴: request-2025-01.log.gz -->
             <fileNamePattern>${LOG_PATH}/request-%d{yyyy-MM}.log.gz</fileNamePattern>
-            <!-- 최대 12개월치 보관 (1년) -->
-            <maxHistory>12</maxHistory>
+            <!-- 최대 1개월치 보관 -->
+            <maxHistory>1</maxHistory>
         </rollingPolicy>
 
         <encoder>
@@ -44,8 +44,8 @@
     <appender name="RESPONSE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/response.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/response-%d{yyyy-MM}.log</fileNamePattern>
-            <maxHistory>12</maxHistory>
+            <fileNamePattern>${LOG_PATH}/response-%d{yyyy-MM}.log.gz</fileNamePattern>
+            <maxHistory>1</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
@@ -63,8 +63,8 @@
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/error-%d{yyyy-MM}.log</fileNamePattern>
-            <maxHistory>12</maxHistory>
+            <fileNamePattern>${LOG_PATH}/error-%d{yyyy-MM}.log.gz</fileNamePattern>
+            <maxHistory>1</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>

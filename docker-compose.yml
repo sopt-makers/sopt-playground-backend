@@ -9,6 +9,8 @@ services:
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    volumes:
+      - /home/ec2-user/playground/logs:/app/logs
     networks:
       - default
     depends_on:
@@ -23,6 +25,8 @@ services:
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    volumes:
+      - /home/ec2-user/playground/logs:/app/logs
     networks:
       - default
     depends_on:
