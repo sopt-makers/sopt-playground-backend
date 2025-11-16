@@ -150,7 +150,7 @@ public class CommunityResponseMapper {
         return new PostResponse(
                 post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
                 category.name(), post.title(), post.content(), post.hits(),
-                comments.size(), post.images(), post.isQuestion(), post.isBlindWriter(),
+                (int) comments.stream().filter(c -> !c.isDeleted()).count(), post.images(), post.isQuestion(), post.isBlindWriter(),
                 post.sopticleUrl(), anonymousProfileVo, createdAt, comments, dao.post().vote(), null
         );
     }
