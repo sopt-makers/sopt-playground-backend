@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.community.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -7,14 +8,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.QCommunityPost;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
-import org.sopt.makers.internal.community.domain.anonymous.QAnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
+import org.sopt.makers.internal.community.domain.anonymous.QAnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.community.domain.comment.QCommunityComment;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
-import org.sopt.makers.internal.community.dto.CommentDao;
-import org.sopt.makers.internal.community.dto.QCategoryPostMemberDao;
-import org.sopt.makers.internal.community.dto.QCommentDao;
+import org.sopt.makers.internal.community.dto.comment.CommentDao;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberBlock;
 import org.sopt.makers.internal.member.domain.QMemberCareer;
@@ -44,7 +43,7 @@ public class CommunityQueryRepository {
 
         JPAQuery<CategoryPostMemberDao> query;
         if (categoryId == CATEGORY_PART_TALK || categoryId == CATEGORY_PROMOTION) {
-            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+            query = queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
                     .from(posts)
                     .innerJoin(posts.member, member)
                     .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
@@ -54,7 +53,7 @@ public class CommunityQueryRepository {
                     .distinct()
                     .orderBy(posts.createdAt.desc());
         } else {
-            query = queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+            query = queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
                     .from(posts)
                     .innerJoin(posts.member, member)
                     .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
@@ -82,7 +81,7 @@ public class CommunityQueryRepository {
         val category = QCategory.category;
         val member = QMember.member;
 
-        return queryFactory.select(new QCategoryPostMemberDao(posts, member, category))
+        return queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
                 .from(posts)
                 .innerJoin(posts.member, member)
                 .innerJoin(category).on(posts.categoryId.eq(category.id))
@@ -108,20 +107,27 @@ public class CommunityQueryRepository {
                 ));
     }
 
-    public Map<Long, AnonymousPostProfile> getAnonymousPostProfilesByPostId(List<Long> postIds) {
+    public Map<Long, AnonymousProfile> getAnonymousProfilesByPostId(List<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        QAnonymousPostProfile anonymousPostProfile = QAnonymousPostProfile.anonymousPostProfile;
+        QAnonymousProfile anonymousProfile = QAnonymousProfile.anonymousProfile;
+        QCommunityPost post = QCommunityPost.communityPost;
 
         return queryFactory
-                .selectFrom(anonymousPostProfile)
-                .where(anonymousPostProfile.communityPost.id.in(postIds))
+                .selectFrom(anonymousProfile)
+                .join(anonymousProfile.post, post).fetchJoin()
+                .leftJoin(anonymousProfile.nickname).fetchJoin()
+                .leftJoin(anonymousProfile.profileImg).fetchJoin()
+                .where(
+                        anonymousProfile.post.id.in(postIds),
+                        anonymousProfile.member.id.eq(post.member.id)
+                )
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
-                        profile -> profile.getCommunityPost().getId(),
+                        profile -> profile.getPost().getId(),
                         profile -> profile
                 ));
     }
@@ -131,11 +137,15 @@ public class CommunityQueryRepository {
         val member = QMember.member;
         val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
+        val anonymousProfile = QAnonymousProfile.anonymousProfile;
 
-        JPAQuery<CommentDao> query = queryFactory.select(new QCommentDao(member, comment))
+        JPAQuery<CommentDao> query = queryFactory.select(Projections.constructor(CommentDao.class, member, comment))
                 .from(comment)
                 .innerJoin(member).on(member.id.eq(comment.writerId))
                 .leftJoin(member.careers, careers)
+                .leftJoin(comment.anonymousProfile, anonymousProfile).fetchJoin()
+                .leftJoin(anonymousProfile.nickname).fetchJoin()
+                .leftJoin(anonymousProfile.profileImg).fetchJoin()
                 .where(comment.postId.eq(postId))
                 .distinct()
                 .orderBy(comment.id.asc());

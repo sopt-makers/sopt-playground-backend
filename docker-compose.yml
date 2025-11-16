@@ -9,6 +9,12 @@ services:
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    volumes:
+      - /home/ec2-user/playground/logs:/app/logs
+    networks:
+      - default
+    depends_on:
+      - redis
 
   playground-green:
     image: ${PLAYGROUND_ECR_REPO}
@@ -19,3 +25,28 @@ services:
     environment:
       - TZ=Asia/Seoul
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    volumes:
+      - /home/ec2-user/playground/logs:/app/logs
+    networks:
+      - default
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: playground-redis
+    ports:
+      - "6381:6379"  # 외부 6381 -> 내부 6379
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - default  # playground_default 네트워크 사용
+
+networks:
+  default:
+    name: playground_default
+
+volumes:
+  redis-data:

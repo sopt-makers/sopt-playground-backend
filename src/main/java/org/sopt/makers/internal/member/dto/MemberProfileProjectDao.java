@@ -1,7 +1,10 @@
 package org.sopt.makers.internal.member.dto;
 
-import com.querydsl.core.annotations.QueryProjection;
+import org.springframework.aot.hint.annotation.Reflective;
 
+import java.util.List;
+
+@Reflective
 public record MemberProfileProjectDao(
         Long id,
         Long writerId,
@@ -11,8 +14,6 @@ public record MemberProfileProjectDao(
         String category,
         String logoImage,
         String thumbnailImage,
-        String[] serviceType
+        List<String> serviceType
 ) {
-    @QueryProjection
-    public MemberProfileProjectDao {}
 }

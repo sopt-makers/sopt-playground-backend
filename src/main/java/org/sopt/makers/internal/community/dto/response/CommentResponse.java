@@ -5,6 +5,7 @@ import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
 import org.sopt.makers.internal.community.dto.MemberVo;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CommentResponse(
         @Schema(required = true)
@@ -17,5 +18,9 @@ public record CommentResponse(
         Boolean isBlindWriter,
         AnonymousProfileVo anonymousProfile,
         Boolean isReported,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Boolean isDeleted,
+        Boolean isLiked,
+        Integer likeCount,
+        List<CommentResponse> replies
 ){}

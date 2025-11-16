@@ -1,11 +1,13 @@
 package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.member.domain.Member;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -37,9 +39,9 @@ public class DeletedCommunityPost {
     @Column
     private Integer hits = 0;
 
-    @Type(type = "string-array")
+    @Type(ListArrayType.class)
     @Column(name = "images", columnDefinition = "text[]")
-    private String[] images;
+    private List<String> images;
 
     @Builder.Default
     @Column

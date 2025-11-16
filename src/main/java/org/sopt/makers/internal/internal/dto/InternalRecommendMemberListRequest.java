@@ -3,7 +3,7 @@ package org.sopt.makers.internal.internal.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Objects;
 

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:text="${isEdit} ? '팝업 수정' : '팝업 추가'">팝업 관리</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="content-header">
+            <h2 th:text="${isEdit} ? '팝업 수정' : '팝업 추가'">팝업 추가</h2>
+            <a th:href="@{/admin/popups}" class="btn btn-secondary">목록으로</a>
+        </div>
+
+        <div class="env-warning" th:classappend="${environment == 'prod' ? 'env-warning-prod' : 'env-warning-dev'}">
+            <span th:text="${environment == 'prod' ?
+                '저장 시 실제 서비스에 반영됩니다.' :
+                '저장 시 개발 환경에만 반영됩니다.'}">
+            </span>
+        </div>
+
+        <div class="form-container">
+            <form id="popupForm" onsubmit="return handleSubmit(event)">
+                <input type="hidden" id="popupId" th:value="${popup.id}">
+                <input type="hidden" id="isEdit" th:value="${isEdit}">
+
+                <div class="form-group">
+                    <label for="startDate">시작 날짜 *</label>
+                    <input type="date" id="startDate" th:value="${popup.startDate}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="endDate">종료 날짜 *</label>
+                    <input type="date" id="endDate" th:value="${popup.endDate}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="pcImageFile">PC 이미지 *</label>
+                    <input type="file" id="pcImageFile" accept="image/*" onchange="handleFileSelect('pc')">
+                    <input type="hidden" id="pcImageUrl" th:value="${popup.pcImageUrl}">
+                    <div id="pcImagePreview" class="image-preview-container">
+                        <img th:if="${popup.pcImageUrl}" th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-preview-large">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobileImageFile">모바일 이미지 *</label>
+                    <input type="file" id="mobileImageFile" accept="image/*" onchange="handleFileSelect('mobile')">
+                    <input type="hidden" id="mobileImageUrl" th:value="${popup.mobileImageUrl}">
+                    <div id="mobileImagePreview" class="image-preview-container">
+                        <img th:if="${popup.mobileImageUrl}" th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-preview-large">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="linkUrl">링크 URL (선택)</label>
+                    <input type="url" id="linkUrl" th:value="${popup.linkUrl}" placeholder="https://sopt.org">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="openInNewTab" th:checked="${popup.openInNewTab}">
+                        새 탭에서 열기
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="showOnlyToRecentGeneration" th:checked="${popup.showOnlyToRecentGeneration}">
+                        최근 기수에게만 보여주기
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" th:text="${isEdit} ? '수정하기' : '추가하기'">추가하기</button>
+                    <a th:href="@{/admin/popups}" class="btn btn-secondary">취소</a>
+                </div>
+            </form>
+        </div>
+
+        <script th:inline="javascript">
+            // 로그인 확인
+            if (!localStorage.getItem('adminKey')) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/admin';
+            }
+
+            const environment = /*[[${environment}]]*/ 'dev';
+
+            function handleFileSelect(type) {
+                const fileInput = document.getElementById(`${type}ImageFile`);
+                const preview = document.getElementById(`${type}ImagePreview`);
+                const file = fileInput.files[0];
+
+                if (file) {
+                    // 파일을 읽어서 이미지 미리보기 표시
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="${type} 이미지" class="image-preview-large">
+                        `;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.style.display = 'none';
+                }
+            }
+
+            async function uploadImageToServer(file, adminKey) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch('/admin/popups/upload-image', {
+                        method: 'POST',
+                        headers: {
+                            'Admin-Key': adminKey
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('이미지 업로드 실패');
+                    }
+
+                    const data = await response.json();
+                    return data.imageUrl;
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    throw error;
+                }
+            }
+
+            async function handleSubmit(event) {
+                event.preventDefault();
+
+                const isEdit = document.getElementById('isEdit').value === 'true';
+                const popupId = document.getElementById('popupId').value;
+                const adminKey = localStorage.getItem('adminKey');
+                const submitButton = event.target.querySelector('button[type="submit"]');
+
+                try {
+                    submitButton.disabled = true;
+                    submitButton.textContent = '업로드 중...';
+
+                    // 이미지 파일 업로드 처리
+                    const pcImageFile = document.getElementById('pcImageFile').files[0];
+                    const mobileImageFile = document.getElementById('mobileImageFile').files[0];
+
+                    let pcImageUrl = document.getElementById('pcImageUrl').value;
+                    let mobileImageUrl = document.getElementById('mobileImageUrl').value;
+
+                    // 새 파일이 선택되었으면 업로드
+                    if (pcImageFile) {
+                        pcImageUrl = await uploadImageToServer(pcImageFile, adminKey);
+                    }
+                    if (mobileImageFile) {
+                        mobileImageUrl = await uploadImageToServer(mobileImageFile, adminKey);
+                    }
+
+                    // 필수 이미지 URL 체크
+                    if (!pcImageUrl || !mobileImageUrl) {
+                        alert('PC 이미지와 모바일 이미지는 필수입니다.');
+                        submitButton.disabled = false;
+                        submitButton.textContent = isEdit ? '수정하기' : '추가하기';
+                        return false;
+                    }
+
+                    const data = {
+                        startDate: document.getElementById('startDate').value,
+                        endDate: document.getElementById('endDate').value,
+                        pcImageUrl: pcImageUrl,
+                        mobileImageUrl: mobileImageUrl,
+                        linkUrl: document.getElementById('linkUrl').value || null,
+                        openInNewTab: document.getElementById('openInNewTab').checked,
+                        showOnlyToRecentGeneration: document.getElementById('showOnlyToRecentGeneration').checked
+                    };
+
+                    const url = isEdit ? `/api/v1/popups/${popupId}` : '/api/v1/popups';
+                    const method = isEdit ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'admin-key': adminKey
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        alert(`팝업이 ${isEdit ? '수정' : '추가'}되었습니다.`);
+                        window.location.href = '/admin/popups';
+                    } else if (response.status === 403) {
+                        alert('인증이 만료되었습니다. 다시 로그인해주세요.');
+                        localStorage.removeItem('adminKey');
+                        window.location.href = '/admin';
+                    } else {
+                        const text = await response.text();
+                        throw new Error(text || response.statusText);
+                    }
+                } catch (error) {
+                    alert('오류 발생: ' + error.message);
+                    submitButton.disabled = false;
+                    submitButton.textContent = isEdit ? '수정하기' : '추가하기';
+                }
+
+                return false;
+            }
+        </script>
+    </div>
+</body>
+</html>

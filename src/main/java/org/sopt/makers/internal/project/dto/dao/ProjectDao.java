@@ -1,10 +1,13 @@
 package org.sopt.makers.internal.project.dto.dao;
 
-import com.querydsl.core.annotations.QueryProjection;
+import java.util.List;
+
+import org.springframework.aot.hint.annotation.Reflective;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Reflective
 public record ProjectDao (
         Long id,
         String name,
@@ -13,14 +16,14 @@ public record ProjectDao (
         String category,
         LocalDate startAt,
         LocalDate endAt,
-        String[] serviceType,
+        List<String> serviceType,
         Boolean isAvailable,
         Boolean isFounding,
         String summary,
         String detail,
         String logoImage,
         String thumbnailImage,
-        String[] images,
+        List<String> images,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
 
@@ -36,6 +39,4 @@ public record ProjectDao (
         String linkTitle,
         String linkUrl
 ) {
-    @QueryProjection
-    public ProjectDao {}
 }

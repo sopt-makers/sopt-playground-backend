@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
@@ -69,10 +69,12 @@ public class SlackService {
     private String generateErrorPointMessage(HttpServletRequest request) {
         StringBuilder sb = new StringBuilder();
 
-        sb.setLength(0);
-        sb.append("Request URL: " + request.getRequestURL().toString() + NEW_LINE);
-        sb.append("Request Method: " + request.getMethod() + NEW_LINE);
-        sb.append("Request Time : " + new Date() + NEW_LINE);
+        sb.append("🔗 *").append(request.getMethod()).append(" ").append(request.getRequestURI()).append("*").append(NEW_LINE);
+        sb.append("⏰ ").append(new Date()).append(NEW_LINE);
+
+        if (request.getQueryString() != null) {
+            sb.append("🔍 Query: ").append(request.getQueryString());
+        }
 
         return sb.toString();
     }

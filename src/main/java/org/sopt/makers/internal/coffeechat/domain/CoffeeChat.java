@@ -14,7 +14,7 @@ import org.sopt.makers.internal.common.util.GenericEnumListConverter;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Entity

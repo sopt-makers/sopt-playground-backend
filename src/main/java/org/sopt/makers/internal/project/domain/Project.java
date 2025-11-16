@@ -1,18 +1,13 @@
 package org.sopt.makers.internal.project.domain;
 
-import com.vladmihalcea.hibernate.type.array.StringArrayType;
 import lombok.*;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-@TypeDefs({
-        @TypeDef(name = "string-array", typeClass = StringArrayType.class)
-})
+import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -42,9 +37,9 @@ public class Project {
     @Column(name = "end_at")
     private LocalDate endAt;
 
-    @Type(type = "string-array")
+    @Type(ListArrayType.class)
     @Column(name = "service_type", columnDefinition = "text[]")
-    private String[] serviceType;
+    private List<String> serviceType;
 
     @Column(name = "is_available")
     private Boolean isAvailable;
@@ -62,9 +57,9 @@ public class Project {
     @Column(name = "thumbnail_image")
     private String thumbnailImage;
 
-    @Type(type = "string-array")
+    @Type(ListArrayType.class)
     @Column(name = "images", columnDefinition = "text[]")
-    private String[] images;
+    private List<String> images;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -78,14 +73,14 @@ public class Project {
             String category,
             LocalDate startAt,
             LocalDate endAt,
-            String[] serviceType,
+            List<String> serviceType,
             Boolean isAvailable,
             Boolean isFounding,
             String summary,
             String detail,
             String logoImage,
             String thumbnailImage,
-            String[] images
+            List<String> images
     ) {
         this.name = name == null ? this.name : name;
         this.generation = generation == null ? this.generation : generation;

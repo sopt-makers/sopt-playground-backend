@@ -5,6 +5,7 @@ spring:
     username: root
     password: root
   jpa:
+    open-in-view: false
     properties:
       hibernate:
         show_sql: true
@@ -22,6 +23,16 @@ spring:
           auth: true
           starttls:
             enable: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
 
 jwt:
   secret: test
@@ -122,3 +133,6 @@ external:
     service-name: test
     endpoints:
       jwk: /.well-known/jwks.json
+
+admin:
+  key: test-admin-key

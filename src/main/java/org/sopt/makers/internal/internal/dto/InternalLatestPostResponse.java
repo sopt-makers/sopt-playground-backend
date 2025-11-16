@@ -3,9 +3,9 @@ package org.sopt.makers.internal.internal.dto;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import lombok.Builder;
-import org.sopt.makers.internal.common.util.MentionCleaner;
+import org.sopt.makers.internal.community.utils.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 
@@ -27,7 +27,7 @@ public record InternalLatestPostResponse(
             SoptActivity latestActivity,
             InternalUserDetails userDetails,
             String categoryName,
-            Optional<AnonymousPostProfile> anonymousPostProfile,
+            Optional<AnonymousProfile> anonymousProfile,
             String baseUrl
             ) {
         String generationAndPart = "";
@@ -39,10 +39,10 @@ public record InternalLatestPostResponse(
         String finalProfileImage = userDetails.profileImage();
         Long finalUserId = userDetails.userId();
 
-        if (post.getIsBlindWriter() && anonymousPostProfile.isPresent()) {
-            AnonymousPostProfile anonymousProfile = anonymousPostProfile.get();
-            finalName = anonymousProfile.getNickname().getNickname();
-            finalProfileImage = anonymousProfile.getProfileImg().getImageUrl();
+        if (post.getIsBlindWriter() && anonymousProfile.isPresent()) {
+            AnonymousProfile profile = anonymousProfile.get();
+            finalName = profile.getNickname().getNickname();
+            finalProfileImage = profile.getProfileImg().getImageUrl();
             finalUserId = null;
         }
 

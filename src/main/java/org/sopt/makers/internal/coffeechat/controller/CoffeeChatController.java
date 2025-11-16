@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -74,14 +74,29 @@ public class CoffeeChatController {
         return ResponseEntity.status(HttpStatus.OK).body(coffeeChatService.getCoffeeChatDetail(userId, memberId));
     }
 
-    @Operation(summary = "커피챗/쪽지 수신 API")
+    @Operation(
+        summary = "커피챗/쪽지 발신 API",
+        description = """
+            커피챗 또는 쪽지 요청을 SMS로 발송합니다.
+
+            발송 방식:
+            - SMS를 통해 수신자에게 요청 메시지가 전송됩니다
+            - 발신자의 전화번호가 메시지에 포함되어 수신자가 직접 연락할 수 있습니다
+
+            필수 입력 항목:
+            - receiverId: 수신자 회원 ID
+            - senderPhone: 발신자 전화번호 (하이픈 제외 11자리)
+            - category: COFFEE_CHAT(커피챗) 또는 NOTE(친목)
+            - content: 문의 내용 (최대 500자)
+            """
+    )
     @PostMapping("")
     public ResponseEntity<CommonResponse> requestCoffeeChat(
             @Valid @RequestBody CoffeeChatRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
         coffeeChatService.sendCoffeeChatRequest(request, userId);
-        CommonResponse response = new CommonResponse(true, "커피챗/쪽지 수신 요청에 성공했습니다.");
+        CommonResponse response = new CommonResponse(true, "커피챗/쪽지 요청이 SMS로 발송되었습니다.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
