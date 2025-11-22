@@ -339,30 +339,29 @@ public class MemberService {
 	private boolean filterPlatformConditions(InternalUserDetails userDetails, String part, String team, Integer generation) {
 		if (part == null && team == null && generation == null) return true;
 		List<SoptActivity> activities = userDetails.soptActivities();
-		
-		// 임원진 필터링 (team이 "미디어팀", "운영팀"이 아닌데 team이 있는 경우)
-		if ("임원진".equals(team)) {
-			boolean hasExecutiveRole = activities.stream()
-				.anyMatch(a -> {
-					String activityTeam = a.team();
-					return activityTeam != null && 
-						   !activityTeam.isEmpty() && 
-						   !"미디어팀".equals(activityTeam) && 
-						   !"운영팀".equals(activityTeam);
-				});
-			return hasExecutiveRole;
-		}
-		
-		// 일반 team 필터링 (OPERATION, MEDIA)
-		boolean matches = activities.stream().anyMatch(a -> {
+
+		return activities.stream().anyMatch(a -> {
+			// 공통 조건: generation과 part 체크
 			boolean genMatch = (generation == null || Objects.equals(a.generation(), generation));
 			boolean partMatch = (part == null || Objects.equals(a.part(), part));
-			boolean teamMatch = (team == null || Objects.equals(a.team(), team));
-			
-			return genMatch && partMatch && teamMatch;
+
+			if (!genMatch || !partMatch) {
+				return false;
+			}
+
+			// 팀 조건 체크
+			if ("임원진".equals(team)) {
+				// 임원진: 미디어팀, 운영팀이 아닌 다른 팀이 있는 경우
+				String activityTeam = a.team();
+				return activityTeam != null &&
+					   !activityTeam.isEmpty() &&
+					   !"미디어팀".equals(activityTeam) &&
+					   !"운영팀".equals(activityTeam);
+			} else {
+				// 일반 팀 필터링
+				return team == null || Objects.equals(a.team(), team);
+			}
 		});
-		
-		return matches;
 	}
 
 	/**
