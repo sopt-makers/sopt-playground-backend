@@ -192,9 +192,11 @@ public class CommunityCommentService {
     }
 
     private void sendNotifications(Long writerId, CommunityPost post, CommentSaveRequest request, String writerName) {
-        if (!post.getMember().getId().equals(writerId)) {
+        Long postAuthorId = post.getMember().getId();
+
+        if (!postAuthorId.equals(writerId)) {
             CommentNotificationMessage message = CommentNotificationMessage.of(
-                    post.getMember().getId(),
+                    postAuthorId,
                     writerName,
                     request.content(),
                     request.isBlindWriter(),
@@ -207,7 +209,7 @@ public class CommunityCommentService {
             CommunityComment parentComment = communityCommentsRetriever.findCommunityCommentById(request.parentCommentId());
             Long parentCommentAuthorId = parentComment.getWriterId();
 
-            if (!parentCommentAuthorId.equals(writerId) && !parentCommentAuthorId.equals(post.getMember().getId())) {
+            if (!parentCommentAuthorId.equals(writerId) && !parentCommentAuthorId.equals(postAuthorId)) {
                 ReplyNotificationMessage message = ReplyNotificationMessage.of(
                         parentCommentAuthorId,
                         writerName,
@@ -221,6 +223,7 @@ public class CommunityCommentService {
 
         if (Objects.nonNull(request.mention())) {
             sendMentionNotifications(
+                    writerId,
                     request.mention().userIds(),
                     writerName,
                     request.content(),
@@ -231,6 +234,7 @@ public class CommunityCommentService {
     }
 
     private void sendMentionNotifications(
+            Long writerId,
             Long[] recipientIds,
             String writerName,
             String content,
@@ -241,8 +245,16 @@ public class CommunityCommentService {
             return;
         }
 
+        Long[] filteredRecipientIds = Arrays.stream(recipientIds)
+                .filter(recipientId -> !recipientId.equals(writerId))
+                .toArray(Long[]::new);
+
+        if (filteredRecipientIds.length == 0) {
+            return;
+        }
+
         MentionNotificationMessage message = MentionNotificationMessage.of(
-                recipientIds,
+                filteredRecipientIds,
                 writerName,
                 content,
                 isBlindWriter,
