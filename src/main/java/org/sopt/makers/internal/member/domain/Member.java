@@ -111,6 +111,9 @@ public class Member {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
 
+    @Column(name = "appjam_tl_generation")
+    private Integer appjamTlGeneration;
+
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
     }
