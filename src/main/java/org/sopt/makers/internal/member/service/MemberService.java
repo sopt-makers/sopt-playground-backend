@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
+import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -860,6 +861,16 @@ public class MemberService {
 			return new MakersMemberProfileResponse(userDetail.userId(), userDetail.name(), userDetail.profileImage(),
 				memberSoptActivityResponses, memberCareerResponses);
 		}).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<MemberProfileSpecificResponse> getAppjamTlMembers(Long viewerId) {
+		Integer currentGeneration = Constant.CURRENT_GENERATION;
+		List<Long> appjamTlMemberIds = memberRepository.findAppjamTlMemberIdsByGenerationRandomly(currentGeneration);
+
+		return appjamTlMemberIds.stream()
+			.map(memberId -> getMemberProfile(memberId, viewerId))
+			.toList();
 	}
 
 }
