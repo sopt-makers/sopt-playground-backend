@@ -3,10 +3,12 @@ package org.sopt.makers.internal.community.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
+
+import java.util.List;
 
 @Builder
 public record PostSaveRequest(
@@ -30,7 +32,7 @@ public record PostSaveRequest(
 
         @Schema(required = true)
         @NotNull(message = "이미지 필드는 필수 필드입니다.")
-        String[] images,
+        List<String> images,
 
         String link,
 

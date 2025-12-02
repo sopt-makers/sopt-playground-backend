@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.member.domain.Member;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Getter

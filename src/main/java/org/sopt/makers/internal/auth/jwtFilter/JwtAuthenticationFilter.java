@@ -13,10 +13,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import static org.sopt.makers.internal.auth.jwt.code.JwtFailure.*;
 
@@ -39,12 +39,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         // 해당 경로는 인증 로직 무시
-        if (uri.startsWith("/swagger-ui")
+        if (uri.startsWith("/actuator")
+                || uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/swagger-resources")
                 || uri.startsWith("/webjars")
                 || uri.startsWith("/makers")
                 || uri.startsWith("/internal/api/v1")
+                || (uri.startsWith("/api/v1/popups") && !uri.equals("/api/v1/popups/current"))
+                || uri.startsWith("/admin")
+                || uri.startsWith("/css")
                 || (uri.startsWith("/api/v1/projects") && "GET".equalsIgnoreCase(request.getMethod()))
         ) {
             filterChain.doFilter(request, response);

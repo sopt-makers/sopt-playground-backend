@@ -9,14 +9,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
-import org.sopt.makers.internal.community.dto.request.CommentSaveRequest;
+import org.sopt.makers.internal.community.dto.comment.CommentInfo;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
 import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
-import org.sopt.makers.internal.community.service.CommunityCommentService;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentService;
+import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
 import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
@@ -25,7 +26,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,6 +42,7 @@ public class CommunityController {
     private final CommunityPostService communityPostService;
     private final VoteService voteService;
     private final CommunityCommentService communityCommentService;
+    private final CommunityCommentLikeService commentLikeService;
     private final CommunityResponseMapper communityResponseMapper;
     private final InfiniteScrollUtil infiniteScrollUtil;
 
@@ -84,16 +87,30 @@ public class CommunityController {
 
         List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, userId,
                 infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        val hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
+        Boolean hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
+        Map<Long, List<CommentInfo>> postCommentsMap = posts.stream()
+                .collect(Collectors.toMap(
+                        post -> post.post().id(),
+                        post -> communityCommentService.getPostCommentList(post.post().id(), userId, isBlockOn)
+                ));
+        List<Long> allCommentIds = postCommentsMap.values().stream()
+                .flatMap(List::stream)
+                .map(c -> c.commentDao().comment().getId())
+                .collect(Collectors.toList());
+
+        Map<Long, Boolean> commentLikedMap = commentLikeService.getLikedMapByCommentIds(userId, allCommentIds);
+        Map<Long, Integer> commentLikeCountMap = commentLikeService.getLikeCountMapByCommentIds(allCommentIds);
+
         val postResponse = posts.stream().map(post -> {
-            val comments = communityCommentService.getPostCommentList(post.post().id(), userId, isBlockOn);
+            List<CommentInfo> comments = postCommentsMap.get(post.post().id());
             val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
             val isLiked = communityPostService.isLiked(userId, post.post().id());
             val likes = communityPostService.getLikes(post.post().id());
 
             return communityResponseMapper.toPostResponse(post, comments, userId, anonymousPostProfile,
-                    isLiked, likes);
+                    isLiked, likes, commentLikedMap, commentLikeCountMap);
         }).collect(Collectors.toList());
+
         val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -101,9 +118,10 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 글 조회수 증가")
     @PostMapping("/posts/hit")
     public ResponseEntity<Map<String, Boolean>> upPostHit(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody CommunityHitRequest request
     ) {
-        communityPostService.increaseHit(request.postIdList());
+        communityPostService.increaseHit(userId, request.postIdList());
 
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
     }
@@ -151,31 +169,6 @@ public class CommunityController {
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("커뮤니티 글 삭제 성공", true));
     }
 
-    @Operation(summary = "커뮤니티 댓글 생성 API")
-    @PostMapping("/{postId}/comment")
-    public ResponseEntity<Map<String, Boolean>> createComment(
-            @PathVariable("postId") Long postId,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @RequestBody @Valid CommentSaveRequest request
-    ) {
-        communityCommentService.createComment(userId, postId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("댓글 생성 성공", true));
-    }
-
-    @Operation(summary = "커뮤니티 댓글 조회 API")
-    @GetMapping("/{postId}/comment")
-    public ResponseEntity<List<CommentResponse>> getComments(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @PathVariable("postId") Long postId,
-            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn
-    ) {
-        val comments = communityCommentService.getPostCommentList(postId, userId, isBlockOn);
-        val response = comments.stream().
-                map(comment -> communityResponseMapper.toCommentResponse(comment, userId))
-                .toList();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
     @Operation(summary = "커뮤니티 댓글 삭제 API")
     @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<Map<String, Boolean>> deleteComment(
@@ -184,16 +177,6 @@ public class CommunityController {
     ) {
         communityCommentService.deleteComment(commentId, userId);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("댓글 삭제 성공", true));
-    }
-
-    @Operation(summary = "커뮤니티 댓글 신고 API")
-    @PostMapping("/comment/{commentId}/report")
-    public ResponseEntity<Map<String, Boolean>> reportComment(
-            @PathVariable("commentId") Long commentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
-    ) {
-        communityCommentService.reportComment(userId, commentId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("커뮤니티 댓글 신고 성공", true));
     }
 
     @Operation(summary = "커뮤니티 게시글 좋아요 API")

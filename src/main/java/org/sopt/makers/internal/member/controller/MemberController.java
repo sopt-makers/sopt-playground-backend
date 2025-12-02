@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -129,11 +129,7 @@ public class MemberController {
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Valid @RequestBody MemberProfileUpdateRequest request
     ) {
-        val normalTeamNameRequest = request.activities().stream().filter(activity ->
-                ActivityTeam.hasActivityTeam(activity.team())).count();
-        if (request.activities().size() != normalTeamNameRequest) {
-            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
-        }
+
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
         if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(userId, request);
@@ -149,7 +145,7 @@ public class MemberController {
             @PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        MemberProfileSpecificResponse response = memberService.getMemberProfile(id, userId, false);
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(id, userId);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -159,7 +155,7 @@ public class MemberController {
     public ResponseEntity<MemberProfileSpecificResponse> getMyProfile (
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
-        MemberProfileSpecificResponse response = memberService.getMemberProfile(userId, userId, true);
+        MemberProfileSpecificResponse response = memberService.getMemberProfile(userId, userId);
         sortProfileCareer(response);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

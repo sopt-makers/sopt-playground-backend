@@ -26,15 +26,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .httpBasic().disable()
-            .formLogin().disable()
-            .csrf().disable()
-            .cors().configurationSource(corsConfigurationSource())
-        .and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-            .authorizeHttpRequests()
-                .antMatchers(
+            .httpBasic(httpBasic -> httpBasic.disable())
+            .formLogin(formLogin -> formLogin.disable())
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        "/actuator/**",
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
                         "/webjars/swagger-ui/**",
@@ -42,18 +41,20 @@ public class SecurityConfig {
                         "/makers/**",
                         "/internal/api/v1/**",
                         "/api/v1/admin/**",
-                        "/api/v1/projects/"
-                ).permitAll()
-
-//                .antMatchers(
-//                        "/internal/api/v1/projects/**",
-//                        "/internal/api/v1/members/**",
-//                        "/internal/api/v1/sopticles/**",
-//                        "/internal/api/v1/profile",
-//                        "/api/v1/presigned-url"
-//                ).hasAuthority("MEMBER")
-
-        .and()
+                        "/api/v1/projects/",
+                        "/api/v1/popups/**",
+                        "/admin/**",
+                        "/css/**"
+                )
+                .permitAll()
+                .anyRequest().permitAll()
+                // .requestMatchers(
+                //         "/internal/api/v1/projects/**",
+                //         "/internal/api/v1/members/**",
+                //         "/internal/api/v1/sopticles/**",
+                //         "/internal/api/v1/profile"
+                // ).hasAuㅇthority("MEMBER")
+            )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
 

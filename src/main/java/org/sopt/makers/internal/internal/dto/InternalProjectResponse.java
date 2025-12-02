@@ -14,7 +14,7 @@ public record InternalProjectResponse(
         @Schema(required = true)
         String category,
         @Schema(required = true)
-        String[] serviceType,
+        List<String> serviceType,
         @Schema(required = true)
         String summary,
         @Schema(required = true)

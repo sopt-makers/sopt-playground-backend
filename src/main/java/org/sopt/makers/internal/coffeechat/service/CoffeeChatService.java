@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
 import org.sopt.makers.internal.coffeechat.domain.enums.Career;
-import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
 import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatDetailsRequest;
@@ -32,9 +31,7 @@ import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.external.message.MessageSender;
-import org.sopt.makers.internal.external.message.MessageSenderFactory;
-import org.sopt.makers.internal.external.message.email.EmailHistoryService;
+import org.sopt.makers.internal.external.message.gabia.SmsChatSender;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformService;
@@ -49,12 +46,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class CoffeeChatService {
-    private final MessageSenderFactory messageSenderFactory;
+    private final SmsChatSender smsChatSender;
 
     private final MemberRetriever memberRetriever;
     private final MemberCareerRetriever memberCareerRetriever;
 
-    private final EmailHistoryService emailHistoryService;
     private final PlatformService platformService;
 
     private final CoffeeChatModifier coffeeChatModifier;
@@ -69,29 +65,18 @@ public class CoffeeChatService {
     public void sendCoffeeChatRequest(CoffeeChatRequest request, Long senderId) {
         InternalUserDetails senderUserDetails = platformService.getInternalUser(senderId);
         InternalUserDetails receiverUserDetails = platformService.getInternalUser(request.receiverId());
-        String replyInfo = getReplyInfo(request, senderUserDetails);
+        String senderPhone = applyDefaultPhone(request.senderPhone(), senderUserDetails.phone());
 
-        MessageSender senderStrategy = messageSenderFactory.getSender(request.senderEmail(), request.senderPhone());
-        senderStrategy.sendMessage(senderUserDetails, receiverUserDetails, request.content(), replyInfo, request.category());
+        smsChatSender.sendMessage(senderUserDetails, receiverUserDetails, request.content(), senderPhone, request.category());
 
-        createHistoryByCategory(request, senderId, senderUserDetails.email());
+        createCoffeeChatHistory(request, senderId);
     }
 
-    private String getReplyInfo(CoffeeChatRequest request, InternalUserDetails sender) {
-        return request.category().equals(ChatCategory.COFFEE_CHAT)
-            ? applyDefaultPhone(request.senderPhone(), sender.phone())
-            : applyDefaultEmail(request.senderEmail(), sender.email());
-    }
-
-    private void createHistoryByCategory(CoffeeChatRequest request, Long senderId, String senderEmail) {
+    private void createCoffeeChatHistory(CoffeeChatRequest request, Long senderId) {
         Member receiver = memberRetriever.findMemberById(request.receiverId());
         Member sender = memberRetriever.findMemberById(senderId);
 
-        if (request.category().equals(ChatCategory.COFFEE_CHAT)) {
-            coffeeChatModifier.createCoffeeChatHistory(sender, receiver, request.content());
-        } else {
-            emailHistoryService.createEmailHistory(request, sender, senderEmail);
-        }
+        coffeeChatModifier.createCoffeeChatHistory(sender, receiver, request.content());
     }
 
     @Transactional(readOnly = true)
@@ -213,15 +198,8 @@ public class CoffeeChatService {
         }).toList();
     }
 
-    private String applyDefaultEmail(String requestEmail, String senderEmail) {
-        if (requestEmail == null) {
-            return senderEmail;
-        }
-        return requestEmail;
-    }
-
     private String applyDefaultPhone(String requestPhone, String senderPhone) {
-        if (requestPhone == null) {
+        if (requestPhone == null || requestPhone.isBlank()) {
             return senderPhone;
         }
         return requestPhone;

@@ -50,7 +50,7 @@ public class ProjectService {
 
     @Transactional
     public void createProject (ProjectSaveRequest request) {
-        validateImageCount(request.images().length);
+        validateImageCount(request.images().size());
         val project = projectRepository.save(
                 Project.builder()
                         .name(request.name())
@@ -89,7 +89,7 @@ public class ProjectService {
 
     @Transactional
     public void updateProject (Long writerId, Long projectId, ProjectUpdateRequest request) {
-        validateImageCount(request.images().length);
+        validateImageCount(request.images().size());
 
         Project project = getProjectById(projectId);
         validateWriter(project, writerId);

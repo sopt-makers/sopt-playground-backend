@@ -15,8 +15,8 @@
 //import org.sopt.makers.internal.exception.WrongTokenException;
 //import org.springframework.stereotype.Service;
 //
-//import javax.crypto.spec.SecretKeySpec;
-//import javax.xml.bind.DatatypeConverter;
+//import jakarta.crypto.spec.SecretKeySpec;
+//import jakarta.xml.bind.DatatypeConverter;
 //
 //@RequiredArgsConstructor
 //@Service

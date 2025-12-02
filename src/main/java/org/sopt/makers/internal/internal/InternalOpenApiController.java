@@ -50,7 +50,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -106,7 +106,7 @@ public class InternalOpenApiController {
 	public ResponseEntity<InternalMemberProfileResponse> getUserProfile(
 		@Parameter(description = "조회할 멤버 ID", example = "1") @RequestParam String memberId) {
 		Member member = memberService.getMemberById(Long.valueOf(memberId));
-		InternalUserDetails userDetails = platformService.getInternalUserWithOriginalTeam(Long.valueOf(memberId));
+		InternalUserDetails userDetails = platformService.getInternalUser(Long.valueOf(memberId));
 
 		List<CardinalInfoResponse> activityResponses = userDetails.soptActivities()
 			.stream()

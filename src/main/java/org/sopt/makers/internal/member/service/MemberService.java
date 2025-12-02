@@ -34,6 +34,7 @@ import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
 import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
@@ -60,6 +61,7 @@ import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
+import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -91,6 +93,7 @@ public class MemberService {
 	private final SlackMessageUtil slackMessageUtil;
 	private final ReviewService reviewService;
 	private final PlatformService platformService;
+	private final MemberSortingService memberSortingService;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -130,13 +133,10 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
-	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId ,Boolean isForUpdate) {
+	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
 		Member member = getMemberHasProfileById(profileId);
 		boolean isMine = Objects.equals(profileId, viewerId);
-		// 내 프로필 조회 (수정 목적)인 경우 원본 team 정보 사용, 일반 프로필 조회인 경우 role 변환된 team 정보 사용
-		InternalUserDetails userDetails = isForUpdate
-			? platformService.getInternalUserWithOriginalTeam(profileId)
-			: platformService.getInternalUser(profileId);
+		InternalUserDetails userDetails = platformService.getInternalUser(profileId);
 		List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
 		val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
 		val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
@@ -298,11 +298,21 @@ public class MemberService {
 		// 3-1) Member 정보를 포함한 정렬 및 페이지네이션 처리
 		int offsetValue = (offset == null || offset < 0) ? 0 : offset;
 		int limitValue = (limit == null || limit <= 0) ? 30 : limit;
-		
-		OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
-		List<InternalUserDetails> sortedUsers = filteredBySearch.stream()
-			.sorted((a, b) -> compareByOrderCondition(a, b, memberMap, orderByCondition))
-			.toList();
+
+		// orderBy 파라미터가 있으면 orderBy 우선, 없으면 필터별 정렬 정책 적용
+		List<InternalUserDetails> sortedUsers;
+		if (orderBy != null) {
+			// orderBy 파라미터가 있을 때: OrderByCondition 기준으로 정렬
+			OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
+			sortedUsers = filteredBySearch.stream()
+				.sorted(memberSortingService.createComparatorByOrderCondition(memberMap, orderByCondition, employed))
+				.toList();
+		} else {
+			// orderBy가 없을 때: 필터별 정렬 정책 적용
+			sortedUsers = filteredBySearch.stream()
+				.sorted(memberSortingService.createComparator(memberMap, employed, checkedTeam))
+				.toList();
+		}
 		
 		List<InternalUserDetails> pagedByServer = sortedUsers.stream()
 			.skip(offsetValue)
@@ -329,30 +339,29 @@ public class MemberService {
 	private boolean filterPlatformConditions(InternalUserDetails userDetails, String part, String team, Integer generation) {
 		if (part == null && team == null && generation == null) return true;
 		List<SoptActivity> activities = userDetails.soptActivities();
-		
-		// 임원진 필터링 (team이 "미디어팀", "운영팀"이 아닌데 team이 있는 경우)
-		if ("임원진".equals(team)) {
-			boolean hasExecutiveRole = activities.stream()
-				.anyMatch(a -> {
-					String activityTeam = a.team();
-					return activityTeam != null && 
-						   !activityTeam.isEmpty() && 
-						   !"미디어팀".equals(activityTeam) && 
-						   !"운영팀".equals(activityTeam);
-				});
-			return hasExecutiveRole;
-		}
-		
-		// 일반 team 필터링 (OPERATION, MEDIA)
-		boolean matches = activities.stream().anyMatch(a -> {
+
+		return activities.stream().anyMatch(a -> {
+			// 공통 조건: generation과 part 체크
 			boolean genMatch = (generation == null || Objects.equals(a.generation(), generation));
 			boolean partMatch = (part == null || Objects.equals(a.part(), part));
-			boolean teamMatch = (team == null || Objects.equals(a.team(), team));
-			
-			return genMatch && partMatch && teamMatch;
+
+			if (!genMatch || !partMatch) {
+				return false;
+			}
+
+			// 팀 조건 체크
+			if ("임원진".equals(team)) {
+				// 임원진: 미디어팀, 운영팀이 아닌 다른 팀이 있는 경우
+				String activityTeam = a.team();
+				return activityTeam != null &&
+					   !activityTeam.isEmpty() &&
+					   !"미디어팀".equals(activityTeam) &&
+					   !"운영팀".equals(activityTeam);
+			} else {
+				// 일반 팀 필터링
+				return team == null || Objects.equals(a.team(), team);
+			}
 		});
-		
-		return matches;
 	}
 
 	/**
@@ -375,124 +384,6 @@ public class MemberService {
 			.anyMatch(c -> c.contains(keyword));
 
 		return inName || inUniv || inCompany;
-	}
-
-	/**
-	 * 멤버 정렬 비교 메서드 (Member 정보 포함)
-	 * 1순위: 최신 기수 (lastGeneration 내림차순)
-	 * 2순위: 프로필 정보 완성도 (내림차순)
-	 * 3순위: 이름 ㄱㄴㄷ 순 (오름차순)
-	 */
-	private int compareForSortingWithMember(InternalUserDetails a, InternalUserDetails b, Map<Long, Member> memberMap) {
-		// 1순위: 최신 기수 비교 (내림차순)
-		int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
-		if (generationCompare != 0) {
-			return generationCompare;
-		}
-
-		// 2순위: 프로필 정보 완성도 비교 (내림차순)
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
-		int profileCompletenessA = calculateProfileCompletenessWithMember(a, memberA);
-		int profileCompletenessB = calculateProfileCompletenessWithMember(b, memberB);
-		int completenessCompare = Integer.compare(profileCompletenessB, profileCompletenessA);
-		if (completenessCompare != 0) {
-			return completenessCompare;
-		}
-
-		// 3순위: 이름 ㄱㄴㄷ 순 비교 (오름차순)
-		return a.name().compareTo(b.name());
-	}
-
-	/**
-	 * OrderByCondition에 따른 정렬 비교 메서드
-	 */
-	private int compareByOrderCondition(InternalUserDetails a, InternalUserDetails b, Map<Long, Member> memberMap, OrderByCondition orderBy) {
-		if (orderBy == null) {
-			return compareForSortingWithMember(a, b, memberMap);
-		}
-
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
-
-		return switch (orderBy) {
-			case LATEST_REGISTERED -> {
-				// 최신 등록순: ID 내림차순 (ID가 클수록 최근)
-				if (memberA == null && memberB == null) yield 0;
-				if (memberA == null) yield 1;
-				if (memberB == null) yield -1;
-				yield Long.compare(memberB.getId(), memberA.getId());
-			}
-			case OLDEST_REGISTERED -> {
-				// 오래된 등록순: ID 오름차순 (ID가 작을수록 오래됨)
-				if (memberA == null && memberB == null) yield 0;
-				if (memberA == null) yield 1;
-				if (memberB == null) yield -1;
-				yield Long.compare(memberA.getId(), memberB.getId());
-			}
-			case LATEST_GENERATION -> {
-				// 최신 기수순: 기수 내림차순
-				int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
-				if (generationCompare != 0) yield generationCompare;
-				// 기수가 같으면 이름 오름차순
-				yield a.name().compareTo(b.name());
-			}
-			case OLDEST_GENERATION -> {
-				// 오래된 기수순: 기수 오름차순
-				int generationCompare = Integer.compare(a.lastGeneration(), b.lastGeneration());
-				if (generationCompare != 0) yield generationCompare;
-				// 기수가 같으면 이름 오름차순
-				yield a.name().compareTo(b.name());
-			}
-		};
-	}
-
-
-
-	/**
-	 * Member 정보를 포함한 프로필 정보 완성도 계산
-	 * null이 아닌 필드의 개수를 반환
-	 */
-	private int calculateProfileCompletenessWithMember(InternalUserDetails userDetails, Member member) {
-		int count = 0;
-		
-		// 기본 정보 필드들 (InternalUserDetails에서)
-		if (userDetails.profileImage() != null && !userDetails.profileImage().isBlank()) count+=5; // 프로필사진 5점
-		if (userDetails.birthday() != null && !userDetails.birthday().isBlank()) count++;
-		if (userDetails.phone() != null && !userDetails.phone().isBlank()) count++;
-		if (userDetails.email() != null && !userDetails.email().isBlank()) count++;
-		
-		// Member 정보가 있는 경우 추가 필드들
-		if (member != null) {
-			if (member.getAddress() != null && !member.getAddress().isBlank()) count++;
-			if (member.getUniversity() != null && !member.getUniversity().isBlank()) count++;
-			if (member.getMajor() != null && !member.getMajor().isBlank()) count++;
-			if (member.getIntroduction() != null && !member.getIntroduction().isBlank()) count+=3; // 자기소개 3점
-			if (member.getSkill() != null && !member.getSkill().isBlank()) count++;
-			if (member.getMbti() != null && !member.getMbti().isBlank()) count++;
-			if (member.getMbtiDescription() != null && !member.getMbtiDescription().isBlank()) count++;
-			if (member.getSojuCapacity() != null) count++;
-			if (member.getInterest() != null && !member.getInterest().isBlank()) count++;
-			if (member.getIdealType() != null && !member.getIdealType().isBlank()) count++;
-			if (member.getSelfIntroduction() != null && !member.getSelfIntroduction().isBlank()) count++;
-			
-			// UserFavor 정보
-			if (member.getUserFavor() != null) {
-				UserFavor favor = member.getUserFavor();
-				if (favor.getIsPourSauceLover() != null) count++;
-				if (favor.getIsHardPeachLover() != null) count++;
-				if (favor.getIsMintChocoLover() != null) count++;
-				if (favor.getIsRedBeanFishBreadLover() != null) count++;
-				if (favor.getIsSojuLover() != null) count++;
-				if (favor.getIsRiceTteokLover() != null) count++;
-			}
-			
-			// Links와 Careers 개수
-			if (member.getLinks() != null && !member.getLinks().isEmpty()) count += member.getLinks().size();
-			if (member.getCareers() != null && !member.getCareers().isEmpty()) count += member.getCareers().size() * 3; // 커리어 개당 3점
-		}
-		
-		return count;
 	}
 
 
@@ -671,6 +562,56 @@ public class MemberService {
 		return rootNode;
 	}
 
+	/**
+	 * 임원진 직책 여부 확인
+	 * - "회장", "부회장", "총무"와 정확히 일치하거나
+	 * - "파트장"을 포함하거나 (예: "기획 파트장", "디자인 파트장")
+	 * - "팀장"을 포함하면 (예: "운영팀 팀장", "미디어팀 팀장")
+	 * 임원진으로 간주
+	 */
+	private boolean isExecutivePosition(String team) {
+		if (team == null || team.isEmpty()) {
+			return false;
+		}
+		return team.equals("회장")
+			|| team.equals("부회장")
+			|| team.equals("총무")
+			|| team.contains("파트장")
+			|| team.contains("팀장");
+	}
+
+	/**
+	 * 가공된 team 값을 Platform 원본 team 값으로 역변환
+	 * PlatformService.convertRoleToTeamValue의 역변환
+	 *
+	 * - "회장", "부회장", "총무", "파트장" 포함 → null
+	 * - "팀장" 포함 (예: "운영팀 팀장") → "운영팀"
+	 * - 그 외 → 원본 그대로 반환
+	 */
+	private String convertTeamToOriginalValue(String team) {
+		if (team == null || team.isEmpty()) {
+			return null;
+		}
+
+		// 회장, 부회장, 총무는 원본 team이 null
+		if (team.equals("회장") || team.equals("부회장") || team.equals("총무")) {
+			return null;
+		}
+
+		// "기획 파트장", "디자인 파트장" 등 → 원본 team은 null
+		if (team.contains("파트장")) {
+			return null;
+		}
+
+		// "운영팀 팀장", "미디어팀 팀장" 등 → " 팀장" 제거
+		if (team.contains("팀장")) {
+			return team.replace(" 팀장", "");
+		}
+
+		// 일반 팀 (미디어팀, 운영팀 등)은 그대로 반환
+		return team;
+	}
+
 	@Transactional
 	public Member updateMemberProfile(Long id, MemberProfileUpdateRequest request) {
 		val userDetails = platformService.getInternalUser(id);
@@ -679,21 +620,40 @@ public class MemberService {
 			.stream()
 			.collect(Collectors.toMap(SoptActivity::generation, Function.identity()));
 
-		List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = request.activities()
-			.stream()
-			.map(requestActivity -> {
-				SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
+		List<PlatformUserUpdateRequest.SoptActivityRequest> soptActivitiesForPlatform = new ArrayList<>();
 
-				if (dbActivity == null) {
-					throw new ClientBadRequestException(
-						"요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
-				}
+		for (val requestActivity : request.activities()) {
+			SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
 
-				return new PlatformUserUpdateRequest.SoptActivityRequest(dbActivity.activityId(),
-					requestActivity.team());
-			})
-			.toList();
+			if (dbActivity == null) {
+				throw new ClientBadRequestException(
+					"요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
+			}
 
+			// 임원진 기수는 원본 team 값으로 역변환하여 전송 (업데이트하지 않음)
+			if (isExecutivePosition(dbActivity.team())) {
+				String originalTeam = convertTeamToOriginalValue(dbActivity.team());
+				soptActivitiesForPlatform.add(
+					new PlatformUserUpdateRequest.SoptActivityRequest(
+						dbActivity.activityId(),
+						originalTeam // Platform 원본 team 값으로 역변환
+					)
+				);
+				continue;
+			}
+
+			// 일반 팀만 ActivityTeam 검증
+			if (!ActivityTeam.hasActivityTeam(requestActivity.team())) {
+				throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+			}
+
+			soptActivitiesForPlatform.add(
+				new PlatformUserUpdateRequest.SoptActivityRequest(
+					dbActivity.activityId(),
+					requestActivity.team()
+				)
+			);
+		}
 		val platformRequest = new PlatformUserUpdateRequest(request.name(), request.profileImage(),
 			request.birthday() != null ? request.birthday().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
 			request.phone() != null && !request.phone().isBlank() ? request.phone() : userDetails.phone(),

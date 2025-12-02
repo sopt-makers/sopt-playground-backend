@@ -1,14 +1,15 @@
 package org.sopt.makers.internal.community.domain;
 
 import lombok.*;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import org.hibernate.annotations.Type;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
 import org.sopt.makers.internal.vote.domain.Vote;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,9 +42,9 @@ public class CommunityPost extends AuditingTimeEntity {
     @Column(nullable = false)
     private Integer hits = 0;
 
-    @Type(type = "string-array")
+    @Type(ListArrayType.class)
     @Column(name = "images", columnDefinition = "text[]")
-    private String[] images;
+    private List<String> images;
 
     @Column(nullable = false)
     private Boolean isQuestion;
@@ -73,11 +74,12 @@ public class CommunityPost extends AuditingTimeEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<CommunityPostLike> likes = new ArrayList<>();
 
-    @OneToOne(mappedBy = "communityPost", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private AnonymousPostProfile anonymousProfile;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "anonymous_profile_id")
+    private AnonymousProfile anonymousProfile;
 
     public void updatePost(Long categoryId, String title, String content,
-                           String[] images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
+                           List<String> images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
         this.categoryId = categoryId;
         this.title = title;
         this.content = content;
@@ -85,5 +87,9 @@ public class CommunityPost extends AuditingTimeEntity {
         this.isQuestion = isQuestion;
         this.isBlindWriter = isBlindWriter;
         this.sopticleUrl = sopticleUrl;
+    }
+
+    public void registerAnonymousProfile(AnonymousProfile profile) {
+        this.anonymousProfile = profile;
     }
 }

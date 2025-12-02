@@ -20,7 +20,7 @@ import lombok.val;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.domain.ReportPost;
-import org.sopt.makers.internal.community.domain.anonymous.AnonymousPostProfile;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
 import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
@@ -42,14 +42,14 @@ import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.ReportPostRepository;
-import org.sopt.makers.internal.community.repository.anonymous.AnonymousPostProfileRepository;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRepository;
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
-import org.sopt.makers.internal.community.service.anonymous.AnonymousPostProfileService;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -71,8 +71,12 @@ import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 
 import static java.util.stream.Collectors.*;
 
@@ -81,12 +85,13 @@ import static java.util.stream.Collectors.*;
 @Service
 public class CommunityPostService {
 
-    private final AnonymousPostProfileService anonymousPostProfileService;
+    private final AnonymousProfileService anonymousProfileService;
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
     private final PushNotificationService pushNotificationService;
     private final PlatformService platformService;
     private final MakersCrewClient makersCrewClient;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private final CommunityPostModifier communityPostModifier;
 
@@ -103,7 +108,7 @@ public class CommunityPostService {
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final ReportPostRepository reportPostRepository;
     private final MemberBlockRepository memberBlockRepository;
-    private final AnonymousPostProfileRepository anonymousPostProfileRepository;
+    private final AnonymousProfileRetriever anonymousProfileRetriever;
 
     private final CommunityMapper communityMapper;
     private final CommunityResponseMapper communityResponseMapper;
@@ -118,6 +123,9 @@ public class CommunityPostService {
     private static final int MIN_POINTS_FOR_HOT_POST = 10;
     private static final long SOPTICLE_CATEGORY_ID = 21;
     private static final long MEETING_CATEGORY_ID = 24L;
+
+    private static final String VIEW_COUNT_PREFIX = "post:view:";
+    private static final Duration VIEW_COUNT_TTL = Duration.ofHours(24);
 
     @Transactional(readOnly = true)
     public PostAllResponse getMeetingPosts(Long userId, Integer page, Integer take) {
@@ -211,7 +219,7 @@ public class CommunityPostService {
 
         if (isSopticleCategory(request.categoryId())) {
             SopticleScrapedResponse scrapedResponse = sopticleScrapedService.getSopticleMetaData(request.link());
-            post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), new String[] { scrapedResponse.thumbnailUrl() },
+            post.updatePost(request.categoryId(), scrapedResponse.title(), scrapedResponse.description(), List.of(scrapedResponse.thumbnailUrl()),
                             request.isQuestion(), request.isBlindWriter(), scrapedResponse.url());
         } else {
             post.updatePost(request.categoryId(), request.title(), request.content(), request.images(),
@@ -239,9 +247,24 @@ public class CommunityPostService {
         communityPostRepository.delete(post);
     }
 
-    public void increaseHit(List<Long> postIdList) {
+    public void increaseHit(Long userId, List<Long> postIdList) {
         for (Long postId : postIdList) {
-            communityPostModifier.increaseHitTransactional(postId);
+            String redisKey = generateRedisKey(userId, postId);
+            Boolean hasViewed = redisTemplate.hasKey(redisKey);
+
+            if (hasViewed) {
+                continue;
+            }
+
+            redisTemplate.opsForValue().set(redisKey, "1", VIEW_COUNT_TTL);
+
+            try {
+                communityPostModifier.increaseHitTransactional(postId);
+            } catch (Exception e) {
+                log.error("조회수 증가 실패. Redis 키 삭제 수행 (보상 트랜잭션). postId: {}, userId: {}, redisKey: {}",
+                    postId, userId, redisKey, e);
+                redisTemplate.delete(redisKey);
+            }
         }
     }
 
@@ -298,8 +321,8 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public AnonymousPostProfile getAnonymousPostProfile(Long postId) {
-        return anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(postId).orElse(null);
+    public AnonymousProfile getAnonymousPostProfile(Long postId) {
+        return anonymousProfileRetriever.findByPostId(postId).orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -326,13 +349,12 @@ public class CommunityPostService {
 
         Map<Long, String> categoryNameMap = categoryRetriever.getAllCategories().stream()
                 .collect(Collectors.toMap(Category::getId, Category::getName));
+        Map<Long, AnonymousProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
         return posts.stream()
                 .map(post -> {
                     val authorDetails = platformService.getInternalUser(post.getMember().getId());
-                    val anonymousProfile = post.getIsBlindWriter()
-                            ? anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId()).orElse(null)
-                            : null;
+                    val anonymousProfile = anonymousProfileMap.get(post.getId());
                     String categoryName = categoryNameMap.getOrDefault(post.getCategoryId(), "");
                     return communityResponseMapper.toPopularPostResponse(post, anonymousProfile, authorDetails, categoryName);
                 })
@@ -344,7 +366,7 @@ public class CommunityPostService {
         List<CommunityPost> posts = getPopularPostsBase(limitCount);
 
         Map<Long, String> categoryNameMap = getCategoryNameMap(posts);
-        Map<Long, AnonymousPostProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
+        Map<Long, AnonymousProfile> anonymousProfileMap = getAnonymousProfileMap(posts);
 
         String baseUrl = activeProfile.equals("prod")
                 ? "https://playground.sopt.org/?feed="
@@ -413,7 +435,7 @@ public class CommunityPostService {
         return posts.stream()
                 .map(post -> {
                     int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
-                    int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+                    int commentCount = communityCommentRepository.countAllByPostIdAndIsDeleted(post.getId(), false);
                     VoteResponse vote = voteService.getVoteByPostId(post.getId(), memberId);
                     Integer totalVoteCount = Objects.nonNull(vote) ? vote.totalParticipants() : null;
                     Category category = categoryMap.get(post.getCategoryId());
@@ -459,9 +481,9 @@ public class CommunityPostService {
 
                 String categoryName = categoryNameMap.getOrDefault(categoryId, "");
 
-                Optional<AnonymousPostProfile> anonymousProfile = Optional.empty();
+                Optional<AnonymousProfile> anonymousProfile = Optional.empty();
                 if (post.getIsBlindWriter()) {
-                    anonymousProfile = anonymousPostProfileRepository.findAnonymousPostProfileByCommunityPostId(post.getId());
+                    anonymousProfile = anonymousProfileRetriever.findByPostId(post.getId());
                 }
 
                 responses.add(InternalLatestPostResponse.of(post, latestActivity, userDetails, categoryName, anonymousProfile, baseUrl));
@@ -471,7 +493,7 @@ public class CommunityPostService {
     }
 
     private PostWithPoints createPostWithPoints(CommunityPost post) {
-        int commentCount = communityCommentRepository.countAllByPostId(post.getId());
+        int commentCount = communityCommentRepository.countAllByPostIdAndIsDeleted(post.getId(), false);
         int likeCount = communityPostLikeRepository.countAllByPostId(post.getId());
         int points = calculatePoints(commentCount, likeCount);
         return new PostWithPoints(post, points, post.getHits());
@@ -523,7 +545,8 @@ public class CommunityPostService {
 
     private void handleBlindWriter(PostSaveRequest request, Member member, CommunityPost post) {
         if (request.isBlindWriter()) {
-            anonymousPostProfileService.createAnonymousPostProfile(member, post);
+            AnonymousProfile profile = anonymousProfileService.getOrCreateAnonymousProfile(member, post);
+            post.registerAnonymousProfile(profile);
         }
     }
 
@@ -540,7 +563,7 @@ public class CommunityPostService {
             PostSaveRequest enrichedRequest = PostSaveRequest.builder()
                     .categoryId(request.categoryId())
                     .content(scrapedResponse.description())
-                    .images(new String[] { scrapedResponse.thumbnailUrl() })
+                    .images(List.of(scrapedResponse.thumbnailUrl()))
                     .link(scrapedResponse.url())
                     .title(scrapedResponse.title())
                     .isBlindWriter(false)
@@ -570,12 +593,12 @@ public class CommunityPostService {
         return communityQueryRepository.getCategoryNamesByIds(categoryIds);
     }
 
-    private Map<Long, AnonymousPostProfile> getAnonymousProfileMap(List<CommunityPost> posts) {
+    private Map<Long, AnonymousProfile> getAnonymousProfileMap(List<CommunityPost> posts) {
         List<Long> postIds = posts.stream()
                 .map(CommunityPost::getId)
                 .distinct()
                 .toList();
-        return communityQueryRepository.getAnonymousPostProfilesByPostId(postIds);
+        return communityQueryRepository.getAnonymousProfilesByPostId(postIds);
     }
 
     private Map<Long, Category> getCategoryMap(List<CommunityPost> posts) {
@@ -590,5 +613,10 @@ public class CommunityPostService {
 
         return categoryRetriever.findAllByIds(categoryIds).stream()
                 .collect(toMap(Category::getId, category -> category));
+    }
+
+    private String generateRedisKey(Long userId, Long postId) {
+        String today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        return VIEW_COUNT_PREFIX + today + ":" + userId + ":" + postId;
     }
 }
