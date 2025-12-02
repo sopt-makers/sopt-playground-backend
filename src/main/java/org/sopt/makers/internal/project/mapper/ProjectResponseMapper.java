@@ -48,11 +48,19 @@ public class ProjectResponseMapper {
                 .map(member -> {
                     InternalUserDetails details = projectMembersDetails.stream()
                             .filter(d -> d.userId().equals(member.getUserId()))
-                            .findFirst().get();
+                            .findFirst()
+                            .orElse(null);
+
+                    if (details == null) {
+                        // 외부 플랫폼에서 사용자 정보를 찾을 수 없는 경우 스킵
+                        return null;
+                    }
 
                     Boolean memberHasProfile = hasProfileList.stream()
                             .filter(m -> m.getId().equals(member.getUserId()))
-                            .findFirst().get().getHasProfile();
+                            .findFirst()
+                            .map(Member::getHasProfile)
+                            .orElse(false);  // 프로필이 없으면 기본값 false
 
                     return new ProjectDetailMemberResponse(
                             member.getUserId(),
@@ -65,6 +73,7 @@ public class ProjectResponseMapper {
                             memberHasProfile
                     );
                 })
+                .filter(response -> response != null)  // null 응답 필터링
                 .toList();
     }
 
