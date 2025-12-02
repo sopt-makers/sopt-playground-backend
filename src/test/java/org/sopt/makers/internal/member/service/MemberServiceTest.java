@@ -36,8 +36,6 @@ class MemberServiceTest {
                 .thenReturn(expectedMemberIds);
 
         // When
-        // Note: This test verifies that the repository method is called correctly
-        // The actual profile fetching is tested in integration tests
         memberRepository.findAppjamTlMemberIdsByGenerationRandomly(currentGeneration);
 
         // Then
