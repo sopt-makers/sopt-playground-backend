@@ -53,6 +53,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
@@ -864,7 +865,7 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<MemberProfileSpecificResponse> getAppjamTlMembers(Long viewerId) {
+    public List<TlMemberResponse> getAppjamTlMembers(Long viewerId) {
         Integer currentGeneration = Constant.CURRENT_GENERATION;
         List<Long> tlMemberIds = memberRepository.findTlMemberIdsByGenerationRandomly(currentGeneration);
 
@@ -879,60 +880,36 @@ public class MemberService {
         return tlMemberIds.stream()
                 .filter(memberById::containsKey)
                 .filter(userDetailsById::containsKey)
-                .map(memberId -> buildTlMemberProfile(
+                .map(memberId -> buildTlMemberResponse(
                         memberId,
-                        viewerId,
                         memberById.get(memberId),
                         userDetailsById.get(memberId)
                 ))
                 .toList();
     }
 
-    private MemberProfileSpecificResponse buildTlMemberProfile(
-            Long profileId,
-            Long viewerId,
+    private TlMemberResponse buildTlMemberResponse(
+            Long memberId,
             Member member,
             InternalUserDetails userDetails
     ) {
-        boolean isMine = Objects.equals(profileId, viewerId);
-        List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
-        val activityMap = getMemberProfileActivity(userDetails.soptActivities(), memberProfileProjects);
-        val soptActivity = getMemberProfileProjects(userDetails.soptActivities(), memberProfileProjects);
-        List<MemberProfileProjectVo> soptActivityResponse = soptActivity.stream()
-                .map(m -> new MemberProfileProjectVo(m.id(), m.generation(), m.part(), checkTeamNullCondition(m.team()),
-                        m.projects()))
-                .toList();
-        List<MemberActivityResponse> activityResponses = activityMap.entrySet()
-                .stream()
-                .map(entry -> new MemberActivityResponse(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-        boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
-        MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(member, userDetails, isMine,
-                memberProfileProjects, activityResponses, isCoffeeChatActivate);
-
-        Map<Integer, MemberProfileProjectVo> projectMap = soptActivityResponse.stream()
-                .collect(Collectors.toMap(MemberProfileProjectVo::generation, vo -> vo));
-
-        List<MemberProfileSpecificResponse.SoptMemberActivityResponse> updatedActivities = response.soptActivities()
-                .stream()
-                .map(sa -> {
-                    MemberProfileProjectVo matched = projectMap.get(sa.generation());
-                    if (matched != null) {
-                        return new MemberProfileSpecificResponse.SoptMemberActivityResponse(sa.generation(), sa.part(),
-                                sa.team(), matched.projects());
-                    }
-                    return sa;
-                })
+        List<MemberProfileResponse.MemberSoptActivityResponse> activities = userDetails.soptActivities().stream()
+                .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
+                        (long) activity.activityId(),
+                        activity.generation(),
+                        activity.part(),
+                        activity.team()
+                ))
                 .toList();
 
-        MemberProfileSpecificResponse updateResponse = new MemberProfileSpecificResponse(response.name(),
-                response.profileImage(), response.birthday(), response.isPhoneBlind(), response.phone(), response.email(),
-                response.address(), response.university(), response.major(), response.introduction(), response.skill(),
-                response.mbti(), response.mbtiDescription(), response.sojuCapacity(), response.interest(),
-                response.userFavor(), response.idealType(), response.selfIntroduction(), response.activities(),
-                updatedActivities, response.links(), response.projects(), response.careers(), response.allowOfficial(),
-                response.isCoffeeChatActivate(), response.isMine());
-        return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
+        return new TlMemberResponse(
+                memberId,
+                userDetails.name(),
+                member.getUniversity(),
+                userDetails.profileImage(),
+                activities,
+                member.getIntroduction()
+        );
     }
 
 }

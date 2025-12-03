@@ -31,6 +31,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -90,10 +91,10 @@ public class MemberController {
            최신 기수의 앱잼 TL로 참여한 멤버들을 랜덤 순서로 조회합니다.
            """)
    @GetMapping("/tl")
-   public ResponseEntity<List<MemberProfileSpecificResponse>> getTlMembers(
+   public ResponseEntity<List<TlMemberResponse>> getTlMembers(
            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
    ) {
-       List<MemberProfileSpecificResponse> responses = memberService.getAppjamTlMembers(userId);
+       List<TlMemberResponse> responses = memberService.getAppjamTlMembers(userId);
        return ResponseEntity.status(HttpStatus.OK).body(responses);
    }
 
