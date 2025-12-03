@@ -32,14 +32,14 @@ class MemberServiceTest {
         Integer currentGeneration = 37;
         List<Long> expectedMemberIds = Arrays.asList(1L, 2L, 3L);
 
-        when(memberRepository.findAppjamTlMemberIdsByGenerationRandomly(currentGeneration))
+        when(memberRepository.findTlMemberIdsByGenerationRandomly(currentGeneration))
                 .thenReturn(expectedMemberIds);
 
         // When
-        memberRepository.findAppjamTlMemberIdsByGenerationRandomly(currentGeneration);
+        memberRepository.findTlMemberIdsByGenerationRandomly(currentGeneration);
 
         // Then
-        verify(memberRepository).findAppjamTlMemberIdsByGenerationRandomly(eq(currentGeneration));
+        verify(memberRepository).findTlMemberIdsByGenerationRandomly(eq(currentGeneration));
     }
 
     @Test
@@ -48,15 +48,15 @@ class MemberServiceTest {
         // Given
         Integer currentGeneration = 37;
 
-        when(memberRepository.findAppjamTlMemberIdsByGenerationRandomly(currentGeneration))
+        when(memberRepository.findTlMemberIdsByGenerationRandomly(currentGeneration))
                 .thenReturn(List.of());
 
         // When
-        List<Long> result = memberRepository.findAppjamTlMemberIdsByGenerationRandomly(currentGeneration);
+        List<Long> result = memberRepository.findTlMemberIdsByGenerationRandomly(currentGeneration);
 
         // Then
         assertThat(result).isEmpty();
-        verify(memberRepository).findAppjamTlMemberIdsByGenerationRandomly(eq(currentGeneration));
+        verify(memberRepository).findTlMemberIdsByGenerationRandomly(eq(currentGeneration));
     }
 
     @Test
@@ -66,15 +66,15 @@ class MemberServiceTest {
         Integer expectedGeneration = 37;
         List<Long> mockMemberIds = Arrays.asList(10L, 20L, 30L);
 
-        when(memberRepository.findAppjamTlMemberIdsByGenerationRandomly(expectedGeneration))
+        when(memberRepository.findTlMemberIdsByGenerationRandomly(expectedGeneration))
                 .thenReturn(mockMemberIds);
 
         // When
-        List<Long> result = memberRepository.findAppjamTlMemberIdsByGenerationRandomly(expectedGeneration);
+        List<Long> result = memberRepository.findTlMemberIdsByGenerationRandomly(expectedGeneration);
 
         // Then
         assertThat(result).hasSize(3);
         assertThat(result).containsExactly(10L, 20L, 30L);
-        verify(memberRepository, times(1)).findAppjamTlMemberIdsByGenerationRandomly(expectedGeneration);
+        verify(memberRepository, times(1)).findTlMemberIdsByGenerationRandomly(expectedGeneration);
     }
 }
