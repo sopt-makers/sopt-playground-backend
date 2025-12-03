@@ -6,6 +6,7 @@ import org.mapstruct.Mapping;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
@@ -32,6 +33,7 @@ public interface MemberMapper {
     @Mapping(target = "phone", source = "userDetails.phone")
     @Mapping(target = "email", source = "userDetails.email")
     @Mapping(target = "activities", source = "activities")
+    @Mapping(target = "workPreference", expression = "java(toWorkPreferenceResponse(member.getWorkPreference()))")
     MemberProfileSpecificResponse toProfileSpecificResponse (
             Member member,
             InternalUserDetails userDetails,
@@ -49,4 +51,16 @@ public interface MemberMapper {
 
     MemberProjectVo toActivityInfoVo (MemberProfileProjectDao project);
 
+    default MemberProfileSpecificResponse.WorkPreferenceResponse toWorkPreferenceResponse(WorkPreference workPreference) {
+        if (workPreference == null) {
+            return null;
+        }
+        return new MemberProfileSpecificResponse.WorkPreferenceResponse(
+            workPreference.getIdeationStyle(),
+            workPreference.getWorkTime(),
+            workPreference.getCommunicationStyle(),
+            workPreference.getWorkPlace(),
+            workPreference.getFeedbackStyle()
+        );
+    }
 }

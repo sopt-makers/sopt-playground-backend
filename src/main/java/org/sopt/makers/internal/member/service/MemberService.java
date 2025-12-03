@@ -34,6 +34,7 @@ import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
 import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.dto.ActivityVo;
@@ -41,6 +42,7 @@ import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.request.WorkPreferenceUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
@@ -173,7 +175,7 @@ public class MemberService {
 			response.profileImage(), response.birthday(), response.isPhoneBlind(), response.phone(), response.email(),
 			response.address(), response.university(), response.major(), response.introduction(), response.skill(),
 			response.mbti(), response.mbtiDescription(), response.sojuCapacity(), response.interest(),
-			response.userFavor(), response.idealType(), response.selfIntroduction(), response.activities(),
+			response.userFavor(), response.idealType(), response.selfIntroduction(), response.workPreference(), response.activities(),
 			updatedActivities, response.links(), response.projects(), response.careers(), response.allowOfficial(),
 			response.isCoffeeChatActivate(), response.isMine());
 		return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
@@ -528,7 +530,7 @@ public class MemberService {
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
 			request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(), request.interest(),
 			userFavor, request.idealType(), request.selfIntroduction(), request.allowOfficial(), memberLinks,
-			memberCareers, request.isPhoneBlind());
+			memberCareers, request.isPhoneBlind(), null);
 
 		try {
 			if (Objects.equals(activeProfile, "prod")) {
@@ -704,11 +706,39 @@ public class MemberService {
 			.isHardPeachLover(request.userFavor().isHardPeachLover())
 			.build();
 
+		WorkPreference workPreference = null;
+		if (request.workPreference() != null) {
+			workPreference = WorkPreference.builder()
+				.ideationStyle(request.workPreference().ideationStyle())
+				.workTime(request.workPreference().workTime())
+				.communicationStyle(request.workPreference().communicationStyle())
+				.workPlace(request.workPreference().workPlace())
+				.feedbackStyle(request.workPreference().feedbackStyle())
+				.build();
+		}
+
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
 			request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(), request.interest(),
 			userFavor, request.idealType(), request.selfIntroduction(), request.allowOfficial(), memberLinks,
-			memberCareers, request.isPhoneBlind());
+			memberCareers, request.isPhoneBlind(), workPreference);
 
+		return member;
+	}
+
+	@Transactional
+	public Member updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
+		Member member = getMemberById(memberId);
+
+		WorkPreference workPreference = WorkPreference.builder()
+			.ideationStyle(request.ideationStyle())
+			.workTime(request.workTime())
+			.communicationStyle(request.communicationStyle())
+			.workPlace(request.workPlace())
+			.feedbackStyle(request.feedbackStyle())
+			.build();
+
+		member.updateWorkPreference(workPreference);
+		memberRepository.save(member);
 		return member;
 	}
 
