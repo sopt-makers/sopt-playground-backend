@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.member.service;
 
+import static org.sopt.makers.internal.common.Constant.*;
+
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -54,6 +56,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
@@ -726,7 +729,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public Member updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
+	public void updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
 		Member member = getMemberById(memberId);
 
 		WorkPreference workPreference = WorkPreference.builder()
@@ -739,7 +742,102 @@ public class MemberService {
 
 		member.updateWorkPreference(workPreference);
 		memberRepository.save(member);
-		return member;
+	}
+
+	@Transactional(readOnly = true)
+	public WorkPreferenceRecommendationResponse getWorkPreferenceRecommendations(Long userId) {
+		Member currentMember = getMemberById(userId);
+
+		if (currentMember.getWorkPreference() == null) {
+			throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다. 먼저 작업 성향을 설정해주세요.");
+		}
+
+		InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
+		if (currentUserDetails.lastGeneration() != CURRENT_GENERATION) {
+			throw new ClientBadRequestException("최신 기수만 조회가 가능합니다.");
+		}
+
+		List<Member> membersWithWorkPreference = memberRepository.findAllByWorkPreferenceNotNull().stream()
+			.filter(member -> !member.getId().equals(userId))
+			.toList();
+
+		List<Long> memberIds = membersWithWorkPreference.stream()
+			.map(Member::getId)
+			.toList();
+
+		List<InternalUserDetails> userDetailsList = platformService.getInternalUsers(memberIds);
+
+		Map<Long, InternalUserDetails> latestGenerationUserMap = userDetailsList.stream()
+			.filter(user -> user.lastGeneration() == CURRENT_GENERATION)
+			.collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+		List<Member> candidateMembers = membersWithWorkPreference.stream()
+			.filter(member -> latestGenerationUserMap.containsKey(member.getId()))
+			.toList();
+
+		WorkPreference currentPreference = currentMember.getWorkPreference();
+		List<Member> matchedCandidates = candidateMembers.stream()
+			.filter(member -> {
+				WorkPreference candidatePreference = member.getWorkPreference();
+				int matchCount = calculateMatchCount(currentPreference, candidatePreference);
+				return matchCount >= 3; // 3개 이상 일치
+			})
+			.collect(Collectors.toList());
+
+		Collections.shuffle(matchedCandidates);
+		List<Member> selectedCandidates = matchedCandidates.stream()
+			.limit(4)
+			.toList();
+
+		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations = selectedCandidates.stream()
+			.map(member -> {
+				InternalUserDetails userDetails = latestGenerationUserMap.get(member.getId());
+
+				List<WorkPreferenceRecommendationResponse.MemberSoptActivityResponse> activities =
+					userDetails.soptActivities().stream()
+						.map(activity -> new WorkPreferenceRecommendationResponse.MemberSoptActivityResponse(
+							(long) activity.activityId(),
+							activity.generation(),
+							activity.part(),
+							activity.team()
+						))
+						.toList();
+
+				WorkPreferenceRecommendationResponse.WorkPreferenceData workPreferenceData = null;
+				if (member.getWorkPreference() != null) {
+					workPreferenceData = new WorkPreferenceRecommendationResponse.WorkPreferenceData(
+						member.getWorkPreference().getIdeationStyle(),
+						member.getWorkPreference().getWorkTime(),
+						member.getWorkPreference().getCommunicationStyle(),
+						member.getWorkPreference().getWorkPlace(),
+						member.getWorkPreference().getFeedbackStyle()
+					);
+				}
+				
+				return new WorkPreferenceRecommendationResponse.RecommendedMember(
+					member.getId(),
+					userDetails.name(),
+					userDetails.profileImage(),
+					userDetails.birthday(),
+					member.getUniversity(),
+					member.getMbti(),
+					workPreferenceData,
+					activities
+				);
+			})
+			.toList();
+
+		return new WorkPreferenceRecommendationResponse(recommendations);
+	}
+
+	private int calculateMatchCount(WorkPreference current, WorkPreference candidate) {
+		int count = 0;
+		if (Objects.equals(current.getIdeationStyle(), candidate.getIdeationStyle())) count++;
+		if (Objects.equals(current.getWorkTime(), candidate.getWorkTime())) count++;
+		if (Objects.equals(current.getCommunicationStyle(), candidate.getCommunicationStyle())) count++;
+		if (Objects.equals(current.getWorkPlace(), candidate.getWorkPlace())) count++;
+		if (Objects.equals(current.getFeedbackStyle(), candidate.getFeedbackStyle())) count++;
+		return count;
 	}
 
 	@Transactional

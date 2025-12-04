@@ -33,6 +33,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -149,6 +150,15 @@ public class MemberController {
     ) {
         memberService.updateWorkPreference(userId, request);
         CommonResponse response = new CommonResponse(true, "작업 성향이 성공적으로 업데이트되었습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "작업 성향 유사 멤버 추천 API")
+    @GetMapping("/work-preference/recommendations")
+    public ResponseEntity<WorkPreferenceRecommendationResponse> getWorkPreferenceRecommendations(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        WorkPreferenceRecommendationResponse response = memberService.getWorkPreferenceRecommendations(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
