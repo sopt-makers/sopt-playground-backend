@@ -4,7 +4,7 @@ import java.util.List;
 import org.sopt.makers.internal.member.domain.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
+public interface MemberRepository extends JpaRepository<Member, Long> {
 
 //    List<Member> findAllByNameContaining(String name);
 

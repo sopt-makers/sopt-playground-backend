@@ -34,6 +34,7 @@ import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
+import org.sopt.makers.internal.member.domain.TlMember;
 import org.sopt.makers.internal.member.domain.UserFavor;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
@@ -80,6 +81,7 @@ import lombok.val;
 @Service
 public class MemberService {
     private final MemberRetriever memberRetriever;
+    private final TlMemberRetriever tlMemberRetriever;
     private final CoffeeChatRetriever coffeeChatRetriever;
     private final MemberCareerRetriever memberCareerRetriever;
     private final MemberResponseMapper memberResponseMapper;
@@ -865,33 +867,54 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<TlMemberResponse> getAppjamTlMembers(Long viewerId) {
-        Integer currentGeneration = Constant.CURRENT_GENERATION;
-        List<Long> tlMemberIds = memberRepository.findTlMemberIdsByGenerationRandomly(currentGeneration);
+    public List<TlMemberResponse> getAppjamTlMembers(Long userId) {
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        boolean isCurrentGenerationUser = userDetails.soptActivities().stream()
+                .anyMatch(activity -> Objects.equals(activity.generation(), Constant.CURRENT_GENERATION));
 
-        List<Member> members = memberRepository.findAllByHasProfileTrueAndIdIn(tlMemberIds);
-        Map<Long, Member> memberById = members.stream()
+        if (!isCurrentGenerationUser) {
+            return Collections.emptyList();
+        }
+
+        List<TlMember> tlMembers = tlMemberRetriever.findByTlGeneration(Constant.CURRENT_GENERATION);
+
+        List<Long> tlMemberIds = tlMembers.stream()
+                .map(tlMember -> tlMember.getMember().getId())
+                .toList();
+
+        Map<Long, Member> memberById = memberRepository.findAllByHasProfileTrueAndIdIn(tlMemberIds).stream()
                 .collect(Collectors.toMap(Member::getId, Function.identity()));
 
-        List<InternalUserDetails> userDetailsList = platformService.getInternalUsers(tlMemberIds);
-        Map<Long, InternalUserDetails> userDetailsById = userDetailsList.stream()
+        Map<Long, InternalUserDetails> tlUserDetailsById = platformService.getInternalUsers(tlMemberIds).stream()
                 .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
 
-        return tlMemberIds.stream()
-                .filter(memberById::containsKey)
-                .filter(userDetailsById::containsKey)
-                .map(memberId -> buildTlMemberResponse(
-                        memberId,
-                        memberById.get(memberId),
-                        userDetailsById.get(memberId)
-                ))
+        return tlMembers.stream()
+                .filter(tlMember -> {
+                    Long memberId = tlMember.getMember().getId();
+                    return memberById.containsKey(memberId) && tlUserDetailsById.containsKey(memberId);
+                })
+                .sorted((tl1, tl2) -> {
+                    String name1 = tlUserDetailsById.get(tl1.getMember().getId()).name();
+                    String name2 = tlUserDetailsById.get(tl2.getMember().getId()).name();
+                    return name1.compareTo(name2);
+                })
+                .map(tlMember -> {
+                    Long memberId = tlMember.getMember().getId();
+                    return buildTlMemberResponse(
+                            memberId,
+                            memberById.get(memberId),
+                            tlUserDetailsById.get(memberId),
+                            tlMember.getServiceType()
+                    );
+                })
                 .toList();
     }
 
     private TlMemberResponse buildTlMemberResponse(
             Long memberId,
             Member member,
-            InternalUserDetails userDetails
+            InternalUserDetails userDetails,
+            org.sopt.makers.internal.member.domain.enums.ServiceType serviceType
     ) {
         List<MemberProfileResponse.MemberSoptActivityResponse> activities = userDetails.soptActivities().stream()
                 .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
@@ -908,7 +931,8 @@ public class MemberService {
                 member.getUniversity(),
                 userDetails.profileImage(),
                 activities,
-                member.getIntroduction()
+                member.getIntroduction(),
+                serviceType
         );
     }
 

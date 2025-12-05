@@ -87,8 +87,9 @@ public class MemberController {
        return ResponseEntity.status(HttpStatus.OK).body(responses);
    }
 
-   @Operation(summary = "앱잼 TL 멤버 랜덤 조회 API", description = """
-           최신 기수의 앱잼 TL로 참여한 멤버들을 랜덤 순서로 조회합니다.
+   @Operation(summary = "앱잼 TL 멤버 조회 API", description = """
+           최신 기수의 앱잼 TL로 참여한 멤버들을 이름 가나다순으로 조회합니다.
+           각 TL이 발표한 서비스 타입(WEB 또는 APP) 정보를 포함합니다.
            """)
    @GetMapping("/tl")
    public ResponseEntity<List<TlMemberResponse>> getTlMembers(
