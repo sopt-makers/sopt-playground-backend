@@ -11,7 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.vote.domain.VoteSelection;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -108,11 +110,19 @@ public class Member {
     @ColumnDefault("true")
     private Boolean isPhoneBlind = true;
 
+    @Type(JsonType.class)
+    @Column(name = "work_preference", columnDefinition = "jsonb")
+    private WorkPreference workPreference;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<VoteSelection> voteSelections = new ArrayList<>();
 
     public void editActivityChange(Boolean isCheck) {
         this.editActivitiesAble = isCheck;
+    }
+
+    public void updateWorkPreference(WorkPreference workPreference) {
+        this.workPreference = workPreference;
     }
 
     public void saveMemberProfile(
@@ -131,7 +141,8 @@ public class Member {
             Boolean allowOfficial,
             List<MemberLink> links,
             List<MemberCareer> careers,
-            Boolean isPhoneBlind
+            Boolean isPhoneBlind,
+            WorkPreference workPreference
     ) {
         this.address = address;
         this.university = university;
@@ -152,5 +163,6 @@ public class Member {
         this.careers.addAll(careers);
         this.hasProfile = true;
         this.isPhoneBlind = isPhoneBlind;
+        this.workPreference = workPreference;
     }
 }

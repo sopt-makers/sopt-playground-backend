@@ -27,6 +27,7 @@ public record MemberProfileSpecificResponse(
         UserFavorResponse userFavor,
         String idealType,
         String selfIntroduction,
+        WorkPreferenceResponse workPreference,
         @Schema(required = true)
         List<MemberActivityResponse> activities,
         @Schema(required = true)
@@ -52,6 +53,14 @@ public record MemberProfileSpecificResponse(
             Boolean isRedBeanFishBreadLover,
             Boolean isSojuLover,
             Boolean isRiceTteokLover
+    ){}
+
+    public record WorkPreferenceResponse(
+            String ideationStyle,
+            String workTime,
+            String communicationStyle,
+            String workPlace,
+            String feedbackStyle
     ){}
 
     public record MemberProjectResponse(
@@ -110,6 +119,7 @@ public record MemberProfileSpecificResponse(
             response.userFavor(),
             response.idealType(),
             response.selfIntroduction(),
+            response.workPreference(),
             response.activities(),
             response.soptActivities(),
             response.links(),

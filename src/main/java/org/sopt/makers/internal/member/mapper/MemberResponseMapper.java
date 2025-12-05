@@ -24,7 +24,8 @@ public class MemberResponseMapper {
                 userDetails.profileImage(),
                 member.getHasProfile(),
                 member.getEditActivitiesAble(),
-                isCoffeeChatActive
+                isCoffeeChatActive,
+                member.getWorkPreference() != null
         );
     }
 

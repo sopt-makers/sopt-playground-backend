@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.member.service;
 
+import static org.sopt.makers.internal.common.Constant.*;
+
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -34,6 +36,7 @@ import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
 import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.dto.ActivityVo;
@@ -41,6 +44,7 @@ import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.request.WorkPreferenceUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
@@ -52,6 +56,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
@@ -62,6 +67,8 @@ import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
+import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
+import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -94,6 +101,8 @@ public class MemberService {
 	private final ReviewService reviewService;
 	private final PlatformService platformService;
 	private final MemberSortingService memberSortingService;
+	private final WorkPreferenceRetriever workPreferenceRetriever;
+	private final WorkPreferenceModifier workPreferenceModifier;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -173,7 +182,7 @@ public class MemberService {
 			response.profileImage(), response.birthday(), response.isPhoneBlind(), response.phone(), response.email(),
 			response.address(), response.university(), response.major(), response.introduction(), response.skill(),
 			response.mbti(), response.mbtiDescription(), response.sojuCapacity(), response.interest(),
-			response.userFavor(), response.idealType(), response.selfIntroduction(), response.activities(),
+			response.userFavor(), response.idealType(), response.selfIntroduction(), response.workPreference(), response.activities(),
 			updatedActivities, response.links(), response.projects(), response.careers(), response.allowOfficial(),
 			response.isCoffeeChatActivate(), response.isMine());
 		return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
@@ -528,7 +537,7 @@ public class MemberService {
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
 			request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(), request.interest(),
 			userFavor, request.idealType(), request.selfIntroduction(), request.allowOfficial(), memberLinks,
-			memberCareers, request.isPhoneBlind());
+			memberCareers, request.isPhoneBlind(), null);
 
 		try {
 			if (Objects.equals(activeProfile, "prod")) {
@@ -704,12 +713,77 @@ public class MemberService {
 			.isHardPeachLover(request.userFavor().isHardPeachLover())
 			.build();
 
+		WorkPreference workPreference = null;
+		if (request.workPreference() != null) {
+			workPreference = workPreferenceModifier.buildWorkPreferenceFromStrings(
+				request.workPreference().ideationStyle(),
+				request.workPreference().workTime(),
+				request.workPreference().communicationStyle(),
+				request.workPreference().workPlace(),
+				request.workPreference().feedbackStyle()
+			);
+		}
+
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
 			request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(), request.interest(),
 			userFavor, request.idealType(), request.selfIntroduction(), request.allowOfficial(), memberLinks,
-			memberCareers, request.isPhoneBlind());
+			memberCareers, request.isPhoneBlind(), workPreference);
 
 		return member;
+	}
+
+	@Transactional
+	public void updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
+		workPreferenceModifier.updateWorkPreference(memberId, request);
+	}
+
+	@Transactional(readOnly = true)
+	public WorkPreferenceRecommendationResponse getWorkPreferenceRecommendations(Long userId) {
+		// 1. 현재 사용자의 작업 성향 검증
+		workPreferenceRetriever.validateWorkPreferenceExists(userId);
+		workPreferenceRetriever.validateCurrentGeneration(userId);
+
+		Member currentMember = getMemberById(userId);
+		WorkPreference currentPreference = currentMember.getWorkPreference();
+
+		// 2. 작업 성향이 있는 다른 멤버들 조회
+		List<Member> membersWithWorkPreference = workPreferenceRetriever.findMembersWithWorkPreference(userId);
+		if (membersWithWorkPreference.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+		}
+
+		// 3. 최신 기수 멤버들만 필터링
+		List<Long> memberIds = membersWithWorkPreference.stream()
+				.map(Member::getId)
+				.toList();
+
+		Map<Long, InternalUserDetails> latestGenerationUserMap =
+				workPreferenceRetriever.getLatestGenerationMembersMap(memberIds);
+
+		List<Member> candidateMembers = membersWithWorkPreference.stream()
+				.filter(member -> latestGenerationUserMap.containsKey(member.getId()))
+				.toList();
+
+		if (candidateMembers.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+		}
+
+		// 4. 매칭 기준에 따라 필터링
+		List<Member> matchedCandidates = workPreferenceRetriever.filterCandidatesByMatchCount(
+				candidateMembers, currentPreference, 3);
+
+		// 5. 랜덤으로 최대 4명 선택
+		List<Member> shuffledCandidates = new ArrayList<>(matchedCandidates);
+		Collections.shuffle(shuffledCandidates);
+		List<Member> selectedCandidates = shuffledCandidates.stream()
+				.limit(4)
+				.toList();
+
+		// 6. Response 생성
+		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations =
+				memberMapper.toRecommendedMembers(selectedCandidates, latestGenerationUserMap);
+
+		return new WorkPreferenceRecommendationResponse(recommendations);
 	}
 
 	@Transactional

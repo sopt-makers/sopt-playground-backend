@@ -14,6 +14,8 @@ public record MemberInfoResponse(
 
         Boolean editActivitiesAble,
 
-        Boolean hasCoffeeChat
+        Boolean hasCoffeeChat,
+
+        Boolean hasWorkPreference
 ) {
 }
