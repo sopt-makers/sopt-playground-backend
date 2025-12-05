@@ -2,6 +2,7 @@ package org.sopt.makers.internal.project.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -53,7 +54,15 @@ public class ProjectQueryRepository {
 
     private BooleanExpression checkProjectContainsName(String name) {
         val checkNameIsEmpty = Objects.isNull(name);
-        return checkNameIsEmpty ? null : QProject.project.name.lower().contains(name.toLowerCase());
+        if (checkNameIsEmpty) {
+            return null;
+        }
+        // Expressions.stringTemplate를 사용하여 직접 SQL 작성 (escape 없이)
+        return Expressions.booleanTemplate(
+            "lower({0}) like lower({1})",
+            QProject.project.name,
+            "%" + name + "%"
+        );
     }
 
     private BooleanExpression checkProjectCategory(String category) {
