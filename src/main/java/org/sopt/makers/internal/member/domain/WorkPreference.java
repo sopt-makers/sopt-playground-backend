@@ -5,6 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.sopt.makers.internal.member.domain.enums.IdeationStyle;
+import org.sopt.makers.internal.member.domain.enums.WorkTime;
+import org.sopt.makers.internal.member.domain.enums.CommunicationStyle;
+import org.sopt.makers.internal.member.domain.enums.WorkPlace;
+import org.sopt.makers.internal.member.domain.enums.FeedbackStyle;
 
 import java.io.Serializable;
 
@@ -14,18 +19,29 @@ import java.io.Serializable;
 @Builder
 public class WorkPreference implements Serializable {
 
-    private String ideationStyle; // "즉흥" or "숙고"
-    private String workTime; // "아침" or "밤"
-    private String communicationStyle; // "몰아서" or "나눠서"
-    private String workPlace; // "카공" or "집콕"
-    private String feedbackStyle; // "직설적" or "돌려서"
+    private IdeationStyle ideationStyle;
+    private WorkTime workTime;
+    private CommunicationStyle communicationStyle;
+    private WorkPlace workPlace;
+    private FeedbackStyle feedbackStyle;
 
-    public void updatePreference(String ideationStyle, String workTime, String communicationStyle,
-                                  String workPlace, String feedbackStyle) {
-        this.ideationStyle = ideationStyle;
-        this.workTime = workTime;
-        this.communicationStyle = communicationStyle;
-        this.workPlace = workPlace;
-        this.feedbackStyle = feedbackStyle;
+    public String getIdeationStyleValue() {
+        return ideationStyle != null ? ideationStyle.getValue() : null;
+    }
+
+    public String getWorkTimeValue() {
+        return workTime != null ? workTime.getValue() : null;
+    }
+
+    public String getCommunicationStyleValue() {
+        return communicationStyle != null ? communicationStyle.getValue() : null;
+    }
+
+    public String getWorkPlaceValue() {
+        return workPlace != null ? workPlace.getValue() : null;
+    }
+
+    public String getFeedbackStyleValue() {
+        return feedbackStyle != null ? feedbackStyle.getValue() : null;
     }
 }

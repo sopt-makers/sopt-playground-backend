@@ -67,6 +67,8 @@ import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
+import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
+import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -99,6 +101,8 @@ public class MemberService {
 	private final ReviewService reviewService;
 	private final PlatformService platformService;
 	private final MemberSortingService memberSortingService;
+	private final WorkPreferenceRetriever workPreferenceRetriever;
+	private final WorkPreferenceModifier workPreferenceModifier;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -711,13 +715,13 @@ public class MemberService {
 
 		WorkPreference workPreference = null;
 		if (request.workPreference() != null) {
-			workPreference = WorkPreference.builder()
-				.ideationStyle(request.workPreference().ideationStyle())
-				.workTime(request.workPreference().workTime())
-				.communicationStyle(request.workPreference().communicationStyle())
-				.workPlace(request.workPreference().workPlace())
-				.feedbackStyle(request.workPreference().feedbackStyle())
-				.build();
+			workPreference = workPreferenceModifier.buildWorkPreferenceFromStrings(
+				request.workPreference().ideationStyle(),
+				request.workPreference().workTime(),
+				request.workPreference().communicationStyle(),
+				request.workPreference().workPlace(),
+				request.workPreference().feedbackStyle()
+			);
 		}
 
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
@@ -730,114 +734,56 @@ public class MemberService {
 
 	@Transactional
 	public void updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
-		Member member = getMemberById(memberId);
-
-		WorkPreference workPreference = WorkPreference.builder()
-			.ideationStyle(request.ideationStyle())
-			.workTime(request.workTime())
-			.communicationStyle(request.communicationStyle())
-			.workPlace(request.workPlace())
-			.feedbackStyle(request.feedbackStyle())
-			.build();
-
-		member.updateWorkPreference(workPreference);
-		memberRepository.save(member);
+		workPreferenceModifier.updateWorkPreference(memberId, request);
 	}
 
 	@Transactional(readOnly = true)
 	public WorkPreferenceRecommendationResponse getWorkPreferenceRecommendations(Long userId) {
+		// 1. 현재 사용자의 작업 성향 검증
+		workPreferenceRetriever.validateWorkPreferenceExists(userId);
+		workPreferenceRetriever.validateCurrentGeneration(userId);
+
 		Member currentMember = getMemberById(userId);
+		WorkPreference currentPreference = currentMember.getWorkPreference();
 
-		if (currentMember.getWorkPreference() == null) {
-			throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다. 먼저 작업 성향을 설정해주세요.");
+		// 2. 작업 성향이 있는 다른 멤버들 조회
+		List<Member> membersWithWorkPreference = workPreferenceRetriever.findMembersWithWorkPreference(userId);
+		if (membersWithWorkPreference.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
 		}
 
-		InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
-		if (currentUserDetails.lastGeneration() != CURRENT_GENERATION) {
-			throw new ClientBadRequestException("최신 기수만 조회가 가능합니다.");
-		}
-
-		List<Member> membersWithWorkPreference = memberRepository.findAllByWorkPreferenceNotNull().stream()
-			.filter(member -> !member.getId().equals(userId))
-			.toList();
-
+		// 3. 최신 기수 멤버들만 필터링
 		List<Long> memberIds = membersWithWorkPreference.stream()
-			.map(Member::getId)
-			.toList();
+				.map(Member::getId)
+				.toList();
 
-		List<InternalUserDetails> userDetailsList = platformService.getInternalUsers(memberIds);
-
-		Map<Long, InternalUserDetails> latestGenerationUserMap = userDetailsList.stream()
-			.filter(user -> user.lastGeneration() == CURRENT_GENERATION)
-			.collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+		Map<Long, InternalUserDetails> latestGenerationUserMap =
+				workPreferenceRetriever.getLatestGenerationMembersMap(memberIds);
 
 		List<Member> candidateMembers = membersWithWorkPreference.stream()
-			.filter(member -> latestGenerationUserMap.containsKey(member.getId()))
-			.toList();
+				.filter(member -> latestGenerationUserMap.containsKey(member.getId()))
+				.toList();
 
-		WorkPreference currentPreference = currentMember.getWorkPreference();
-		List<Member> matchedCandidates = candidateMembers.stream()
-			.filter(member -> {
-				WorkPreference candidatePreference = member.getWorkPreference();
-				int matchCount = calculateMatchCount(currentPreference, candidatePreference);
-				return matchCount >= 3; // 3개 이상 일치
-			})
-			.collect(Collectors.toList());
+		if (candidateMembers.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+		}
 
-		Collections.shuffle(matchedCandidates);
-		List<Member> selectedCandidates = matchedCandidates.stream()
-			.limit(4)
-			.toList();
+		// 4. 매칭 기준에 따라 필터링
+		List<Member> matchedCandidates = workPreferenceRetriever.filterCandidatesByMatchCount(
+				candidateMembers, currentPreference, 3);
 
-		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations = selectedCandidates.stream()
-			.map(member -> {
-				InternalUserDetails userDetails = latestGenerationUserMap.get(member.getId());
+		// 5. 랜덤으로 최대 4명 선택
+		List<Member> shuffledCandidates = new ArrayList<>(matchedCandidates);
+		Collections.shuffle(shuffledCandidates);
+		List<Member> selectedCandidates = shuffledCandidates.stream()
+				.limit(4)
+				.toList();
 
-				List<WorkPreferenceRecommendationResponse.MemberSoptActivityResponse> activities =
-					userDetails.soptActivities().stream()
-						.map(activity -> new WorkPreferenceRecommendationResponse.MemberSoptActivityResponse(
-							(long) activity.activityId(),
-							activity.generation(),
-							activity.part(),
-							activity.team()
-						))
-						.toList();
-
-				WorkPreferenceRecommendationResponse.WorkPreferenceData workPreferenceData = null;
-				if (member.getWorkPreference() != null) {
-					workPreferenceData = new WorkPreferenceRecommendationResponse.WorkPreferenceData(
-						member.getWorkPreference().getIdeationStyle(),
-						member.getWorkPreference().getWorkTime(),
-						member.getWorkPreference().getCommunicationStyle(),
-						member.getWorkPreference().getWorkPlace(),
-						member.getWorkPreference().getFeedbackStyle()
-					);
-				}
-				
-				return new WorkPreferenceRecommendationResponse.RecommendedMember(
-					member.getId(),
-					userDetails.name(),
-					userDetails.profileImage(),
-					userDetails.birthday(),
-					member.getUniversity(),
-					member.getMbti(),
-					workPreferenceData,
-					activities
-				);
-			})
-			.toList();
+		// 6. Response 생성
+		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations =
+				memberMapper.toRecommendedMembers(selectedCandidates, latestGenerationUserMap);
 
 		return new WorkPreferenceRecommendationResponse(recommendations);
-	}
-
-	private int calculateMatchCount(WorkPreference current, WorkPreference candidate) {
-		int count = 0;
-		if (Objects.equals(current.getIdeationStyle(), candidate.getIdeationStyle())) count++;
-		if (Objects.equals(current.getWorkTime(), candidate.getWorkTime())) count++;
-		if (Objects.equals(current.getCommunicationStyle(), candidate.getCommunicationStyle())) count++;
-		if (Objects.equals(current.getWorkPlace(), candidate.getWorkPlace())) count++;
-		if (Objects.equals(current.getFeedbackStyle(), candidate.getFeedbackStyle())) count++;
-		return count;
 	}
 
 	@Transactional

@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.member.mapper;
 
 import java.util.List;
+import java.util.Map;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
@@ -13,6 +14,7 @@ import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.MemberProjectVo;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
@@ -56,11 +58,70 @@ public interface MemberMapper {
             return null;
         }
         return new MemberProfileSpecificResponse.WorkPreferenceResponse(
-            workPreference.getIdeationStyle(),
-            workPreference.getWorkTime(),
-            workPreference.getCommunicationStyle(),
-            workPreference.getWorkPlace(),
-            workPreference.getFeedbackStyle()
+            workPreference.getIdeationStyleValue(),
+            workPreference.getWorkTimeValue(),
+            workPreference.getCommunicationStyleValue(),
+            workPreference.getWorkPlaceValue(),
+            workPreference.getFeedbackStyleValue()
+        );
+    }
+
+    // WorkPreference Recommendation 관련 매핑 메서드들
+    default List<WorkPreferenceRecommendationResponse.RecommendedMember> toRecommendedMembers(
+            List<Member> members, Map<Long, InternalUserDetails> userDetailsMap) {
+
+        return members.stream()
+                .map(member -> toRecommendedMember(member, userDetailsMap.get(member.getId())))
+                .toList();
+    }
+
+    default WorkPreferenceRecommendationResponse.RecommendedMember toRecommendedMember(
+            Member member, InternalUserDetails userDetails) {
+
+        List<WorkPreferenceRecommendationResponse.MemberSoptActivityResponse> activities =
+                mapSoptActivitiesForRecommendation(userDetails);
+
+        WorkPreferenceRecommendationResponse.WorkPreferenceData workPreferenceData =
+                mapWorkPreferenceData(member.getWorkPreference());
+
+        return new WorkPreferenceRecommendationResponse.RecommendedMember(
+                member.getId(),
+                userDetails.name(),
+                userDetails.profileImage(),
+                userDetails.birthday(),
+                member.getUniversity(),
+                member.getMbti(),
+                workPreferenceData,
+                activities
+        );
+    }
+
+    default List<WorkPreferenceRecommendationResponse.MemberSoptActivityResponse> mapSoptActivitiesForRecommendation(
+            InternalUserDetails userDetails) {
+
+        return userDetails.soptActivities().stream()
+                .map(activity -> new WorkPreferenceRecommendationResponse.MemberSoptActivityResponse(
+                        (long) activity.activityId(),
+                        activity.generation(),
+                        activity.part(),
+                        activity.team()
+                ))
+                .toList();
+    }
+
+    default WorkPreferenceRecommendationResponse.WorkPreferenceData mapWorkPreferenceData(
+            WorkPreference workPreference) {
+
+        if (workPreference == null) {
+            return null;
+        }
+
+        return new WorkPreferenceRecommendationResponse.WorkPreferenceData(
+                workPreference.getIdeationStyleValue(),
+                workPreference.getWorkTimeValue(),
+                workPreference.getCommunicationStyleValue(),
+                workPreference.getWorkPlaceValue(),
+                workPreference.getFeedbackStyleValue()
         );
     }
 }
