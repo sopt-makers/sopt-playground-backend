@@ -743,17 +743,25 @@ public class MemberService {
 
 	@Transactional(readOnly = true)
 	public WorkPreferenceRecommendationResponse getWorkPreferenceRecommendations(Long userId) {
-		// 1. 현재 사용자의 작업 성향 검증
-		workPreferenceRetriever.validateWorkPreferenceExists(userId);
-		workPreferenceRetriever.validateCurrentGeneration(userId);
-
+		// 1. 현재 사용자의 작업 성향 및 기수 확인
 		Member currentMember = getMemberById(userId);
 		WorkPreference currentPreference = currentMember.getWorkPreference();
+
+		// 작업 성향이 없는 경우 빈 리스트 반환
+		if (currentPreference == null) {
+			return new WorkPreferenceRecommendationResponse(false, Collections.emptyList());
+		}
+
+		// 최신 기수가 아닌 경우 빈 리스트 반환
+		InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
+		if (currentUserDetails.lastGeneration() != Constant.CURRENT_GENERATION) {
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
+		}
 
 		// 2. 작업 성향이 있는 다른 멤버들 조회
 		List<Member> membersWithWorkPreference = workPreferenceRetriever.findMembersWithWorkPreference(userId);
 		if (membersWithWorkPreference.isEmpty()) {
-			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
 		}
 
 		// 3. 최신 기수 멤버들만 필터링
@@ -769,10 +777,10 @@ public class MemberService {
 				.toList();
 
 		if (candidateMembers.isEmpty()) {
-			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
 		}
 
-		// 4. 매칭 기준에 따라 필터링
+		// 4. 매칭 기준에 따라 필터링 (3개 이상 일치)
 		List<Member> matchedCandidates = workPreferenceRetriever.filterCandidatesByMatchCount(
 				candidateMembers, currentPreference, 3);
 
@@ -783,11 +791,16 @@ public class MemberService {
 				.limit(4)
 				.toList();
 
-		// 6. Response 생성
+		// 6. Response 생성 (매칭률 포함)
 		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations =
-				memberMapper.toRecommendedMembers(selectedCandidates, latestGenerationUserMap);
+				memberMapper.toRecommendedMembersWithMatchPercentage(
+						selectedCandidates,
+						latestGenerationUserMap,
+						currentPreference,
+						workPreferenceRetriever
+				);
 
-		return new WorkPreferenceRecommendationResponse(recommendations);
+		return new WorkPreferenceRecommendationResponse(true, recommendations);
 	}
 
 	@Transactional
