@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
+import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -35,6 +36,7 @@ import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
+import org.sopt.makers.internal.member.domain.TlMember;
 import org.sopt.makers.internal.member.domain.UserFavor;
 import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
@@ -57,6 +59,7 @@ import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
+import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
@@ -85,6 +88,7 @@ import lombok.val;
 @Service
 public class MemberService {
 	private final MemberRetriever memberRetriever;
+	private final TlMemberRetriever tlMemberRetriever;
 	private final CoffeeChatRetriever coffeeChatRetriever;
 	private final MemberCareerRetriever memberCareerRetriever;
 	private final MemberResponseMapper memberResponseMapper;
@@ -935,5 +939,75 @@ public class MemberService {
 				memberSoptActivityResponses, memberCareerResponses);
 		}).toList();
 	}
+
+    @Transactional(readOnly = true)
+    public List<TlMemberResponse> getAppjamTlMembers(Long userId) {
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        boolean isCurrentGenerationUser = userDetails.soptActivities().stream()
+                .anyMatch(activity -> Objects.equals(activity.generation(), Constant.CURRENT_GENERATION));
+
+        if (!isCurrentGenerationUser) {
+            return Collections.emptyList();
+        }
+
+        List<TlMember> tlMembers = tlMemberRetriever.findByTlGeneration(Constant.CURRENT_GENERATION);
+
+        List<Long> tlMemberIds = tlMembers.stream()
+                .map(tlMember -> tlMember.getMember().getId())
+                .toList();
+
+        Map<Long, Member> memberById = memberRepository.findAllByHasProfileTrueAndIdIn(tlMemberIds).stream()
+                .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+        Map<Long, InternalUserDetails> tlUserDetailsById = platformService.getInternalUsers(tlMemberIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        return tlMembers.stream()
+                .filter(tlMember -> {
+                    Long memberId = tlMember.getMember().getId();
+                    return memberById.containsKey(memberId) && tlUserDetailsById.containsKey(memberId);
+                })
+                .sorted((tl1, tl2) -> {
+                    String name1 = tlUserDetailsById.get(tl1.getMember().getId()).name();
+                    String name2 = tlUserDetailsById.get(tl2.getMember().getId()).name();
+                    return name1.compareTo(name2);
+                })
+                .map(tlMember -> {
+                    Long memberId = tlMember.getMember().getId();
+                    return buildTlMemberResponse(
+                            memberId,
+                            memberById.get(memberId),
+                            tlUserDetailsById.get(memberId),
+                            tlMember.getServiceType()
+                    );
+                })
+                .toList();
+    }
+
+    private TlMemberResponse buildTlMemberResponse(
+            Long memberId,
+            Member member,
+            InternalUserDetails userDetails,
+            org.sopt.makers.internal.member.domain.enums.ServiceType serviceType
+    ) {
+        List<MemberProfileResponse.MemberSoptActivityResponse> activities = userDetails.soptActivities().stream()
+                .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
+                        (long) activity.activityId(),
+                        activity.generation(),
+                        activity.part(),
+                        activity.team()
+                ))
+                .toList();
+
+        return new TlMemberResponse(
+                memberId,
+                userDetails.name(),
+                member.getUniversity(),
+                userDetails.profileImage(),
+                activities,
+                member.getIntroduction(),
+                serviceType
+        );
+    }
 
 }

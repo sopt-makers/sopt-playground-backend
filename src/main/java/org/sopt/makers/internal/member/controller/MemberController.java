@@ -34,6 +34,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
+import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -86,6 +87,18 @@ public class MemberController {
    @GetMapping("/search")
    public ResponseEntity<List<MemberResponse>> getMemberByName (@RequestParam String name) {
        List<MemberResponse> responses = memberService.getMemberByName(name);
+       return ResponseEntity.status(HttpStatus.OK).body(responses);
+   }
+
+   @Operation(summary = "앱잼 TL 멤버 조회 API", description = """
+           최신 기수의 앱잼 TL로 참여한 멤버들을 이름 가나다순으로 조회합니다.
+           각 TL이 발표한 서비스 타입(WEB 또는 APP) 정보를 포함합니다.
+           """)
+   @GetMapping("/tl")
+   public ResponseEntity<List<TlMemberResponse>> getTlMembers(
+           @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+   ) {
+       List<TlMemberResponse> responses = memberService.getAppjamTlMembers(userId);
        return ResponseEntity.status(HttpStatus.OK).body(responses);
    }
 
