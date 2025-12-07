@@ -82,7 +82,6 @@ public interface MemberMapper {
         );
     }
 
-    // 매칭률 포함한 추천 멤버 매핑 (37기만)
     default List<WorkPreferenceRecommendationResponse.RecommendedMember> toRecommendedMembersWithMatchPercentage(
             List<Member> members,
             Map<Long, InternalUserDetails> userDetailsMap,
@@ -103,7 +102,6 @@ public interface MemberMapper {
     default WorkPreferenceRecommendationResponse.RecommendedMember toRecommendedMemberWithMatchPercentage(
             Member member, InternalUserDetails userDetails, int matchPercentage) {
 
-        // 37기 활동만 추출
         WorkPreferenceRecommendationResponse.MemberSoptActivityResponse currentGenerationActivity =
                 userDetails.soptActivities().stream()
                         .filter(activity -> activity.generation() == org.sopt.makers.internal.common.Constant.CURRENT_GENERATION)
