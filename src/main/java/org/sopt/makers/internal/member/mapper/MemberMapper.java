@@ -82,25 +82,20 @@ public interface MemberMapper {
         );
     }
 
-    default List<WorkPreferenceRecommendationResponse.RecommendedMember> toRecommendedMembersWithMatchPercentage(
+    default List<WorkPreferenceRecommendationResponse.RecommendedMember> toRecommendedMembers(
             List<Member> members,
-            Map<Long, InternalUserDetails> userDetailsMap,
-            WorkPreference currentUserPreference,
-            org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever workPreferenceRetriever) {
+            Map<Long, InternalUserDetails> userDetailsMap) {
 
         return members.stream()
                 .map(member -> {
                     InternalUserDetails userDetails = userDetailsMap.get(member.getId());
-                    int matchCount = workPreferenceRetriever.calculateMatchCount(currentUserPreference, member.getWorkPreference());
-                    int matchPercentage = calculateMatchPercentage(matchCount);
-
-                    return toRecommendedMemberWithMatchPercentage(member, userDetails, matchPercentage);
+                    return toRecommendedMember(member, userDetails);
                 })
                 .toList();
     }
 
-    default WorkPreferenceRecommendationResponse.RecommendedMember toRecommendedMemberWithMatchPercentage(
-            Member member, InternalUserDetails userDetails, int matchPercentage) {
+    default WorkPreferenceRecommendationResponse.RecommendedMember toRecommendedMember(
+            Member member, InternalUserDetails userDetails) {
 
         WorkPreferenceRecommendationResponse.MemberSoptActivityResponse currentGenerationActivity =
                 userDetails.soptActivities().stream()
@@ -123,17 +118,7 @@ public interface MemberMapper {
                 userDetails.profileImage(),
                 member.getUniversity(),
                 currentGenerationActivity,
-                matchPercentage,
                 workPreferenceData
         );
-    }
-
-    default int calculateMatchPercentage(int matchCount) {
-        return switch (matchCount) {
-            case 5 -> 100;
-            case 4 -> 80;
-            case 3 -> 60;
-            default -> 0;
-        };
     }
 }

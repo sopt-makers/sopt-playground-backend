@@ -28,9 +28,6 @@ public record WorkPreferenceRecommendationResponse(
         @Schema(description = "37기 활동 정보", required = true)
         MemberSoptActivityResponse activity,
 
-        @Schema(description = "매칭률 (60, 80, 100)", required = true, example = "80")
-        int matchPercentage,
-
         @Schema(description = "작업 성향 정보", required = true)
         WorkPreferenceData workPreference
     ) {}
