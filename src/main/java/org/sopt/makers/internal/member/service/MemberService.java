@@ -785,11 +785,9 @@ public class MemberService {
 				.toList();
 
 		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations =
-				memberMapper.toRecommendedMembersWithMatchPercentage(
+				memberMapper.toRecommendedMembers(
 						selectedCandidates,
-						latestGenerationUserMap,
-						currentPreference,
-						workPreferenceRetriever
+						latestGenerationUserMap
 				);
 
 		return new WorkPreferenceRecommendationResponse(true, recommendations);
