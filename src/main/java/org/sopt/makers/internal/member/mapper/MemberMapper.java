@@ -66,49 +66,6 @@ public interface MemberMapper {
         );
     }
 
-    // WorkPreference Recommendation 관련 매핑 메서드들
-    default List<WorkPreferenceRecommendationResponse.RecommendedMember> toRecommendedMembers(
-            List<Member> members, Map<Long, InternalUserDetails> userDetailsMap) {
-
-        return members.stream()
-                .map(member -> toRecommendedMember(member, userDetailsMap.get(member.getId())))
-                .toList();
-    }
-
-    default WorkPreferenceRecommendationResponse.RecommendedMember toRecommendedMember(
-            Member member, InternalUserDetails userDetails) {
-
-        List<WorkPreferenceRecommendationResponse.MemberSoptActivityResponse> activities =
-                mapSoptActivitiesForRecommendation(userDetails);
-
-        WorkPreferenceRecommendationResponse.WorkPreferenceData workPreferenceData =
-                mapWorkPreferenceData(member.getWorkPreference());
-
-        return new WorkPreferenceRecommendationResponse.RecommendedMember(
-                member.getId(),
-                userDetails.name(),
-                userDetails.profileImage(),
-                userDetails.birthday(),
-                member.getUniversity(),
-                member.getMbti(),
-                workPreferenceData,
-                activities
-        );
-    }
-
-    default List<WorkPreferenceRecommendationResponse.MemberSoptActivityResponse> mapSoptActivitiesForRecommendation(
-            InternalUserDetails userDetails) {
-
-        return userDetails.soptActivities().stream()
-                .map(activity -> new WorkPreferenceRecommendationResponse.MemberSoptActivityResponse(
-                        (long) activity.activityId(),
-                        activity.generation(),
-                        activity.part(),
-                        activity.team()
-                ))
-                .toList();
-    }
-
     default WorkPreferenceRecommendationResponse.WorkPreferenceData mapWorkPreferenceData(
             WorkPreference workPreference) {
 
@@ -123,5 +80,60 @@ public interface MemberMapper {
                 workPreference.getWorkPlaceValue(),
                 workPreference.getFeedbackStyleValue()
         );
+    }
+
+    default List<WorkPreferenceRecommendationResponse.RecommendedMember> toRecommendedMembersWithMatchPercentage(
+            List<Member> members,
+            Map<Long, InternalUserDetails> userDetailsMap,
+            WorkPreference currentUserPreference,
+            org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever workPreferenceRetriever) {
+
+        return members.stream()
+                .map(member -> {
+                    InternalUserDetails userDetails = userDetailsMap.get(member.getId());
+                    int matchCount = workPreferenceRetriever.calculateMatchCount(currentUserPreference, member.getWorkPreference());
+                    int matchPercentage = calculateMatchPercentage(matchCount);
+
+                    return toRecommendedMemberWithMatchPercentage(member, userDetails, matchPercentage);
+                })
+                .toList();
+    }
+
+    default WorkPreferenceRecommendationResponse.RecommendedMember toRecommendedMemberWithMatchPercentage(
+            Member member, InternalUserDetails userDetails, int matchPercentage) {
+
+        WorkPreferenceRecommendationResponse.MemberSoptActivityResponse currentGenerationActivity =
+                userDetails.soptActivities().stream()
+                        .filter(activity -> activity.generation() == org.sopt.makers.internal.common.Constant.CURRENT_GENERATION)
+                        .findFirst()
+                        .map(activity -> new WorkPreferenceRecommendationResponse.MemberSoptActivityResponse(
+                                (long) activity.activityId(),
+                                activity.generation(),
+                                activity.part(),
+                                activity.team()
+                        ))
+                        .orElse(null);
+
+        WorkPreferenceRecommendationResponse.WorkPreferenceData workPreferenceData =
+                mapWorkPreferenceData(member.getWorkPreference());
+
+        return new WorkPreferenceRecommendationResponse.RecommendedMember(
+                member.getId(),
+                userDetails.name(),
+                userDetails.profileImage(),
+                member.getUniversity(),
+                currentGenerationActivity,
+                matchPercentage,
+                workPreferenceData
+        );
+    }
+
+    default int calculateMatchPercentage(int matchCount) {
+        return switch (matchCount) {
+            case 5 -> 100;
+            case 4 -> 80;
+            case 3 -> 60;
+            default -> 0;
+        };
     }
 }

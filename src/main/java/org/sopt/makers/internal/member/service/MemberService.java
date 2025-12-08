@@ -743,20 +743,23 @@ public class MemberService {
 
 	@Transactional(readOnly = true)
 	public WorkPreferenceRecommendationResponse getWorkPreferenceRecommendations(Long userId) {
-		// 1. 현재 사용자의 작업 성향 검증
-		workPreferenceRetriever.validateWorkPreferenceExists(userId);
-		workPreferenceRetriever.validateCurrentGeneration(userId);
-
 		Member currentMember = getMemberById(userId);
 		WorkPreference currentPreference = currentMember.getWorkPreference();
 
-		// 2. 작업 성향이 있는 다른 멤버들 조회
-		List<Member> membersWithWorkPreference = workPreferenceRetriever.findMembersWithWorkPreference(userId);
-		if (membersWithWorkPreference.isEmpty()) {
-			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+		if (currentPreference == null) {
+			return new WorkPreferenceRecommendationResponse(false, Collections.emptyList());
 		}
 
-		// 3. 최신 기수 멤버들만 필터링
+		InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
+		if (currentUserDetails.lastGeneration() != Constant.CURRENT_GENERATION) {
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
+		}
+
+		List<Member> membersWithWorkPreference = workPreferenceRetriever.findMembersWithWorkPreference(userId);
+		if (membersWithWorkPreference.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
+		}
+
 		List<Long> memberIds = membersWithWorkPreference.stream()
 				.map(Member::getId)
 				.toList();
@@ -769,25 +772,27 @@ public class MemberService {
 				.toList();
 
 		if (candidateMembers.isEmpty()) {
-			return new WorkPreferenceRecommendationResponse(Collections.emptyList());
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
 		}
 
-		// 4. 매칭 기준에 따라 필터링
 		List<Member> matchedCandidates = workPreferenceRetriever.filterCandidatesByMatchCount(
 				candidateMembers, currentPreference, 3);
 
-		// 5. 랜덤으로 최대 4명 선택
 		List<Member> shuffledCandidates = new ArrayList<>(matchedCandidates);
 		Collections.shuffle(shuffledCandidates);
 		List<Member> selectedCandidates = shuffledCandidates.stream()
 				.limit(4)
 				.toList();
 
-		// 6. Response 생성
 		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations =
-				memberMapper.toRecommendedMembers(selectedCandidates, latestGenerationUserMap);
+				memberMapper.toRecommendedMembersWithMatchPercentage(
+						selectedCandidates,
+						latestGenerationUserMap,
+						currentPreference,
+						workPreferenceRetriever
+				);
 
-		return new WorkPreferenceRecommendationResponse(recommendations);
+		return new WorkPreferenceRecommendationResponse(true, recommendations);
 	}
 
 	@Transactional
