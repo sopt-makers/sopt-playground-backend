@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.member.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,22 +27,27 @@ public class WorkPreference implements Serializable {
     private WorkPlace workPlace;
     private FeedbackStyle feedbackStyle;
 
+    @JsonIgnore
     public String getIdeationStyleValue() {
         return ideationStyle != null ? ideationStyle.getValue() : null;
     }
 
+    @JsonIgnore
     public String getWorkTimeValue() {
         return workTime != null ? workTime.getValue() : null;
     }
 
+    @JsonIgnore
     public String getCommunicationStyleValue() {
         return communicationStyle != null ? communicationStyle.getValue() : null;
     }
 
+    @JsonIgnore
     public String getWorkPlaceValue() {
         return workPlace != null ? workPlace.getValue() : null;
     }
 
+    @JsonIgnore
     public String getFeedbackStyleValue() {
         return feedbackStyle != null ? feedbackStyle.getValue() : null;
     }
