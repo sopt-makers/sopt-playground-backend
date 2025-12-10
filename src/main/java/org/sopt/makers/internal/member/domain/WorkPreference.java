@@ -18,7 +18,6 @@ import java.io.Serializable;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkPreference implements Serializable {
 
     private IdeationStyle ideationStyle;
