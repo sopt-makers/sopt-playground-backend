@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.member.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +18,7 @@ import java.io.Serializable;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkPreference implements Serializable {
 
     private IdeationStyle ideationStyle;
