@@ -1,7 +1,5 @@
 package org.sopt.makers.internal.member.service;
 
-import static org.sopt.makers.internal.common.Constant.*;
-
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -30,7 +28,8 @@ import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.constants.AppJamObMemberId;
+import org.sopt.makers.internal.member.constants.MakersMemberId;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.member.domain.MemberCareer;
@@ -113,9 +112,13 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public MemberInfoResponse getMyInformation(Long userId) {
 		Member member = getMemberById(userId);
+		List<Long> appJamObMemberIds = AppJamObMemberId.getAppJamObMember();
 		InternalUserDetails userDetails = platformService.getInternalUser(userId);
 		boolean isCoffeeChatActive = coffeeChatRetriever.existsCoffeeChat(member);
-		return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
+		boolean enableWorkPreferenceEvent =
+			Objects.equals(userDetails.lastGeneration(), Constant.CURRENT_GENERATION) || appJamObMemberIds.contains(userId);
+
+		return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive, enableWorkPreferenceEvent);
 	}
 
 	@Transactional(readOnly = true)
