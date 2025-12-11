@@ -63,7 +63,7 @@ import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.constants.MakersMemberId;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
 import org.sopt.makers.internal.member.service.MemberRetriever;
