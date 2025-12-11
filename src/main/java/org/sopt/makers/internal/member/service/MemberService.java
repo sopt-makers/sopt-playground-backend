@@ -754,7 +754,12 @@ public class MemberService {
 		}
 
 		InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
-		if (currentUserDetails.lastGeneration() != Constant.CURRENT_GENERATION) {
+
+		List<Long> appJamObMemberIds = AppJamObMemberId.getAppJamObMember();
+		boolean enableWorkPreferenceEvent =
+			Objects.equals(currentUserDetails.lastGeneration(), Constant.CURRENT_GENERATION) || appJamObMemberIds.contains(userId);
+
+		if (!enableWorkPreferenceEvent) {
 			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
 		}
 
