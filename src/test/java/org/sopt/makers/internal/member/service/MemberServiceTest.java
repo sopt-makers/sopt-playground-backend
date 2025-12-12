@@ -33,7 +33,10 @@ import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import java.util.Collections;
 import java.util.List;
 
+import org.sopt.makers.internal.exception.ClientBadRequestException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
@@ -82,7 +85,7 @@ class MemberServiceTest {
     private MemberService memberService;
 
     @Test
-    @DisplayName("현재 기수가 아닌 유저가 조회하면 빈 리스트를 반환한다")
+    @DisplayName("현재 기수가 아닌 유저가 조회하면 400 에러가 발생한다.")
     void getAppjamTlMembers_ReturnsEmptyList_WhenUserIsNotCurrentGeneration() {
         // Given
         Long userId = 100L;
@@ -101,11 +104,11 @@ class MemberServiceTest {
 
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
 
-        // When
-        List<TlMemberResponse> result = memberService.getAppjamTlMembers(userId);
+        // When & Then
+        assertThatThrownBy(() -> memberService.getAppjamTlMembers(userId))
+                .isInstanceOf(ClientBadRequestException.class)
+                .hasMessageContaining("최신 기수가 아닌 유저입니다.");
 
-        // Then
-        assertThat(result).isEmpty();
         verify(platformService).getInternalUser(userId);
         verify(tlMemberRetriever, never()).findByTlGeneration(anyInt());
     }

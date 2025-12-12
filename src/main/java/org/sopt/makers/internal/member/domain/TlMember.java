@@ -40,4 +40,10 @@ public class TlMember {
     @Enumerated(EnumType.STRING)
     @Column(name = "service_type", nullable = false)
     private ServiceType serviceType;
+
+    @Column(name = "self_introduction", nullable = false, length = 2048)
+    private String selfIntroduction;
+
+    @Column(name = "competition_data", nullable = false, length = 2048)
+    private String competitionData;
 }

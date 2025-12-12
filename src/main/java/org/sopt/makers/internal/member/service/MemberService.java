@@ -40,6 +40,7 @@ import org.sopt.makers.internal.member.domain.UserFavor;
 import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
+import org.sopt.makers.internal.member.domain.enums.ServiceType;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
@@ -958,7 +959,7 @@ public class MemberService {
                 .anyMatch(activity -> Objects.equals(activity.generation(), Constant.CURRENT_GENERATION));
 
         if (!isCurrentGenerationUser) {
-            return Collections.emptyList();
+            throw new ClientBadRequestException("최신 기수가 아닌 유저입니다.");
         }
 
         List<TlMember> tlMembers = tlMemberRetriever.findByTlGeneration(Constant.CURRENT_GENERATION);
@@ -989,7 +990,9 @@ public class MemberService {
                             memberId,
                             memberById.get(memberId),
                             tlUserDetailsById.get(memberId),
-                            tlMember.getServiceType()
+                            tlMember.getServiceType(),
+							tlMember.getSelfIntroduction(),
+							tlMember.getCompetitionData()
                     );
                 })
                 .toList();
@@ -999,7 +1002,9 @@ public class MemberService {
             Long memberId,
             Member member,
             InternalUserDetails userDetails,
-            org.sopt.makers.internal.member.domain.enums.ServiceType serviceType
+			ServiceType serviceType,
+			String selfIntroduction,
+			String competitionData
     ) {
         List<MemberProfileResponse.MemberSoptActivityResponse> activities = userDetails.soptActivities().stream()
                 .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
@@ -1017,7 +1022,9 @@ public class MemberService {
                 userDetails.profileImage(),
                 activities,
                 member.getIntroduction(),
-                serviceType
+                serviceType,
+				selfIntroduction,
+				competitionData
         );
     }
 
