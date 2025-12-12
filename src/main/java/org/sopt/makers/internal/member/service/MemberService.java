@@ -59,6 +59,7 @@ import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
@@ -743,6 +744,26 @@ public class MemberService {
 	@Transactional
 	public void updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
 		workPreferenceModifier.updateWorkPreference(memberId, request);
+	}
+
+	@Transactional(readOnly = true)
+	public WorkPreferenceResponse getWorkPreference(Long userId) {
+		Member member = getMemberById(userId);
+		WorkPreference workPreference = member.getWorkPreference();
+
+		if (workPreference == null) {
+			throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다.");
+		}
+
+		WorkPreferenceResponse.WorkPreferenceData data = new WorkPreferenceResponse.WorkPreferenceData(
+			workPreference.getIdeationStyleValue(),
+			workPreference.getWorkTimeValue(),
+			workPreference.getCommunicationStyleValue(),
+			workPreference.getWorkPlaceValue(),
+			workPreference.getFeedbackStyleValue()
+		);
+
+		return new WorkPreferenceResponse(data);
 	}
 
 	@Transactional(readOnly = true)
