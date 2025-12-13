@@ -31,6 +31,7 @@ public record MemberProfileUpdateRequest (
         UserFavorRequest userFavor,
         String idealType,
         String selfIntroduction,
+        WorkPreferenceRequest workPreference,
         List<MemberLinkUpdateRequest> links,
         @Schema(required = true)
         List<MemberSoptActivityUpdateRequest> activities,
@@ -46,6 +47,14 @@ public record MemberProfileUpdateRequest (
             Boolean isRedBeanFishBreadLover,
             Boolean isSojuLover,
             Boolean isRiceTteokLover
+    ){}
+
+    public record WorkPreferenceRequest(
+            String ideationStyle,
+            String workTime,
+            String communicationStyle,
+            String workPlace,
+            String feedbackStyle
     ){}
     public record MemberLinkUpdateRequest(
             Long id,

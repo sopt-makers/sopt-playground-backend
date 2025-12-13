@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Profile("!prod")
 @OpenAPIDefinition(
         servers = {
-                @Server(url = "https://playground.dev.sopt.org", description = "개발 환경"),
+                @Server(url = "https://playground-dev.sopt.org", description = "개발 환경"),
                 @Server(url = "http://localhost:8080", description = "로컬 환경")
         },
         info = @Info(
@@ -23,7 +23,9 @@ import org.springframework.stereotype.Component;
 )
 @SecurityScheme(
         name = "Authorization",
-        type = SecuritySchemeType.APIKEY,
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT",
         in = SecuritySchemeIn.HEADER
 )
 @Component
