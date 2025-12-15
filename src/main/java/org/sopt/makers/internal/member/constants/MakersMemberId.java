@@ -1,4 +1,4 @@
-package org.sopt.makers.internal.member.domain;
+package org.sopt.makers.internal.member.constants;
 
 import java.util.List;
 import lombok.Getter;

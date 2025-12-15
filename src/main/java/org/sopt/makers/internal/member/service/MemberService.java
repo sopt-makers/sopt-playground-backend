@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
+import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -27,20 +28,25 @@ import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
-import org.sopt.makers.internal.member.domain.MakersMemberId;
+import org.sopt.makers.internal.member.constants.AppJamObMemberId;
+import org.sopt.makers.internal.member.constants.MakersMemberId;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberBlock;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.domain.MemberLink;
 import org.sopt.makers.internal.member.domain.MemberReport;
+import org.sopt.makers.internal.member.domain.TlMember;
 import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
+import org.sopt.makers.internal.member.domain.enums.ServiceType;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectVo;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
+import org.sopt.makers.internal.member.dto.request.WorkPreferenceUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
@@ -52,6 +58,9 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
+import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
 import org.sopt.makers.internal.member.repository.MemberBlockRepository;
@@ -62,6 +71,8 @@ import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
+import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
+import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -78,6 +89,7 @@ import lombok.val;
 @Service
 public class MemberService {
 	private final MemberRetriever memberRetriever;
+	private final TlMemberRetriever tlMemberRetriever;
 	private final CoffeeChatRetriever coffeeChatRetriever;
 	private final MemberCareerRetriever memberCareerRetriever;
 	private final MemberResponseMapper memberResponseMapper;
@@ -94,15 +106,21 @@ public class MemberService {
 	private final ReviewService reviewService;
 	private final PlatformService platformService;
 	private final MemberSortingService memberSortingService;
+	private final WorkPreferenceRetriever workPreferenceRetriever;
+	private final WorkPreferenceModifier workPreferenceModifier;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
 	@Transactional(readOnly = true)
 	public MemberInfoResponse getMyInformation(Long userId) {
 		Member member = getMemberById(userId);
+		List<Long> appJamObMemberIds = AppJamObMemberId.getAppJamObMember();
 		InternalUserDetails userDetails = platformService.getInternalUser(userId);
 		boolean isCoffeeChatActive = coffeeChatRetriever.existsCoffeeChat(member);
-		return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive);
+		boolean enableWorkPreferenceEvent =
+			Objects.equals(userDetails.lastGeneration(), Constant.CURRENT_GENERATION) || appJamObMemberIds.contains(userId);
+
+		return memberResponseMapper.toMemberInfoResponse(member, userDetails, isCoffeeChatActive, enableWorkPreferenceEvent);
 	}
 
 	@Transactional(readOnly = true)
@@ -173,7 +191,7 @@ public class MemberService {
 			response.profileImage(), response.birthday(), response.isPhoneBlind(), response.phone(), response.email(),
 			response.address(), response.university(), response.major(), response.introduction(), response.skill(),
 			response.mbti(), response.mbtiDescription(), response.sojuCapacity(), response.interest(),
-			response.userFavor(), response.idealType(), response.selfIntroduction(), response.activities(),
+			response.userFavor(), response.idealType(), response.selfIntroduction(), response.workPreference(), response.activities(),
 			updatedActivities, response.links(), response.projects(), response.careers(), response.allowOfficial(),
 			response.isCoffeeChatActivate(), response.isMine());
 		return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
@@ -528,7 +546,7 @@ public class MemberService {
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
 			request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(), request.interest(),
 			userFavor, request.idealType(), request.selfIntroduction(), request.allowOfficial(), memberLinks,
-			memberCareers, request.isPhoneBlind());
+			memberCareers, request.isPhoneBlind(), null);
 
 		try {
 			if (Objects.equals(activeProfile, "prod")) {
@@ -704,12 +722,105 @@ public class MemberService {
 			.isHardPeachLover(request.userFavor().isHardPeachLover())
 			.build();
 
+		WorkPreference workPreference = null;
+		if (request.workPreference() != null) {
+			workPreference = workPreferenceModifier.buildWorkPreferenceFromStrings(
+				request.workPreference().ideationStyle(),
+				request.workPreference().workTime(),
+				request.workPreference().communicationStyle(),
+				request.workPreference().workPlace(),
+				request.workPreference().feedbackStyle()
+			);
+		}
+
 		member.saveMemberProfile(request.address(), request.university(), request.major(), request.introduction(),
 			request.skill(), request.mbti(), request.mbtiDescription(), request.sojuCapacity(), request.interest(),
 			userFavor, request.idealType(), request.selfIntroduction(), request.allowOfficial(), memberLinks,
-			memberCareers, request.isPhoneBlind());
+			memberCareers, request.isPhoneBlind(), workPreference);
 
 		return member;
+	}
+
+	@Transactional
+	public void updateWorkPreference(Long memberId, WorkPreferenceUpdateRequest request) {
+		workPreferenceModifier.updateWorkPreference(memberId, request);
+	}
+
+	@Transactional(readOnly = true)
+	public WorkPreferenceResponse getWorkPreference(Long userId) {
+		Member member = getMemberById(userId);
+		WorkPreference workPreference = member.getWorkPreference();
+
+		if (workPreference == null) {
+			throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다.");
+		}
+
+		WorkPreferenceResponse.WorkPreferenceData data = new WorkPreferenceResponse.WorkPreferenceData(
+			workPreference.getIdeationStyleValue(),
+			workPreference.getWorkTimeValue(),
+			workPreference.getCommunicationStyleValue(),
+			workPreference.getWorkPlaceValue(),
+			workPreference.getFeedbackStyleValue()
+		);
+
+		return new WorkPreferenceResponse(data);
+	}
+
+	@Transactional(readOnly = true)
+	public WorkPreferenceRecommendationResponse getWorkPreferenceRecommendations(Long userId) {
+		Member currentMember = getMemberById(userId);
+		WorkPreference currentPreference = currentMember.getWorkPreference();
+
+		if (currentPreference == null) {
+			return new WorkPreferenceRecommendationResponse(false, Collections.emptyList());
+		}
+
+		InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
+
+		List<Long> appJamObMemberIds = AppJamObMemberId.getAppJamObMember();
+		boolean enableWorkPreferenceEvent =
+			Objects.equals(currentUserDetails.lastGeneration(), Constant.CURRENT_GENERATION) || appJamObMemberIds.contains(userId);
+
+		if (!enableWorkPreferenceEvent) {
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
+		}
+
+		List<Member> membersWithWorkPreference = workPreferenceRetriever.findMembersWithWorkPreference(userId);
+		if (membersWithWorkPreference.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
+		}
+
+		List<Long> memberIds = membersWithWorkPreference.stream()
+				.map(Member::getId)
+				.toList();
+
+		Map<Long, InternalUserDetails> latestGenerationUserMap =
+				workPreferenceRetriever.getLatestGenerationMembersMap(memberIds);
+
+		List<Member> candidateMembers = membersWithWorkPreference.stream()
+				.filter(member -> latestGenerationUserMap.containsKey(member.getId()))
+				.toList();
+
+		if (candidateMembers.isEmpty()) {
+			return new WorkPreferenceRecommendationResponse(true, Collections.emptyList());
+		}
+
+		List<Member> matchedCandidates = workPreferenceRetriever.filterCandidatesByMatchCount(
+				candidateMembers, currentPreference, 3);
+
+		List<Member> shuffledCandidates = new ArrayList<>(matchedCandidates);
+		Collections.shuffle(shuffledCandidates);
+		List<Member> selectedCandidates = shuffledCandidates.stream()
+				.limit(4)
+				.toList();
+
+		List<WorkPreferenceRecommendationResponse.RecommendedMember> recommendations =
+				memberMapper.toRecommendedMembers(
+						selectedCandidates,
+						latestGenerationUserMap
+				);
+
+		return new WorkPreferenceRecommendationResponse(true, recommendations);
 	}
 
 	@Transactional
@@ -861,5 +972,81 @@ public class MemberService {
 				memberSoptActivityResponses, memberCareerResponses);
 		}).toList();
 	}
+
+    @Transactional(readOnly = true)
+    public List<TlMemberResponse> getAppjamTlMembers(Long userId) {
+        InternalUserDetails userDetails = platformService.getInternalUser(userId);
+        boolean isCurrentGenerationUser = userDetails.soptActivities().stream()
+                .anyMatch(activity -> Objects.equals(activity.generation(), Constant.CURRENT_GENERATION));
+
+        if (!isCurrentGenerationUser) {
+            throw new ClientBadRequestException("최신 기수가 아닌 유저입니다.");
+        }
+
+        List<TlMember> tlMembers = tlMemberRetriever.findByTlGeneration(Constant.CURRENT_GENERATION);
+
+        List<Long> tlMemberIds = tlMembers.stream()
+                .map(tlMember -> tlMember.getMember().getId())
+                .toList();
+
+        Map<Long, Member> memberById = memberRepository.findAllByHasProfileTrueAndIdIn(tlMemberIds).stream()
+                .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+        Map<Long, InternalUserDetails> tlUserDetailsById = platformService.getInternalUsers(tlMemberIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        return tlMembers.stream()
+                .filter(tlMember -> {
+                    Long memberId = tlMember.getMember().getId();
+                    return memberById.containsKey(memberId) && tlUserDetailsById.containsKey(memberId);
+                })
+                .sorted((tl1, tl2) -> {
+                    String name1 = tlUserDetailsById.get(tl1.getMember().getId()).name();
+                    String name2 = tlUserDetailsById.get(tl2.getMember().getId()).name();
+                    return name1.compareTo(name2);
+                })
+                .map(tlMember -> {
+                    Long memberId = tlMember.getMember().getId();
+                    return buildTlMemberResponse(
+                            memberId,
+                            memberById.get(memberId),
+                            tlUserDetailsById.get(memberId),
+                            tlMember.getServiceType(),
+							tlMember.getSelfIntroduction(),
+							tlMember.getCompetitionData()
+                    );
+                })
+                .toList();
+    }
+
+    private TlMemberResponse buildTlMemberResponse(
+            Long memberId,
+            Member member,
+            InternalUserDetails userDetails,
+			ServiceType serviceType,
+			String selfIntroduction,
+			String competitionData
+    ) {
+        List<MemberProfileResponse.MemberSoptActivityResponse> activities = userDetails.soptActivities().stream()
+                .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
+                        (long) activity.activityId(),
+                        activity.generation(),
+                        activity.part(),
+                        activity.team()
+                ))
+                .toList();
+
+        return new TlMemberResponse(
+                memberId,
+                userDetails.name(),
+                member.getUniversity(),
+                userDetails.profileImage(),
+                activities,
+                member.getIntroduction(),
+                serviceType,
+				selfIntroduction,
+				competitionData
+        );
+    }
 
 }

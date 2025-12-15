@@ -17,12 +17,14 @@ import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
 import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.member.dto.request.MemberReportRequest;
+import org.sopt.makers.internal.member.dto.request.WorkPreferenceUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
 import org.sopt.makers.internal.member.dto.response.MemberCrewResponse;
@@ -31,6 +33,9 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
+import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
+import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -86,6 +91,18 @@ public class MemberController {
        return ResponseEntity.status(HttpStatus.OK).body(responses);
    }
 
+   @Operation(summary = "앱잼 TL 멤버 조회 API", description = """
+           최신 기수의 앱잼 TL로 참여한 멤버들을 이름 가나다순으로 조회합니다.
+           각 TL이 발표한 서비스 타입(WEB 또는 APP) 정보를 포함합니다.
+           """)
+   @GetMapping("/tl")
+   public ResponseEntity<List<TlMemberResponse>> getTlMembers(
+           @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+   ) {
+       List<TlMemberResponse> responses = memberService.getAppjamTlMembers(userId);
+       return ResponseEntity.status(HttpStatus.OK).body(responses);
+   }
+
 
    // 프론트 연결 되면 삭제 예정
     @Deprecated
@@ -136,6 +153,35 @@ public class MemberController {
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
         val response = memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "작업 성향 업데이트 API")
+    @PatchMapping("/work-preference")
+    public ResponseEntity<CommonResponse> updateWorkPreference(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @RequestBody WorkPreferenceUpdateRequest request
+    ) {
+        memberService.updateWorkPreference(userId, request);
+        CommonResponse response = new CommonResponse(true, "작업 성향이 성공적으로 업데이트되었습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "멤버 작업 성향 조회 API")
+    @GetMapping("/work-preference")
+    public ResponseEntity<WorkPreferenceResponse> getWorkPreference(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        WorkPreferenceResponse response = memberService.getWorkPreference(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "작업 성향 유사 멤버 추천 API")
+    @GetMapping("/work-preference/recommendations")
+    public ResponseEntity<WorkPreferenceRecommendationResponse> getWorkPreferenceRecommendations(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        WorkPreferenceRecommendationResponse response = memberService.getWorkPreferenceRecommendations(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

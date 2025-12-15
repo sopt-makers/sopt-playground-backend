@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberResponseMapper {
 
-    public MemberInfoResponse toMemberInfoResponse(Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActive) {
+    public MemberInfoResponse toMemberInfoResponse(Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActive, Boolean enableWorkPreferenceEvent) {
         return new MemberInfoResponse(
                 member.getId(),
                 userDetails.name(),
@@ -24,7 +24,9 @@ public class MemberResponseMapper {
                 userDetails.profileImage(),
                 member.getHasProfile(),
                 member.getEditActivitiesAble(),
-                isCoffeeChatActive
+                isCoffeeChatActive,
+                member.getWorkPreference() != null,
+                enableWorkPreferenceEvent
         );
     }
 
