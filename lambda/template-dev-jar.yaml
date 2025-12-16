@@ -49,19 +49,20 @@ Resources:
             Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
 
       Events:
-        # Warmer 이벤트 (SnapStart와 함께 사용하면 효과적)
-        Warmer:
-          Type: Schedule
-          Properties:
-            Schedule: rate(5 minutes)
-            Enabled: true
-            Input: '{"warmer": true}'
+#        # Warmer 이벤트 (SnapStart 환경에는 권장되지 않음)
+#        Warmer:
+#          Type: Schedule
+#          Properties:
+#            Schedule: rate(5 minutes)
+#            Enabled: true
+#            Input: '{"warmer": true}'
         ApiProxy:
           Type: Api
           Properties:
             RestApiId: !Ref PlaygroundApi
             Path: /{proxy+}
             Method: ANY
+
 
   PlaygroundApi:
     Type: AWS::Serverless::Api
@@ -70,8 +71,8 @@ Resources:
       Cors:
         AllowOrigin: "'*'"
         AllowHeaders: "'*'"
-        AllowMethods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
-        AllowCredentials: false
+        AllowMethods: "'*'"
+        AllowCredentials: "'false'"
 
 Outputs:
   ApiEndpoint:

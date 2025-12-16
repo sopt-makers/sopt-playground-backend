@@ -2,8 +2,6 @@ plugins {
 	id 'org.springframework.boot' version '3.2.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'java'
-	id 'org.graalvm.buildtools.native' version '0.10.4'
-	id 'org.springframework.boot.aot' version '3.2.0' apply false
 	id 'org.hibernate.orm' version '6.2.13.Final'
 }
 
@@ -37,7 +35,10 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation "org.springframework.boot:spring-boot-starter-aop"
-	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation("org.springframework.boot:spring-boot-starter-web") {
+		// AWS Lambda 환경에서 불필요한 내장 Tomcat 컨테이너 제외
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+	}
 	implementation "org.springframework.boot:spring-boot-starter-mail"
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
@@ -109,9 +110,6 @@ dependencies {
 	implementation 'com.google.apis:google-api-services-sheets:v4-rev516-1.23.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
 
-	// Web Client
-	implementation("org.springframework.boot:spring-boot-starter-webflux")
-
 	// Mac M1/M2 ARM 환경에서 Netty DNS Resolver
 	implementation "io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64"
 
@@ -135,6 +133,7 @@ tasks.named('test') {
 
 // Lambda ZIP 빌드 설정 - buildZip 설정을 포함한 Lambda 최적화
 task lambdaJar(type: Zip) {
+	dependsOn bootJar  // bootJar 작업이 먼저 실행되도록 명시적 의존성 추가
 	archiveClassifier = 'lambda'
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	zip64 = true  // 대용량 ZIP 파일 지원 (65535개 이상의 파일)
