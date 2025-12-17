@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# 간단한 Lambda JAR 배포 스크립트 (자동 스택 삭제 기능 포함)
+# 간단한 Lambda JAR 배포 스크립트
 
 set -e  # 에러 발생시 중단
 
 # 설정
 ENV=${1:-dev}
 S3_BUCKET="sopt-makers-internal"
-STACK_NAME="playground-${ENV}-jar"
+STACK_NAME="playground-${ENV}"
 AWS_REGION="ap-northeast-2"
 
 # 색상 정의

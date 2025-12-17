@@ -21,12 +21,3 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 template = "template-prod.yaml"
 resolve_s3 = true
-
-[dev-jar.deploy.parameters]
-stack_name = "playground-dev-jar"
-region = "ap-northeast-2"
-capabilities = "CAPABILITY_IAM"
-confirm_changeset = false
-template = "template-dev-jar.yaml"
-resolve_image_repos = true
-resolve_s3 = true

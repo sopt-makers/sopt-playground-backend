@@ -951,7 +951,7 @@ public class MemberService {
 
 	public List<MakersMemberProfileResponse> getAllMakersMembersProfiles() {
 		List<Long> makerMemberIds = MakersMemberId.getMakersMember();
-		List<Member> members = memberRepository.findAllByHasProfileTrueAndIdIn(makerMemberIds);
+		List<Member> members = memberRepository.findAllByHasProfileTrueAndIdInWithCareers(makerMemberIds);
 		List<InternalUserDetails> userDetails = platformService.getInternalUsers(makerMemberIds);
 
 		Map<Long, List<MemberCareer>> careerMap = members.stream()

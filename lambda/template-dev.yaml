@@ -13,11 +13,11 @@ Parameters:
   S3Bucket:
     Type: String
     Default: ""
-    Description: S3 bucket containing the Lambda JAR
+    Description: S3 bucket containing the Lambda
   S3Key:
     Type: String
     Default: ""
-    Description: S3 key (path) to the Lambda JAR file
+    Description: S3 key (path) to the Lambda file
   Profile:
     Type: String
     Default: "lambda-dev"
@@ -27,7 +27,7 @@ Resources:
   PlaygroundApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "playground-api-dev-jar"
+      FunctionName: !Sub "playground-api-dev"
       CodeUri:
         Bucket: !Ref S3Bucket
         Key: !Ref S3Key
