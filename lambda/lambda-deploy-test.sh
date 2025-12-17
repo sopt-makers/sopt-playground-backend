@@ -37,7 +37,7 @@ cd lambda
 
 # SAM 배포 실행
 sam deploy \
-  --config-env ${ENV}-jar \
+  --config-env ${ENV} \
   --stack-name ${STACK_NAME} \
   --no-fail-on-empty-changeset \
   --parameter-overrides \
