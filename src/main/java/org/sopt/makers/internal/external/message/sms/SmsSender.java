@@ -2,9 +2,10 @@ package org.sopt.makers.internal.external.message.sms;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.util.Base64;
+
 import lombok.AllArgsConstructor;
 import lombok.val;
-import org.apache.tomcat.util.codec.binary.Base64;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.naver.NaverSmsRequest;
 import org.sopt.makers.internal.external.naver.NaverSmsResponse;

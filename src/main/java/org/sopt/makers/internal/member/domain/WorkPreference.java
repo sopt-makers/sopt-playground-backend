@@ -15,7 +15,7 @@ import org.sopt.makers.internal.member.domain.enums.FeedbackStyle;
 import java.io.Serializable;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class WorkPreference implements Serializable {

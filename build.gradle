@@ -2,8 +2,6 @@ plugins {
 	id 'org.springframework.boot' version '3.2.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'java'
-	id 'org.graalvm.buildtools.native' version '0.10.4'
-	id 'org.springframework.boot.aot' version '3.2.0' apply false
 	id 'org.hibernate.orm' version '6.2.13.Final'
 }
 
@@ -37,7 +35,10 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
 	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 	implementation "org.springframework.boot:spring-boot-starter-aop"
-	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation("org.springframework.boot:spring-boot-starter-web") {
+		// AWS Lambda 환경에서 불필요한 내장 Tomcat 컨테이너 제외
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+	}
 	implementation "org.springframework.boot:spring-boot-starter-mail"
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
@@ -48,6 +49,11 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'
 	implementation 'net.minidev:json-smart'
+
+	// AWS Lambda Dependencies for JAR deployment
+	implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.5'
+	implementation 'com.amazonaws:aws-lambda-java-core:1.4.0'
+	implementation 'com.amazonaws:aws-lambda-java-events:3.16.1'
 
 	// log
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
@@ -104,9 +110,6 @@ dependencies {
 	implementation 'com.google.apis:google-api-services-sheets:v4-rev516-1.23.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
 
-	// Web Client
-	implementation("org.springframework.boot:spring-boot-starter-webflux")
-
 	// Mac M1/M2 ARM 환경에서 Netty DNS Resolver
 	implementation "io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64"
 
@@ -128,368 +131,37 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// Native Image 호환성 체크 태스크
-tasks.register('checkNativeImageCompatibility') {
-	group = 'verification'
-	description = 'Native Image 호환성을 체크합니다'
+// Lambda ZIP 빌드 설정 - buildZip 설정을 포함한 Lambda 최적화
+task lambdaJar(type: Zip) {
+	dependsOn bootJar  // bootJar 작업이 먼저 실행되도록 명시적 의존성 추가
+	archiveClassifier = 'lambda'
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	zip64 = true  // 대용량 ZIP 파일 지원 (65535개 이상의 파일)
 
-	doLast {
-		println "🔍 Native Image 호환성 체크 중..."
-
-		def warnings = []
-
-		// @QueryProjection 사용 체크
-		fileTree('src/main/java').matching {
-			include '**/*.java'
-		}.each { file ->
-			if (file.text.contains('@QueryProjection') && file.text.contains('record ')) {
-				warnings.add("⚠️  ${file.name}: Record + @QueryProjection 사용 (Projections.constructor() 권장)")
-			}
-
-			// LAZY 없이 @OneToMany 체크
-			if (file.text.contains('@OneToMany') && !file.text.contains('FetchType.EAGER') && !file.text.contains('fetch = FetchType')) {
-				warnings.add("ℹ️  ${file.name}: @OneToMany에 fetch type 명시 권장")
-			}
-		}
-
-		if (warnings.isEmpty()) {
-			println "✅ Native Image 호환성 문제 없음!"
-		} else {
-			println "\n경고 사항:"
-			warnings.each { println it }
+	// buildZip처럼 lib 디렉토리 구조로 패키징
+	into('lib') {
+		from(jar)
+		from(configurations.runtimeClasspath) {
+			// Tomcat 관련 제외 - Lambda에서는 불필요
+			exclude "org/apache/tomcat/embed/**"
+			exclude "META-INF/*.SF"
+			exclude "META-INF/*.DSA"
+			exclude "META-INF/*.RSA"
+			exclude "META-INF/MANIFEST.MF"
+			exclude "**/module-info.class"
 		}
 	}
 }
 
-// ========== Native Image Hints 자동 생성 유틸리티 ==========
+// Lambda 빌드를 기본 빌드에 포함
+build.dependsOn lambdaJar
 
-// Java 파일 스캔 공통 함수
-def scanJavaFiles(Closure processor) {
-	fileTree('src/main/java').matching {
-		include '**/*.java'
-	}.each { file -> processor(file, file.text) }
+// Spring Boot JAR 빌드 설정
+jar {
+	enabled = true
+	archiveClassifier = ''
 }
 
-// Hints 파일 작성 공통 함수
-def writeHintsFile(File outputDir, String fileName, String content) {
-	new File(outputDir, fileName).text = content
-	println "  ✅ ${fileName}"
-}
-
-// Hints 클래스 템플릿 생성 함수
-def generateHintsTemplate(String className, String javadoc, String imports, String body) {
-	"""package org.sopt.makers.internal.graalVm.nativeImageHints;
-
-${imports}
-/**
- * ${javadoc}
- *
- * ⚠️ 자동 생성 파일 - 수정하지 마세요!
- * 생성: Native Image 빌드 시 (./gradlew nativeCompile)
- */
-@Configuration
-@ImportRuntimeHints(${className}.${className}RuntimeHints.class)
-public class ${className} {
-
-    static class ${className}RuntimeHints implements RuntimeHintsRegistrar {
-
-        @Override
-        public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-${body}
-        }
-    }
-}
-"""
-}
-
-// Native Image Hints 자동 생성 태스크 (Native Image 빌드 시에만 실행)
-tasks.register('generateNativeImageHints') {
-	group = 'native-image'
-	description = 'Native Image 빌드를 위한 Hints 파일들을 자동 생성 (빌드 타임 전용)'
-
-	def outputDir = file("${buildDir}/generated-sources/nativeHints/org/sopt/makers/internal/graalVm/nativeImageHints")
-
-	doLast {
-		outputDir.mkdirs()
-		println "🤖 Native Image Hints 자동 생성 중..."
-		println "📁 출력 경로: ${outputDir}"
-
-		[
-			[1, 'QueryDSL Projection', { generateQueryDslProjectionHints(outputDir) }],
-			[2, 'Feign', { generateFeignHints(outputDir) }],
-			[3, 'Admin Resources', { generateAdminResourcesHints(outputDir) }],
-			[4, 'Hibernate Types', { generateHibernateTypesHints(outputDir) }]
-		].each { step, name, generator ->
-			println "\n🔍 [${step}/4] ${name} Hints 생성..."
-			generator()
-		}
-
-		println "\n✅ 모든 Hints 파일 생성 완료!"
-		println "ℹ️  이 파일들은 Native Image 빌드 시에만 사용되며 Git에 커밋되지 않습니다."
-	}
-}
-
-def generateQueryDslProjectionHints(File outputDir) {
-	def complexDtos = []
-	def packagePattern = ~/package\s+([\w.]+);/
-
-	scanJavaFiles { file, content ->
-		if (content.contains('@Reflective') && content.contains('record ')) {
-			def hasComplexType = content =~ /(?:List|Set|Map)<[^>]+>/ ||
-								 content =~ /\b\w+\[\]\s+\w+[,)]/ ||
-								 content =~ /record\s+\w+\([^)]*[A-Z]\w+\s+\w+/
-
-			if (hasComplexType) {
-				def pkgMatcher = content =~ packagePattern
-				def recMatcher = content =~ /(?:public\s+)?record\s+(\w+)/
-				if (pkgMatcher.find() && recMatcher.find()) {
-					def fullClassName = "${pkgMatcher.group(1)}.${recMatcher.group(1)}"
-					complexDtos.add(fullClassName)
-					println "  ✓ 감지: ${recMatcher.group(1)}"
-				}
-			}
-		}
-	}
-
-	def imports = """import org.springframework.aot.hint.MemberCategory;
-import org.springframework.aot.hint.RuntimeHints;
-import org.springframework.aot.hint.RuntimeHintsRegistrar;
-import org.springframework.aot.hint.TypeReference;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportRuntimeHints;"""
-
-	def body = """            registerComplexProjectionDtos(hints);
-        }
-
-        private void registerComplexProjectionDtos(RuntimeHints hints) {
-            String[] complexDtoClasses = {
-${complexDtos.collect { "                \"${it}\"" }.join(',\n')}
-            };
-
-            for (String className : complexDtoClasses) {
-                hints.reflection().registerType(
-                    TypeReference.of(className),
-                    builder -> builder.withMembers(
-                        MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
-                        MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-                        MemberCategory.PUBLIC_FIELDS,
-                        MemberCategory.DECLARED_FIELDS
-                    )
-                );
-            }"""
-
-	def javadoc = """QueryDSL Projections.constructor()를 위한 GraalVM Native Image 힌트
- *
- * 복잡한 타입(List<Enum>, 배열 등)을 가진 Record의 생성자를 등록합니다."""
-
-	def content = generateHintsTemplate('QueryDslProjectionNativeHints', javadoc, imports, body)
-	writeHintsFile(outputDir, 'QueryDslProjectionNativeHints.java', content)
-	println "  (${complexDtos.size()}개 DTO)"
-}
-
-def generateHibernateTypesHints(File outputDir) {
-	def usedTypes = [] as Set
-	def typePattern = ~/@Type\(([\w.]+)\.class\)/
-
-	scanJavaFiles { file, content ->
-		def matcher = content =~ typePattern
-		while (matcher.find()) {
-			def typeName = matcher.group(1)
-			if (typeName.contains('ArrayType')) usedTypes.add(typeName)
-		}
-	}
-
-	def imports = """import org.springframework.aot.hint.MemberCategory;
-import org.springframework.aot.hint.RuntimeHints;
-import org.springframework.aot.hint.RuntimeHintsRegistrar;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportRuntimeHints;"""
-
-	def body = """            registerHypersistenceTypes(hints);
-        }
-
-        private void registerHypersistenceTypes(RuntimeHints hints) {
-            String[] hypersistenceTypes = {
-                "io.hypersistence.utils.hibernate.type.array.ListArrayType",
-                "io.hypersistence.utils.hibernate.type.array.StringArrayType"
-            };
-
-            for (String typeName : hypersistenceTypes) {
-                try {
-                    Class<?> type = Class.forName(typeName);
-                    hints.reflection().registerType(type, builder -> builder.withMembers(
-                        MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
-                        MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-                        MemberCategory.INVOKE_PUBLIC_METHODS,
-                        MemberCategory.INVOKE_DECLARED_METHODS,
-                        MemberCategory.PUBLIC_FIELDS,
-                        MemberCategory.DECLARED_FIELDS
-                    ));
-                } catch (ClassNotFoundException ignored) {}
-            }"""
-
-	def javadoc = """Hypersistence Utils Hibernate Types를 위한 GraalVM Native Image 힌트
- *
- * Hibernate 커스텀 타입들의 리플렉션 인스턴스화를 지원합니다."""
-
-	def content = generateHintsTemplate('HibernateTypesNativeHints', javadoc, imports, body)
-	writeHintsFile(outputDir, 'HibernateTypesNativeHints.java', content)
-
-	if (usedTypes.isEmpty()) {
-		println "  ⚠️  사용 중인 타입 없음"
-	} else {
-		println "  ✓ 감지된 타입: ${usedTypes.join(', ')}"
-	}
-}
-
-def generateAdminResourcesHints(File outputDir) {
-	def imports = """import org.springframework.aot.hint.MemberCategory;
-import org.springframework.aot.hint.RuntimeHints;
-import org.springframework.aot.hint.RuntimeHintsRegistrar;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportRuntimeHints;"""
-
-	def body = """            hints.resources().registerPattern("templates/admin/*.html");
-            hints.resources().registerPattern("static/css/*.css");
-
-            hints.reflection().registerType(
-                org.thymeleaf.spring6.SpringTemplateEngine.class,
-                hint -> hint.withMembers(
-                    MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
-                    MemberCategory.INVOKE_PUBLIC_METHODS
-                )
-            );
-
-            hints.reflection().registerType(
-                org.thymeleaf.spring6.view.ThymeleafViewResolver.class,
-                hint -> hint.withMembers(
-                    MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
-                    MemberCategory.INVOKE_PUBLIC_METHODS
-                )
-            );"""
-
-	def javadoc = """Admin 페이지를 위한 GraalVM Native Image 힌트
- *
- * Thymeleaf 템플릿과 정적 리소스(CSS)를 Native Image에 포함시킵니다."""
-
-	def content = generateHintsTemplate('AdminResourcesNativeHints', javadoc, imports, body)
-	writeHintsFile(outputDir, 'AdminResourcesNativeHints.java', content)
-}
-
-def generateFeignHints(File outputDir) {
-	def imports = """import feign.*;
-import feign.codec.*;
-import org.springframework.aot.hint.ExecutableMode;
-import org.springframework.aot.hint.MemberCategory;
-import org.springframework.aot.hint.RuntimeHints;
-import org.springframework.aot.hint.RuntimeHintsRegistrar;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportRuntimeHints;"""
-
-	def enrichMethods = [
-		'RequestInterceptor', 'ResponseInterceptor.Chain', 'Client', 'Decoder', 'Encoder',
-		'Contract', 'Logger', 'Logger.Level', 'InvocationHandlerFactory', 'QueryMapEncoder',
-		'ErrorDecoder', 'Request.Options', 'Retryer', 'ExceptionPropagationPolicy'
-	].collect { """                hints.reflection().registerMethod(
-                    Capability.class.getMethod("enrich", ${it}.class), ExecutableMode.INVOKE
-                );""" }.join('\n')
-
-	def body = """            registerFeignCoreClasses(hints);
-            registerCapabilityMethods(hints);
-            registerSpringCloudFeignClasses(hints);
-        }
-
-        private void registerFeignCoreClasses(RuntimeHints hints) {
-            Class<?>[] coreClasses = {
-                Capability.class, Client.class, Contract.class, Decoder.class, Encoder.class,
-                ErrorDecoder.class, InvocationHandlerFactory.class, Logger.class, QueryMapEncoder.class,
-                RequestInterceptor.class, ResponseInterceptor.class, ResponseInterceptor.Chain.class,
-                Retryer.class, ExceptionPropagationPolicy.class, Request.Options.class
-            };
-
-            for (Class<?> clazz : coreClasses) {
-                hints.reflection().registerType(clazz,
-                    MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-                    MemberCategory.INVOKE_PUBLIC_METHODS, MemberCategory.INVOKE_DECLARED_METHODS,
-                    MemberCategory.DECLARED_FIELDS, MemberCategory.PUBLIC_FIELDS
-                );
-            }
-        }
-
-        private void registerCapabilityMethods(RuntimeHints hints) {
-            try {
-${enrichMethods}
-            } catch (NoSuchMethodException ignored) {}
-        }
-
-        private void registerSpringCloudFeignClasses(RuntimeHints hints) {
-            String[] springCloudClasses = {
-                "org.springframework.cloud.openfeign.FeignClientFactoryBean",
-                "org.springframework.cloud.openfeign.FeignContext",
-                "org.springframework.cloud.openfeign.support.SpringMvcContract",
-                "org.springframework.cloud.openfeign.support.SpringEncoder",
-                "org.springframework.cloud.openfeign.support.SpringDecoder",
-                "org.springframework.cloud.openfeign.support.ResponseEntityDecoder",
-                "org.springframework.cloud.openfeign.FeignLoggerFactory",
-                "org.springframework.cloud.openfeign.clientconfig.FeignClientConfigurer"
-            };
-
-            for (String className : springCloudClasses) {
-                try {
-                    Class<?> clazz = Class.forName(className);
-                    hints.reflection().registerType(clazz,
-                        MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-                        MemberCategory.INVOKE_PUBLIC_METHODS, MemberCategory.INVOKE_DECLARED_METHODS
-                    );
-                } catch (ClassNotFoundException ignored) {}
-            }"""
-
-	def javadoc = """Feign Client를 위한 GraalVM Native Image 힌트
- *
- * Feign의 default interface methods를 Native Image에 등록합니다."""
-
-	def content = generateHintsTemplate('FeignNativeHints', javadoc, imports, body)
-	writeHintsFile(outputDir, 'FeignNativeHints.java', content)
-}
-
-// 생성된 소스를 컴파일 경로에 추가 (먼저 선언)
-sourceSets {
-	main {
-		java {
-			srcDir "${buildDir}/generated-sources/nativeHints"
-		}
-	}
-}
-
-// Native Image 빌드 전에 자동으로 Hints 생성
-// processAot보다 더 early stage인 compileJava에 연결
-tasks.named('compileJava').configure {
-	dependsOn 'generateNativeImageHints'
-}
-
-// Hibernate bytecode enhancement 설정 (Native Image 지원)
-hibernate {
-	enhancement {
-		enableLazyInitialization = true
-		enableDirtyTracking = true
-		enableAssociationManagement = true
-	}
-}
-
-// GraalVM 네이티브 컴파일을 위한 설정
-graalvmNative {
-	binaries {
-		main {
-			imageName = 'internal'
-			mainClass = 'org.sopt.makers.internal.InternalApplication'
-			buildArgs.add('--verbose')
-            buildArgs.add('-H:+ReportExceptionStackTraces')
-            buildArgs.add('--initialize-at-run-time=io.netty')
-            buildArgs.add('-H:+AddAllCharsets')
-            buildArgs.add('-H:+AllowDeprecatedBuilderClassesOnImageClasspath')
-		}
-	}
-	metadataRepository {
-		enabled = true
-	}
+bootJar {
+	enabled = true
 }
