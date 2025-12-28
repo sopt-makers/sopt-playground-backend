@@ -7,7 +7,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.community.dto.response.SopticleResponse;
-import org.sopt.makers.internal.deprecated.soulmate.dto.SoulmateResponse;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
@@ -144,14 +143,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new SopticleResponse(false, ex.getMessage(), null));
-    }
-
-    @ExceptionHandler(SoulmateException.class)
-    public ResponseEntity<SoulmateResponse> SoulmateException (SoulmateException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new SoulmateResponse(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(FeignException.class)
