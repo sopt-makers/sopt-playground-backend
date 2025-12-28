@@ -3,7 +3,7 @@ package org.sopt.makers.internal.resolution.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public enum ResolutionTag {
 		try {
 			return ResolutionTag.valueOf(value);
 		} catch (IllegalArgumentException e) {
-			throw new ClientBadRequestException("Unknown Timecapsop Tag Name: " + value);
+			throw new BadRequestException("Unknown Timecapsop Tag Name: " + value);
 		}
 	}
 

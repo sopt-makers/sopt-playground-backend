@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.vote.domain.Vote;
@@ -56,7 +56,7 @@ public class VoteService {
 
         // 이미 투표했으면 투표 불가
         if (voteSelectionRepository.existsByVoteOptionInAndMember(selectedOptions, member)) {
-            throw new ClientBadRequestException("이미 투표했습니다.");
+            throw new BadRequestException("이미 투표했습니다.");
         }
 
         validateVoteSelectionPolicy(vote, selectedOptionIds);
@@ -113,20 +113,20 @@ public class VoteService {
         if (Objects.isNull(vote)) return;
 
         if (Objects.equals(categoryId, 21L)) {
-            throw new ClientBadRequestException("솝티클 카테고리는 투표를 만들 수 없습니다.");
+            throw new BadRequestException("솝티클 카테고리는 투표를 만들 수 없습니다.");
         }
 
         List<String> options = vote.voteOptions();
         if (options == null || options.size() < 2 || options.size() > 5) {
-            throw new ClientBadRequestException("투표 옵션은 2개 이상 5개 이하만 가능합니다.");
+            throw new BadRequestException("투표 옵션은 2개 이상 5개 이하만 가능합니다.");
         }
 
         for (String option : options) {
             if (option == null || option.trim().isEmpty()) {
-                throw new ClientBadRequestException("투표 옵션 내용은 공백일 수 없습니다.");
+                throw new BadRequestException("투표 옵션 내용은 공백일 수 없습니다.");
             }
             if (option.length() > 40) {
-                throw new ClientBadRequestException("투표 옵션은 40자까지만 입력 가능합니다.");
+                throw new BadRequestException("투표 옵션은 40자까지만 입력 가능합니다.");
             }
         }
     }
@@ -134,13 +134,13 @@ public class VoteService {
     private void validateVoteSelectionPolicy(Vote vote, List<Long> selectedOptionIds) {
         // 복수 투표 불가인 경우 옵션 2개 이상 불가능
         if (!vote.isMultipleOptions() && selectedOptionIds.size() > 1) {
-            throw new ClientBadRequestException("복수 선택 불가능한 투표입니다.");
+            throw new BadRequestException("복수 선택 불가능한 투표입니다.");
         }
 
         // 선택한 옵션이 존재하지 않는 경우 체크
         List<VoteOption> selectedOptions = voteOptionRepository.findAllById(selectedOptionIds);
         if (selectedOptions.size() != selectedOptionIds.size()) {
-            throw new ClientBadRequestException("존재하지 않는 투표 옵션이 포함되어 있습니다.");
+            throw new BadRequestException("존재하지 않는 투표 옵션이 포함되어 있습니다.");
         }
     }
 }

@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.external.message.MessageSender;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.exception.PlaygroundException;
 import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +38,7 @@ public class EmailChatSender implements MessageSender {
 			);
 		} catch (MessagingException | UnsupportedEncodingException exception) {
 			log.error(exception.getMessage());
-			throw new BusinessLogicException("커피챗 이메일 전송에 실패했습니다.");
+			throw new PlaygroundException("커피챗 이메일 전송에 실패했습니다.");
 		}
 	}
 }

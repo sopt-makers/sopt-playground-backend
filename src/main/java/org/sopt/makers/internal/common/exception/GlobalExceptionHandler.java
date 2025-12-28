@@ -6,16 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.community.dto.response.SopticleResponse;
-import org.sopt.makers.internal.exception.AuthFailureException;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.ForbiddenClientException;
-import org.sopt.makers.internal.exception.SopticleException;
-import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
-import org.sopt.makers.internal.exception.WrongAccessTokenException;
-import org.sopt.makers.internal.exception.WrongImageInputException;
-import org.sopt.makers.internal.exception.WrongSecretHeaderException;
+import org.sopt.makers.internal.exception.*;
 import org.sopt.makers.internal.external.slack.MessageType;
 import org.sopt.makers.internal.external.slack.SlackService;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,12 +33,8 @@ public class GlobalExceptionHandler {
 
     private final SlackService slackService;
 
-    @ExceptionHandler(BusinessLogicException.class)
-    public ResponseEntity<String> businessLogicException (BusinessLogicException ex, final HttpServletRequest request) {
-
-        if (!(ex instanceof WordChainGameHasWrongInputException)) {
-            sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
-        }
+    @ExceptionHandler(PlaygroundException.class)
+    public ResponseEntity<String> businessLogicException (PlaygroundException ex, final HttpServletRequest request) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
@@ -87,8 +74,8 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
-    @ExceptionHandler(ClientBadRequestException.class)
-    public ResponseEntity<String> clientBadRequestException (ClientBadRequestException ex, final HttpServletRequest request) {
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<String> clientBadRequestException (BadRequestException ex, final HttpServletRequest request) {
 
         sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
         return ResponseEntity
@@ -96,52 +83,20 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
-    @ExceptionHandler(WrongImageInputException.class)
-    public ResponseEntity<CommonExceptionResponse> wrongImageInputException (WrongImageInputException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new CommonExceptionResponse(ex.getMessage(), ex.code));
-    }
-
-    @ExceptionHandler(ForbiddenClientException.class)
-    public ResponseEntity<String> forbiddenClientException (ForbiddenClientException ex) {
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<String> forbiddenClientException (ForbiddenException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ex.getMessage());
     }
 
-    @ExceptionHandler(AuthFailureException.class)
-    public ResponseEntity<String> authFailureException (AuthFailureException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(ex.getMessage());
-    }
-
-    @ExceptionHandler(WrongAccessTokenException.class)
-    public ResponseEntity<String> wrongAccessTokenException (WrongAccessTokenException ex) {
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<String> UnauthorizedException (UnauthorizedException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ex.getMessage());
-    }
-
-    @ExceptionHandler(WrongSecretHeaderException.class)
-    public ResponseEntity<String> wrongSecretHeaderException (WrongSecretHeaderException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ex.getMessage());
-    }
-
-    @ExceptionHandler(SopticleException.class)
-    public ResponseEntity<SopticleResponse> SopticleException (SopticleException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new SopticleResponse(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(FeignException.class)

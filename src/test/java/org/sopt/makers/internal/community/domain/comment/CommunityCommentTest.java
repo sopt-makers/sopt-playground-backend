@@ -2,7 +2,7 @@ package org.sopt.makers.internal.community.domain.comment;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -42,7 +42,7 @@ public class CommunityCommentTest {
 
         // When & Then
         assertThatThrownBy(() -> comment.validateUpdatePermission(otherUserId))
-                .isInstanceOf(ClientBadRequestException.class);
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class CommunityCommentTest {
 
         // When & Then
         assertThatThrownBy(() -> comment.validateUpdatePermission(writerId))
-                .isInstanceOf(ClientBadRequestException.class);
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test
