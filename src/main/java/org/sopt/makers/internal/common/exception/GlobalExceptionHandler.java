@@ -12,7 +12,6 @@ import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.sopt.makers.internal.exception.SopticleException;
-import org.sopt.makers.internal.exception.SoulmateException;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.sopt.makers.internal.exception.WrongImageInputException;
