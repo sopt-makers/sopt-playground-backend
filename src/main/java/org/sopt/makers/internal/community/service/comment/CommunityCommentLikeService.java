@@ -5,7 +5,7 @@ import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.CommunityCommentLike;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.springframework.stereotype.Service;
@@ -30,13 +30,13 @@ public class CommunityCommentLikeService {
 		CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
 		if (!post.getComments().contains(comment)) {
-			throw new ClientBadRequestException("해당 게시글의 댓글이 아닙니다.");
+			throw new BadRequestException("해당 게시글의 댓글이 아닙니다.");
 		}
 		Member member = memberRetriever.findMemberById(memberId);
 
 		boolean alreadyLiked = commentLikeRetriever.isLiked(memberId, commentId);
 		if (alreadyLiked) {
-			throw new ClientBadRequestException("이미 좋아요를 누른 댓글입니다.");
+			throw new BadRequestException("이미 좋아요를 누른 댓글입니다.");
 		}
 
 		commentLikeModifier.create(member, comment);
@@ -47,12 +47,12 @@ public class CommunityCommentLikeService {
 		CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
 		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
 		if (!post.getComments().contains(comment)) {
-			throw new ClientBadRequestException("해당 게시글의 댓글이 아닙니다.");
+			throw new BadRequestException("해당 게시글의 댓글이 아닙니다.");
 		}
 
 		Optional<CommunityCommentLike> existingLike = commentLikeRetriever.findByMemberIdAndCommentId(memberId, commentId);
 		if (existingLike.isEmpty()) {
-			throw new ClientBadRequestException("좋아요를 누르지 않은 댓글입니다.");
+			throw new BadRequestException("좋아요를 누르지 않은 댓글입니다.");
 		}
 
 		commentLikeModifier.delete(existingLike.get());

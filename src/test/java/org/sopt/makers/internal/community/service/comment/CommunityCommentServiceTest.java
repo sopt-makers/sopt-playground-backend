@@ -12,7 +12,7 @@ import org.sopt.makers.internal.community.repository.comment.CommunityCommentRep
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -106,7 +106,7 @@ public class CommunityCommentServiceTest {
         assertThatThrownBy(() ->
                 communityCommentService.updateComment(otherUserId, commentId, request)
         )
-                .isInstanceOf(ClientBadRequestException.class);
+                .isInstanceOf(BadRequestException.class);
     }
 
 }

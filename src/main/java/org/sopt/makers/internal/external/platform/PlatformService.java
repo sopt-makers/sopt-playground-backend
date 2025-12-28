@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.auth.common.code.BaseResponse;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -76,12 +76,12 @@ public class PlatformService {
 
         var body = result.getBody();
         if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
-            throw new NotFoundDBEntityException( "[INTERNAL-500] 플랫폼 API 호출 실패 또는 인증 오류. 요청 ID: " + userIds);
+            throw new NotFoundException( "[INTERNAL-500] 플랫폼 API 호출 실패 또는 인증 오류. 요청 ID: " + userIds);
         }
 
         var users = body.getData();
         if (users == null || users.isEmpty()) {
-            throw new NotFoundDBEntityException( "[INTERNAL-404-ALL] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userIds);
+            throw new NotFoundException( "[INTERNAL-404-ALL] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userIds);
         }
 
         // 누락된 userId 탐색
@@ -113,12 +113,12 @@ public class PlatformService {
 
         var body = result.getBody();
         if (body == null || !Boolean.TRUE.equals(body.isSuccess())) {
-            throw new NotFoundDBEntityException( "[INTERNAL-500] 플랫폼 API 호출 실패 또는 인증 오류. 요청 ID: " + userIds);
+            throw new NotFoundException( "[INTERNAL-500] 플랫폼 API 호출 실패 또는 인증 오류. 요청 ID: " + userIds);
         }
 
         var users = body.getData();
         if (users == null || users.isEmpty()) {
-            throw new NotFoundDBEntityException( "[INTERNAL-404-ALL] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userIds);
+            throw new NotFoundException( "[INTERNAL-404-ALL] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userIds);
         }
 
         // 누락된 userId 탐색

@@ -9,7 +9,7 @@ import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
-import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.exception.PlaygroundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.member.domain.Member;
@@ -23,7 +23,7 @@ public class CoffeeChatResponseMapper {
     public CoffeeChatDetailResponse toCoffeeChatDetailResponse(CoffeeChat coffeeChat, Member member, InternalUserDetails userDetails, MemberCareer memberCareer, Boolean isMine) {
 
         if (!coffeeChat.getMember().getId().equals(member.getId())) {
-            throw new BusinessLogicException("잘못된 커피챗 사용자가 전달되었습니다.");
+            throw new PlaygroundException("잘못된 커피챗 사용자가 전달되었습니다.");
         }
 
         return new CoffeeChatDetailResponse(

@@ -12,12 +12,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
 import org.sopt.makers.internal.common.CommonResponse;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
 import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
@@ -122,10 +121,10 @@ public class MemberController {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
                 ActivityTeam.hasActivityTeam(activity.team())).count();
         if (request.activities().size() != normalTeamNameRequest) {
-            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+            throw new BadRequestException("잘못된 솝트 활동 팀 이름입니다.");
         }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
-        if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
+        if (currentCount > 1) throw new BadRequestException("현재 직장이 2개 이상입니다.");
         Member member = memberService.saveMemberProfile(userId, request);
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         boolean isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
@@ -148,7 +147,7 @@ public class MemberController {
     ) {
 
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
-        if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
+        if (currentCount > 1) throw new BadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(userId, request);
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());

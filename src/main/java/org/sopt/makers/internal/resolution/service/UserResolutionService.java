@@ -1,8 +1,8 @@
 package org.sopt.makers.internal.resolution.service;
 
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
@@ -72,26 +72,26 @@ public class UserResolutionService {
 		validateGeneration(userDetails);
 
 		UserResolution resolution = userResolutionRepository.findUserResolutionByMemberAndGeneration(member, CURRENT_GENERATION)
-				.orElseThrow(() -> new NotFoundDBEntityException("Not exists resolution message"));
+				.orElseThrow(() -> new NotFoundException("Not exists resolution message"));
 
 		userResolutionRepository.delete(resolution);
 	}
 
 	private void validateMemberHasActivities(InternalUserDetails userDetails) {
 		if (userDetails.soptActivities() == null) {
-			throw new ClientBadRequestException("Not exists sopt activities");
+			throw new BadRequestException("Not exists sopt activities");
 		}
 	}
 
 	private void validateGeneration(InternalUserDetails userDetails) {
 		if (userDetails.lastGeneration() != CURRENT_GENERATION) {
-			throw new ClientBadRequestException("Only new generation can enroll resolution");
+			throw new BadRequestException("Only new generation can enroll resolution");
 		}
 	}
 
 	private void validateExistingResolution(Member member) {
 		if (existsCurrentResolution(member)) {
-			throw new ClientBadRequestException("Already exist user resolution message");
+			throw new BadRequestException("Already exist user resolution message");
 		}
 	}
 
@@ -101,6 +101,6 @@ public class UserResolutionService {
 
 	private Member getMemberById(Long userId) {
 		return memberRepository.findById(userId).orElseThrow(
-			() -> new NotFoundDBEntityException("Is not a Member"));
+			() -> new NotFoundException("Is not a Member"));
 	}
 }

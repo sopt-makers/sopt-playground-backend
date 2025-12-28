@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.auth.jwt.exception.JwtException;
 import org.sopt.makers.internal.auth.jwt.service.JwtAuthenticationService;
 import org.sopt.makers.internal.auth.security.authentication.MakersAuthentication;
-import org.sopt.makers.internal.exception.WrongAccessTokenException;
+import org.sopt.makers.internal.exception.UnauthorizedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -71,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void checkJwtAvailable (String jwtToken) {
         if (Objects.isNull(jwtToken)) {
-            throw new WrongAccessTokenException("Token is empty or not verified");
+            throw new UnauthorizedException("Token is empty or not verified");
         }
 
     }

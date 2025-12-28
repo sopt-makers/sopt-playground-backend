@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
-import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformClient;
@@ -219,7 +218,7 @@ public class ProjectService {
 
     private Project getProjectById(Long projectId) {
         return projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundDBEntityException("잘못된 프로젝트 조회입니다."));
+                .orElseThrow(() -> new NotFoundException("잘못된 프로젝트 조회입니다."));
     }
 
     public List<Long> getProjectUserIdsByProjectId(Long projectId) {
@@ -229,13 +228,13 @@ public class ProjectService {
 
     private void validateImageCount(int imageCount) {
         if (imageCount > 10) {
-            throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");
+            throw new BadRequestException("이미지 개수를 초과했습니다.");
         }
     }
 
     private void validateWriter(Project project, Long writerId) {
         if (!Objects.equals(project.getWriterId(), writerId)) {
-            throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
+            throw new BadRequestException("수정 권한이 없는 유저입니다.");
         }
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -27,7 +27,7 @@ public enum Career {
         return Arrays.stream(Career.values())
                 .filter(career -> career.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown Career Title: " + title));
+                .orElseThrow(() -> new BadRequestException("Unknown Career Title: " + title));
     }
 
     @JsonValue

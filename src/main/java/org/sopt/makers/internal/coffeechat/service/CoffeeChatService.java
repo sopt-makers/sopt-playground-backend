@@ -30,7 +30,7 @@ import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.message.gabia.SmsChatSender;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
@@ -97,7 +97,7 @@ public class CoffeeChatService {
         try {
             CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
             return coffeeChat.getIsCoffeeChatActivate();
-        } catch (NotFoundDBEntityException ex) {
+        } catch (NotFoundException ex) {
             return false;
         }
     }
