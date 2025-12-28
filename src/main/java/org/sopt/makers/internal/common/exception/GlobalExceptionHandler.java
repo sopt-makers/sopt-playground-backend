@@ -6,20 +6,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.auth.dto.response.RegisterTokenBySmsResponse;
 import org.sopt.makers.internal.community.dto.response.SopticleResponse;
-import org.sopt.makers.internal.deprecated.soulmate.dto.SoulmateResponse;
 import org.sopt.makers.internal.exception.AuthFailureException;
 import org.sopt.makers.internal.exception.BusinessLogicException;
 import org.sopt.makers.internal.exception.ClientBadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenClientException;
 import org.sopt.makers.internal.exception.SopticleException;
-import org.sopt.makers.internal.exception.SoulmateException;
 import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
 import org.sopt.makers.internal.exception.WrongAccessTokenException;
 import org.sopt.makers.internal.exception.WrongImageInputException;
 import org.sopt.makers.internal.exception.WrongSecretHeaderException;
-import org.sopt.makers.internal.exception.WrongSixNumberCodeException;
 import org.sopt.makers.internal.external.slack.MessageType;
 import org.sopt.makers.internal.external.slack.SlackService;
 import org.springframework.beans.factory.annotation.Value;
@@ -140,28 +136,12 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
-    @ExceptionHandler(WrongSixNumberCodeException.class)
-    public ResponseEntity<RegisterTokenBySmsResponse> wrongSixNumberCodeException (WrongSixNumberCodeException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(new RegisterTokenBySmsResponse(false, ex.getMessage(), null, null));
-    }
-
     @ExceptionHandler(SopticleException.class)
     public ResponseEntity<SopticleResponse> SopticleException (SopticleException ex) {
         log.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new SopticleResponse(false, ex.getMessage(), null));
-    }
-
-    @ExceptionHandler(SoulmateException.class)
-    public ResponseEntity<SoulmateResponse> SoulmateException (SoulmateException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new SoulmateResponse(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(FeignException.class)
