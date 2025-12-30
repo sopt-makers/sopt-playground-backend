@@ -1,26 +1,25 @@
 package org.sopt.makers.internal.common.exception;
 
-import feign.FeignException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.common.notification.ErrorNotificationService;
 import org.sopt.makers.internal.exception.*;
-import org.sopt.makers.internal.external.slack.MessageType;
-import org.sopt.makers.internal.external.slack.SlackService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.Errors;
-import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Slf4j
@@ -31,107 +30,129 @@ public class GlobalExceptionHandler {
     @Value("${spring.profiles.active}")
     private String activeProfile;
 
-    private final SlackService slackService;
+    private final ErrorNotificationService errorNotificationService;
+    private static final String BASE_PACKAGE = "org.sopt.makers.internal";
 
-    @ExceptionHandler(PlaygroundException.class)
-    public ResponseEntity<String> businessLogicException (PlaygroundException ex, final HttpServletRequest request) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> methodArgumentNotValidException (MethodArgumentNotValidException ex) {
-        log.error(ex.getMessage());
-
-        Errors errors = ex.getBindingResult();
-        Map<String, String> validateDetails = new HashMap<>();
-
-        for (FieldError error : errors.getFieldErrors()) {
-            String validKeyName = String.format("valid_%s", error.getField());
-            validateDetails.put(validKeyName, error.getDefaultMessage());
-        }
-        return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
-            .body(validateDetails);
-    }
-
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> entityNotfoundException (EntityNotFoundException ex, final HttpServletRequest request) {
-
-        sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
-
-    // TODO 공통 Error Response 생성 후 일괄 적용
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<String> httpMessageNotReadableException (HttpMessageNotReadableException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
-
+    // Business Exception
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<String> clientBadRequestException (BadRequestException ex, final HttpServletRequest request) {
-
-        sendErrorMessageToSlack(ex, MessageType.CLIENT, request);
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<String> forbiddenClientException (ForbiddenException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(ex.getMessage());
+    public ResponseEntity<Map<String, String>> handleBadRequestException(BadRequestException exception) {
+        return createErrorResponse(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<String> UnauthorizedException (UnauthorizedException ex) {
-        log.error(ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ex.getMessage());
+    public ResponseEntity<Map<String, String>> handleUnauthorizedException(UnauthorizedException exception) {
+        return createErrorResponse(exception.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(FeignException.class)
-    public ResponseEntity<String> feignClientException(FeignException ex) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body("Invalid external api request" + ex.getMessage());
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbiddenException(ForbiddenException exception) {
+        return createErrorResponse(exception.getMessage(), HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> unknownException (RuntimeException ex, final HttpServletRequest request) {
-        sendErrorMessageToSlack(ex, MessageType.SERVER, request);
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ex.getMessage());
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFoundException(NotFoundException exception) {
+        return createErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(DuplicateKeyException.class)
-    public ResponseEntity<String> handleDuplicateKey(DuplicateKeyException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> handleConflictException(ConflictException exception) {
+        return createErrorResponse(exception.getMessage(), HttpStatus.CONFLICT);
     }
 
-    private void sendErrorMessageToSlack(Exception exception, MessageType messageType, final HttpServletRequest request) {
-        LinkedHashMap<String, String> content = new LinkedHashMap<>();
+    @ExceptionHandler(PlaygroundException.class)
+    public ResponseEntity<Map<String, String>> handlePlaygroundException(PlaygroundException exception, HttpServletRequest request) {
+        log.error("PlaygroundException Message: {}, Location: {}, URI: {}",
+                exception.getMessage(),
+                getErrorLocation(exception),
+                request.getRequestURI()
+        );
 
-        content.put("🌍 Environment", activeProfile);
-        content.put("📍 Error Location", getErrorLocation(exception));
-        content.put("⚠️ Exception Type", exception.getClass().getSimpleName());
-        content.put("💬 Error Message", exception.getMessage());
-        slackService.sendMessage(messageType.getTitle(), content, messageType, request);
+        if (errorNotificationService.shouldNotify(exception, activeProfile)) {
+            errorNotificationService.notifyError(exception, request, activeProfile, BASE_PACKAGE);
+        }
+
+        return createErrorResponse(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // Validation Exception
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception, HttpServletRequest request) {
+        String errors = exception.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+
+        return createErrorResponse("Validation failed: " + errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, String>> handleConstraintViolationException(ConstraintViolationException exception) {
+        String errors = exception.getConstraintViolations()
+                .stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .collect(Collectors.joining(", "));
+
+        return createErrorResponse("Constraint violation: " + errors, HttpStatus.BAD_REQUEST);
+    }
+
+    // HTTP Exception
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
+        return createErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException exception) {
+        return createErrorResponse("HTTP method not supported: " + exception.getMethod(), HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, String>> handleMissingServletRequestParameterException(MissingServletRequestParameterException exception) {
+        return createErrorResponse("Missing required parameter: " + exception.getParameterName(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException exception) {
+        return createErrorResponse("Unsupported media type: " + exception.getContentType(), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
+    // Unexpected Exception
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleException(Exception exception, HttpServletRequest request) {
+        log.error("UnexpectedError Message: {}, Location: {}, URI: {}, Method: {}",
+                exception.getMessage(),
+                getErrorLocation(exception),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+
+        if (errorNotificationService.shouldNotify(exception, activeProfile)) {
+            errorNotificationService.notifyError(exception, request, activeProfile, BASE_PACKAGE);
+        }
+
+        return createErrorResponse("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private ResponseEntity<Map<String, String>> createErrorResponse(String message, HttpStatus status) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return ResponseEntity.status(status).body(response);
     }
 
     private String getErrorLocation(Throwable throwable) {
         if (throwable.getStackTrace().length == 0) {
             return "Unknown location";
+        }
+
+        for (StackTraceElement trace : throwable.getStackTrace()) {
+            if (trace.getClassName().startsWith(BASE_PACKAGE)) {
+                return String.format("%s.%s() (Line %d)",
+                        trace.getClassName(),
+                        trace.getMethodName(),
+                        trace.getLineNumber()
+                );
+            }
         }
 
         StackTraceElement firstTrace = throwable.getStackTrace()[0];
