@@ -19,6 +19,7 @@ import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
 import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.ConflictException;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
@@ -73,7 +74,6 @@ import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -439,7 +439,7 @@ public class MemberService {
 
 	public Member saveDefaultMemberProfile(Long userId) {
 		if (memberRepository.existsById(userId)) {
-			throw new DuplicateKeyException("이미 존재하는 유저입니다. userId=" + userId);
+			throw new ConflictException("이미 존재하는 유저입니다. userId=" + userId);
 		}
 
 		Member member = Member.builder()
