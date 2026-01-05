@@ -2,6 +2,7 @@ package org.sopt.makers.internal.member.repository;
 
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberQuestion;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +19,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	List<MemberQuestion> findAnsweredQuestions(
 		@Param("receiverId") Long receiverId,
 		@Param("cursor") Long cursor,
-		@Param("limit") int limit
+		Pageable pageable
 	);
 
 	@Query("SELECT q FROM MemberQuestion q " +
@@ -29,7 +30,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	List<MemberQuestion> findUnansweredQuestions(
 		@Param("receiverId") Long receiverId,
 		@Param("cursor") Long cursor,
-		@Param("limit") int limit
+		Pageable pageable
 	);
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +

@@ -5,6 +5,7 @@ import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberQuestion;
 import org.sopt.makers.internal.member.repository.MemberQuestionRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,11 +22,11 @@ public class MemberQuestionRetriever {
 	}
 
 	public List<MemberQuestion> findAnsweredQuestions(Long receiverId, Long cursor, int limit) {
-		return memberQuestionRepository.findAnsweredQuestions(receiverId, cursor, limit);
+		return memberQuestionRepository.findAnsweredQuestions(receiverId, cursor, PageRequest.of(0, limit));
 	}
 
 	public List<MemberQuestion> findUnansweredQuestions(Long receiverId, Long cursor, int limit) {
-		return memberQuestionRepository.findUnansweredQuestions(receiverId, cursor, limit);
+		return memberQuestionRepository.findUnansweredQuestions(receiverId, cursor, PageRequest.of(0, limit));
 	}
 
 	public long countUnansweredQuestions(Long receiverId) {
