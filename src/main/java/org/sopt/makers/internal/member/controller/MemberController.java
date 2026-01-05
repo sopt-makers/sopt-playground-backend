@@ -32,6 +32,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
@@ -100,6 +101,20 @@ public class MemberController {
    ) {
        List<TlMemberResponse> responses = memberService.getAppjamTlMembers(userId);
        return ResponseEntity.status(HttpStatus.OK).body(responses);
+   }
+
+   @Operation(summary = "질문 대상 멤버 조회 API", description = """
+           질문을 받을 수 있는 대상 멤버들을 파트별로 조회합니다.
+           part 파라미터가 없으면 모든 파트의 멤버를 반환합니다.
+           part 파라미터 옵션: 서버, SERVER, iOS, 안드로이드, ANDROID, 웹, WEB, 디자인, DESIGN, 기획, PLAN
+           각 파트별로 하드코딩된 멤버를 반환합니다.
+           """)
+   @GetMapping("/ask/list")
+   public ResponseEntity<AskMemberResponse> getAskMembers(
+           @RequestParam(required = false, name = "part") String part
+   ) {
+       AskMemberResponse response = memberService.getAskMembers(part);
+       return ResponseEntity.status(HttpStatus.OK).body(response);
    }
 
 
