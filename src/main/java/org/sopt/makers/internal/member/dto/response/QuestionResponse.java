@@ -4,13 +4,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
 
 public record QuestionResponse(
-	@Schema(required = true, description = "질문 ID")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "질문 ID")
 	Long questionId,
 
-	@Schema(required = true, description = "질문 내용")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "질문 내용")
 	String content,
 
-	@Schema(required = true, description = "질문자 ID (익명일 경우 null)")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "질문자 ID")
 	Long askerId,
 
 	@Schema(description = "질문자 이름 (익명일 경우 null)")
@@ -22,31 +22,31 @@ public record QuestionResponse(
 	@Schema(description = "익명 프로필 정보 (익명일 경우)")
 	AnonymousProfileVo anonymousProfile,
 
-	@Schema(required = true, description = "익명 여부")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "익명 여부")
 	Boolean isAnonymous,
 
-	@Schema(required = true, description = "나도 궁금해요 반응 수")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "나도 궁금해요 반응 수")
 	Long reactionCount,
 
-	@Schema(required = true, description = "현재 사용자가 나도 궁금해요를 눌렀는지 여부")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "현재 사용자가 나도 궁금해요를 눌렀는지 여부")
 	Boolean isReacted,
 
-	@Schema(required = true, description = "답변 여부")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "답변 여부")
 	Boolean isAnswered,
 
 	@Schema(description = "답변 정보 (답변이 있을 경우)")
 	AnswerResponse answer,
 
-	@Schema(required = true, description = "생성일시 (ISO 8601 형식)")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "생성일시")
 	String createdAt,
 
-	@Schema(required = true, description = "질문이 일주일 이내에 작성되었는지 여부 (new 태그)")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "질문이 일주일 이내에 작성되었는지 여부")
 	Boolean isNew,
 
-	@Schema(required = true, description = "본인의 질문인지 여부")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "본인의 질문인지 여부")
 	Boolean isMine,
 
-	@Schema(required = true, description = "본인이 받은 질문인지 여부")
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "본인이 받은 질문인지 여부")
 	Boolean isReceived
 ) {
 }
