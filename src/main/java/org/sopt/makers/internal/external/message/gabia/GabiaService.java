@@ -7,7 +7,7 @@ import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaAuthResponse;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaSMSResponse;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaSMSResponseData;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class GabiaService {
             HashMap<String, String> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
             return new GabiaAuthResponse(result.get("access_token"));
         } catch (IOException e) {
-            throw new ClientBadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
+            throw new BadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
         }
     }
 
@@ -101,13 +101,13 @@ public class GabiaService {
             HashMap<String, String> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
             return mapToGabiaSMSResponse(result);
         } catch (IOException e) {
-            throw new ClientBadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
+            throw new BadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
         }
     }
 
     private static GabiaSMSResponse mapToGabiaSMSResponse(HashMap<String, String> result) {
         if (!result.containsKey("code") || !result.containsKey("message")) {
-            throw new ClientBadRequestException("Gabia 서버 통신에 실패했습니다");
+            throw new BadRequestException("Gabia 서버 통신에 실패했습니다");
         }
 
         String code = result.get("code");

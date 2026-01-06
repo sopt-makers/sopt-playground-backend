@@ -3,7 +3,7 @@ package org.sopt.makers.internal.internal.dto;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sopt.makers.internal.exception.BusinessLogicException;
+import org.sopt.makers.internal.exception.PlaygroundException;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,7 +26,7 @@ public enum SearchContent {
 	public static SearchContent of(String key) {
 		SearchContent result = KEY_MAP.get(key.toLowerCase());
 		if (result == null) {
-			throw new BusinessLogicException("Unknown key: " + key);
+			throw new PlaygroundException("Unknown key: " + key);
 		}
 		return result;
 	}

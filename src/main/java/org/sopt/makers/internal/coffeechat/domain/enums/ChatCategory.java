@@ -3,7 +3,7 @@ package org.sopt.makers.internal.coffeechat.domain.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -27,7 +27,7 @@ public enum ChatCategory {
 		return Arrays.stream(ChatCategory.values())
 				.filter(category -> category.title.equals(title))
 				.findFirst()
-				.orElseThrow(() -> new ClientBadRequestException("Unknown Chat Category Title: " + title));
+				.orElseThrow(() -> new BadRequestException("Unknown Chat Category Title: " + title));
 	}
 
 	@JsonValue

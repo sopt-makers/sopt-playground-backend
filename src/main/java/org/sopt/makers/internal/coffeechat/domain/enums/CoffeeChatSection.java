@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -28,7 +28,7 @@ public enum CoffeeChatSection {
         return Arrays.stream(CoffeeChatSection.values())
                 .filter(section -> section.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown CoffeeChat Section Title: " + title));
+                .orElseThrow(() -> new BadRequestException("Unknown CoffeeChat Section Title: " + title));
     }
 
     @JsonValue

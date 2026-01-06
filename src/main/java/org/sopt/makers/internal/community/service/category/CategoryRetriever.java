@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.repository.category.CategoryRepository;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class CategoryRetriever {
 
     public void checkExistsCategoryById(Long categoryId) {
         if (!categoryRepository.existsById(categoryId)) {
-            throw new NotFoundDBEntityException("존재하지 않는 category id 값입니다.");
+            throw new NotFoundException("존재하지 않는 category id 값입니다.");
         }
     }
 
@@ -36,7 +36,7 @@ public class CategoryRetriever {
         Category parent = allCategories.stream()
                 .filter(c -> c.getId().equals(parentId))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
 
         List<Long> descendantIds = new ArrayList<>();
         collectDescendantIds(parent, descendantIds, allCategories);

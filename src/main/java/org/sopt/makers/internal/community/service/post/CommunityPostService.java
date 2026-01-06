@@ -51,8 +51,8 @@ import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRe
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.PlaygroundException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.makers.CrewPostListResponse;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
@@ -165,7 +165,7 @@ public class CommunityPostService {
     @Transactional(readOnly = true)
     public PostDetailData getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
         val postDao = communityQueryRepository.getPostById(postId);
-        if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
+        if (Objects.isNull(postDao)) throw new BadRequestException("존재하지 않는 postId입니다.");
 
         val authorId = postDao.member().getId();
         if (isBlockedOn && !Objects.equals(memberId, authorId)) {
@@ -392,7 +392,7 @@ public class CommunityPostService {
         List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
 
         if (posts.isEmpty()) {
-            throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
+            throw new PlaygroundException("최근 한 달 내에 작성된 게시물이 없습니다.");
         }
         return posts;
     }
@@ -581,7 +581,7 @@ public class CommunityPostService {
 
     private void validatePostOwner(Long memberId, Long postWriterId) {
         if (!Objects.equals(memberId, postWriterId)) {
-            throw new ClientBadRequestException("수정/삭제 권한이 없는 유저입니다.");
+            throw new BadRequestException("수정/삭제 권한이 없는 유저입니다.");
         }
     }
 

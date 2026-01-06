@@ -18,9 +18,9 @@ import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
 import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.MemberHasNotProfileException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.ConflictException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.PlatformUserUpdateRequest;
@@ -74,7 +74,6 @@ import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -213,11 +212,11 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public Member getMemberHasProfileById(Long id) {
 		Member member = memberRepository.findById(id)
-			.orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다."));
+			.orElseThrow(() -> new NotFoundException("해당 id의 Member를 찾을 수 없습니다."));
 		if (member.getHasProfile())
 			return member;
 		else
-			throw new MemberHasNotProfileException("해당 Member는 프로필이 없습니다.");
+			throw new BadRequestException("해당 Member는 프로필이 없습니다.");
 	}
 
 	@Transactional(readOnly = true)
@@ -243,7 +242,7 @@ public class MemberService {
 	public Map<String, List<ActivityVo>> getMemberProfileActivity(List<SoptActivity> soptActivities,
 		List<MemberProfileProjectDao> memberProfileProjects) {
 		if (soptActivities.isEmpty()) {
-			throw new NotFoundDBEntityException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
+			throw new NotFoundException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
 		}
 
 		val cardinalInfoMap = soptActivities.stream()
@@ -440,7 +439,7 @@ public class MemberService {
 
 	public Member saveDefaultMemberProfile(Long userId) {
 		if (memberRepository.existsById(userId)) {
-			throw new DuplicateKeyException("이미 존재하는 유저입니다. userId=" + userId);
+			throw new ConflictException("이미 존재하는 유저입니다. userId=" + userId);
 		}
 
 		Member member = Member.builder()
@@ -476,7 +475,7 @@ public class MemberService {
 	@Transactional
 	public void deleteDefaultMemberProfile(Long userId) {
 		if (!memberRepository.existsById(userId)) {
-			throw new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다.");
+			throw new NotFoundException("해당 id의 Member를 찾을 수 없습니다.");
 		}
 		memberRepository.deleteById(userId);
 	}
@@ -502,10 +501,10 @@ public class MemberService {
 			request.phone(), request.email(), soptActivitiesForPlatform);
 
 		platformService.updateInternalUser(userId, platformRequest);
-		Member member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+		Member member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundException("Member"));
 		Long memberId = member.getId();
 		if (Objects.isNull(memberId))
-			throw new NotFoundDBEntityException("Member id is null");
+			throw new NotFoundException("Member id is null");
 		List<MemberLink> memberLinkEntities = request.links()
 			.stream()
 			.map(link -> MemberLink.builder().memberId(memberId).title(link.title()).url(link.url()).build())
@@ -519,10 +518,10 @@ public class MemberService {
 				if (!career.isCurrent()) {
 					val end = YearMonth.parse(career.endDate(), formatter);
 					if (start.isAfter(end))
-						throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+						throw new BadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
 				}
 			} catch (DateTimeParseException e) {
-				throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
+				throw new BadRequestException("날짜 형식이 잘못되었습니다.");
 			}
 			return MemberCareer.builder()
 				.memberId(memberId)
@@ -644,7 +643,7 @@ public class MemberService {
 			SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
 
 			if (dbActivity == null) {
-				throw new ClientBadRequestException(
+				throw new BadRequestException(
 					"요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
 			}
 
@@ -662,7 +661,7 @@ public class MemberService {
 
 			// 일반 팀만 ActivityTeam 검증
 			if (!ActivityTeam.hasActivityTeam(requestActivity.team())) {
-				throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+				throw new BadRequestException("잘못된 솝트 활동 팀 이름입니다.");
 			}
 
 			soptActivitiesForPlatform.add(
@@ -698,10 +697,10 @@ public class MemberService {
 				if (!career.isCurrent()) {
 					val end = YearMonth.parse(career.endDate(), formatter);
 					if (start.isAfter(end))
-						throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+						throw new BadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
 				}
 			} catch (DateTimeParseException e) {
-				throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
+				throw new BadRequestException("날짜 형식이 잘못되었습니다.");
 			}
 			return MemberCareer.builder()
 				.memberId(memberId)
@@ -752,7 +751,7 @@ public class MemberService {
 		WorkPreference workPreference = member.getWorkPreference();
 
 		if (workPreference == null) {
-			throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다.");
+			throw new BadRequestException("작업 성향이 설정되지 않았습니다.");
 		}
 
 		WorkPreferenceResponse.WorkPreferenceData data = new WorkPreferenceResponse.WorkPreferenceData(
@@ -826,7 +825,7 @@ public class MemberService {
 	@Transactional
 	public void deleteUserProfileLink(Long linkId, Long memberId) {
 		MemberLink link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
-			.orElseThrow(() -> new NotFoundDBEntityException("Member Profile Link"));
+			.orElseThrow(() -> new NotFoundException("Member Profile Link"));
 		memberLinkRepository.delete(link);
 	}
 
@@ -843,7 +842,7 @@ public class MemberService {
 
 	@Transactional
 	public void checkActivities(Long memberId, Boolean isCheck) {
-		Member member = memberRepository.findById(memberId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+		Member member = memberRepository.findById(memberId).orElseThrow(() -> new NotFoundException("Member"));
 
 		member.editActivityChange(isCheck);
 	}
@@ -980,7 +979,7 @@ public class MemberService {
                 .anyMatch(activity -> Objects.equals(activity.generation(), Constant.CURRENT_GENERATION));
 
         if (!isCurrentGenerationUser) {
-            throw new ClientBadRequestException("최신 기수가 아닌 유저입니다.");
+            throw new BadRequestException("최신 기수가 아닌 유저입니다.");
         }
 
         List<TlMember> tlMembers = tlMemberRetriever.findByTlGeneration(Constant.CURRENT_GENERATION);

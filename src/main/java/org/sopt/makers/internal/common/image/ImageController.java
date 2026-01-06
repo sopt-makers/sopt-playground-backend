@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.common.image.ImageRequest;
-import org.sopt.makers.internal.common.image.ImageResponse;
-import org.sopt.makers.internal.exception.WrongImageInputException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,7 +70,7 @@ public class ImageController {
     public ResponseEntity<List<ImageResponse>> getImagesUrls (
             @RequestBody List<ImageRequest> imageRequests
     ) {
-        if (imageRequests.size() > 10) throw new WrongImageInputException("이미지 개수를 초과했습니다.", "OutOfNumberImages");
+        if (imageRequests.size() > 10) throw new BadRequestException("이미지 개수를 초과했습니다.");
 
         val responses = imageRequests.stream().map(request -> {
             val type = request.type();
