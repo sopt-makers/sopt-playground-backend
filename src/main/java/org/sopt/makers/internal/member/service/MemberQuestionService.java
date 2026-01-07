@@ -6,6 +6,7 @@ import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberAnswer;
 import org.sopt.makers.internal.member.domain.MemberQuestion;
@@ -55,16 +56,11 @@ public class MemberQuestionService {
 			throw new BadRequestException("자기 자신에게 질문할 수 없습니다.");
 		}
 
-		if (request.isAnonymous() && (request.latestSoptActivity() == null || request.latestSoptActivity().isBlank())) {
-			throw new BadRequestException("익명 질문의 경우 최신 기수 정보는 필수입니다.");
-		}
-
 		MemberQuestion question = memberQuestionModifier.createQuestion(
 			receiver,
 			asker,
 			request.content(),
-			request.isAnonymous(),
-			request.latestSoptActivity()
+			request.isAnonymous()
 		);
 
 		return question.getId();
@@ -196,28 +192,38 @@ public class MemberQuestionService {
 	}
 
 	@Transactional(readOnly = true)
-	public QuestionsResponse getQuestions(Long userId, Long receiverId, QuestionTab tab, Long cursor, Integer limit) {
-		int queryLimit = PaginationUtil.validateAndGetLimit(limit);
+	public QuestionsResponse getQuestions(Long userId, Long receiverId, QuestionTab tab, Integer page, Integer size) {
+		int pageNumber = page != null ? page : 0;
+		int pageSize = (size != null && size > 0 && size <= 100) ? size : 10;
 
 		List<MemberQuestion> questions;
+		long totalElements;
+
 		if (QuestionTab.ANSWERED == tab) {
-			questions = memberQuestionRetriever.findAnsweredQuestions(receiverId, cursor, queryLimit + 1);
+			questions = memberQuestionRetriever.findAnsweredQuestions(receiverId, pageNumber, pageSize);
+			totalElements = memberQuestionRetriever.countAnsweredQuestions(receiverId);
 		} else {
-			questions = memberQuestionRetriever.findUnansweredQuestions(receiverId, cursor, queryLimit + 1);
+			questions = memberQuestionRetriever.findUnansweredQuestions(receiverId, pageNumber, pageSize);
+			totalElements = memberQuestionRetriever.countUnansweredQuestions(receiverId);
 		}
 
-		boolean hasNext = questions.size() > queryLimit;
-		List<MemberQuestion> limitedQuestions = hasNext ?
-			questions.subList(0, queryLimit) : questions;
-
-		Long nextCursor = hasNext && !limitedQuestions.isEmpty() ?
-			limitedQuestions.get(limitedQuestions.size() - 1).getId() : null;
-
-		List<QuestionResponse> questionResponses = limitedQuestions.stream()
+		List<QuestionResponse> questionResponses = questions.stream()
 			.map(q -> toQuestionResponse(q, userId))
 			.collect(Collectors.toList());
 
-		return new QuestionsResponse(questionResponses, hasNext, nextCursor);
+		int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+		boolean hasNext = pageNumber < totalPages - 1;
+		boolean hasPrevious = pageNumber > 0;
+
+		return new QuestionsResponse(
+			questionResponses,
+			pageNumber,
+			pageSize,
+			totalElements,
+			totalPages,
+			hasNext,
+			hasPrevious
+		);
 	}
 
 	@Transactional(readOnly = true)
@@ -276,23 +282,22 @@ public class MemberQuestionService {
 
 		boolean isNew = question.getCreatedAt().isAfter(LocalDateTime.now().minusDays(NEW_QUESTION_DAYS));
 
-		Long askerId = null;
-		String askerName = null;
-		String askerProfileImage = null;
-		AnonymousProfileVo anonymousProfile = null;
+		InternalUserDetails askerInfo = platformService.getInternalUser(question.getAsker().getId());
 
-		if (question.getIsAnonymous()) {
-			if (question.getLatestSoptActivity() != null) {
-				anonymousProfile = new AnonymousProfileVo(question.getLatestSoptActivity(), null);
-			}
-		} else if (question.getAsker() != null) {
-			InternalUserDetails askerInfo = platformService.getInternalUser(question.getAsker().getId());
-			askerId = question.getAsker().getId();
-			askerName = askerInfo.name();
-			askerProfileImage = askerInfo.profileImage();
-		}
+		Long askerId = question.getIsAnonymous() ? null : question.getAsker().getId();
+		String askerName = question.getIsAnonymous() ? null : askerInfo.name();
+		String askerProfileImage = question.getIsAnonymous() ? null : askerInfo.profileImage();
 
-		boolean isMine = question.getAsker() != null && question.getAsker().getId().equals(currentUserId);
+		String askerLatestGeneration = askerInfo.soptActivities().stream()
+			.max((a1, a2) -> Integer.compare(a1.generation(), a2.generation()))
+			.map(activity -> activity.generation() + "기 " + activity.part())
+			.orElse(null);
+
+		AnonymousProfileVo anonymousProfile = question.getIsAnonymous() && askerLatestGeneration != null
+			? new AnonymousProfileVo(askerLatestGeneration, null)
+			: null;
+
+		boolean isMine = question.getAsker().getId().equals(currentUserId);
 		boolean isReceived = question.getReceiver().getId().equals(currentUserId);
 
 		return new QuestionResponse(
@@ -301,6 +306,7 @@ public class MemberQuestionService {
 			askerId,
 			askerName,
 			askerProfileImage,
+			askerLatestGeneration,
 			anonymousProfile,
 			question.getIsAnonymous(),
 			reactionCount,

@@ -16,13 +16,6 @@ public record QuestionSaveRequest(
 
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "익명 여부")
 	@NotNull(message = "익명 여부는 필수입니다.")
-	Boolean isAnonymous,
-
-	@Schema(
-		description = "익명인 경우 최신 기수 정보 (예: '36기 서버', '35기 기획')",
-		example = "36기 서버",
-		requiredMode = Schema.RequiredMode.NOT_REQUIRED
-	)
-	String latestSoptActivity
+	Boolean isAnonymous
 ) {
 }

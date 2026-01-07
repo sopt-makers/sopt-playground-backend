@@ -21,12 +21,16 @@ public class MemberQuestionRetriever {
 			.orElseThrow(() -> new NotFoundException("존재하지 않는 질문입니다. id: [" + questionId + "]"));
 	}
 
-	public List<MemberQuestion> findAnsweredQuestions(Long receiverId, Long cursor, int limit) {
-		return memberQuestionRepository.findAnsweredQuestions(receiverId, cursor, PageRequest.of(0, limit));
+	public List<MemberQuestion> findAnsweredQuestions(Long receiverId, int page, int size) {
+		return memberQuestionRepository.findAnsweredQuestions(receiverId, PageRequest.of(page, size));
 	}
 
-	public List<MemberQuestion> findUnansweredQuestions(Long receiverId, Long cursor, int limit) {
-		return memberQuestionRepository.findUnansweredQuestions(receiverId, cursor, PageRequest.of(0, limit));
+	public List<MemberQuestion> findUnansweredQuestions(Long receiverId, int page, int size) {
+		return memberQuestionRepository.findUnansweredQuestions(receiverId, PageRequest.of(page, size));
+	}
+
+	public long countAnsweredQuestions(Long receiverId) {
+		return memberQuestionRepository.countAnsweredQuestions(receiverId);
 	}
 
 	public long countUnansweredQuestions(Long receiverId) {

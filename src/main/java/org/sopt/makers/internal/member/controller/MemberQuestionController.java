@@ -153,8 +153,8 @@ public class MemberQuestionController {
 		description = """
 			특정 사용자의 질문 목록을 조회합니다.
 			tab: answered (답변 완료), unanswered (새질문)
-			cursor: 마지막 질문 ID (최초 조회 시 null)
-			limit: 조회할 개수 (기본 20, 최대 100)
+			page: 페이지 번호 (0부터 시작, 기본값 0)
+			size: 페이지 크기 (기본 10, 최대 100)
 			"""
 	)
 	@GetMapping("/{memberId}/questions")
@@ -162,10 +162,10 @@ public class MemberQuestionController {
 		@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
         @PathVariable Long memberId,
 		@RequestParam(value = "tab", defaultValue = "answered") QuestionTab tab,
-		@RequestParam(value = "cursor", required = false) Long cursor,
-		@RequestParam(value = "limit", required = false) Integer limit
+		@RequestParam(value = "page", required = false) Integer page,
+		@RequestParam(value = "size", required = false) Integer size
 	) {
-		QuestionsResponse response = memberQuestionService.getQuestions(userId, memberId, tab, cursor, limit);
+		QuestionsResponse response = memberQuestionService.getQuestions(userId, memberId, tab, page, size);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 

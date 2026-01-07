@@ -14,24 +14,25 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	@Query("SELECT q FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +
 		"AND q.answer IS NOT NULL " +
-		"AND (:cursor IS NULL OR q.id < :cursor) " +
 		"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findAnsweredQuestions(
 		@Param("receiverId") Long receiverId,
-		@Param("cursor") Long cursor,
 		Pageable pageable
 	);
 
 	@Query("SELECT q FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +
 		"AND q.answer IS NULL " +
-		"AND (:cursor IS NULL OR q.id < :cursor) " +
 		"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findUnansweredQuestions(
 		@Param("receiverId") Long receiverId,
-		@Param("cursor") Long cursor,
 		Pageable pageable
 	);
+
+	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
+		"WHERE q.receiver.id = :receiverId " +
+		"AND q.answer IS NOT NULL")
+	long countAnsweredQuestions(@Param("receiverId") Long receiverId);
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +

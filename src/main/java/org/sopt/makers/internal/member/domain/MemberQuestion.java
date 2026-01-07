@@ -38,9 +38,6 @@ public class MemberQuestion extends AuditingTimeEntity {
 	@Column(nullable = false)
 	private Boolean isAnonymous;
 
-	@Column(length = 100)
-	private String latestSoptActivity;
-
 	@Builder.Default
 	@Column(nullable = false)
 	private Boolean isReported = false;

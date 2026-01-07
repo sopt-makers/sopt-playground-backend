@@ -19,6 +19,9 @@ public record QuestionResponse(
 	@Schema(description = "질문자 프로필 이미지 (익명일 경우 null)")
 	String askerProfileImage,
 
+	@Schema(description = "질문자 최신 기수 정보 (예: '36기 서버')")
+	String askerLatestGeneration,
+
 	@Schema(description = "익명 프로필 정보 (익명일 경우)")
 	AnonymousProfileVo anonymousProfile,
 
