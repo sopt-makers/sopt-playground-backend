@@ -44,19 +44,24 @@ public class MemberQuestionService {
 	private static final int NEW_QUESTION_DAYS = 7;
 
 	@Transactional
-	public Long createQuestion(Long askerId, QuestionSaveRequest request) {
+	public Long createQuestion(Long askerId, Long receiverId, QuestionSaveRequest request) {
 		Member asker = memberRetriever.findMemberById(askerId);
-		Member receiver = memberRetriever.findMemberById(request.receiverId());
+		Member receiver = memberRetriever.findMemberById(receiverId);
 
-		if (askerId.equals(request.receiverId())) {
+		if (askerId.equals(receiverId)) {
 			throw new BadRequestException("자기 자신에게 질문할 수 없습니다.");
+		}
+
+		if (request.isAnonymous() && (request.latestSoptActivity() == null || request.latestSoptActivity().isBlank())) {
+			throw new BadRequestException("익명 질문의 경우 최신 기수 정보는 필수입니다.");
 		}
 
 		MemberQuestion question = memberQuestionModifier.createQuestion(
 			receiver,
 			asker,
 			request.content(),
-			request.isAnonymous()
+			request.isAnonymous(),
+			request.latestSoptActivity()
 		);
 
 		return question.getId();
@@ -261,8 +266,13 @@ public class MemberQuestionService {
 		Long askerId = null;
 		String askerName = null;
 		String askerProfileImage = null;
+		AnonymousProfileVo anonymousProfile = null;
 
-		if (!question.getIsAnonymous() && question.getAsker() != null) {
+		if (question.getIsAnonymous()) {
+			if (question.getLatestSoptActivity() != null) {
+				anonymousProfile = new AnonymousProfileVo(question.getLatestSoptActivity(), null);
+			}
+		} else if (question.getAsker() != null) {
 			InternalUserDetails askerInfo = platformService.getInternalUser(question.getAsker().getId());
 			askerId = question.getAsker().getId();
 			askerName = askerInfo.name();
@@ -278,7 +288,7 @@ public class MemberQuestionService {
 			askerId,
 			askerName,
 			askerProfileImage,
-			null,
+			anonymousProfile,
 			question.getIsAnonymous(),
 			reactionCount,
 			isReacted,

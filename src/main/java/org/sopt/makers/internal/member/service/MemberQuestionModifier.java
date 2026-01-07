@@ -12,12 +12,13 @@ public class MemberQuestionModifier {
 
 	private final MemberQuestionRepository memberQuestionRepository;
 
-	public MemberQuestion createQuestion(Member receiver, Member asker, String content, Boolean isAnonymous) {
+	public MemberQuestion createQuestion(Member receiver, Member asker, String content, Boolean isAnonymous, String latestSoptActivity) {
 		return memberQuestionRepository.save(MemberQuestion.builder()
 			.receiver(receiver)
 			.asker(isAnonymous ? null : asker)
 			.content(content)
 			.isAnonymous(isAnonymous)
+			.latestSoptActivity(latestSoptActivity)
 			.build());
 	}
 

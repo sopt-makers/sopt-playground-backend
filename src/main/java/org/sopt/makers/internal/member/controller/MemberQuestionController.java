@@ -33,12 +33,13 @@ public class MemberQuestionController {
 			익명으로 작성할 경우 asker 정보가 숨겨집니다.
 			"""
 	)
-	@PostMapping("/questions")
+	@PostMapping("/questions/{receiverId}")
 	public ResponseEntity<Map<String, Long>> createQuestion(
 		@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+		@PathVariable Long receiverId,
 		@RequestBody @Valid QuestionSaveRequest request
 	) {
-		Long questionId = memberQuestionService.createQuestion(userId, request);
+		Long questionId = memberQuestionService.createQuestion(userId, receiverId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("questionId", questionId));
 	}
 
