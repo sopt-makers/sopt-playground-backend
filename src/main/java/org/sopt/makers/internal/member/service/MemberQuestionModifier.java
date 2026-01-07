@@ -15,7 +15,7 @@ public class MemberQuestionModifier {
 	public MemberQuestion createQuestion(Member receiver, Member asker, String content, Boolean isAnonymous, String latestSoptActivity) {
 		return memberQuestionRepository.save(MemberQuestion.builder()
 			.receiver(receiver)
-			.asker(isAnonymous ? null : asker)
+			.asker(asker)
 			.content(content)
 			.isAnonymous(isAnonymous)
 			.latestSoptActivity(latestSoptActivity)

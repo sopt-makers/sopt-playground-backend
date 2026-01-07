@@ -227,10 +227,6 @@ public class MemberQuestionService {
 	}
 
 	private void validateQuestionOwner(MemberQuestion question, Long userId) {
-		if (question.getIsAnonymous()) {
-			throw new ForbiddenException("익명 질문은 수정할 수 없습니다.");
-		}
-
 		if (question.getAsker() == null || !question.getAsker().getId().equals(userId)) {
 			throw new ForbiddenException("질문 작성자만 수정할 수 있습니다.");
 		}
