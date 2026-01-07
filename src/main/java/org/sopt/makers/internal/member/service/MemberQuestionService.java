@@ -86,7 +86,7 @@ public class MemberQuestionService {
 		MemberQuestion question = memberQuestionRetriever.findById(questionId);
 		memberRetriever.checkExistsMemberById(userId);
 
-		boolean isAsker = question.getAsker() != null && question.getAsker().getId().equals(userId);
+		boolean isAsker = question.getAsker().getId().equals(userId);
 		boolean isReceiver = question.getReceiver().getId().equals(userId);
 
 		if (!isAsker && !isReceiver) {
