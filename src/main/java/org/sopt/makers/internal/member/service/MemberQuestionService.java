@@ -14,6 +14,8 @@ import org.sopt.makers.internal.member.dto.request.*;
 import org.sopt.makers.internal.member.dto.response.*;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
 import org.sopt.makers.internal.common.util.PaginationUtil;
+import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.external.pushNotification.message.member.AnswerNotificationMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,7 @@ public class MemberQuestionService {
 	private final QuestionReportRetriever questionReportRetriever;
 	private final QuestionReportModifier questionReportModifier;
 	private final PlatformService platformService;
+	private final PushNotificationService pushNotificationService;
 
 	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
 	private static final int NEW_QUESTION_DAYS = 7;
@@ -115,10 +118,7 @@ public class MemberQuestionService {
 
 		MemberAnswer answer = memberAnswerModifier.createAnswer(question, request.content());
 
-		// TODO: 푸시 알림 발송 (문구 확정 후 구현)
-		// if (question.getAsker() != null) {
-		//     pushNotificationService.sendAnswerNotification(question.getAsker().getId());
-		// }
+		sendAnswerNotification(question, answer, userId);
 
 		return answer.getId();
 	}
@@ -229,6 +229,23 @@ public class MemberQuestionService {
 	private void validateQuestionOwner(MemberQuestion question, Long userId) {
 		if (question.getAsker() == null || !question.getAsker().getId().equals(userId)) {
 			throw new ForbiddenException("질문 작성자만 수정할 수 있습니다.");
+		}
+	}
+
+	private void sendAnswerNotification(MemberQuestion question, MemberAnswer answer, Long answerWriterId) {
+		try {
+			InternalUserDetails answerWriter = platformService.getInternalUser(answerWriterId);
+
+			AnswerNotificationMessage message = AnswerNotificationMessage.of(
+				question.getAsker().getId(),
+				answerWriter.name(),
+				answer.getContent(),
+				null
+			);
+
+			pushNotificationService.sendPushNotification(message);
+		} catch (Exception e) {
+			log.error("답변 푸시 알림 발송 실패: questionId={}, error={}", question.getId(), e.getMessage(), e);
 		}
 	}
 
