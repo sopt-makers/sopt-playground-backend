@@ -13,7 +13,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 
 	@Query("SELECT q FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +
-		"AND q.answer IS NOT NULL " +
+		"AND EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id) " +
 		"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findAnsweredQuestions(
 		@Param("receiverId") Long receiverId,
@@ -22,7 +22,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 
 	@Query("SELECT q FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +
-		"AND q.answer IS NULL " +
+		"AND NOT EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id) " +
 		"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findUnansweredQuestions(
 		@Param("receiverId") Long receiverId,
@@ -31,12 +31,12 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +
-		"AND q.answer IS NOT NULL")
+		"AND EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id)")
 	long countAnsweredQuestions(@Param("receiverId") Long receiverId);
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
 		"WHERE q.receiver.id = :receiverId " +
-		"AND q.answer IS NULL")
+		"AND NOT EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id)")
 	long countUnansweredQuestions(@Param("receiverId") Long receiverId);
 
 	boolean existsByIdAndAsker(Long questionId, Member asker);

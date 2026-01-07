@@ -229,6 +229,9 @@ public class MemberQuestionService {
 			totalElements = memberQuestionRetriever.countUnansweredQuestions(receiverId);
 		}
 
+		log.info("tab: {}", tab);
+		log.info(questions.toString());
+
 		List<QuestionResponse> questionResponses = questions.stream()
 			.map(q -> toQuestionResponse(q, userId))
 			.collect(Collectors.toList());
