@@ -6,7 +6,6 @@ import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
-import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberAnswer;
 import org.sopt.makers.internal.member.domain.MemberQuestion;
@@ -14,7 +13,10 @@ import org.sopt.makers.internal.member.domain.QuestionTab;
 import org.sopt.makers.internal.member.dto.request.*;
 import org.sopt.makers.internal.member.dto.response.*;
 import org.sopt.makers.internal.community.dto.AnonymousProfileVo;
-import org.sopt.makers.internal.common.util.PaginationUtil;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
+import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.external.pushNotification.message.member.AnswerNotificationMessage;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,6 +46,8 @@ public class MemberQuestionService {
 	private final QuestionReportModifier questionReportModifier;
 	private final PlatformService platformService;
 	private final PushNotificationService pushNotificationService;
+	private final AnonymousNicknameRetriever anonymousNicknameRetriever;
+	private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
 	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
 	private static final int NEW_QUESTION_DAYS = 7;
@@ -56,11 +61,28 @@ public class MemberQuestionService {
 			throw new BadRequestException("자기 자신에게 질문할 수 없습니다.");
 		}
 
+		AnonymousNickname anonymousNickname = null;
+		AnonymousProfileImage anonymousProfileImage = null;
+
+		if (request.isAnonymous()) {
+			List<MemberQuestion> receiverQuestions = memberQuestionRetriever.findByReceiverId(receiverId);
+			List<AnonymousNickname> excludeNicknames = receiverQuestions.stream()
+				.map(MemberQuestion::getAnonymousNickname)
+				.filter(Objects::nonNull)
+				.distinct()
+				.toList();
+
+			anonymousNickname = anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNicknames);
+			anonymousProfileImage = anonymousProfileImageRetriever.getAnonymousProfileImage();
+		}
+
 		MemberQuestion question = memberQuestionModifier.createQuestion(
 			receiver,
 			asker,
 			request.content(),
-			request.isAnonymous()
+			request.isAnonymous(),
+			anonymousNickname,
+			anonymousProfileImage
 		);
 
 		return question.getId();
@@ -293,9 +315,14 @@ public class MemberQuestionService {
 			.map(activity -> activity.generation() + "기 " + activity.part())
 			.orElse(null);
 
-		AnonymousProfileVo anonymousProfile = question.getIsAnonymous() && askerLatestGeneration != null
-			? new AnonymousProfileVo(askerLatestGeneration, null)
-			: null;
+		AnonymousProfileVo anonymousProfile = null;
+		if (question.getIsAnonymous() && question.getAnonymousNickname() != null) {
+			String nickname = question.getAnonymousNickname().getNickname();
+			String profileImgUrl = question.getAnonymousProfileImage() != null
+				? question.getAnonymousProfileImage().getImageUrl()
+				: null;
+			anonymousProfile = new AnonymousProfileVo(nickname, profileImgUrl);
+		}
 
 		boolean isMine = question.getAsker().getId().equals(currentUserId);
 		boolean isReceived = question.getReceiver().getId().equals(currentUserId);

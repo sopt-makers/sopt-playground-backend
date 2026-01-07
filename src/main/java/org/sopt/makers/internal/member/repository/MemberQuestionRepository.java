@@ -42,4 +42,10 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	boolean existsByIdAndAsker(Long questionId, Member asker);
 
 	boolean existsByIdAndReceiver(Long questionId, Member receiver);
+
+	@Query("SELECT q FROM MemberQuestion q ORDER BY q.id DESC")
+	List<MemberQuestion> findTopByOrderByIdDesc(Pageable pageable);
+
+	@Query("SELECT q FROM MemberQuestion q WHERE q.receiver.id = :receiverId")
+	List<MemberQuestion> findByReceiverId(@Param("receiverId") Long receiverId);
 }

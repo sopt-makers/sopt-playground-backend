@@ -44,4 +44,8 @@ public class MemberQuestionRetriever {
 	public boolean isReceiver(Long questionId, Member receiver) {
 		return memberQuestionRepository.existsByIdAndReceiver(questionId, receiver);
 	}
+
+	public List<MemberQuestion> findByReceiverId(Long receiverId) {
+		return memberQuestionRepository.findByReceiverId(receiverId);
+	}
 }

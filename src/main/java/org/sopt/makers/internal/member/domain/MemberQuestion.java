@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
+import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,14 @@ public class MemberQuestion extends AuditingTimeEntity {
 
 	@Column(nullable = false)
 	private Boolean isAnonymous;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "anonymous_nickname_id")
+	private AnonymousNickname anonymousNickname;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "anonymous_profile_image_id")
+	private AnonymousProfileImage anonymousProfileImage;
 
 	@Builder.Default
 	@Column(nullable = false)
