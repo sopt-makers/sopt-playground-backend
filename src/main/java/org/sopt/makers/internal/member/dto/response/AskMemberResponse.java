@@ -26,8 +26,11 @@ AskMemberResponse(
             @Schema(description = "최근 활동 정보", required = true)
             MemberSoptActivityResponse latestActivity,
 
-            @Schema(description = "커리어 목록")
-            List<MemberCareerResponse> careers,
+            @Schema(description = "현재 커리어")
+            MemberCareerResponse currentCareer,
+
+            @Schema(description = "직전 커리어")
+            MemberCareerResponse previousCareer,
 
             @Schema(description = "답변 보장 여부", example = "true", required = true)
             Boolean isAnswerGuaranteed
@@ -41,7 +44,6 @@ AskMemberResponse(
 
     public record MemberCareerResponse(
             String companyName,
-            String title,
-            Boolean isCurrent
+            String title
     ) {}
 }

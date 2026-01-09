@@ -1055,7 +1055,6 @@ public class MemberService {
     public AskMemberResponse getAskMembers(String partName) {
         List<AskMemberResponse.QuestionTargetMember> targetMembers = new ArrayList<>();
 
-        // 파트 이름을 Part enum으로 변환
         Part part = convertToPart(partName);
 
         // 특정 파트가 지정된 경우 해당 파트만, 없으면 모든 파트
@@ -1084,14 +1083,52 @@ public class MemberService {
                     continue;
                 }
 
-                // 커리어 정보 변환
-                List<AskMemberResponse.MemberCareerResponse> careers = member.getCareers().stream()
-                        .map(career -> new AskMemberResponse.MemberCareerResponse(
-                                career.getCompanyName(),
-                                career.getTitle(),
-                                career.getIsCurrent()
-                        ))
-                        .toList();
+                // 커리어 정보 처리
+                AskMemberResponse.MemberCareerResponse currentCareer = null;
+                AskMemberResponse.MemberCareerResponse previousCareer = null;
+
+                List<MemberCareer> careers = member.getCareers();
+                if (careers != null && !careers.isEmpty()) {
+                    // 현재 재직중인 커리어 찾기
+                    Optional<MemberCareer> currentCareerOpt = careers.stream()
+                            .filter(career -> career.getIsCurrent() != null && career.getIsCurrent())
+                            .findFirst();
+
+                    if (currentCareerOpt.isPresent()) {
+                        MemberCareer current = currentCareerOpt.get();
+                        currentCareer = new AskMemberResponse.MemberCareerResponse(
+                                current.getCompanyName(),
+                                current.getTitle()
+                        );
+                    }
+
+                    // 직전 커리어 찾기 (isCurrent가 false인 것 중 가장 최근)
+                    List<MemberCareer> pastCareers = careers.stream()
+                            .filter(career -> career.getIsCurrent() == null || !career.getIsCurrent())
+                            .filter(career -> career.getEndDate() != null)
+                            .toList();
+
+                    if (!pastCareers.isEmpty()) {
+                        // endDate로 정렬하여 가장 최근 것 선택
+                        MemberCareer mostRecentPast = pastCareers.stream()
+                                .max((c1, c2) -> {
+                                    try {
+                                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                                        val end1 = YearMonth.parse(c1.getEndDate(), formatter);
+                                        val end2 = YearMonth.parse(c2.getEndDate(), formatter);
+                                        return end1.compareTo(end2);
+                                    } catch (Exception e) {
+                                        return 0;
+                                    }
+                                })
+                                .orElse(null);
+
+						previousCareer = new AskMemberResponse.MemberCareerResponse(
+							mostRecentPast.getCompanyName(),
+							mostRecentPast.getTitle()
+						);
+					}
+                }
 
                 AskMemberResponse.MemberSoptActivityResponse activityResponse =
                         new AskMemberResponse.MemberSoptActivityResponse(
@@ -1107,7 +1144,8 @@ public class MemberService {
                                 userDetails.profileImage(),
                                 member.getIntroduction(),
                                 activityResponse,
-                                careers,
+                                currentCareer,
+                                previousCareer,
                                 true  // 답변보장 항상 true
                         );
 
