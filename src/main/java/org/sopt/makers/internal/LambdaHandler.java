@@ -8,15 +8,9 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.HashMap;
-import java.time.Instant;
 
 public class LambdaHandler implements RequestStreamHandler {
 
@@ -26,6 +20,12 @@ public class LambdaHandler implements RequestStreamHandler {
     static {
         try {
             handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(InternalApplication.class);
+            SpringBootLambdaContainerHandler.getContainerConfig().addBinaryContentTypes(
+                "image/png",
+                "image/jpeg",
+                "image/gif",
+                "application/octet-stream"
+            );
         } catch (ContainerInitializationException e) {
             throw new RuntimeException("Could not initialize Spring Boot application", e);
         } catch (Exception e) {
