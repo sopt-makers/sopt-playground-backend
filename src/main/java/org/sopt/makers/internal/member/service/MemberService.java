@@ -29,6 +29,7 @@ import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.member.constants.AppJamObMemberId;
+import org.sopt.makers.internal.member.constants.AskMemberId;
 import org.sopt.makers.internal.member.constants.MakersMemberId;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberBlock;
@@ -40,6 +41,7 @@ import org.sopt.makers.internal.member.domain.UserFavor;
 import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
+import org.sopt.makers.internal.member.domain.enums.Part;
 import org.sopt.makers.internal.member.domain.enums.ServiceType;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
@@ -58,6 +60,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
@@ -1046,6 +1049,130 @@ public class MemberService {
 				selfIntroduction,
 				competitionData
         );
+    }
+
+    @Transactional(readOnly = true)
+    public AskMemberResponse getAskMembers(String partName) {
+        List<AskMemberResponse.QuestionTargetMember> targetMembers = new ArrayList<>();
+
+        Part part = convertToPart(partName);
+
+        // 특정 파트가 지정된 경우 해당 파트만, 없으면 모든 파트
+        List<Long> memberIds;
+        if (part != null) {
+            memberIds = AskMemberId.getAskMembersByPart(part);
+        } else {
+            memberIds = AskMemberId.getAllAskMembers();
+        }
+
+        for (Long memberId : memberIds) {
+            try {
+                Member member = memberRepository.findById(memberId).orElse(null);
+                if (member == null || !member.getHasProfile()) {
+                    continue;
+                }
+
+                InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+
+                // 최근 활동 정보 가져오기
+                SoptActivity latestActivity = userDetails.soptActivities().stream()
+                        .max((a1, a2) -> Integer.compare(a1.generation(), a2.generation()))
+                        .orElse(null);
+
+                if (latestActivity == null) {
+                    continue;
+                }
+
+                // 커리어 정보 처리
+                AskMemberResponse.MemberCareerResponse currentCareer = null;
+                AskMemberResponse.MemberCareerResponse previousCareer = null;
+
+                List<MemberCareer> careers = member.getCareers();
+                if (careers != null && !careers.isEmpty()) {
+                    // 현재 재직중인 커리어 찾기
+                    Optional<MemberCareer> currentCareerOpt = careers.stream()
+                            .filter(career -> career.getIsCurrent() != null && career.getIsCurrent())
+                            .findFirst();
+
+                    if (currentCareerOpt.isPresent()) {
+                        MemberCareer current = currentCareerOpt.get();
+                        currentCareer = new AskMemberResponse.MemberCareerResponse(
+                                current.getCompanyName(),
+                                current.getTitle()
+                        );
+                    }
+
+                    // 직전 커리어 찾기 (isCurrent가 false인 것 중 가장 최근)
+                    List<MemberCareer> pastCareers = careers.stream()
+                            .filter(career -> career.getIsCurrent() == null || !career.getIsCurrent())
+                            .filter(career -> career.getEndDate() != null)
+                            .toList();
+
+                    if (!pastCareers.isEmpty()) {
+                        // endDate로 정렬하여 가장 최근 것 선택
+                        MemberCareer mostRecentPast = pastCareers.stream()
+                                .max((c1, c2) -> {
+                                    try {
+                                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                                        val end1 = YearMonth.parse(c1.getEndDate(), formatter);
+                                        val end2 = YearMonth.parse(c2.getEndDate(), formatter);
+                                        return end1.compareTo(end2);
+                                    } catch (Exception e) {
+                                        return 0;
+                                    }
+                                })
+                                .orElse(null);
+
+						previousCareer = new AskMemberResponse.MemberCareerResponse(
+							mostRecentPast.getCompanyName(),
+							mostRecentPast.getTitle()
+						);
+					}
+                }
+
+                AskMemberResponse.MemberSoptActivityResponse activityResponse =
+                        new AskMemberResponse.MemberSoptActivityResponse(
+                                latestActivity.generation(),
+                                latestActivity.part(),
+                                latestActivity.team()
+                        );
+
+                AskMemberResponse.QuestionTargetMember targetMember =
+                        new AskMemberResponse.QuestionTargetMember(
+                                memberId,
+                                userDetails.name(),
+                                userDetails.profileImage(),
+                                member.getIntroduction(),
+                                activityResponse,
+                                currentCareer,
+                                previousCareer,
+                                true  // 답변보장 항상 true
+                        );
+
+                targetMembers.add(targetMember);
+            } catch (Exception e) {
+                log.error("Failed to process member ID: " + memberId, e);
+                continue;
+            }
+        }
+
+        return new AskMemberResponse(targetMembers);
+    }
+
+    private Part convertToPart(String partName) {
+        if (partName == null || partName.isBlank()) {
+            return null;
+        }
+
+        return switch (partName.toUpperCase()) {
+            case "서버", "SERVER" -> Part.SERVER;
+            case "IOS" -> Part.IOS;
+            case "안드로이드", "ANDROID" -> Part.ANDROID;
+            case "웹", "WEB" -> Part.WEB;
+            case "디자인", "DESIGN" -> Part.DESIGN;
+            case "기획", "PLAN" -> Part.PLAN;
+            default -> null;
+        };
     }
 
 }
