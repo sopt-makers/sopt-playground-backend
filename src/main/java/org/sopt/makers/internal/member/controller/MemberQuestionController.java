@@ -180,4 +180,17 @@ public class MemberQuestionController {
 		UnansweredCountResponse response = memberQuestionService.getUnansweredCount(userId);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
+
+	@Operation(
+			summary = "내 질문의 답변 위치 조회 API",
+			description = "특정 사용자의 답변 완료 탭에서 내가 남긴 가장 최신 질문이 몇 페이지 몇 번째에 있는지 조회합니다."
+	)
+	@GetMapping("/{memberId}/questions/my-latest-answered")
+	public ResponseEntity<MyLatestAnsweredQuestionLocationResponse> getMyLatestAnsweredQuestionLocation(
+			@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+			@PathVariable Long memberId
+	) {
+		MyLatestAnsweredQuestionLocationResponse response = memberQuestionService.getMyLatestAnsweredQuestionLocation(userId, memberId);
+		return ResponseEntity.status(HttpStatus.OK).body(response);
+	}
 }

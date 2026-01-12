@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
@@ -257,6 +258,36 @@ public class MemberQuestionService {
 	public UnansweredCountResponse getUnansweredCount(Long userId) {
 		long count = memberQuestionRetriever.countUnansweredQuestions(userId);
 		return new UnansweredCountResponse(count);
+	}
+
+	@Transactional(readOnly = true)
+	public MyLatestAnsweredQuestionLocationResponse getMyLatestAnsweredQuestionLocation(Long userId, Long receiverId) {
+		if (Objects.equals(userId, receiverId)) {
+			throw new BadRequestException("자신에게 질문할 수 없습니다.");
+		}
+
+		memberRetriever.checkExistsMemberById(userId);
+		memberRetriever.checkExistsMemberById(receiverId);
+
+		List<MemberQuestion> myAnsweredQuestions = memberQuestionRetriever.findAllAnsweredByAskerAndReceiverOrderByLatest(userId, receiverId);
+
+		if (myAnsweredQuestions.isEmpty()) {
+			return new MyLatestAnsweredQuestionLocationResponse(null, null, null);
+		}
+
+		MemberQuestion latestQuestion = myAnsweredQuestions.get(0);
+		List<Long> allAnsweredIds = memberQuestionRetriever.findAllAnsweredQuestionIdsByReceiver(receiverId);
+
+		int targetIndexInTotal = allAnsweredIds.indexOf(latestQuestion.getId());
+		if (targetIndexInTotal == -1) {
+			return new MyLatestAnsweredQuestionLocationResponse(null, null, null);
+		}
+
+		int pageSize = 10;
+		int page = targetIndexInTotal / pageSize;
+		int index = targetIndexInTotal % pageSize;
+
+		return new MyLatestAnsweredQuestionLocationResponse(latestQuestion.getId(), page, index);
 	}
 
 	private void validateQuestionOwner(MemberQuestion question, Long userId) {
