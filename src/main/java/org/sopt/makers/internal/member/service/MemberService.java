@@ -1084,7 +1084,7 @@ public class MemberService {
                 }
 
                 // 커리어 정보 처리 - 현재 직장 우선, 없으면 가장 최근 직장
-                AskMemberResponse.MemberCareerResponse career = null;
+                AskMemberResponse.AskMemberCareerResponse career = null;
 
                 List<MemberCareer> careers = member.getCareers();
                 if (careers != null && !careers.isEmpty()) {
@@ -1095,7 +1095,7 @@ public class MemberService {
 
                     if (currentCareerOpt.isPresent()) {
                         MemberCareer current = currentCareerOpt.get();
-                        career = new AskMemberResponse.MemberCareerResponse(
+                        career = new AskMemberResponse.AskMemberCareerResponse(
                                 current.getCompanyName(),
                                 current.getTitle()
                         );
@@ -1124,7 +1124,7 @@ public class MemberService {
                                 .orElse(careers.get(0)); // 정렬 실패시 첫 번째 커리어 선택
 
                         if (mostRecent != null) {
-                            career = new AskMemberResponse.MemberCareerResponse(
+                            career = new AskMemberResponse.AskMemberCareerResponse(
                                     mostRecent.getCompanyName(),
                                     mostRecent.getTitle()
                             );
@@ -1132,8 +1132,8 @@ public class MemberService {
                     }
                 }
 
-                AskMemberResponse.MemberSoptActivityResponse activityResponse =
-                        new AskMemberResponse.MemberSoptActivityResponse(
+                AskMemberResponse.AskMemberSoptActivityResponse activityResponse =
+                        new AskMemberResponse.AskMemberSoptActivityResponse(
                                 latestActivity.generation(),
                                 latestActivity.part(),
                                 latestActivity.team()

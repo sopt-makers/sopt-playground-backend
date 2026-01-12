@@ -24,22 +24,22 @@ AskMemberResponse(
             String introduction,
 
             @Schema(description = "최근 활동 정보")
-            MemberSoptActivityResponse latestActivity,
+            AskMemberSoptActivityResponse latestActivity,
 
             @Schema(description = "커리어 정보")
-            MemberCareerResponse career,
+            AskMemberCareerResponse career,
 
             @Schema(description = "답변 보장 여부", example = "true")
             Boolean isAnswerGuaranteed
     ) {}
 
-    public record MemberSoptActivityResponse(
+    public record AskMemberSoptActivityResponse(
             Integer generation,
             String part,
             String team
     ) {}
 
-    public record MemberCareerResponse(
+    public record AskMemberCareerResponse(
             String companyName,
             String title
     ) {}
