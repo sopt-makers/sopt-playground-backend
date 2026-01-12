@@ -69,8 +69,8 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
 
         // 기본 조건
         BooleanBuilder baseCondition = new BooleanBuilder();
-        baseCondition.and(isInSection(section))
-                .and(isInTopicType(topicType))
+        baseCondition.and(isInSection(coffeeChat, section))
+                .and(isInTopicType(coffeeChat, topicType))
                 .and(isInCareer(coffeeChat, career))
                 .and(coffeeChat.isCoffeeChatActivate.isTrue()
                         .or(coffeeChat.member.id.eq(memberId)));
@@ -123,19 +123,19 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .fetch();
     }
 
-    private BooleanExpression isInSection(CoffeeChatSection section) {
+    private BooleanExpression isInSection(QCoffeeChat coffeeChat, CoffeeChatSection section) {
         if (section == null) {
             return null;
         }
-        StringPath sectionStringPath = Expressions.stringPath("section");
+        StringPath sectionStringPath = Expressions.stringPath(coffeeChat, "section");
         return sectionStringPath.contains(section.name());
     }
 
-    private BooleanExpression isInTopicType(CoffeeChatTopicType topicType) {
+    private BooleanExpression isInTopicType(QCoffeeChat coffeeChat, CoffeeChatTopicType topicType) {
         if (topicType == null) {
             return null;
         }
-        StringPath topicTypeStringPath = Expressions.stringPath("coffee_chat_topic_type");
+        StringPath topicTypeStringPath = Expressions.stringPath(coffeeChat, "coffeeChatTopicType");
         return topicTypeStringPath.contains(topicType.name());
     }
 
