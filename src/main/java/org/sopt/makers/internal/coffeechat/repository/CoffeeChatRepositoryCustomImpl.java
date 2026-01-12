@@ -3,8 +3,6 @@ package org.sopt.makers.internal.coffeechat.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -12,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.coffeechat.domain.QCoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.QCoffeeChatHistory;
 import org.sopt.makers.internal.coffeechat.domain.enums.Career;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatSection;
-import org.sopt.makers.internal.coffeechat.domain.enums.CoffeeChatTopicType;
 import org.sopt.makers.internal.coffeechat.dto.request.CoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.request.RecentCoffeeChatInfoDto;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
@@ -61,7 +57,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
     }
 
     @Override
-    public List<CoffeeChatInfoDto> findCoffeeChatInfoByDbConditions(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career) {
+    public List<CoffeeChatInfoDto> findCoffeeChatInfoByDbConditions(Long memberId, Career career) {
 
         QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
         QMember member = QMember.member;
@@ -69,9 +65,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
 
         // 기본 조건
         BooleanBuilder baseCondition = new BooleanBuilder();
-        baseCondition.and(isInSection(coffeeChat, section))
-                .and(isInTopicType(coffeeChat, topicType))
-                .and(isInCareer(coffeeChat, career))
+        baseCondition.and(isInCareer(coffeeChat, career))
                 .and(coffeeChat.isCoffeeChatActivate.isTrue()
                         .or(coffeeChat.member.id.eq(memberId)));
 
@@ -80,6 +74,7 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                         CoffeeChatInfoDto.class,
                         coffeeChat.member.id,
                         coffeeChat.coffeeChatBio,
+                        coffeeChat.section,
                         coffeeChat.coffeeChatTopicType,
                         coffeeChat.career,
                         coffeeChat.member.university,
@@ -123,22 +118,6 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                 .fetch();
     }
 
-    private BooleanExpression isInSection(QCoffeeChat coffeeChat, CoffeeChatSection section) {
-        if (section == null) {
-            return null;
-        }
-        StringPath sectionStringPath = Expressions.stringPath(coffeeChat, "section");
-        return sectionStringPath.contains(section.name());
-    }
-
-    private BooleanExpression isInTopicType(QCoffeeChat coffeeChat, CoffeeChatTopicType topicType) {
-        if (topicType == null) {
-            return null;
-        }
-        StringPath topicTypeStringPath = Expressions.stringPath(coffeeChat, "coffeeChatTopicType");
-        return topicTypeStringPath.contains(topicType.name());
-    }
-
     private BooleanExpression isInCareer(QCoffeeChat coffeeChat, Career career) {
         if (career == null) {
             return null;
@@ -153,18 +132,4 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
         return memberCareer.companyName.contains(search)
                 .or(member.university.contains(search));
     }
-
-    // private BooleanExpression isInPart(QMember member, String part, QMemberSoptActivity memberSoptActivity) {
-    //     if (part == null) {
-    //         return null;
-    //     }
-    //     return JPAExpressions
-    //             .selectFrom(memberSoptActivity)
-    //             .where(memberSoptActivity.memberId.eq(member.id)
-    //                     .and(memberSoptActivity.part.like(part + "%"))
-    //             )
-    //             .exists();
-    // }
-
-
 }
