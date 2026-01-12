@@ -37,12 +37,12 @@ public class MemberQuestionRetriever {
 		return memberQuestionRepository.countUnansweredQuestions(receiverId);
 	}
 
-	public boolean isAsker(Long questionId, Member asker) {
-		return memberQuestionRepository.existsByIdAndAsker(questionId, asker);
+	public List<MemberQuestion> findAllAnsweredByAskerAndReceiverOrderByLatest(Long askerId, Long receiverId) {
+		return memberQuestionRepository.findAllAnsweredByAskerAndReceiverOrderByLatest(askerId, receiverId);
 	}
 
-	public boolean isReceiver(Long questionId, Member receiver) {
-		return memberQuestionRepository.existsByIdAndReceiver(questionId, receiver);
+	public List<Long> findAllAnsweredQuestionIdsByReceiver(Long receiverId) {
+		return memberQuestionRepository.findAllAnsweredQuestionIdsByReceiver(receiverId);
 	}
 
 	public List<MemberQuestion> findByReceiverId(Long receiverId) {

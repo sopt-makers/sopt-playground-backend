@@ -12,32 +12,49 @@ import java.util.List;
 public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, Long> {
 
 	@Query("SELECT q FROM MemberQuestion q " +
-		"WHERE q.receiver.id = :receiverId " +
-		"AND EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id) " +
-		"ORDER BY q.createdAt DESC")
+			"WHERE q.receiver.id = :receiverId " +
+			"AND q.answer IS NOT NULL " +
+			"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findAnsweredQuestions(
-		@Param("receiverId") Long receiverId,
-		Pageable pageable
+			@Param("receiverId") Long receiverId,
+			Pageable pageable
 	);
 
 	@Query("SELECT q FROM MemberQuestion q " +
-		"WHERE q.receiver.id = :receiverId " +
-		"AND NOT EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id) " +
-		"ORDER BY q.createdAt DESC")
+			"WHERE q.receiver.id = :receiverId " +
+			"AND q.answer IS NULL " +
+			"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findUnansweredQuestions(
-		@Param("receiverId") Long receiverId,
-		Pageable pageable
+			@Param("receiverId") Long receiverId,
+			Pageable pageable
 	);
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
-		"WHERE q.receiver.id = :receiverId " +
-		"AND EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id)")
+			"WHERE q.receiver.id = :receiverId " +
+			"AND q.answer IS NOT NULL")
 	long countAnsweredQuestions(@Param("receiverId") Long receiverId);
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
-		"WHERE q.receiver.id = :receiverId " +
-		"AND NOT EXISTS (SELECT 1 FROM MemberAnswer a WHERE a.question.id = q.id)")
+			"WHERE q.receiver.id = :receiverId " +
+			"AND q.answer IS NULL")
 	long countUnansweredQuestions(@Param("receiverId") Long receiverId);
+
+	@Query("SELECT q FROM MemberQuestion q " +
+			"WHERE q.asker.id = :askerId AND q.receiver.id = :receiverId " +
+			"AND q.answer IS NOT NULL " +
+			"ORDER BY q.createdAt DESC")
+	List<MemberQuestion> findAllAnsweredByAskerAndReceiverOrderByLatest(
+			@Param("askerId") Long askerId,
+			@Param("receiverId") Long receiverId
+	);
+
+	@Query("SELECT q.id FROM MemberQuestion q " +
+			"WHERE q.receiver.id = :receiverId " +
+			"AND q.answer IS NOT NULL " +
+			"ORDER BY q.createdAt DESC")
+	List<Long> findAllAnsweredQuestionIdsByReceiver(@Param("receiverId") Long receiverId);
+
+	// ------------------
 
 	boolean existsByIdAndAsker(Long questionId, Member asker);
 
