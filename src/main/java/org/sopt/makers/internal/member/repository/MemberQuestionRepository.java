@@ -13,7 +13,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 
 	@Query("SELECT q FROM MemberQuestion q " +
 			"WHERE q.receiver.id = :receiverId " +
-			"AND q.answer IS NOT NULL " + // 기존 EXISTS를 필드 직접 참조로 간소화
+			"AND q.answer IS NOT NULL " +
 			"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findAnsweredQuestions(
 			@Param("receiverId") Long receiverId,
