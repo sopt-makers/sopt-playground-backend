@@ -11,10 +11,10 @@ AskMemberResponse(
 ) {
     @Schema(description = "질문 대상 멤버 정보")
     public record QuestionTargetMember(
-            @Schema(description = "멤버 ID", required = true)
+            @Schema(description = "멤버 ID")
             Long id,
 
-            @Schema(description = "멤버 이름", required = true)
+            @Schema(description = "멤버 이름")
             String name,
 
             @Schema(description = "프로필 이미지 URL")
@@ -23,16 +23,13 @@ AskMemberResponse(
             @Schema(description = "소개")
             String introduction,
 
-            @Schema(description = "최근 활동 정보", required = true)
+            @Schema(description = "최근 활동 정보")
             MemberSoptActivityResponse latestActivity,
 
-            @Schema(description = "현재 커리어")
-            MemberCareerResponse currentCareer,
+            @Schema(description = "커리어 정보")
+            MemberCareerResponse career,
 
-            @Schema(description = "직전 커리어")
-            MemberCareerResponse previousCareer,
-
-            @Schema(description = "답변 보장 여부", example = "true", required = true)
+            @Schema(description = "답변 보장 여부", example = "true")
             Boolean isAnswerGuaranteed
     ) {}
 
