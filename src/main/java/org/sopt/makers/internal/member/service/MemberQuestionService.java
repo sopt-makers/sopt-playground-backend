@@ -19,6 +19,8 @@ import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRet
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.external.pushNotification.message.member.AnswerNotificationMessage;
+import org.sopt.makers.internal.external.sms.SmsNotificationService;
+import org.sopt.makers.internal.external.sms.message.member.QuestionNotificationSmsMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +48,7 @@ public class MemberQuestionService {
 	private final QuestionReportModifier questionReportModifier;
 	private final PlatformService platformService;
 	private final PushNotificationService pushNotificationService;
+	private final SmsNotificationService smsNotificationService;
 	private final AnonymousNicknameRetriever anonymousNicknameRetriever;
 	private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
@@ -84,6 +87,8 @@ public class MemberQuestionService {
 			anonymousNickname,
 			anonymousProfileImage
 		);
+
+		sendQuestionNotification(question, receiverId);
 
 		return question.getId();
 	}
@@ -257,6 +262,23 @@ public class MemberQuestionService {
 	private void validateQuestionOwner(MemberQuestion question, Long userId) {
 		if (question.getAsker() == null || !question.getAsker().getId().equals(userId)) {
 			throw new ForbiddenException("질문 작성자만 수정할 수 있습니다.");
+		}
+	}
+
+	private void sendQuestionNotification(MemberQuestion question, Long receiverId) {
+		try {
+			InternalUserDetails receiver = platformService.getInternalUser(receiverId);
+			String askProfileLink = String.format("https://playground.sopt.org/members/%d/ask", receiverId);
+
+			QuestionNotificationSmsMessage message = QuestionNotificationSmsMessage.of(
+				question.getContent(),
+				askProfileLink,
+				receiver.phone()
+			);
+
+			smsNotificationService.sendSms(message);
+		} catch (Exception e) {
+			log.error("질문 SMS 알림 발송 실패: questionId={}, receiverId={}, error={}", question.getId(), receiverId, e.getMessage(), e);
 		}
 	}
 
