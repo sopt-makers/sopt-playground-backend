@@ -152,7 +152,7 @@ public class MemberQuestionController {
 		summary = "질문 목록 조회 API",
 		description = """
 			특정 사용자의 질문 목록을 조회합니다.
-			tab: answered (답변 완료), unanswered (새질문)
+			tab: answered (답변 완료), unanswered (새질문), 미입력 시 전체 조회
 			page: 페이지 번호 (0부터 시작, 기본값 0)
 			size: 페이지 크기 (기본 10, 최대 100)
 			"""
@@ -161,7 +161,7 @@ public class MemberQuestionController {
 	public ResponseEntity<QuestionsResponse> getQuestions(
 		@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
         @PathVariable Long memberId,
-		@RequestParam(value = "tab", defaultValue = "answered") QuestionTab tab,
+		@RequestParam(value = "tab", required = false) QuestionTab tab,
 		@RequestParam(value = "page", required = false) Integer page,
 		@RequestParam(value = "size", required = false) Integer size
 	) {
