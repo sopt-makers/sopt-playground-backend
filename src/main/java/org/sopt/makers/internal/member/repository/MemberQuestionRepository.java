@@ -22,7 +22,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 
 	@Query("SELECT q FROM MemberQuestion q " +
 			"WHERE q.receiver.id = :receiverId " +
-			"AND q.answer IS NULL " +
+			"AND NOT EXISTS (SELECT a FROM MemberAnswer a WHERE a.question = q) " +
 			"ORDER BY q.createdAt DESC")
 	List<MemberQuestion> findUnansweredQuestions(
 			@Param("receiverId") Long receiverId,
@@ -44,7 +44,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
 			"WHERE q.receiver.id = :receiverId " +
-			"AND q.answer IS NULL")
+			"AND NOT EXISTS (SELECT a FROM MemberAnswer a WHERE a.question = q)")
 	long countUnansweredQuestions(@Param("receiverId") Long receiverId);
 
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
