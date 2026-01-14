@@ -227,7 +227,10 @@ public class MemberQuestionService {
 		List<MemberQuestion> questions;
 		long totalElements;
 
-		if (QuestionTab.ANSWERED == tab) {
+		if (tab == null) {
+			questions = memberQuestionRetriever.findAllQuestions(receiverId, pageNumber, pageSize);
+			totalElements = memberQuestionRetriever.countAllQuestions(receiverId);
+		} else if (QuestionTab.ANSWERED == tab) {
 			questions = memberQuestionRetriever.findAnsweredQuestions(receiverId, pageNumber, pageSize);
 			totalElements = memberQuestionRetriever.countAnsweredQuestions(receiverId);
 		} else {
@@ -340,6 +343,7 @@ public class MemberQuestionService {
 		AnswerResponse answerResponse = null;
 		if (question.getAnswer() != null) {
 			MemberAnswer answer = question.getAnswer();
+			InternalUserDetails receiverInfo = platformService.getInternalUser(question.getReceiver().getId());
 			Long answerReactionCount = answerReactionRetriever.countByAnswerId(answer.getId());
 			Boolean isAnswerReacted = answerReactionRetriever.existsByAnswerAndMember(
 				answer,
@@ -351,6 +355,9 @@ public class MemberQuestionService {
 				answer.getContent(),
 				answerReactionCount,
 				isAnswerReacted,
+				receiverInfo.userId(),
+				receiverInfo.name(),
+				receiverInfo.profileImage(),
 				answer.getCreatedAt().format(DATE_TIME_FORMATTER)
 			);
 		}

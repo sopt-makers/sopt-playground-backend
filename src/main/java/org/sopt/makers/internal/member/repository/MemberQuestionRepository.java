@@ -29,6 +29,14 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 			Pageable pageable
 	);
 
+	@Query("SELECT q FROM MemberQuestion q " +
+			"WHERE q.receiver.id = :receiverId " +
+			"ORDER BY q.createdAt DESC")
+	List<MemberQuestion> findAllQuestions(
+			@Param("receiverId") Long receiverId,
+			Pageable pageable
+	);
+
 	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
 			"WHERE q.receiver.id = :receiverId " +
 			"AND q.answer IS NOT NULL")
@@ -38,6 +46,10 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 			"WHERE q.receiver.id = :receiverId " +
 			"AND q.answer IS NULL")
 	long countUnansweredQuestions(@Param("receiverId") Long receiverId);
+
+	@Query("SELECT COUNT(q) FROM MemberQuestion q " +
+			"WHERE q.receiver.id = :receiverId")
+	long countAllQuestions(@Param("receiverId") Long receiverId);
 
 	@Query("SELECT q FROM MemberQuestion q " +
 			"WHERE q.asker.id = :askerId AND q.receiver.id = :receiverId " +
