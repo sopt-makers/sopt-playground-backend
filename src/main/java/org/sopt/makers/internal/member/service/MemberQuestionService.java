@@ -180,10 +180,6 @@ public class MemberQuestionService {
 			throw new BadRequestException("답변이 달린 질문에는 '나도 궁금해요'를 누를 수 없습니다.");
 		}
 
-		if (question.getReceiver().getId().equals(userId)) {
-			throw new BadRequestException("본인에게 달린 질문에는 '나도 궁금해요'를 누를 수 없습니다.");
-		}
-
 		if (questionReactionRetriever.existsByQuestionAndMember(question, user)) {
 			questionReactionModifier.deleteReaction(question, user);
 		} else {
@@ -195,10 +191,6 @@ public class MemberQuestionService {
 	public void toggleAnswerReaction(Long userId, Long answerId) {
 		MemberAnswer answer = memberAnswerRetriever.findById(answerId);
 		Member user = memberRetriever.findMemberById(userId);
-
-		if (answer.getQuestion().getReceiver().getId().equals(userId)) {
-			throw new BadRequestException("본인의 답변에는 '도움돼요'를 누를 수 없습니다.");
-		}
 
 		if (answerReactionRetriever.existsByAnswerAndMember(answer, user)) {
 			answerReactionModifier.deleteReaction(answer, user);
