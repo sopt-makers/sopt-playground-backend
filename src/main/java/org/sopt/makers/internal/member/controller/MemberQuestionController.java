@@ -108,7 +108,6 @@ public class MemberQuestionController {
 		description = """
 			답변이 달리기 전 질문에 '나도 궁금해요' 반응을 토글합니다.
 			이미 반응을 누른 경우 취소되고, 누르지 않은 경우 반응이 추가됩니다.
-			질문을 받은 사람은 반응을 누를 수 없습니다.
 			"""
 	)
 	@PostMapping("/questions/{questionId}/reactions")
@@ -125,7 +124,6 @@ public class MemberQuestionController {
 		description = """
 			답변에 '도움돼요' 반응을 토글합니다.
 			이미 반응을 누른 경우 취소되고, 누르지 않은 경우 반응이 추가됩니다.
-			답변 작성자는 반응을 누를 수 없습니다.
 			"""
 	)
 	@PostMapping("/answers/{answerId}/reactions")
