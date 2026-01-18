@@ -29,6 +29,10 @@ public class MemberQuestionRetriever {
 		return memberQuestionRepository.findUnansweredQuestions(receiverId, PageRequest.of(page, size));
 	}
 
+	public List<MemberQuestion> findAllQuestions(Long receiverId, int page, int size) {
+		return memberQuestionRepository.findAllQuestions(receiverId, PageRequest.of(page, size));
+	}
+
 	public long countAnsweredQuestions(Long receiverId) {
 		return memberQuestionRepository.countAnsweredQuestions(receiverId);
 	}
@@ -37,12 +41,16 @@ public class MemberQuestionRetriever {
 		return memberQuestionRepository.countUnansweredQuestions(receiverId);
 	}
 
-	public boolean isAsker(Long questionId, Member asker) {
-		return memberQuestionRepository.existsByIdAndAsker(questionId, asker);
+	public long countAllQuestions(Long receiverId) {
+		return memberQuestionRepository.countAllQuestions(receiverId);
 	}
 
-	public boolean isReceiver(Long questionId, Member receiver) {
-		return memberQuestionRepository.existsByIdAndReceiver(questionId, receiver);
+	public List<MemberQuestion> findAllAnsweredByAskerAndReceiverOrderByLatest(Long askerId, Long receiverId) {
+		return memberQuestionRepository.findAllAnsweredByAskerAndReceiverOrderByLatest(askerId, receiverId);
+	}
+
+	public List<Long> findAllAnsweredQuestionIdsByReceiver(Long receiverId) {
+		return memberQuestionRepository.findAllAnsweredQuestionIdsByReceiver(receiverId);
 	}
 
 	public List<MemberQuestion> findByReceiverId(Long receiverId) {

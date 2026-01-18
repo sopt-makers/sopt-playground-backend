@@ -108,7 +108,6 @@ public class MemberQuestionController {
 		description = """
 			답변이 달리기 전 질문에 '나도 궁금해요' 반응을 토글합니다.
 			이미 반응을 누른 경우 취소되고, 누르지 않은 경우 반응이 추가됩니다.
-			질문을 받은 사람은 반응을 누를 수 없습니다.
 			"""
 	)
 	@PostMapping("/questions/{questionId}/reactions")
@@ -125,7 +124,6 @@ public class MemberQuestionController {
 		description = """
 			답변에 '도움돼요' 반응을 토글합니다.
 			이미 반응을 누른 경우 취소되고, 누르지 않은 경우 반응이 추가됩니다.
-			답변 작성자는 반응을 누를 수 없습니다.
 			"""
 	)
 	@PostMapping("/answers/{answerId}/reactions")
@@ -152,7 +150,7 @@ public class MemberQuestionController {
 		summary = "질문 목록 조회 API",
 		description = """
 			특정 사용자의 질문 목록을 조회합니다.
-			tab: answered (답변 완료), unanswered (새질문)
+			tab: answered (답변 완료), unanswered (새질문), 미입력 시 전체 조회
 			page: 페이지 번호 (0부터 시작, 기본값 0)
 			size: 페이지 크기 (기본 10, 최대 100)
 			"""
@@ -161,7 +159,7 @@ public class MemberQuestionController {
 	public ResponseEntity<QuestionsResponse> getQuestions(
 		@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
         @PathVariable Long memberId,
-		@RequestParam(value = "tab", defaultValue = "answered") QuestionTab tab,
+		@RequestParam(value = "tab", required = false) QuestionTab tab,
 		@RequestParam(value = "page", required = false) Integer page,
 		@RequestParam(value = "size", required = false) Integer size
 	) {
@@ -178,6 +176,19 @@ public class MemberQuestionController {
 		@Parameter(hidden = true) @AuthenticationPrincipal Long userId
 	) {
 		UnansweredCountResponse response = memberQuestionService.getUnansweredCount(userId);
+		return ResponseEntity.status(HttpStatus.OK).body(response);
+	}
+
+	@Operation(
+			summary = "내 질문의 답변 위치 조회 API",
+			description = "특정 사용자의 답변 완료 탭에서 내가 남긴 가장 최신 질문이 몇 페이지 몇 번째에 있는지 조회합니다."
+	)
+	@GetMapping("/{memberId}/questions/my-latest-answered")
+	public ResponseEntity<MyLatestAnsweredQuestionLocationResponse> getMyLatestAnsweredQuestionLocation(
+			@Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+			@PathVariable Long memberId
+	) {
+		MyLatestAnsweredQuestionLocationResponse response = memberQuestionService.getMyLatestAnsweredQuestionLocation(userId, memberId);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 }
