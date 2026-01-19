@@ -2,10 +2,6 @@ package org.sopt.makers.internal.external.pushNotification.message;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 범용 푸시 알림 메시지
- * 직접 title, content를 지정하여 전송할 때 사용합니다.
- */
 @RequiredArgsConstructor
 public class SimplePushNotificationMessage implements PushNotificationMessageBuilder {
 
