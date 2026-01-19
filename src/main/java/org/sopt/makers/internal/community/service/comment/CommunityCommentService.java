@@ -36,9 +36,10 @@ import org.sopt.makers.internal.community.repository.comment.CommunityCommentRep
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,7 +72,7 @@ public class CommunityCommentService {
 
     private final CommunityMapper communityMapper;
 
-    private final PushNotificationService pushNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackNotificationService slackNotificationService;
 
@@ -201,7 +202,7 @@ public class CommunityCommentService {
                     request.isBlindWriter(),
                     request.webLink()
             );
-            pushNotificationService.sendPushNotification(message);
+            eventPublisher.publishEvent(PushNotificationEvent.of(message));
         }
 
         if (request.isChildComment()) {
@@ -216,7 +217,7 @@ public class CommunityCommentService {
                         request.isBlindWriter(),
                         request.webLink()
                 );
-                pushNotificationService.sendPushNotification(message);
+                eventPublisher.publishEvent(PushNotificationEvent.of(message));
             }
         }
 
@@ -259,7 +260,7 @@ public class CommunityCommentService {
                 isBlindWriter,
                 webLink
         );
-        pushNotificationService.sendPushNotification(message);
+        eventPublisher.publishEvent(PushNotificationEvent.of(message));
     }
 
 }

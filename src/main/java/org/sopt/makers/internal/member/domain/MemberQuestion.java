@@ -63,6 +63,16 @@ public class MemberQuestion extends AuditingTimeEntity {
 		this.content = content;
 	}
 
+	public void updateAnonymous(
+		Boolean isAnonymous,
+		AnonymousNickname anonymousNickname,
+		AnonymousProfileImage anonymousProfileImage
+	) {
+		this.isAnonymous = isAnonymous;
+		this.anonymousNickname = anonymousNickname;
+		this.anonymousProfileImage = anonymousProfileImage;
+	}
+
 	public void markAsReported() {
 		this.isReported = true;
 	}

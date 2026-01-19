@@ -2,6 +2,7 @@ package org.sopt.makers.internal.member.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
 import org.sopt.makers.internal.exception.NotFoundException;
@@ -18,10 +19,10 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
 import org.sopt.makers.internal.external.pushNotification.message.member.AnswerNotificationMessage;
 import org.sopt.makers.internal.external.sms.SmsNotificationService;
 import org.sopt.makers.internal.external.sms.message.member.QuestionNotificationSmsMessage;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,8 +49,8 @@ public class MemberQuestionService {
 	private final QuestionReportRetriever questionReportRetriever;
 	private final QuestionReportModifier questionReportModifier;
 	private final PlatformService platformService;
-	private final PushNotificationService pushNotificationService;
 	private final SmsNotificationService smsNotificationService;
+	private final ApplicationEventPublisher eventPublisher;
 	private final AnonymousNicknameRetriever anonymousNicknameRetriever;
 	private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
@@ -105,7 +106,34 @@ public class MemberQuestionService {
 			throw new BadRequestException("답변이 달린 질문은 수정할 수 없습니다.");
 		}
 
-		memberQuestionModifier.updateQuestion(question, request.content());
+		AnonymousNickname anonymousNickname = null;
+		AnonymousProfileImage anonymousProfileImage = null;
+
+		if (request.isAnonymous()) {
+			if (question.getIsAnonymous()) {
+				anonymousNickname = question.getAnonymousNickname();
+				anonymousProfileImage = question.getAnonymousProfileImage();
+			} else {
+				Long receiverId = question.getReceiver().getId();
+				List<MemberQuestion> receiverQuestions = memberQuestionRetriever.findByReceiverId(receiverId);
+				List<AnonymousNickname> excludeNicknames = receiverQuestions.stream()
+					.map(MemberQuestion::getAnonymousNickname)
+					.filter(Objects::nonNull)
+					.distinct()
+					.toList();
+
+				anonymousNickname = anonymousNicknameRetriever.findRandomAnonymousNickname(excludeNicknames);
+				anonymousProfileImage = anonymousProfileImageRetriever.getAnonymousProfileImage();
+			}
+		}
+
+		memberQuestionModifier.updateQuestion(
+			question,
+			request.content(),
+			request.isAnonymous(),
+			anonymousNickname,
+			anonymousProfileImage
+		);
 	}
 
 	@Transactional
@@ -175,10 +203,6 @@ public class MemberQuestionService {
 	public void toggleQuestionReaction(Long userId, Long questionId) {
 		MemberQuestion question = memberQuestionRetriever.findById(questionId);
 		Member user = memberRetriever.findMemberById(userId);
-
-		if (question.hasAnswer()) {
-			throw new BadRequestException("답변이 달린 질문에는 '나도 궁금해요'를 누를 수 없습니다.");
-		}
 
 		if (questionReactionRetriever.existsByQuestionAndMember(question, user)) {
 			questionReactionModifier.deleteReaction(question, user);
@@ -319,9 +343,9 @@ public class MemberQuestionService {
 				null
 			);
 
-			pushNotificationService.sendPushNotification(message);
+			eventPublisher.publishEvent(PushNotificationEvent.of(message));
 		} catch (Exception e) {
-			log.error("답변 푸시 알림 발송 실패: questionId={}, error={}", question.getId(), e.getMessage(), e);
+			log.error("답변 푸시 알림 이벤트 발행 실패: questionId={}, error={}", question.getId(), e.getMessage(), e);
 		}
 	}
 

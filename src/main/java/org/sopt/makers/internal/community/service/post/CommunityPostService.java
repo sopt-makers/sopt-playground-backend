@@ -58,7 +58,8 @@ import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.external.pushNotification.message.SimplePushNotificationMessage;
+import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
@@ -71,6 +72,7 @@ import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,7 +90,7 @@ public class CommunityPostService {
     private final AnonymousProfileService anonymousProfileService;
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
-    private final PushNotificationService pushNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final PlatformService platformService;
     private final MakersCrewClient makersCrewClient;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -207,7 +209,10 @@ public class CommunityPostService {
         String writerName = isBlindWriter ? "익명" : mentionRequest.writerName();
         String content = "[" + writerName + "의 글] : \"" + postTitle + "\"";
 
-        pushNotificationService.sendPushNotification(title, content, mentionRequest.userIds(), mentionRequest.webLink());
+        SimplePushNotificationMessage message = SimplePushNotificationMessage.of(
+                title, content, mentionRequest.userIds(), mentionRequest.webLink()
+        );
+        eventPublisher.publishEvent(PushNotificationEvent.of(message));
     }
 
     @Transactional

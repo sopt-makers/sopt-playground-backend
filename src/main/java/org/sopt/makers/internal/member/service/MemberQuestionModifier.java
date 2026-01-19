@@ -32,8 +32,15 @@ public class MemberQuestionModifier {
 			.build());
 	}
 
-	public void updateQuestion(MemberQuestion question, String content) {
+	public void updateQuestion(
+		MemberQuestion question,
+		String content,
+		Boolean isAnonymous,
+		AnonymousNickname anonymousNickname,
+		AnonymousProfileImage anonymousProfileImage
+	) {
 		question.updateContent(content);
+		question.updateAnonymous(isAnonymous, anonymousNickname, anonymousProfileImage);
 		memberQuestionRepository.save(question);
 	}
 
