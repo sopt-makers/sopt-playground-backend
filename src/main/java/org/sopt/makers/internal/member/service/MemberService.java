@@ -110,6 +110,7 @@ public class MemberService {
 	private final MemberSortingService memberSortingService;
 	private final WorkPreferenceRetriever workPreferenceRetriever;
 	private final WorkPreferenceModifier workPreferenceModifier;
+	private final AskMemberId askMemberId;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -1057,12 +1058,15 @@ public class MemberService {
 
         Part part = convertToPart(partName);
 
+        // prod 프로파일인지 확인
+        boolean isProd = "prod".equals(activeProfile);
+
         // 특정 파트가 지정된 경우 해당 파트만, 없으면 모든 파트
         List<Long> memberIds;
         if (part != null) {
-            memberIds = AskMemberId.getAskMembersByPart(part);
+            memberIds = askMemberId.getAskMembersByPart(part, isProd);
         } else {
-            memberIds = AskMemberId.getAllAskMembers();
+            memberIds = askMemberId.getAllAskMembers(isProd);
         }
 
         for (Long memberId : memberIds) {
