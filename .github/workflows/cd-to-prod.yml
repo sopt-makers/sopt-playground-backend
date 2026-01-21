@@ -64,7 +64,7 @@ jobs:
       - name: 'Build with Gradle'
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build -x test
+          ./gradlew clean bootJar -x test
         shell: bash
 
       - name: 'Login to ECR'
