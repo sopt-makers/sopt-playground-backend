@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import java.util.Arrays;
 
@@ -24,7 +24,7 @@ public enum MeetingType {
         return Arrays.stream(MeetingType.values())
                 .filter(type -> type.title.equals(title))
                 .findFirst()
-                .orElseThrow(() -> new ClientBadRequestException("Unknown Meeting Type Title: " + title));
+                .orElseThrow(() -> new BadRequestException("Unknown Meeting Type Title: " + title));
     }
 
     @JsonValue

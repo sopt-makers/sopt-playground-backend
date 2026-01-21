@@ -2,11 +2,31 @@ name: Deploy Lambda to Dev
 
 on:
   workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+          - info
+          - warning
+          - debug
+  repository_dispatch:
+    types: [deploy-to-test-event]
+  push:
+    branches: [ develop ]
+
 
 jobs:
   deploy:
-    name: Build and Deploy Lambda
+    name: Deploy Lambda Dev
     runs-on: ubuntu-latest
+
+    env:
+      S3_BUCKET: sopt-makers-internal
+      STACK_NAME: playground-dev
+      AWS_REGION: ap-northeast-2
 
     steps:
       - name: Checkout code
@@ -18,97 +38,52 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
 
-      - name: Setup Gradle cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_TEMP }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY_TEMP }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Get application-lambda-dev.yml from AWS S3
+      - name: Get application config from S3
         run: |
           aws s3 cp \
-            --region ap-northeast-2 \
-            s3://sopt-makers-internal/dev/deploy/application-lambda-dev.yml src/main/resources/application-lambda-dev.yml
+            s3://${{ env.S3_BUCKET }}/dev/deploy/application-lambda-dev.yml \
+            src/main/resources/application-lambda-dev.yml
 
-      - name: Get Apple key from AWS S3
+      - name: Get Apple key from S3
         run: |
           aws s3 cp \
-            --region ap-northeast-2 \
-            s3://sopt-makers-internal/dev/deploy/${{ secrets.APPLE_KEY }} src/main/resources/static/${{ secrets.APPLE_KEY }}
+            s3://${{ env.S3_BUCKET }}/dev/deploy/${{ secrets.APPLE_KEY }} \
+            src/main/resources/static/${{ secrets.APPLE_KEY }}
 
-      - name: Set up QEMU for multi-platform builds
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: linux/arm64
+      - name: Build Lambda
+        run: ./gradlew clean lambdaJar -x test
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to ECR Public
+      - name: Upload JAR to S3
         run: |
-          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+          # 빌드 ZIP 파일 찾기
+          JAR_FILE=$(ls build/distributions/*-lambda.zip | head -1)
 
-      - name: Login to ECR Private
-        run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          # 타임스탬프 생성
+          TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+          S3_KEY="lambda/playground-dev-${TIMESTAMP}-lambda.zip"
 
-      - name: Generate timestamp tag
-        id: timestamp
-        run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          echo "IMAGE_TAG=build-$TIMESTAMP" >> $GITHUB_OUTPUT
-          echo "Generated image tag: build-$TIMESTAMP"
+          # S3 업로드
+          aws s3 cp "$JAR_FILE" "s3://${{ env.S3_BUCKET }}/$S3_KEY"
 
-      - name: Build Docker image with GraalVM native compilation
-        run: |
-          docker buildx build \
-            --platform=linux/arm64 \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
-            -f lambda/dev.Dockerfile \
-            -t ${{ secrets.AWS_LAMBDA_DEV_ECR_REPO }}:${{ steps.timestamp.outputs.IMAGE_TAG }} \
-            --load \
-            .
+          echo "S3_KEY=$S3_KEY" >> $GITHUB_ENV
 
-      - name: Tag and push Docker image to ECR
-        run: |
-          REPO_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.AWS_LAMBDA_DEV_ECR_REPO }}
+      - name: Install SAM CLI
+        uses: aws-actions/setup-sam@v2
 
-          # Push with timestamp tag
-          docker tag ${{ secrets.AWS_LAMBDA_DEV_ECR_REPO }}:${{ steps.timestamp.outputs.IMAGE_TAG }} $REPO_URI:${{ steps.timestamp.outputs.IMAGE_TAG }}
-          docker push $REPO_URI:${{ steps.timestamp.outputs.IMAGE_TAG }}
-
-          # Push with latest tag
-          docker tag ${{ secrets.AWS_LAMBDA_DEV_ECR_REPO }}:${{ steps.timestamp.outputs.IMAGE_TAG }} $REPO_URI:latest
-          docker push $REPO_URI:latest
-
-          echo "IMAGE_URI=$REPO_URI:${{ steps.timestamp.outputs.IMAGE_TAG }}" >> $GITHUB_ENV
-
-      - name: Set up Python for SAM CLI
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
-
-      - name: Deploy to Lambda with SAM
+      - name: Deploy with SAM
         working-directory: ./lambda
         run: |
           sam deploy \
             --config-env dev \
-            --no-confirm-changeset \
+            --stack-name ${{ env.STACK_NAME }} \
             --no-fail-on-empty-changeset \
-            --parameter-overrides ImageUri=${{ env.IMAGE_URI }}
+            --parameter-overrides \
+              S3Bucket=${{ env.S3_BUCKET }} \
+              S3Key=${{ env.S3_KEY }}

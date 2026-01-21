@@ -19,7 +19,7 @@ import lombok.val;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sopt.makers.internal.auth.AuthConfig;
-import org.sopt.makers.internal.exception.WordChainGameHasWrongInputException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformService;
@@ -195,7 +195,7 @@ public class WordChainGameService {
         if (!Objects.isNull(recentWord)) {
             boolean isLastWordWriterIsMakingNextWord = recentWord.getMemberId().equals(memberId);
             if (isLastWordWriterIsMakingNextWord)
-                throw new WordChainGameHasWrongInputException("본인 단어에는 단어를 이을 수 없어요.");
+                throw new BadRequestException("본인 단어에는 단어를 이을 수 없어요.");
         }
     }
 
@@ -215,14 +215,14 @@ public class WordChainGameService {
         val lastWord = wordRepository.findFirstByRoomIdOrderByCreatedAtDesc(lastRoomId);
         val isLastWordWriterIsMakingNewGame = lastWord.getMemberId().equals(memberId);
         if (isLastWordWriterIsMakingNewGame)
-            throw new WordChainGameHasWrongInputException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
+            throw new BadRequestException("마지막 단어 작성자는 새로 게임을 시작할 수 없어요.");
     }
 
     @Transactional(readOnly = true)
     public void checkDuplicateWord(Long roomId, String word) {
         boolean hasDuplicateWord = (wordRepository.existsByWordAndRoomId(word, roomId));
         if (hasDuplicateWord) {
-            throw new WordChainGameHasWrongInputException("이미 누군가 사용한 단어예요.");
+            throw new BadRequestException("이미 누군가 사용한 단어예요.");
         }
     }
 
@@ -271,31 +271,31 @@ public class WordChainGameService {
     @Transactional(readOnly = true)
     public void checkRoomIsValid(Long roomId) {
         val room = wordChainGameRepository.findById(roomId);
-        if (room.isEmpty()) throw new WordChainGameHasWrongInputException("없는 방 번호입니다.");
+        if (room.isEmpty()) throw new BadRequestException("없는 방 번호입니다.");
     }
 
     private void checkInputWordIsNone(WordChainGameRoom lastRoom) {
         val noInputWordInRoom = lastRoom.getWordList().isEmpty();
         if (noInputWordInRoom)
-            throw new WordChainGameHasWrongInputException("이전 게임에 아무도 답을 하지 않은 경우에는 새로운 방을 만들 수 없어요.");
+            throw new BadRequestException("이전 게임에 아무도 답을 하지 않은 경우에는 새로운 방을 만들 수 없어요.");
     }
 
     private void checkWordIsKoreanLetter(String word) {
-        if (!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new WordChainGameHasWrongInputException("한글 이외의 문자는 허용되지 않아요.");
+        if (!word.matches("[ㄱ-ㅎㅏ-ㅣ가-힣]+")) throw new BadRequestException("한글 이외의 문자는 허용되지 않아요.");
     }
 
     private void checkWordIsOneLetter(String word) {
-        if (word.length() < 2) throw new WordChainGameHasWrongInputException("한글자 단어는 사용할 수 없어요.");
+        if (word.length() < 2) throw new BadRequestException("한글자 단어는 사용할 수 없어요.");
     }
 
     private void checkIsInDictionary(String word) {
         val isWordInDictionary = checkWordExistInDictionary(word);
-        if (!isWordInDictionary) throw new WordChainGameHasWrongInputException("표준국어대사전에 존재하지 않는 단어예요.");
+        if (!isWordInDictionary) throw new BadRequestException("표준국어대사전에 존재하지 않는 단어예요.");
     }
 
     private void checkIsChainingWord(String lastWord, String nextWord) {
         if (checkIsNotChainingWord(lastWord, nextWord))
-            throw new WordChainGameHasWrongInputException("끝말을 잇는 단어가 아니에요.");
+            throw new BadRequestException("끝말을 잇는 단어가 아니에요.");
     }
 
     private boolean checkIsNotChainingWord(String lastWord, String nextWord) {

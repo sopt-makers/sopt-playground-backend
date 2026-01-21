@@ -2,7 +2,7 @@ package org.sopt.makers.internal.review.service;
 
 import static org.sopt.makers.internal.common.Constant.*;
 
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -33,7 +33,7 @@ public class ActivityReviewService {
     public void createActivityReview(CreateActivityReviewRequest request, Long memberId) {
         InternalUserDetails userDetails = platformService.getInternalUser(memberId);
         if (userDetails.lastGeneration() != CURRENT_GENERATION) {
-            throw new ClientBadRequestException("Only current generation can write activity reviews");
+            throw new BadRequestException("Only current generation can write activity reviews");
         }
         val member = memberRetriever.findMemberById(memberId);
         val activityReview = ActivityReview.builder()

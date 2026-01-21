@@ -51,14 +51,15 @@ import org.sopt.makers.internal.community.repository.post.DeletedCommunityPostRe
 import org.sopt.makers.internal.community.service.SopticleScrapedService;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.category.CategoryRetriever;
-import org.sopt.makers.internal.exception.BusinessLogicException;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.PlaygroundException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.makers.CrewPostListResponse;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.external.pushNotification.message.SimplePushNotificationMessage;
+import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
@@ -71,6 +72,7 @@ import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,7 +90,7 @@ public class CommunityPostService {
     private final AnonymousProfileService anonymousProfileService;
     private final SopticleScrapedService sopticleScrapedService;
     private final VoteService voteService;
-    private final PushNotificationService pushNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final PlatformService platformService;
     private final MakersCrewClient makersCrewClient;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -165,7 +167,7 @@ public class CommunityPostService {
     @Transactional(readOnly = true)
     public PostDetailData getPostById(Long memberId, Long postId, Boolean isBlockedOn) {
         val postDao = communityQueryRepository.getPostById(postId);
-        if (Objects.isNull(postDao)) throw new ClientBadRequestException("존재하지 않는 postId입니다.");
+        if (Objects.isNull(postDao)) throw new BadRequestException("존재하지 않는 postId입니다.");
 
         val authorId = postDao.member().getId();
         if (isBlockedOn && !Objects.equals(memberId, authorId)) {
@@ -207,7 +209,10 @@ public class CommunityPostService {
         String writerName = isBlindWriter ? "익명" : mentionRequest.writerName();
         String content = "[" + writerName + "의 글] : \"" + postTitle + "\"";
 
-        pushNotificationService.sendPushNotification(title, content, mentionRequest.userIds(), mentionRequest.webLink());
+        SimplePushNotificationMessage message = SimplePushNotificationMessage.of(
+                title, content, mentionRequest.userIds(), mentionRequest.webLink()
+        );
+        eventPublisher.publishEvent(PushNotificationEvent.of(message));
     }
 
     @Transactional
@@ -392,7 +397,7 @@ public class CommunityPostService {
         List<CommunityPost> posts = communityQueryRepository.findPopularPosts(limitCount);
 
         if (posts.isEmpty()) {
-            throw new BusinessLogicException("최근 한 달 내에 작성된 게시물이 없습니다.");
+            throw new PlaygroundException("최근 한 달 내에 작성된 게시물이 없습니다.");
         }
         return posts;
     }
@@ -581,7 +586,7 @@ public class CommunityPostService {
 
     private void validatePostOwner(Long memberId, Long postWriterId) {
         if (!Objects.equals(memberId, postWriterId)) {
-            throw new ClientBadRequestException("수정/삭제 권한이 없는 유저입니다.");
+            throw new BadRequestException("수정/삭제 권한이 없는 유저입니다.");
         }
     }
 

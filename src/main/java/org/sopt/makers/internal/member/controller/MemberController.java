@@ -12,12 +12,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
 import org.sopt.makers.internal.common.CommonResponse;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.makers.MakersCrewClient;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.dto.request.CheckActivityRequest;
 import org.sopt.makers.internal.member.dto.request.MemberBlockRequest;
@@ -33,6 +32,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
+import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
@@ -103,6 +103,20 @@ public class MemberController {
        return ResponseEntity.status(HttpStatus.OK).body(responses);
    }
 
+   @Operation(summary = "질문 대상 멤버 조회 API", description = """
+           질문을 받을 수 있는 대상 멤버들을 파트별로 조회합니다.
+           part 파라미터가 없으면 모든 파트의 멤버를 반환합니다.
+           part 파라미터 옵션: 서버, SERVER, iOS, 안드로이드, ANDROID, 웹, WEB, 디자인, DESIGN, 기획, PLAN
+           각 파트별로 하드코딩된 멤버를 반환합니다.
+           """)
+   @GetMapping("/ask/list")
+   public ResponseEntity<AskMemberResponse> getAskMembers(
+           @RequestParam(required = false, name = "part") String part
+   ) {
+       AskMemberResponse response = memberService.getAskMembers(part);
+       return ResponseEntity.status(HttpStatus.OK).body(response);
+   }
+
 
    // 프론트 연결 되면 삭제 예정
     @Deprecated
@@ -122,10 +136,10 @@ public class MemberController {
         val normalTeamNameRequest = request.activities().stream().filter(activity ->
                 ActivityTeam.hasActivityTeam(activity.team())).count();
         if (request.activities().size() != normalTeamNameRequest) {
-            throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+            throw new BadRequestException("잘못된 솝트 활동 팀 이름입니다.");
         }
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
-        if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
+        if (currentCount > 1) throw new BadRequestException("현재 직장이 2개 이상입니다.");
         Member member = memberService.saveMemberProfile(userId, request);
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         boolean isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());
@@ -148,7 +162,7 @@ public class MemberController {
     ) {
 
         val currentCount = request.careers().stream().filter(c -> c.isCurrent()).count();
-        if (currentCount > 1) throw new ClientBadRequestException("현재 직장이 2개 이상입니다.");
+        if (currentCount > 1) throw new BadRequestException("현재 직장이 2개 이상입니다.");
         val member = memberService.updateMemberProfile(userId, request);
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         val isCoffeeChatActivate = coffeeChatService.getCoffeeChatActivate(member.getId());

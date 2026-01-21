@@ -30,7 +30,7 @@ import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.message.gabia.SmsChatSender;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
@@ -97,7 +97,7 @@ public class CoffeeChatService {
         try {
             CoffeeChat coffeeChat = coffeeChatRetriever.findCoffeeChatByMember(member);
             return coffeeChat.getIsCoffeeChatActivate();
-        } catch (NotFoundDBEntityException ex) {
+        } catch (NotFoundException ex) {
             return false;
         }
     }
@@ -139,7 +139,7 @@ public class CoffeeChatService {
 
     private List<CoffeeChatInfoDto> getSearchCoffeeChatInfoList(Long memberId, CoffeeChatSection section, CoffeeChatTopicType topicType, Career career, String part, String search) {
         List<CoffeeChatInfoDto> response =
-            coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, section, topicType, career);
+            coffeeChatRepository.findCoffeeChatInfoByDbConditions(memberId, career);
 
         response = response.stream()
             .filter(distinctByKey(CoffeeChatInfoDto::memberId))
@@ -148,27 +148,34 @@ public class CoffeeChatService {
         List<Long> userIds = response.stream().map(CoffeeChatInfoDto::memberId).filter(Objects::nonNull).distinct().toList();
         Map<Long, InternalUserDetails> userMap = getUserMapFromUserIds(userIds);
 
-        // 1. '파트' 필터 적용
+        if (section != null) {
+            response = response.stream()
+                .filter(dto -> dto.sectionList() != null && dto.sectionList().contains(section))
+                .toList();
+        }
+
+        if (topicType != null) {
+            response = response.stream()
+                .filter(dto -> dto.topicTypeList() != null && dto.topicTypeList().contains(topicType))
+                .toList();
+        }
+
         if (part != null) {
             response = response.stream()
                 .filter(dto -> {
                     InternalUserDetails userDetails = userMap.get(dto.memberId());
-                    // userDetails가 null이 아닐 경우에만 soptActivities를 확인하도록 방어 코드 추가
                     return userDetails != null && userDetails.soptActivities().stream()
                         .anyMatch(activity -> part.equalsIgnoreCase(activity.part()));
                 })
                 .toList();
         }
 
-        // 2. '파트' 필터링이 적용된 결과에 '검색어' 필터 적용
         if (search != null && !search.isBlank()) {
             response = response.stream()
                 .filter(dto -> {
-                    // DB 필드(회사명, 대학교) 검색 조건
                     boolean dbFieldMatch = (dto.university() != null && dto.university().contains(search))
                         || (dto.companyName() != null && dto.companyName().contains(search));
 
-                    // 외부 API 필드(이름) 검색 조건
                     InternalUserDetails userDetails = userMap.get(dto.memberId());
                     boolean nameFieldMatch = userDetails != null && userDetails.name().contains(search);
 

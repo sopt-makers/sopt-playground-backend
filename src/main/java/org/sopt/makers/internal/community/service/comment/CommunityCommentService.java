@@ -17,7 +17,6 @@ import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileServ
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
-import org.sopt.makers.internal.community.utils.MentionExtractor;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
@@ -30,16 +29,17 @@ import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.community.domain.comment.ReportComment;
 import org.sopt.makers.internal.community.dto.comment.CommentDao;
 import org.sopt.makers.internal.community.dto.request.comment.CommentSaveRequest;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.community.mapper.CommunityMapper;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.community.repository.comment.CommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.CommunityQueryRepository;
 import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCommentRepository;
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
-import org.sopt.makers.internal.external.pushNotification.PushNotificationService;
+import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,7 +72,7 @@ public class CommunityCommentService {
 
     private final CommunityMapper communityMapper;
 
-    private final PushNotificationService pushNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final SlackMessageUtil slackMessageUtil;
     private final SlackNotificationService slackNotificationService;
 
@@ -125,7 +125,7 @@ public class CommunityCommentService {
         CommunityComment comment = communityCommentsRetriever.findCommunityCommentById(commentId);
 
         if (!Objects.equals(writerId, comment.getWriterId())) {
-            throw new ClientBadRequestException("수정 권한이 없는 유저입니다.");
+            throw new BadRequestException("수정 권한이 없는 유저입니다.");
         }
 
         commentMentionAnonymizer.anonymizeMentionsInReplies(comment);
@@ -186,7 +186,7 @@ public class CommunityCommentService {
 
         for (String nickname : anonymousNicknames) {
             if (!foundNicknameSet.contains(nickname)) {
-                throw new ClientBadRequestException("해당 게시글에 존재하지 않는 익명 닉네임입니다: " + nickname);
+                throw new BadRequestException("해당 게시글에 존재하지 않는 익명 닉네임입니다: " + nickname);
             }
         }
     }
@@ -202,7 +202,7 @@ public class CommunityCommentService {
                     request.isBlindWriter(),
                     request.webLink()
             );
-            pushNotificationService.sendPushNotification(message);
+            eventPublisher.publishEvent(PushNotificationEvent.of(message));
         }
 
         if (request.isChildComment()) {
@@ -217,7 +217,7 @@ public class CommunityCommentService {
                         request.isBlindWriter(),
                         request.webLink()
                 );
-                pushNotificationService.sendPushNotification(message);
+                eventPublisher.publishEvent(PushNotificationEvent.of(message));
             }
         }
 
@@ -260,7 +260,7 @@ public class CommunityCommentService {
                 isBlindWriter,
                 webLink
         );
-        pushNotificationService.sendPushNotification(message);
+        eventPublisher.publishEvent(PushNotificationEvent.of(message));
     }
 
 }

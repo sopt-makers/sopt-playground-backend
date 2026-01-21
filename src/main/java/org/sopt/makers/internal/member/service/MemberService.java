@@ -18,9 +18,9 @@ import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
 import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.community.service.ReviewService;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.MemberHasNotProfileException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.ConflictException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.PlatformUserUpdateRequest;
@@ -29,6 +29,7 @@ import org.sopt.makers.internal.external.platform.UserSearchResponse;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
 import org.sopt.makers.internal.member.constants.AppJamObMemberId;
+import org.sopt.makers.internal.member.constants.AskMemberId;
 import org.sopt.makers.internal.member.constants.MakersMemberId;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberBlock;
@@ -40,6 +41,7 @@ import org.sopt.makers.internal.member.domain.UserFavor;
 import org.sopt.makers.internal.member.domain.WorkPreference;
 import org.sopt.makers.internal.member.domain.enums.ActivityTeam;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
+import org.sopt.makers.internal.member.domain.enums.Part;
 import org.sopt.makers.internal.member.domain.enums.ServiceType;
 import org.sopt.makers.internal.member.dto.ActivityVo;
 import org.sopt.makers.internal.member.dto.MemberProfileProjectDao;
@@ -58,6 +60,7 @@ import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificRespons
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.MemberSoptActivityResponse;
+import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
@@ -74,7 +77,6 @@ import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,6 +110,7 @@ public class MemberService {
 	private final MemberSortingService memberSortingService;
 	private final WorkPreferenceRetriever workPreferenceRetriever;
 	private final WorkPreferenceModifier workPreferenceModifier;
+	private final AskMemberId askMemberId;
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -213,11 +216,11 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public Member getMemberHasProfileById(Long id) {
 		Member member = memberRepository.findById(id)
-			.orElseThrow(() -> new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다."));
+			.orElseThrow(() -> new NotFoundException("해당 id의 Member를 찾을 수 없습니다."));
 		if (member.getHasProfile())
 			return member;
 		else
-			throw new MemberHasNotProfileException("해당 Member는 프로필이 없습니다.");
+			throw new BadRequestException("해당 Member는 프로필이 없습니다.");
 	}
 
 	@Transactional(readOnly = true)
@@ -243,7 +246,7 @@ public class MemberService {
 	public Map<String, List<ActivityVo>> getMemberProfileActivity(List<SoptActivity> soptActivities,
 		List<MemberProfileProjectDao> memberProfileProjects) {
 		if (soptActivities.isEmpty()) {
-			throw new NotFoundDBEntityException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
+			throw new NotFoundException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
 		}
 
 		val cardinalInfoMap = soptActivities.stream()
@@ -440,7 +443,7 @@ public class MemberService {
 
 	public Member saveDefaultMemberProfile(Long userId) {
 		if (memberRepository.existsById(userId)) {
-			throw new DuplicateKeyException("이미 존재하는 유저입니다. userId=" + userId);
+			throw new ConflictException("이미 존재하는 유저입니다. userId=" + userId);
 		}
 
 		Member member = Member.builder()
@@ -476,7 +479,7 @@ public class MemberService {
 	@Transactional
 	public void deleteDefaultMemberProfile(Long userId) {
 		if (!memberRepository.existsById(userId)) {
-			throw new NotFoundDBEntityException("해당 id의 Member를 찾을 수 없습니다.");
+			throw new NotFoundException("해당 id의 Member를 찾을 수 없습니다.");
 		}
 		memberRepository.deleteById(userId);
 	}
@@ -502,10 +505,10 @@ public class MemberService {
 			request.phone(), request.email(), soptActivitiesForPlatform);
 
 		platformService.updateInternalUser(userId, platformRequest);
-		Member member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+		Member member = memberRepository.findById(userId).orElseThrow(() -> new NotFoundException("Member"));
 		Long memberId = member.getId();
 		if (Objects.isNull(memberId))
-			throw new NotFoundDBEntityException("Member id is null");
+			throw new NotFoundException("Member id is null");
 		List<MemberLink> memberLinkEntities = request.links()
 			.stream()
 			.map(link -> MemberLink.builder().memberId(memberId).title(link.title()).url(link.url()).build())
@@ -519,10 +522,10 @@ public class MemberService {
 				if (!career.isCurrent()) {
 					val end = YearMonth.parse(career.endDate(), formatter);
 					if (start.isAfter(end))
-						throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+						throw new BadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
 				}
 			} catch (DateTimeParseException e) {
-				throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
+				throw new BadRequestException("날짜 형식이 잘못되었습니다.");
 			}
 			return MemberCareer.builder()
 				.memberId(memberId)
@@ -644,7 +647,7 @@ public class MemberService {
 			SoptActivity dbActivity = dbActivityMap.get(requestActivity.generation());
 
 			if (dbActivity == null) {
-				throw new ClientBadRequestException(
+				throw new BadRequestException(
 					"요청된 활동 기수 정보(" + requestActivity.generation() + ")가 유저의 기존 정보와 일치하지 않습니다.");
 			}
 
@@ -662,7 +665,7 @@ public class MemberService {
 
 			// 일반 팀만 ActivityTeam 검증
 			if (!ActivityTeam.hasActivityTeam(requestActivity.team())) {
-				throw new ClientBadRequestException("잘못된 솝트 활동 팀 이름입니다.");
+				throw new BadRequestException("잘못된 솝트 활동 팀 이름입니다.");
 			}
 
 			soptActivitiesForPlatform.add(
@@ -698,10 +701,10 @@ public class MemberService {
 				if (!career.isCurrent()) {
 					val end = YearMonth.parse(career.endDate(), formatter);
 					if (start.isAfter(end))
-						throw new ClientBadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
+						throw new BadRequestException("커리어는 시작 날짜가 더 앞서야 합니다.");
 				}
 			} catch (DateTimeParseException e) {
-				throw new ClientBadRequestException("날짜 형식이 잘못되었습니다.");
+				throw new BadRequestException("날짜 형식이 잘못되었습니다.");
 			}
 			return MemberCareer.builder()
 				.memberId(memberId)
@@ -752,7 +755,7 @@ public class MemberService {
 		WorkPreference workPreference = member.getWorkPreference();
 
 		if (workPreference == null) {
-			throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다.");
+			throw new BadRequestException("작업 성향이 설정되지 않았습니다.");
 		}
 
 		WorkPreferenceResponse.WorkPreferenceData data = new WorkPreferenceResponse.WorkPreferenceData(
@@ -826,7 +829,7 @@ public class MemberService {
 	@Transactional
 	public void deleteUserProfileLink(Long linkId, Long memberId) {
 		MemberLink link = memberLinkRepository.findByIdAndMemberId(linkId, memberId)
-			.orElseThrow(() -> new NotFoundDBEntityException("Member Profile Link"));
+			.orElseThrow(() -> new NotFoundException("Member Profile Link"));
 		memberLinkRepository.delete(link);
 	}
 
@@ -843,7 +846,7 @@ public class MemberService {
 
 	@Transactional
 	public void checkActivities(Long memberId, Boolean isCheck) {
-		Member member = memberRepository.findById(memberId).orElseThrow(() -> new NotFoundDBEntityException("Member"));
+		Member member = memberRepository.findById(memberId).orElseThrow(() -> new NotFoundException("Member"));
 
 		member.editActivityChange(isCheck);
 	}
@@ -951,7 +954,7 @@ public class MemberService {
 
 	public List<MakersMemberProfileResponse> getAllMakersMembersProfiles() {
 		List<Long> makerMemberIds = MakersMemberId.getMakersMember();
-		List<Member> members = memberRepository.findAllByHasProfileTrueAndIdIn(makerMemberIds);
+		List<Member> members = memberRepository.findAllByHasProfileTrueAndIdInWithCareers(makerMemberIds);
 		List<InternalUserDetails> userDetails = platformService.getInternalUsers(makerMemberIds);
 
 		Map<Long, List<MemberCareer>> careerMap = members.stream()
@@ -980,7 +983,7 @@ public class MemberService {
                 .anyMatch(activity -> Objects.equals(activity.generation(), Constant.CURRENT_GENERATION));
 
         if (!isCurrentGenerationUser) {
-            throw new ClientBadRequestException("최신 기수가 아닌 유저입니다.");
+            throw new BadRequestException("최신 기수가 아닌 유저입니다.");
         }
 
         List<TlMember> tlMembers = tlMemberRetriever.findByTlGeneration(Constant.CURRENT_GENERATION);
@@ -1047,6 +1050,134 @@ public class MemberService {
 				selfIntroduction,
 				competitionData
         );
+    }
+
+    @Transactional(readOnly = true)
+    public AskMemberResponse getAskMembers(String partName) {
+        List<AskMemberResponse.QuestionTargetMember> targetMembers = new ArrayList<>();
+
+        Part part = convertToPart(partName);
+
+        // prod 프로파일인지 확인
+        boolean isProd = "prod".equals(activeProfile);
+
+        // 특정 파트가 지정된 경우 해당 파트만, 없으면 모든 파트
+        List<Long> memberIds;
+        if (part != null) {
+            memberIds = askMemberId.getAskMembersByPart(part, isProd);
+        } else {
+            memberIds = askMemberId.getAllAskMembers(isProd);
+        }
+
+        for (Long memberId : memberIds) {
+            try {
+                Member member = memberRepository.findById(memberId).orElse(null);
+                if (member == null || !member.getHasProfile()) {
+                    continue;
+                }
+
+                InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+
+                // 최근 활동 정보 가져오기
+                SoptActivity latestActivity = userDetails.soptActivities().stream()
+                        .max((a1, a2) -> Integer.compare(a1.generation(), a2.generation()))
+                        .orElse(null);
+
+                if (latestActivity == null) {
+                    continue;
+                }
+
+                // 커리어 정보 처리 - 현재 직장 우선, 없으면 가장 최근 직장
+                AskMemberResponse.AskMemberCareerResponse career = null;
+
+                List<MemberCareer> careers = member.getCareers();
+                if (careers != null && !careers.isEmpty()) {
+                    // 1. 현재 재직중인 커리어 찾기
+                    Optional<MemberCareer> currentCareerOpt = careers.stream()
+                            .filter(c -> c.getIsCurrent() != null && c.getIsCurrent())
+                            .findFirst();
+
+                    if (currentCareerOpt.isPresent()) {
+                        MemberCareer current = currentCareerOpt.get();
+                        career = new AskMemberResponse.AskMemberCareerResponse(
+                                current.getCompanyName(),
+                                current.getTitle()
+                        );
+                    } else {
+                        // 2. 현재 직장이 없으면 가장 최근 직장 찾기
+                        MemberCareer mostRecent = careers.stream()
+                                .filter(c -> c.getEndDate() != null)
+                                .max((c1, c2) -> {
+                                    try {
+                                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                                        val end1 = YearMonth.parse(c1.getEndDate(), formatter);
+                                        val end2 = YearMonth.parse(c2.getEndDate(), formatter);
+                                        return end1.compareTo(end2);
+                                    } catch (Exception e) {
+                                        // 날짜 파싱 실패시 startDate로 비교
+                                        try {
+                                            val formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                                            val start1 = YearMonth.parse(c1.getStartDate(), formatter);
+                                            val start2 = YearMonth.parse(c2.getStartDate(), formatter);
+                                            return start1.compareTo(start2);
+                                        } catch (Exception ex) {
+                                            return 0;
+                                        }
+                                    }
+                                })
+                                .orElse(careers.get(0)); // 정렬 실패시 첫 번째 커리어 선택
+
+                        if (mostRecent != null) {
+                            career = new AskMemberResponse.AskMemberCareerResponse(
+                                    mostRecent.getCompanyName(),
+                                    mostRecent.getTitle()
+                            );
+                        }
+                    }
+                }
+
+                AskMemberResponse.AskMemberSoptActivityResponse activityResponse =
+                        new AskMemberResponse.AskMemberSoptActivityResponse(
+                                latestActivity.generation(),
+                                latestActivity.part(),
+                                latestActivity.team()
+                        );
+
+                AskMemberResponse.QuestionTargetMember targetMember =
+                        new AskMemberResponse.QuestionTargetMember(
+                                memberId,
+                                userDetails.name(),
+                                userDetails.profileImage(),
+                                member.getIntroduction(),
+                                activityResponse,
+                                career,
+                                true  // 답변보장 항상 true
+                        );
+
+                targetMembers.add(targetMember);
+            } catch (Exception e) {
+                log.error("Failed to process member ID: " + memberId, e);
+                continue;
+            }
+        }
+
+        return new AskMemberResponse(targetMembers);
+    }
+
+    private Part convertToPart(String partName) {
+        if (partName == null || partName.isBlank()) {
+            return null;
+        }
+
+        return switch (partName.toUpperCase()) {
+            case "서버", "SERVER" -> Part.SERVER;
+            case "IOS" -> Part.IOS;
+            case "안드로이드", "ANDROID" -> Part.ANDROID;
+            case "웹", "WEB" -> Part.WEB;
+            case "디자인", "DESIGN" -> Part.DESIGN;
+            case "기획", "PLAN" -> Part.PLAN;
+            default -> null;
+        };
     }
 
 }

@@ -1,7 +1,7 @@
 package org.sopt.makers.internal.member.service.workpreference;
 
 import lombok.RequiredArgsConstructor;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
@@ -34,14 +34,14 @@ public class WorkPreferenceRetriever {
     public void validateWorkPreferenceExists(Long memberId) {
         WorkPreference workPreference = getWorkPreferenceByMemberId(memberId);
         if (workPreference == null) {
-            throw new ClientBadRequestException("작업 성향이 설정되지 않았습니다. 먼저 작업 성향을 설정해주세요.");
+            throw new BadRequestException("작업 성향이 설정되지 않았습니다. 먼저 작업 성향을 설정해주세요.");
         }
     }
 
     public void validateCurrentGeneration(Long userId) {
         InternalUserDetails userDetails = platformService.getInternalUser(userId);
         if (userDetails.lastGeneration() != CURRENT_GENERATION) {
-            throw new ClientBadRequestException("최신 기수만 조회가 가능합니다.");
+            throw new BadRequestException("최신 기수만 조회가 가능합니다.");
         }
     }
 

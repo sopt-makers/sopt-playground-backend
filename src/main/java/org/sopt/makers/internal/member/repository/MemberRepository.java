@@ -13,5 +13,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findAllByIdIn(List<Long> ids);
 
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
+
+    @Query("SELECT DISTINCT m FROM Member m LEFT JOIN FETCH m.careers WHERE m.hasProfile = true AND m.id IN :memberIds")
+    List<Member> findAllByHasProfileTrueAndIdInWithCareers(@Param("memberIds") List<Long> memberIds);
+
     List<Member> findAllByWorkPreferenceNotNull();
 }

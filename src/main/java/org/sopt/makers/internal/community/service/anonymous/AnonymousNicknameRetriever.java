@@ -3,7 +3,7 @@ package org.sopt.makers.internal.community.service.anonymous;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.repository.anonymous.AnonymousNicknameRepository;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousNickname;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -40,7 +40,7 @@ public class AnonymousNicknameRetriever {
 
         for (String nickname : nicknames) {
             if (!foundNicknameSet.contains(nickname)) {
-                throw new NotFoundDBEntityException("존재하지 않는 익명 닉네임입니다: " + nickname);
+                throw new NotFoundException("존재하지 않는 익명 닉네임입니다: " + nickname);
             }
         }
     }

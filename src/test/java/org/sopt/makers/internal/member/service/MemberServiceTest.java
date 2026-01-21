@@ -33,7 +33,7 @@ import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import java.util.Collections;
 import java.util.List;
 
-import org.sopt.makers.internal.exception.ClientBadRequestException;
+import org.sopt.makers.internal.exception.BadRequestException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -106,7 +106,7 @@ class MemberServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> memberService.getAppjamTlMembers(userId))
-                .isInstanceOf(ClientBadRequestException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("최신 기수가 아닌 유저입니다.");
 
         verify(platformService).getInternalUser(userId);

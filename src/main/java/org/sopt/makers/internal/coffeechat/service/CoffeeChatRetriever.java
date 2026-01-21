@@ -11,8 +11,8 @@ import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryRespons
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatHistoryRepository;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatReviewRepository;
-import org.sopt.makers.internal.exception.ClientBadRequestException;
-import org.sopt.makers.internal.exception.NotFoundDBEntityException;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.member.domain.Member;
 import org.springframework.stereotype.Component;
 
@@ -26,17 +26,17 @@ public class CoffeeChatRetriever {
 
     public CoffeeChat findCoffeeChatByMember(Member member) {
         return coffeeChatRepository.findCoffeeChatByMember(member)
-                .orElseThrow(() -> new NotFoundDBEntityException("커피챗 정보를 등록한적 없는 유저입니다. " + "member id: " + member.getId()));
+                .orElseThrow(() -> new NotFoundException("커피챗 정보를 등록한적 없는 유저입니다. " + "member id: " + member.getId()));
     }
 
     public CoffeeChat findCoffeeChatById(Long id) {
         return coffeeChatRepository.findById(id)
-                .orElseThrow(() -> new NotFoundDBEntityException("존재하지 않는 커피챗입니다. " + "coffee chat id: " + id));
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 커피챗입니다. " + "coffee chat id: " + id));
     }
 
     public void checkAlreadyExistCoffeeChat(Member member) {
         if (existsCoffeeChat(member)) {
-            throw new ClientBadRequestException("이미 커피챗 정보가 등록된 유저입니다. " + "member id: " + member.getId());
+            throw new BadRequestException("이미 커피챗 정보가 등록된 유저입니다. " + "member id: " + member.getId());
         }
     }
 
@@ -47,7 +47,7 @@ public class CoffeeChatRetriever {
     public CoffeeChat findCoffeeChatAndCheckIsActivated(Member member, Boolean isMine) {
         return coffeeChatRepository.findCoffeeChatByMember(member)
                 .filter(coffeeChat -> coffeeChat.getIsCoffeeChatActivate() || isMine)
-                .orElseThrow(() -> new NotFoundDBEntityException("커피챗 정보를 확인할 수 없는 유저입니다. member id: " + member.getId()));
+                .orElseThrow(() -> new NotFoundException("커피챗 정보를 확인할 수 없는 유저입니다. member id: " + member.getId()));
     }
 
     public List<RecentCoffeeChatInfoDto> recentCoffeeChatInfoList() {
@@ -77,14 +77,14 @@ public class CoffeeChatRetriever {
     public void checkParticipateCoffeeChat(Member member, CoffeeChat coffeeChat) {
 
         if (!coffeeChatHistoryRepository.existsByReceiverAndSender(coffeeChat.getMember(), member)) {
-            throw new ClientBadRequestException("해당 커피챗을 신청한 적 없는 유저입니다. " + "member id: " + member.getId());
+            throw new BadRequestException("해당 커피챗을 신청한 적 없는 유저입니다. " + "member id: " + member.getId());
         }
     }
 
     public void checkAlreadyEnrollReview(Member member, CoffeeChat coffeeChat) {
 
         if (coffeeChatReviewRepository.existsByReviewerAndCoffeeChat(member, coffeeChat)) {
-            throw new ClientBadRequestException("이미 리뷰를 등록한 커피챗입니다.");
+            throw new BadRequestException("이미 리뷰를 등록한 커피챗입니다.");
         }
     }
 
