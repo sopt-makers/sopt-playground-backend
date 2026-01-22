@@ -23,7 +23,7 @@ public class AskMemberId {
             Part.PLAN, List.of(319L, 11L, 661L, 769L),
             Part.DESIGN, List.of(144L, 358L, 64L, 210L),
             Part.WEB, List.of(84L, 85L, 860L, 784L, 673L, 574L, 115L, 635L),
-            Part.IOS, List.of(35L, 45L, 22L, 1093L),
+            Part.IOS, List.of(35L, 45L, 22L),
             Part.ANDROID, List.of(585L, 21L, 407L),
             Part.SERVER, List.of(647L, 989L, 306L, 60L, 221L, 293L)
     );
