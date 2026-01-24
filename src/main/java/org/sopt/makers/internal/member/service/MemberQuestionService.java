@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
-import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
