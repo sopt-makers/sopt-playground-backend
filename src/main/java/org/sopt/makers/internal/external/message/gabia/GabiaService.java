@@ -11,9 +11,13 @@ import org.sopt.makers.internal.external.message.gabia.dto.GabiaSMSResponseData;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -31,7 +35,7 @@ public class GabiaService {
                         .getBytes(StandardCharsets.UTF_8)
         );
 
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = createGabiaClient();
 
         RequestBody requestBody = new FormBody.Builder()
                 .add("grant_type", "client_credentials")
@@ -139,5 +143,25 @@ public class GabiaService {
         GabiaSMSResponseData gabiaSMSResponseData = new Gson().fromJson(data, GabiaSMSResponseData.class);
 
         return new GabiaSMSResponse(code, message, gabiaSMSResponseData);
+    }
+
+    private OkHttpClient createGabiaClient() {
+        try {
+            // TLSv1.2를 명시적으로 활성화
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(null, null, null);
+
+            return new OkHttpClient.Builder()
+                    .sslSocketFactory(sslContext.getSocketFactory(),
+                            (X509TrustManager) TrustManagerFactory
+                                    .getInstance(TrustManagerFactory.getDefaultAlgorithm())
+                                    .getTrustManagers()[0])
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build();
+        } catch (Exception e) {
+            log.error("OkHttpClient 생성 실패", e);
+            return new OkHttpClient();
+        }
     }
 }
