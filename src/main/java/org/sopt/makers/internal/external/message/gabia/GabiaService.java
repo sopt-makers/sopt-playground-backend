@@ -2,6 +2,7 @@ package org.sopt.makers.internal.external.message.gabia;
 
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaAuthResponse;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GabiaService {
@@ -24,25 +26,40 @@ public class GabiaService {
     private static final String LMS_SEND_URL = "https://sms.gabia.com/api/send/lms";
 
     private GabiaAuthResponse getGabiaAccessToken() {
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), authConfig.getGabiaApiKey()).getBytes(StandardCharsets.UTF_8));
+        String authValue = Base64.getEncoder().encodeToString(
+                String.format("%s:%s", authConfig.getGabiaSMSId(), authConfig.getGabiaApiKey())
+                        .getBytes(StandardCharsets.UTF_8)
+        );
 
         OkHttpClient client = new OkHttpClient();
-        RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                .addFormDataPart("grant_type", "client_credentials")
+
+        RequestBody requestBody = new FormBody.Builder()
+                .add("grant_type", "client_credentials")
                 .build();
+
         Request request = new Request.Builder()
                 .url(SMS_OAUTH_TOKEN_URL)
                 .post(requestBody)
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
                 .addHeader("cache-control", "no-cache")
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
-            HashMap<String, String> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
-            return new GabiaAuthResponse(result.get("access_token"));
+            String responseBody = Objects.requireNonNull(response.body()).string();
+
+            HashMap<String, String> result = new Gson().fromJson(responseBody, HashMap.class);
+            String accessToken = result.get("access_token");
+
+            if (accessToken == null || accessToken.isEmpty()) {
+                String errorMessage = result.get("message");
+                log.error("Gabia 토큰 발급 실패: {}", errorMessage);
+                throw new BadRequestException("Gabia SMS 토큰 발급 실패: " + errorMessage);
+            }
+
+            return new GabiaAuthResponse(accessToken);
         } catch (IOException e) {
+            log.error("Gabia 토큰 발급 중 IOException 발생", e);
             throw new BadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
         }
     }
@@ -51,27 +68,31 @@ public class GabiaService {
         boolean sentSuccessfully = false;
         int retryCount = 0;
 
-        // 문자 발송이 실패한 경우 3번까지 재시도
         while (!sentSuccessfully && retryCount < 3) {
             GabiaSMSResponse response = attemptToSendSMS(phone, message);
+            log.info("SMS 발송 응답: {}", response);
 
             if (response.code().equals("200")) {
                 sentSuccessfully = true;
 
-                // TODO:Slack에 알림 전송
                 if (Integer.parseInt(response.data().getAFTER_SMS_QTY()) == 50) {
-
+                    // TODO: Slack에 알림 전송
                 }
-
             } else {
                 retryCount++;
+                log.warn("SMS 발송 실패 (재시도 {}/3): {}", retryCount, response.message());
             }
+        }
+
+        if (!sentSuccessfully) {
+            log.error("SMS 발송 3회 재시도 후 최종 실패 - phone: {}", phone);
         }
     }
 
     private GabiaSMSResponse attemptToSendSMS(String phone, String message) {
         GabiaAuthResponse gabiaAuthResponse = getGabiaAccessToken();
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), gabiaAuthResponse.access_token()).getBytes(StandardCharsets.UTF_8));
+        String authValue = "Bearer " + gabiaAuthResponse.access_token();
+
         OkHttpClient client = new OkHttpClient();
 
         String targetUrl;
@@ -81,26 +102,28 @@ public class GabiaService {
             targetUrl = LMS_SEND_URL;
         }
 
-        RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                .addFormDataPart("phone", phone)
-                .addFormDataPart("callback", authConfig.getGabiaSendNumber())
-                .addFormDataPart("message", message)
-                .addFormDataPart("refkey", UUID.randomUUID().toString())
+        RequestBody requestBody = new FormBody.Builder()
+                .add("phone", phone)
+                .add("callback", authConfig.getGabiaSendNumber())
+                .add("message", message)
+                .add("refkey", UUID.randomUUID().toString())
                 .build();
 
         Request request = new Request.Builder()
                 .url(targetUrl)
                 .post(requestBody)
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                .addHeader("Authorization", "Basic " + authValue)
+                .addHeader("Authorization", authValue)
                 .addHeader("cache-control", "no-cache")
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
-            HashMap<String, String> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
+            String responseBody = Objects.requireNonNull(response.body()).string();
+
+            HashMap<String, String> result = new Gson().fromJson(responseBody, HashMap.class);
             return mapToGabiaSMSResponse(result);
         } catch (IOException e) {
+            log.error("SMS 발송 중 IOException 발생", e);
             throw new BadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
         }
     }
