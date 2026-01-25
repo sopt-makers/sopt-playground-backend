@@ -31,23 +31,7 @@ public class GabiaService {
 
     @PostConstruct
     public void init() {
-        ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-                .tlsVersions(TlsVersion.TLS_1_2)
-                .cipherSuites(
-                        CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
-                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-                        CipherSuite.TLS_AES_128_GCM_SHA256,
-                        CipherSuite.TLS_AES_256_GCM_SHA384,
-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-                )
-                .build();
-
-        this.client = new OkHttpClient.Builder()
-                .connectionSpecs(Collections.singletonList(spec))
-                .build();
+        this.client = new OkHttpClient();
     }
 
     private GabiaAuthResponse getGabiaAccessToken() {
@@ -71,6 +55,7 @@ public class GabiaService {
                 .post(requestBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
+                .addHeader("cache-control", "no-cache")  // 추가된 헤더
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -120,18 +105,25 @@ public class GabiaService {
 
         String targetUrl = (message.length() <= 45) ? SMS_SEND_URL : LMS_SEND_URL;
 
-        RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
+        MultipartBody.Builder bodyBuilder = new MultipartBody.Builder().setType(MultipartBody.FORM)
                 .addFormDataPart("phone", phone)
                 .addFormDataPart("callback", authConfig.getGabiaSendNumber())
                 .addFormDataPart("message", message)
-                .addFormDataPart("refkey", UUID.randomUUID().toString())
-                .build();
+                .addFormDataPart("refkey", UUID.randomUUID().toString());
+
+        // LMS인 경우 subject 추가 (공식 문서 참고)
+        if (message.length() > 45) {
+            bodyBuilder.addFormDataPart("subject", "SOPT");  // 필요시 제목 수정
+        }
+
+        RequestBody requestBody = bodyBuilder.build();
 
         Request request = new Request.Builder()
                 .url(targetUrl)
                 .post(requestBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
+                .addHeader("cache-control", "no-cache")  // 추가된 헤더
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
