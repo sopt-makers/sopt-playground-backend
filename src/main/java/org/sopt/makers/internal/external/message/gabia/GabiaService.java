@@ -2,6 +2,7 @@ package org.sopt.makers.internal.external.message.gabia;
 
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.external.message.gabia.dto.GabiaAuthResponse;
@@ -16,6 +17,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GabiaService {
 
     private final AuthConfig authConfig;
@@ -24,7 +26,16 @@ public class GabiaService {
     private static final String LMS_SEND_URL = "https://sms.gabia.com/api/send/lms";
 
     private GabiaAuthResponse getGabiaAccessToken() {
-        String authValue = Base64.getEncoder().encodeToString(String.format("%s:%s", authConfig.getGabiaSMSId(), authConfig.getGabiaApiKey()).getBytes(StandardCharsets.UTF_8));
+        String smsId = authConfig.getGabiaSMSId();
+        String apiKey = authConfig.getGabiaApiKey();
+
+        // 1. 설정값 누락 확인 로그
+        if (smsId == null || apiKey == null) {
+            log.error("Gabia 설정값이 누락되었습니다. ID: {}, Key 존재여부: {}", smsId, apiKey != null);
+        }
+
+        String authValue = Base64.getEncoder().encodeToString(
+                String.format("%s:%s", smsId, apiKey).getBytes(StandardCharsets.UTF_8));
 
         OkHttpClient client = new OkHttpClient();
         RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
@@ -35,15 +46,23 @@ public class GabiaService {
                 .post(requestBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
-                .addHeader("cache-control", "no-cache")
                 .build();
 
-        try {
-            Response response = client.newCall(request).execute();
-            HashMap<String, String> result = new Gson().fromJson(Objects.requireNonNull(response.body()).string(), HashMap.class);
+        try (Response response = client.newCall(request).execute()) {
+            String bodyString = Objects.requireNonNull(response.body()).string();
+
+            // 2. 성공하지 않았을 때의 상세 로그 기록
+            if (!response.isSuccessful()) {
+                log.error("Gabia 토큰 요청 실패. Status: {}, Body: {}", response.code(), bodyString);
+                throw new BadRequestException("Gabia 인증 실패: " + response.code());
+            }
+
+            HashMap<String, String> result = new Gson().fromJson(bodyString, HashMap.class);
             return new GabiaAuthResponse(result.get("access_token"));
         } catch (IOException e) {
-            throw new BadRequestException("Gabia에 잘못된 인증 데이터가 전달됐습니다.");
+            // 3. 실제 Exception 메시지 로그 기록
+            log.error("Gabia 통신 중 IOException 발생: {}", e.getMessage());
+            throw new BadRequestException("Gabia 서버와 통신할 수 없습니다.");
         }
     }
 
