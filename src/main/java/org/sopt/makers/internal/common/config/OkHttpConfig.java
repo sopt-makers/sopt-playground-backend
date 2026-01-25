@@ -15,11 +15,11 @@ public class OkHttpConfig {
 
     @Bean
     public OkHttpClient gabiaOkHttpClient() {
-        ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-                .tlsVersions(TlsVersion.TLS_1_2)
-                .cipherSuites(
-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+
+        ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.COMPATIBLE_TLS)
+                .tlsVersions(
+                        TlsVersion.TLS_1_2,
+                        TlsVersion.TLS_1_3
                 )
                 .build();
 
@@ -32,3 +32,4 @@ public class OkHttpConfig {
                 .build();
     }
 }
+
