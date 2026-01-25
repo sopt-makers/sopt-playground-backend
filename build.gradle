@@ -48,7 +48,7 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 	implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
 	implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
-	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+	implementation 'com.squareup.okhttp3:okhttp:5.3.2'
 	implementation 'com.google.code.gson:gson:2.10.1'
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
 	implementation 'com.bucket4j:bucket4j-core:8.4.0'

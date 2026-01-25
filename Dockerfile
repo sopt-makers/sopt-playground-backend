@@ -1,7 +1,4 @@
 FROM amazoncorretto:17
-RUN yum update -y && \
-    yum install -y ca-certificates && \
-    update-ca-trust
 WORKDIR /app
 COPY ./build/libs/internal-0.0.1-SNAPSHOT.jar /app/APPLICATION.jar
 
