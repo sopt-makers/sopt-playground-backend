@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -16,23 +17,18 @@ public class OkHttpConfig {
     @Bean
     public OkHttpClient gabiaOkHttpClient() {
 
-        ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.COMPATIBLE_TLS)
-                .tlsVersions(TlsVersion.TLS_1_2)
+        ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
                 .cipherSuites(
-                        // Gabia 서버가 실제로 쓰는 Cipher
-                        CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
-
-                        // 혹시를 대비한 하위 호환
-                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA
+                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
                 )
                 .build();
 
         return new OkHttpClient.Builder()
-                .connectionSpecs(Collections.singletonList(tlsSpec))
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .writeTimeout(5, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
+                .connectionSpecs(List.of(spec))
                 .build();
     }
 }
