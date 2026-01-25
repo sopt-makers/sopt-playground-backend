@@ -7,6 +7,5 @@ ENV SPRING_PROFILES_ACTIVE=dev
 CMD sh -c 'java \
   -Duser.timezone=Asia/Seoul \
   -Djdk.tls.disabledAlgorithms="" \
-  -Djavax.net.debug=ssl,handshake \
   -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE \
   -jar APPLICATION.jar'
