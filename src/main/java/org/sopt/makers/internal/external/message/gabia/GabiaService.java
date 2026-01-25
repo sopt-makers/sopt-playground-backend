@@ -12,9 +12,15 @@ import org.sopt.makers.internal.external.message.gabia.dto.GabiaSMSResponseData;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -31,7 +37,115 @@ public class GabiaService {
 
     @PostConstruct
     public void init() {
-        this.client = new OkHttpClient();
+        // SSL 디버깅 활성화
+        System.setProperty("javax.net.debug", "ssl:handshake");
+
+        try {
+            // TrustManager 생성 - 모든 인증서 신뢰
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                            log.debug("checkClientTrusted: authType={}", authType);
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                            log.debug("checkServerTrusted: authType={}", authType);
+                            if (chain != null && chain.length > 0) {
+                                log.debug("Server cert: {}", chain[0].getSubjectDN());
+                            }
+                        }
+
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return new X509Certificate[0];
+                        }
+                    }
+            };
+
+            // SSLContext 생성 - TLSv1.2 명시
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+
+            // SSLSocketFactory 래핑하여 TLS 버전 강제
+            SSLSocketFactory wrappedFactory = new SSLSocketFactory() {
+                private final SSLSocketFactory delegate = sslContext.getSocketFactory();
+
+                @Override
+                public String[] getDefaultCipherSuites() {
+                    return delegate.getDefaultCipherSuites();
+                }
+
+                @Override
+                public String[] getSupportedCipherSuites() {
+                    return delegate.getSupportedCipherSuites();
+                }
+
+                @Override
+                public java.net.Socket createSocket(java.net.Socket s, String host, int port, boolean autoClose) throws IOException {
+                    SSLSocket socket = (SSLSocket) delegate.createSocket(s, host, port, autoClose);
+                    configureSocket(socket);
+                    return socket;
+                }
+
+                @Override
+                public java.net.Socket createSocket(String host, int port) throws IOException {
+                    SSLSocket socket = (SSLSocket) delegate.createSocket(host, port);
+                    configureSocket(socket);
+                    return socket;
+                }
+
+                @Override
+                public java.net.Socket createSocket(String host, int port, java.net.InetAddress localHost, int localPort) throws IOException {
+                    SSLSocket socket = (SSLSocket) delegate.createSocket(host, port, localHost, localPort);
+                    configureSocket(socket);
+                    return socket;
+                }
+
+                @Override
+                public java.net.Socket createSocket(java.net.InetAddress host, int port) throws IOException {
+                    SSLSocket socket = (SSLSocket) delegate.createSocket(host, port);
+                    configureSocket(socket);
+                    return socket;
+                }
+
+                @Override
+                public java.net.Socket createSocket(java.net.InetAddress address, int port, java.net.InetAddress localAddress, int localPort) throws IOException {
+                    SSLSocket socket = (SSLSocket) delegate.createSocket(address, port, localAddress, localPort);
+                    configureSocket(socket);
+                    return socket;
+                }
+
+                private void configureSocket(SSLSocket socket) {
+                    // TLS 1.2만 사용
+                    socket.setEnabledProtocols(new String[]{"TLSv1.2"});
+
+                    // 사용 가능한 모든 cipher suite 활성화
+                    String[] supportedCiphers = socket.getSupportedCipherSuites();
+                    log.debug("Supported cipher suites: {}", Arrays.toString(supportedCiphers));
+                    socket.setEnabledCipherSuites(supportedCiphers);
+                }
+            };
+
+            // OkHttpClient 설정
+            this.client = new OkHttpClient.Builder()
+                    .sslSocketFactory(wrappedFactory, (X509TrustManager) trustAllCerts[0])
+                    .hostnameVerifier((hostname, session) -> {
+                        log.debug("Verifying hostname: {}, session protocol: {}", hostname, session.getProtocol());
+                        return true;
+                    })
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .build();
+
+            log.info("가비아 OkHttpClient 초기화 완료 (Custom SSL with all ciphers enabled)");
+
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            log.error("SSL 설정 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("SSL 초기화 실패", e);
+        }
     }
 
     private GabiaAuthResponse getGabiaAccessToken() {
@@ -55,7 +169,7 @@ public class GabiaService {
                 .post(requestBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
-                .addHeader("cache-control", "no-cache")  // 추가된 헤더
+                .addHeader("cache-control", "no-cache")
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -69,7 +183,7 @@ public class GabiaService {
             HashMap<String, String> result = gson.fromJson(bodyString, HashMap.class);
             return new GabiaAuthResponse(result.get("access_token"));
         } catch (IOException e) {
-            log.error("가비아 통신 중 에러 (Token): {}", e.getMessage());
+            log.error("가비아 통신 중 에러 (Token): {}", e.getMessage(), e);
             throw new BadRequestException("가비아 서버와 통신할 수 없습니다.");
         }
     }
@@ -83,7 +197,6 @@ public class GabiaService {
                 GabiaSMSResponse response = attemptToSendSMS(phone, message);
                 if (response.code().equals("200")) {
                     sentSuccessfully = true;
-                    // 잔량 부족 알림 등 후속 처리
                     if (Integer.parseInt(response.data().getAFTER_SMS_QTY()) <= 50) {
                         log.warn("가비아 SMS 잔량이 50건 이하입니다!");
                     }
@@ -92,7 +205,7 @@ public class GabiaService {
                     retryCount++;
                 }
             } catch (Exception e) {
-                log.error("SMS 발송 시도 중 예외 발생: {}", e.getMessage());
+                log.error("SMS 발송 시도 중 예외 발생: {}", e.getMessage(), e);
                 retryCount++;
             }
         }
@@ -111,9 +224,8 @@ public class GabiaService {
                 .addFormDataPart("message", message)
                 .addFormDataPart("refkey", UUID.randomUUID().toString());
 
-        // LMS인 경우 subject 추가 (공식 문서 참고)
         if (message.length() > 45) {
-            bodyBuilder.addFormDataPart("subject", "SOPT");  // 필요시 제목 수정
+            bodyBuilder.addFormDataPart("subject", "SOPT");
         }
 
         RequestBody requestBody = bodyBuilder.build();
@@ -123,7 +235,7 @@ public class GabiaService {
                 .post(requestBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .addHeader("Authorization", "Basic " + authValue)
-                .addHeader("cache-control", "no-cache")  // 추가된 헤더
+                .addHeader("cache-control", "no-cache")
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -131,7 +243,7 @@ public class GabiaService {
             HashMap<String, String> result = gson.fromJson(bodyString, HashMap.class);
             return mapToGabiaSMSResponse(result);
         } catch (IOException e) {
-            log.error("가비아 통신 중 에러 (Send): {}", e.getMessage());
+            log.error("가비아 통신 중 에러 (Send): {}", e.getMessage(), e);
             throw new BadRequestException("가비아 서버와 통신할 수 없습니다.");
         }
     }
