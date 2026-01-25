@@ -17,9 +17,13 @@ public class OkHttpConfig {
     public OkHttpClient gabiaOkHttpClient() {
 
         ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.COMPATIBLE_TLS)
-                .tlsVersions(
-                        TlsVersion.TLS_1_2,
-                        TlsVersion.TLS_1_3
+                .tlsVersions(TlsVersion.TLS_1_2)
+                .cipherSuites(
+                        // Gabia 서버가 실제로 쓰는 Cipher
+                        CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
+
+                        // 혹시를 대비한 하위 호환
+                        CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA
                 )
                 .build();
 
