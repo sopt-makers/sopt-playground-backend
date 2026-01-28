@@ -480,8 +480,10 @@ public class CommunityPostService {
 
             postOptional.ifPresent(post -> {
                 InternalUserDetails userDetails = platformService.getInternalUser(post.getMember().getId());
+                // 같은 generation에서 메이커스 활동 우선 (isSopt=false가 메이커스)
                 SoptActivity latestActivity = userDetails.soptActivities().stream()
-                        .max(Comparator.comparing(SoptActivity::generation))
+                        .max(Comparator.comparing(SoptActivity::generation)
+                                .thenComparing(activity -> !activity.isSopt())) // 메이커스(false) 우선
                         .orElse(null);
 
                 String categoryName = categoryNameMap.getOrDefault(categoryId, "");

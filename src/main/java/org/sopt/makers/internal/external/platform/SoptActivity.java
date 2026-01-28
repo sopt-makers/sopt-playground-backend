@@ -5,5 +5,6 @@ public record SoptActivity(
         int generation,
         String part,
         String team,
-        String role
+        String role,
+        boolean isSopt
 ) {}
