@@ -143,12 +143,16 @@ public class PlatformService {
      */
     private SoptActivity convertRoleToTeam(SoptActivity activity) {
         String teamValue = convertRoleToTeamValue(activity.role(), activity.part(), activity.team());
+        // isSopt 필드 추가 - role이 null이 아니면 SOPT 활동, null이면 메이커스 활동으로 추정
+        // 더 정확한 판단을 위해서는 실제 API 응답에서 제공하는 값을 사용해야 함
+        boolean isSopt = activity.isSopt();
         return new SoptActivity(
             activity.activityId(),
             activity.generation(),
             activity.part(),
             teamValue,
-            activity.role()
+            activity.role(),
+            isSopt
         );
     }
 
