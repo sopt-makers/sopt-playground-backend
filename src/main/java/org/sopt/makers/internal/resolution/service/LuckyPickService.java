@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.resolution.domain.UserResolution;
 import org.sopt.makers.internal.resolution.domain.UserResolutionLuckyPick;
 import org.sopt.makers.internal.resolution.dto.response.LuckyPickResponse;
@@ -20,7 +21,6 @@ public class LuckyPickService {
     private final UserResolutionRepository userResolutionRepository;
     private final UserResolutionLuckyPickRepository luckyPickRepository;
     private static final int WINNER_COUNT = 3;
-    private static final int TARGET_GENERATION = 36;
 
     @Transactional
     public LuckyPickResponse checkLuckyPickResult(Long memberId) {
@@ -45,15 +45,15 @@ public class LuckyPickService {
             return;
         }
 
-        List<UserResolution> resolutions = userResolutionRepository.findAllByGeneration(TARGET_GENERATION);
+        List<UserResolution> resolutions = userResolutionRepository.findAllByGeneration(Constant.CURRENT_GENERATION);
         List<Long> participantIds = resolutions.stream()
-                .map(resolution -> resolution.getMember().getId())
-                .distinct()
-                .collect(Collectors.toList());
+            .map(resolution -> resolution.getMember().getId())
+            .distinct()
+            .toList();
 
         List<UserResolutionLuckyPick> participants = participantIds.stream()
-                .map(UserResolutionLuckyPick::new)
-                .collect(Collectors.toList());
+            .map(UserResolutionLuckyPick::new)
+            .collect(Collectors.toList());
 
         participants = luckyPickRepository.saveAll(participants);
 
