@@ -47,13 +47,13 @@ public class LuckyPickService {
 
         List<UserResolution> resolutions = userResolutionRepository.findAllByGeneration(Constant.CURRENT_GENERATION);
         List<Long> participantIds = resolutions.stream()
-                .map(resolution -> resolution.getMember().getId())
-                .distinct()
-                .toList();
+            .map(resolution -> resolution.getMember().getId())
+            .distinct()
+            .toList();
 
         List<UserResolutionLuckyPick> participants = participantIds.stream()
-                .map(UserResolutionLuckyPick::new)
-                .collect(Collectors.toList());
+            .map(UserResolutionLuckyPick::new)
+            .collect(Collectors.toList());
 
         participants = luckyPickRepository.saveAll(participants);
 
