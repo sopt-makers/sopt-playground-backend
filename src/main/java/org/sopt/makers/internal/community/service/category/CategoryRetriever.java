@@ -7,6 +7,7 @@ import org.sopt.makers.internal.community.repository.category.CategoryRepository
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class CategoryRetriever {
         return categoryRepository.findAllById(ids);
     }
 
+    @Transactional(readOnly = true)
     public List<Long> findAllDescendantIds(Long parentId) {
         List<Category> allCategories = categoryRepository.findAll();
         Category parent = allCategories.stream()
