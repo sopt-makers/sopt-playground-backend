@@ -317,7 +317,7 @@ public class MemberQuestionService {
 	private void sendQuestionNotification(MemberQuestion question, Long receiverId) {
 		try {
 			InternalUserDetails receiver = platformService.getInternalUser(receiverId);
-			String askProfileLink = String.format("https://playground.sopt.org/members/%d/?tab=ask", receiverId);
+			String askProfileLink = String.format("https://playground.sopt.org/members/%d?tab=ask", receiverId);
 
 			QuestionNotificationSmsMessage message = QuestionNotificationSmsMessage.of(
 				question.getContent(),
