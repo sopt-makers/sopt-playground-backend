@@ -1,9 +1,11 @@
 package org.sopt.makers.internal.member.mapper;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
@@ -23,8 +25,25 @@ public interface MemberMapper {
     @Mapping(target = "birthday", source = "userDetails.birthday")
     @Mapping(target = "phone", source = "userDetails.phone")
     @Mapping(target = "email", source = "userDetails.email")
-    @Mapping(target = "activities", source = "userDetails.soptActivities")
+    @Mapping(target = "activities", source = "userDetails.soptActivities", qualifiedByName = "sortedSoptActivities")
     MemberProfileResponse toProfileResponse (Member member, InternalUserDetails userDetails, Boolean isCoffeeChatActivate);
+
+    @Named("sortedSoptActivities")
+    default List<MemberProfileResponse.MemberSoptActivityResponse> sortedSoptActivities(List<SoptActivity> soptActivities) {
+        if (soptActivities == null) {
+            return null;
+        }
+        return soptActivities.stream()
+                .sorted(Comparator.comparing(SoptActivity::generation)
+                        .thenComparing(SoptActivity::isSopt)) // 같은 기수에서 메이커스(isSopt=false) 우선
+                .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
+                        (long) activity.activityId(),
+                        activity.generation(),
+                        activity.part(),
+                        activity.team()
+                ))
+                .toList();
+    }
 
     @Mapping(target = "projects", source = "projects")
     MemberProfileProjectVo toSoptMemberProfileProjectVo(SoptActivity member, List<MemberProjectVo> projects);

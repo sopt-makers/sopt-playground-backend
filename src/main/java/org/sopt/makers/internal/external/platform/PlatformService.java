@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.external.platform;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -215,6 +216,8 @@ public class PlatformService {
         InternalUserDetails userDetails = getInternalUser(userId);
         List<SoptActivity> soptActivities = userDetails.soptActivities();
         return soptActivities.stream()
+                .sorted(Comparator.comparing(SoptActivity::generation)
+                        .thenComparing(SoptActivity::isSopt)) // 같은 기수에서 메이커스(isSopt=false) 우선
                 .map(activity -> {
                     if (!activity.isSopt()) {
                         return String.format("%d기 메이커스", activity.generation());

@@ -253,11 +253,15 @@ public class MemberService {
 			throw new NotFoundException("30기 이전 기수 활동 회원은 공식 채널로 문의해주시기 바랍니다.");
 		}
 
-		// 같은 generation에 대한 중복 키 처리 - 첫 번째 값 유지
-		val cardinalInfoMap = soptActivities.stream()
+		// 같은 generation에 대한 중복 키 처리 - 메이커스(isSopt=false) 우선
+		val sortedActivities = soptActivities.stream()
+			.sorted(Comparator.comparing(SoptActivity::generation)
+				.thenComparing(SoptActivity::isSopt))
+			.toList();
+		val cardinalInfoMap = sortedActivities.stream()
 			.collect(Collectors.toMap(SoptActivity::generation, SoptActivity::part, (p1, p2) -> p1));
 
-		val activities = soptActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
+		val activities = sortedActivities.stream().map(a -> memberMapper.toActivityInfoVo(a, false));
 
 		val projects = memberProfileProjects.stream().filter(p -> p.generation() != null).map(p -> {
 			val part = cardinalInfoMap.getOrDefault(p.generation(), "");
@@ -274,8 +278,10 @@ public class MemberService {
 
 	public List<MemberProfileProjectVo> getMemberProfileProjects(List<SoptActivity> soptActivities,
 		List<MemberProfileProjectDao> memberProfileProjects) {
-		// 모든 활동 (SOPT + 메이커스)을 포함
+		// 모든 활동 (SOPT + 메이커스)을 포함, 같은 기수에서 메이커스(isSopt=false) 우선
 		return soptActivities.stream()
+			.sorted(Comparator.comparing(SoptActivity::generation)
+				.thenComparing(SoptActivity::isSopt))
 			.map(m -> {
 				val projects = memberProfileProjects.stream()
 					.filter(p -> p.generation() != null)
@@ -971,6 +977,8 @@ public class MemberService {
 		return userDetails.stream().map(userDetail -> {
 			List<MemberSoptActivityResponse> memberSoptActivityResponses = userDetail.soptActivities()
 				.stream()
+				.sorted(Comparator.comparing(SoptActivity::generation)
+					.thenComparing(SoptActivity::isSopt)) // 같은 기수에서 메이커스(isSopt=false) 우선
 				.map(activity -> new MemberSoptActivityResponse((long)activity.activityId(), activity.generation()))
 				.toList();
 			List<MemberCareer> memberCareers = careerMap.getOrDefault(userDetail.userId(), Collections.emptyList());
@@ -1039,6 +1047,8 @@ public class MemberService {
 			String competitionData
     ) {
         List<MemberProfileResponse.MemberSoptActivityResponse> activities = userDetails.soptActivities().stream()
+                .sorted(Comparator.comparing(SoptActivity::generation)
+                        .thenComparing(SoptActivity::isSopt)) // 같은 기수에서 메이커스(isSopt=false) 우선
                 .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
                         (long) activity.activityId(),
                         activity.generation(),
