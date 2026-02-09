@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.LocalDate;
+import org.hibernate.Hibernate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -183,7 +184,12 @@ public class CommunityPostService {
         val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(authorId);
         val voteResponse = voteService.getVoteByPostId(postId, memberId);
 
-        return new PostDetailData(postDao.post(), authorDetails, authorCareer, postDao.category(), voteResponse);
+        val category = postDao.category();
+        if (category != null) {
+            Hibernate.initialize(category.getParent());
+        }
+
+        return new PostDetailData(postDao.post(), authorDetails, authorCareer, category, voteResponse);
     }
 
     @Transactional
