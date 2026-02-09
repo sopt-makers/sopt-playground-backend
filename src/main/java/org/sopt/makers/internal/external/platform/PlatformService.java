@@ -215,7 +215,12 @@ public class PlatformService {
         InternalUserDetails userDetails = getInternalUser(userId);
         List<SoptActivity> soptActivities = userDetails.soptActivities();
         return soptActivities.stream()
-                .map(activity -> String.format("%d기 %s", activity.generation(), activity.part()))
+                .map(activity -> {
+                    if (!activity.isSopt()) {
+                        return String.format("%d기 메이커스", activity.generation());
+                    }
+                    return String.format("%d기 %s", activity.generation(), activity.part());
+                })
                 .toList();
     }
 
