@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.external.platform;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -143,12 +144,16 @@ public class PlatformService {
      */
     private SoptActivity convertRoleToTeam(SoptActivity activity) {
         String teamValue = convertRoleToTeamValue(activity.role(), activity.part(), activity.team());
+        // isSopt 필드 추가 - role이 null이 아니면 SOPT 활동, null이면 메이커스 활동으로 추정
+        // 더 정확한 판단을 위해서는 실제 API 응답에서 제공하는 값을 사용해야 함
+        boolean isSopt = activity.isSopt();
         return new SoptActivity(
             activity.activityId(),
             activity.generation(),
             activity.part(),
             teamValue,
-            activity.role()
+            activity.role(),
+            isSopt
         );
     }
 
@@ -211,7 +216,14 @@ public class PlatformService {
         InternalUserDetails userDetails = getInternalUser(userId);
         List<SoptActivity> soptActivities = userDetails.soptActivities();
         return soptActivities.stream()
-                .map(activity -> String.format("%d기 %s", activity.generation(), activity.part()))
+                .sorted(Comparator.comparing(SoptActivity::generation)
+                        .thenComparing(SoptActivity::isSopt)) // 같은 기수에서 메이커스(isSopt=false) 우선
+                .map(activity -> {
+                    if (!activity.isSopt()) {
+                        return String.format("%d기 메이커스", activity.generation());
+                    }
+                    return String.format("%d기 %s", activity.generation(), activity.part());
+                })
                 .toList();
     }
 

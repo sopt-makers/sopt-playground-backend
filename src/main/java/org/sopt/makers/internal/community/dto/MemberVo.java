@@ -19,11 +19,15 @@ public record MemberVo(
         if (userDetails == null) return null;
 
         SoptActivity latestSoptActivity = userDetails.soptActivities() == null ? null : userDetails.soptActivities().stream()
-                .max(Comparator.comparing(SoptActivity::generation))
+                .max(Comparator.comparing(SoptActivity::generation)
+                        .thenComparing(activity -> !activity.isSopt())) // 같은 기수에서 메이커스(isSopt=false) 우선
                 .orElse(null);
 
         SoptActivityVo activityVo = latestSoptActivity != null
-                ? new SoptActivityVo(latestSoptActivity.generation(), latestSoptActivity.part(), latestSoptActivity.team())
+                ? new SoptActivityVo(
+                        latestSoptActivity.generation(),
+                        latestSoptActivity.isSopt() ? latestSoptActivity.part() : "메이커스",
+                        latestSoptActivity.team())
                 : null;
 
         CareerVo careerVo = career != null
