@@ -34,8 +34,8 @@ public interface MemberMapper {
             return null;
         }
         return soptActivities.stream()
-                .sorted(Comparator.comparing(SoptActivity::generation)
-                        .thenComparing(SoptActivity::isSopt)) // 같은 기수에서 메이커스(isSopt=false) 우선
+                .sorted(Comparator.comparing(SoptActivity::normalizedGeneration)
+                        .thenComparing(activity -> !activity.isSopt())) // 같은 기수에서 SOPT(isSopt=true) 우선
                 .map(activity -> new MemberProfileResponse.MemberSoptActivityResponse(
                         (long) activity.activityId(),
                         activity.generation(),

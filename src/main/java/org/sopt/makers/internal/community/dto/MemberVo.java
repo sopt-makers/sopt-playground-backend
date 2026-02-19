@@ -19,8 +19,8 @@ public record MemberVo(
         if (userDetails == null) return null;
 
         SoptActivity latestSoptActivity = userDetails.soptActivities() == null ? null : userDetails.soptActivities().stream()
-                .max(Comparator.comparing(SoptActivity::generation)
-                        .thenComparing(activity -> !activity.isSopt())) // 같은 기수에서 메이커스(isSopt=false) 우선
+                .max(Comparator.comparing(SoptActivity::normalizedGeneration)
+                        .thenComparing(SoptActivity::isSopt)) // 같은 기수에서 SOPT(isSopt=true) 우선
                 .orElse(null);
 
         SoptActivityVo activityVo = latestSoptActivity != null
