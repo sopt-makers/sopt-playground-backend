@@ -1,8 +1,7 @@
-package org.sopt.makers.internal.external.message.gabia;
+package org.sopt.makers.internal.external.message;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.coffeechat.domain.enums.ChatCategory;
-import org.sopt.makers.internal.external.message.MessageSender;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.sms.SmsNotificationService;
