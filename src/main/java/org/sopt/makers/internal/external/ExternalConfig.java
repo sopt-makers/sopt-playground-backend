@@ -17,4 +17,11 @@ public class ExternalConfig {
 
     @Value("${push-notification.service}")
     private String service;
+
+    // Internal SMS
+    @Value("${sms.internal.url}")
+    private String smsInternalUrl;
+
+    @Value("${sms.internal.api-key}")
+    private String smsInternalApiKey;
 }

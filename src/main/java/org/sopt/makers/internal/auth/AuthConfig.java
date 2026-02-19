@@ -101,15 +101,6 @@ public class AuthConfig {
 	@Value("${dictionary.key}")
 	private String dictionaryKey;
 
-	@Value("${gabia.sms-id}")
-	private String gabiaSMSId;
-
-	@Value("${gabia.api-key}")
-	private String gabiaApiKey;
-
-	@Value("${gabia.send-number}")
-	private String gabiaSendNumber;
-
 	@Value("${external.auth.api-key}")
 	private String platformApiKey;
 
