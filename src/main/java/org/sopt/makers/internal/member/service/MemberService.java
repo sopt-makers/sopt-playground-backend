@@ -174,23 +174,10 @@ public class MemberService {
 		MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(member, userDetails, isMine,
 			memberProfileProjects, activityResponses, isCoffeeChatActivate);
 
-		// Map 대신 리스트를 직접 매칭하여 처리
-		// soptActivities 갱신 (response.soptActivities()에 soptActivityResponse 붙히기)
-		List<MemberProfileSpecificResponse.SoptMemberActivityResponse> updatedActivities = response.soptActivities()
-			.stream()
-			.map(sa -> {
-				// generation과 part가 모두 일치하는 항목 찾기
-				MemberProfileProjectVo matched = soptActivityResponse.stream()
-					.filter(vo -> vo.generation().equals(sa.generation()) &&
-								  (vo.part() == null || vo.part().equals(sa.part())))
-					.findFirst()
-					.orElse(null);
-				if (matched != null) {
-					return new MemberProfileSpecificResponse.SoptMemberActivityResponse(sa.generation(), sa.part(),
-						sa.team(), matched.projects());
-				}
-				return sa;
-			})
+		// 정렬된 soptActivityResponse에서 직접 SoptMemberActivityResponse 생성
+		List<MemberProfileSpecificResponse.SoptMemberActivityResponse> updatedActivities = soptActivityResponse.stream()
+			.map(vo -> new MemberProfileSpecificResponse.SoptMemberActivityResponse(
+				vo.generation(), vo.part(), vo.team(), vo.projects()))
 			.toList();
 
 		// updatedActivities set 해주기
@@ -270,10 +257,18 @@ public class MemberService {
 
 		val genActivityMap = Stream.concat(activities, projects).collect(Collectors.groupingBy(ActivityVo::generation));
 
-		return genActivityMap.entrySet()
-			.stream()
-			.collect(Collectors.toMap(e -> e.getKey() + "," + cardinalInfoMap.getOrDefault(e.getKey(), ""),
-				Map.Entry::getValue));
+		// 정렬된 기수 순서를 유지하기 위해 LinkedHashMap 사용
+		Map<String, List<ActivityVo>> result = new java.util.LinkedHashMap<>();
+		sortedActivities.stream()
+			.map(SoptActivity::generation)
+			.distinct()
+			.forEach(gen -> {
+				List<ActivityVo> genActivities = genActivityMap.get(gen);
+				if (genActivities != null) {
+					result.put(gen + "," + cardinalInfoMap.getOrDefault(gen, ""), genActivities);
+				}
+			});
+		return result;
 	}
 
 	public List<MemberProfileProjectVo> getMemberProfileProjects(List<SoptActivity> soptActivities,
