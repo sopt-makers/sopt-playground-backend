@@ -121,10 +121,10 @@ member:
   profile:
     crew-default-img: test
 
-gabia:
-  sms-id: test
-  api-key: test
-  send-number: test
+sms:
+  internal:
+    url: test
+    api-key: test
 
 external:
   auth:

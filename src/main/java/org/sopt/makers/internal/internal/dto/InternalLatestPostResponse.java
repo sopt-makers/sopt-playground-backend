@@ -32,7 +32,12 @@ public record InternalLatestPostResponse(
             ) {
         String generationAndPart = "";
         if (!post.getIsBlindWriter() && latestActivity != null) {
-            generationAndPart = String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
+            // 메이커스 활동인 경우 "기수/메이커스", SOPT 활동인 경우 "기수 파트"
+            if (!latestActivity.isSopt()) {
+                generationAndPart = String.format("%d기/메이커스", latestActivity.generation());
+            } else {
+                generationAndPart = String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
+            }
         }
 
         String finalName = userDetails.name();

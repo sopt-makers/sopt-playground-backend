@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.external.platform;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -142,13 +143,26 @@ public class PlatformService {
      * SoptActivity의 role을 team으로 변환
      */
     private SoptActivity convertRoleToTeam(SoptActivity activity) {
+        // 메이커스 활동인 경우, role에 상관없이 team은 "메이커스"만 반환
+        if (!activity.isSopt()) {
+            return new SoptActivity(
+                activity.activityId(),
+                activity.generation(),
+                activity.part(),
+                "메이커스",
+                activity.role(),
+                activity.isSopt()
+            );
+        }
+
         String teamValue = convertRoleToTeamValue(activity.role(), activity.part(), activity.team());
         return new SoptActivity(
             activity.activityId(),
             activity.generation(),
             activity.part(),
             teamValue,
-            activity.role()
+            activity.role(),
+            activity.isSopt()
         );
     }
 
@@ -211,7 +225,14 @@ public class PlatformService {
         InternalUserDetails userDetails = getInternalUser(userId);
         List<SoptActivity> soptActivities = userDetails.soptActivities();
         return soptActivities.stream()
-                .map(activity -> String.format("%d기 %s", activity.generation(), activity.part()))
+                .sorted(Comparator.comparing(SoptActivity::normalizedGeneration)
+                        .thenComparing(activity -> !activity.isSopt())) // 같은 기수에서 SOPT(isSopt=true) 우선
+                .map(activity -> {
+                    if (!activity.isSopt()) {
+                        return String.format("%d기 메이커스", activity.generation());
+                    }
+                    return String.format("%d기 %s", activity.generation(), activity.part());
+                })
                 .toList();
     }
 

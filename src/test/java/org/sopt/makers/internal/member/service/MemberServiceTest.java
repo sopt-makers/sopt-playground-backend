@@ -99,7 +99,7 @@ class MemberServiceTest {
                 "010-1234-5678",
                 "test@example.com",
                 previousGeneration,
-                List.of(new SoptActivity(1, previousGeneration, "서버", null, null))
+                List.of(new SoptActivity(1, previousGeneration, "서버", null, null, true))
         );
 
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
@@ -130,7 +130,7 @@ class MemberServiceTest {
                 "010-1234-5678",
                 "test@example.com",
                 currentGeneration,
-                List.of(new SoptActivity(1, currentGeneration, "서버", null, null))
+                List.of(new SoptActivity(1, currentGeneration, "서버", null, null, true))
         );
 
         Member member1 = Member.builder()
@@ -169,7 +169,7 @@ class MemberServiceTest {
                 "010-1111-1111",
                 "tl1@example.com",
                 currentGeneration,
-                List.of(new SoptActivity(1, currentGeneration, "안드로이드", null, null))
+                List.of(new SoptActivity(1, currentGeneration, "안드로이드", null, null, true))
         );
 
         InternalUserDetails tlUserDetails2 = new InternalUserDetails(
@@ -180,7 +180,7 @@ class MemberServiceTest {
                 "010-2222-2222",
                 "tl2@example.com",
                 currentGeneration,
-                List.of(new SoptActivity(2, currentGeneration, "웹", null, null))
+                List.of(new SoptActivity(2, currentGeneration, "웹", null, null, true))
         );
 
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
@@ -222,7 +222,7 @@ class MemberServiceTest {
                 "010-1234-5678",
                 "test@example.com",
                 currentGeneration,
-                List.of(new SoptActivity(1, currentGeneration, "서버", null, null))
+                List.of(new SoptActivity(1, currentGeneration, "서버", null, null, true))
         );
 
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
@@ -257,7 +257,7 @@ class MemberServiceTest {
                 "010-1234-5678",
                 "test@example.com",
                 currentGeneration,
-                List.of(new SoptActivity(1, currentGeneration, "서버", null, null))
+                List.of(new SoptActivity(1, currentGeneration, "서버", null, null, true))
         );
 
         Member member1 = Member.builder()
@@ -294,7 +294,7 @@ class MemberServiceTest {
                 "010-1111-1111",
                 "tl1@example.com",
                 currentGeneration,
-                List.of(new SoptActivity(1, currentGeneration, "안드로이드", null, null))
+                List.of(new SoptActivity(1, currentGeneration, "안드로이드", null, null, true))
         );
 
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);

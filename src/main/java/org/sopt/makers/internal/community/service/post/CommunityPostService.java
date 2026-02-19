@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.LocalDate;
+import org.hibernate.Hibernate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -183,7 +184,12 @@ public class CommunityPostService {
         val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(authorId);
         val voteResponse = voteService.getVoteByPostId(postId, memberId);
 
-        return new PostDetailData(postDao.post(), authorDetails, authorCareer, postDao.category(), voteResponse);
+        val category = postDao.category();
+        if (category != null) {
+            Hibernate.initialize(category.getParent());
+        }
+
+        return new PostDetailData(postDao.post(), authorDetails, authorCareer, category, voteResponse);
     }
 
     @Transactional
@@ -480,8 +486,10 @@ public class CommunityPostService {
 
             postOptional.ifPresent(post -> {
                 InternalUserDetails userDetails = platformService.getInternalUser(post.getMember().getId());
+                // 같은 generation에서 메이커스 활동 우선 (isSopt=false가 메이커스)
                 SoptActivity latestActivity = userDetails.soptActivities().stream()
-                        .max(Comparator.comparing(SoptActivity::generation))
+                        .max(Comparator.comparing(SoptActivity::generation)
+                                .thenComparing(activity -> !activity.isSopt())) // 메이커스(false) 우선
                         .orElse(null);
 
                 String categoryName = categoryNameMap.getOrDefault(categoryId, "");
