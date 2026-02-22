@@ -380,9 +380,9 @@ public class MemberService {
 
 			// 팀 조건 체크
 			if ("임원진".equals(team)) {
-				// 임원진: 미디어팀, 운영팀이 아닌 다른 팀이 있는 경우
+				// 임원진: 솝트 활동인 동시에 미디어팀, 운영팀이 아닌 다른 팀이 있는 경우
 				String activityTeam = a.team();
-				return activityTeam != null &&
+				return activityTeam != null && a.isSopt() &&
 					   !activityTeam.isEmpty() &&
 					   !"미디어팀".equals(activityTeam) &&
 					   !"운영팀".equals(activityTeam);
