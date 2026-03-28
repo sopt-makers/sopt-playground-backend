@@ -20,7 +20,7 @@ on:
 env:
   SPRING_PROFILES_ACTIVE: prod
   ECR_APP_NAME: ${{ secrets.ECR_APP_NAME }}-prod
-  ECR_REPO: ${{ secrets.ECR_HOST }}/${{ secrets.ECR_APP_NAME }}-prod
+  PLAYGROUND_ECR_REPO: ${{ secrets.ECR_HOST }}/${{ secrets.ECR_APP_NAME }}-prod
   ECR_HOST: ${{ secrets.ECR_HOST }}
 
 jobs:
@@ -74,8 +74,8 @@ jobs:
       - name: 'Docker Image Build & Push'
         run: |
           docker build -t $ECR_APP_NAME .
-          docker tag $ECR_APP_NAME:latest $ECR_REPO
-          docker push $ECR_REPO
+          docker tag $ECR_APP_NAME:latest $PLAYGROUND_ECR_REPO
+          docker push $PLAYGROUND_ECR_REPO
 
       - name: 'Send docker-compose.yml to EC2 Instance'
         uses: appleboy/scp-action@master
@@ -104,14 +104,19 @@ jobs:
 
       - name: 'Docker Container Run'
         uses: appleboy/ssh-action@master
-
+        env:
+          PLAYGROUND_ECR_REPO: ${{ env.PLAYGROUND_ECR_REPO }}
+          SPRING_PROFILES_ACTIVE: ${{ env.SPRING_PROFILES_ACTIVE }}
         with:
           host: ${{ secrets.PROD_RELEASE_SERVER_IP }}
           username: ${{ secrets.RELEASE_SERVER_USER }}
           key: ${{ secrets.PROD_RELEASE_SERVER_KEY }}
+          envs: PLAYGROUND_ECR_REPO,SPRING_PROFILES_ACTIVE
           script: |
-            cd ~
-            sudo docker pull $ECR_REPO
-            sudo chmod +x ./playground/scripts/*.sh
-            ./playground/scripts/deploy.sh
+            cd ~/playground
+            echo "PLAYGROUND_ECR_REPO=$PLAYGROUND_ECR_REPO"
+            echo "SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE"
+            sudo docker pull "$PLAYGROUND_ECR_REPO"
+            sudo chmod +x ./scripts/*.sh
+            ./scripts/deploy.sh
             sudo docker image prune -f
