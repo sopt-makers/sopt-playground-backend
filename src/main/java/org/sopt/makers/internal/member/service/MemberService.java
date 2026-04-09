@@ -606,7 +606,8 @@ public class MemberService {
 			|| team.equals("부회장")
 			|| team.equals("총무")
 			|| team.contains("파트장")
-			|| team.contains("팀장");
+			|| team.contains("팀장")
+			|| team.equals("아트디렉터");
 	}
 
 	/**
@@ -623,7 +624,7 @@ public class MemberService {
 		}
 
 		// 회장, 부회장, 총무는 원본 team이 null
-		if (team.equals("회장") || team.equals("부회장") || team.equals("총무")) {
+		if (team.equals("회장") || team.equals("부회장") || team.equals("총무") || team.equals("아트디렉터")) {
 			return null;
 		}
 
