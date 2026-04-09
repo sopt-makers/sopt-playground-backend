@@ -186,6 +186,7 @@ public class PlatformService {
             case "GENERAL_AFFAIRS" -> "총무";
             case "PART_LEADER" -> part + " 파트장"; // 예: "기획 파트장", "디자인 파트장"
             case "TEAM_LEADER" -> originalTeam + " 팀장"; // 예: "운영팀 팀장", "미디어팀 팀장"
+            case "ART_DIRECTOR" -> "아트디렉터";
             default -> originalTeam;
         };
     }
