@@ -3,6 +3,8 @@ package org.sopt.makers.internal.member.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 public record MemberProfileResponse(
     @Schema(required = true)
     Long id,
@@ -28,6 +30,8 @@ public record MemberProfileResponse(
     List<MemberSoptActivityResponse> activities,
     List<MemberLinkResponse> links,
     List<MemberCareerResponse> careers,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    MemberQuestionPreviewResponse questionPreview,
     Boolean allowOfficial,
     Boolean isCoffeeChatActivate
 ) {
@@ -63,6 +67,11 @@ public record MemberProfileResponse(
             Boolean isCurrent
     ){}
 
+    public record MemberQuestionPreviewResponse(
+        Long questionId,
+        String content
+    ) {}
+
     public static MemberProfileResponse checkIsBlindPhone(MemberProfileResponse response, String phone) {
         return new MemberProfileResponse(
             response.id(),
@@ -86,6 +95,7 @@ public record MemberProfileResponse(
             response.activities(),
             response.links(),
             response.careers(),
+            response.questionPreview(),
             response.allowOfficial(),
             response.isCoffeeChatActivate()
         );
