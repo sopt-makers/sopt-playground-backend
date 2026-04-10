@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.member.service;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -112,6 +113,10 @@ public class MemberService {
 	private final WorkPreferenceRetriever workPreferenceRetriever;
 	private final WorkPreferenceModifier workPreferenceModifier;
 	private final AskMemberId askMemberId;
+	private final MemberQuestionRetriever memberQuestionRetriever;
+
+	private static final int QUESTION_PREVIEW_DAYS = 7;
+
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
@@ -351,12 +356,39 @@ public class MemberService {
 		if (pagedByServer.isEmpty()) {
 			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
 		}
+		List<Long> pagedMemberIds = pagedByServer.stream()
+			.map(InternalUserDetails::userId)
+			.toList();
 
-		List<MemberProfileResponse> memberList = pagedByServer.stream().map(userDetails -> {
-			Member member = memberMap.get(userDetails.userId());
-			boolean isCoffeeChatActivate = member != null && coffeeChatRetriever.existsCoffeeChat(member);
-			return memberMapper.toProfileResponse(member, userDetails, isCoffeeChatActivate);
-		}).toList();
+		Map<Long, MemberProfileResponse.MemberQuestionPreviewResponse> questionPreviewByReceiverId =
+			memberQuestionRetriever.findLatestRecentQuestionsByReceiverIds(
+				pagedMemberIds,
+				LocalDateTime.now().minusDays(QUESTION_PREVIEW_DAYS)
+			).stream().collect(Collectors.toMap(
+				question -> question.getReceiver().getId(),
+				question -> new MemberProfileResponse.MemberQuestionPreviewResponse(
+					question.getId(),
+					question.getContent()
+				)
+			));
+
+		List<MemberProfileResponse> memberList = pagedByServer.stream()
+			.map(userDetails -> {
+				Member member = memberMap.get(userDetails.userId());
+				boolean isCoffeeChatActivate = member != null && coffeeChatRetriever.existsCoffeeChat(member);
+
+				MemberProfileResponse baseResponse = memberMapper.toProfileResponse(
+					member,
+					userDetails,
+					isCoffeeChatActivate
+				);
+
+				MemberProfileResponse.MemberQuestionPreviewResponse questionPreview =
+					questionPreviewByReceiverId.get(userDetails.userId());
+
+				return memberResponseMapper.attachQuestionPreview(baseResponse, questionPreview);
+			})
+			.toList();
 
 		// 4) hasNext 및 totalCount 계산 (서버 기준)
 		boolean hasNext = (offsetValue + limitValue) < sortedUsers.size();
@@ -365,31 +397,50 @@ public class MemberService {
 		return new MemberAllProfileResponse(memberList, hasNext, totalCount);
 	}
 
-	private boolean filterPlatformConditions(InternalUserDetails userDetails, String part, String team, Integer generation) {
-		if (part == null && team == null && generation == null) return true;
+	private boolean filterPlatformConditions(
+		InternalUserDetails userDetails,
+		String part,
+		String team,
+		Integer generation
+	) {
+		if (part == null && team == null && generation == null) {
+			return true;
+		}
+
 		List<SoptActivity> activities = userDetails.soptActivities();
 
-		return activities.stream().anyMatch(a -> {
+		return activities.stream().anyMatch(activity -> {
 			// 공통 조건: generation과 part 체크
-			boolean genMatch = (generation == null || Objects.equals(a.generation(), generation));
-			boolean partMatch = (part == null || Objects.equals(a.part(), part));
+			boolean generationMatch = (generation == null || Objects.equals(activity.generation(), generation));
+			boolean partMatch = (
+				part == null ||
+					Objects.equals(normalizeMemberTabPartFilterActivityPart(activity.part()), part)
+			);
 
-			if (!genMatch || !partMatch) {
+			if (!generationMatch || !partMatch) {
 				return false;
+			}
+
+			if (team == null) {
+				return true;
 			}
 
 			// 팀 조건 체크
 			if ("임원진".equals(team)) {
 				// 임원진: 솝트 활동인 동시에 미디어팀, 운영팀이 아닌 다른 팀이 있는 경우
-				String activityTeam = a.team();
-				return activityTeam != null && a.isSopt() &&
-					   !activityTeam.isEmpty() &&
-					   !"미디어팀".equals(activityTeam) &&
-					   !"운영팀".equals(activityTeam);
-			} else {
-				// 일반 팀 필터링
-				return team == null || Objects.equals(a.team(), team);
+				String activityTeam = activity.team();
+				return activityTeam != null
+					&& activity.isSopt()
+					&& !activityTeam.isEmpty()
+					&& !"미디어팀".equals(activityTeam)
+					&& !"운영팀".equals(activityTeam);
 			}
+
+			if ("메이커스".equals(team)) {
+				return !activity.isSopt() || Objects.equals(activity.team(), "메이커스");
+			}
+
+			return Objects.equals(activity.team(), team);
 		});
 	}
 
@@ -415,21 +466,37 @@ public class MemberService {
 		return inName || inUniv || inCompany;
 	}
 
-
-	private String getMemberPart(Integer filter) {
-		if (filter == null)
+	private String normalizeMemberTabPartFilterActivityPart(String activityPart) {
+		if (activityPart == null || activityPart.isBlank()) {
 			return null;
-		return switch (filter) {
-			case 1 -> "기획";
-			case 2 -> "디자인";
-			case 3 -> "웹";
-			case 4 -> "서버";
-			case 5 -> "안드로이드";
-			case 6 -> "iOS";
-			default -> null;
+		}
+
+		return switch (activityPart) {
+			case "기획", "PLAN", "PM" -> "PLAN";
+			case "디자인", "DESIGN" -> "DESIGN";
+			case "웹", "WEB", "FRONTEND", "프론트엔드" -> "WEB";
+			case "서버", "SERVER", "BACKEND", "백엔드" -> "SERVER";
+			case "안드로이드", "ANDROID" -> "ANDROID";
+			case "iOS", "IOS" -> "IOS";
+			default -> activityPart;
 		};
 	}
 
+	private String getMemberPart(Integer filter) {
+		if (filter == null) {
+			return null;
+		}
+
+		return switch (filter) {
+			case 1 -> "PLAN";
+			case 2 -> "DESIGN";
+			case 3 -> "WEB";
+			case 4 -> "SERVER";
+			case 5 -> "ANDROID";
+			case 6 -> "IOS";
+			default -> null;
+		};
+	}
 
 	private String checkActivityTeamConditions(String team) {
 		if (team == null || team.equals("해당 없음")) {
@@ -437,13 +504,16 @@ public class MemberService {
 		}
 
 		if (team.equals("MAKERS")) {
-			return "임원진";
+			return "메이커스";
 		}
 		if (team.equals("OPERATION")) {
 			return "운영팀";
 		}
 		if (team.equals("MEDIA")) {
 			return "미디어팀";
+		}
+		if (team.equals("EXECUTIVE")) {
+			return "임원진";
 		}
 
 		return null;
