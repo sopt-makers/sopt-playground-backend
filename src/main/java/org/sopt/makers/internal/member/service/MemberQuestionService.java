@@ -308,6 +308,46 @@ public class MemberQuestionService {
 		return new MyLatestAnsweredQuestionLocationResponse(latestQuestion.getId(), page, index);
 	}
 
+	@Transactional(readOnly = true)
+	public QuestionLocationResponse getQuestionLocation(Long receiverId, Long questionId) {
+		memberRetriever.checkExistsMemberById(receiverId);
+
+		MemberQuestion question = memberQuestionRetriever.findById(questionId);
+
+		if (!Objects.equals(question.getReceiver().getId(), receiverId)) {
+			throw new BadRequestException("해당 멤버의 질문이 아닙니다.");
+		}
+
+		QuestionTab tab;
+		long precedingQuestionCount;
+
+		if (question.hasAnswer()) {
+			tab = QuestionTab.ANSWERED;
+			precedingQuestionCount = memberQuestionRetriever.countAnsweredQuestionsBeforeTargetInLatestOrder(
+				receiverId,
+				question.getCreatedAt(),
+				question.getId()
+			);
+		} else {
+			tab = QuestionTab.UNANSWERED;
+			precedingQuestionCount = memberQuestionRetriever.countUnansweredQuestionsBeforeTargetInLatestOrder(
+				receiverId,
+				question.getCreatedAt(),
+				question.getId()
+			);
+		}
+
+		int pageSize = 10;
+		int page = (int) (precedingQuestionCount / pageSize);
+		int index = (int) (precedingQuestionCount % pageSize);
+
+		return new QuestionLocationResponse(questionId, tab, page, index);
+	}
+
+	/*
+	private methods
+	 */
+
 	private void validateQuestionOwner(MemberQuestion question, Long userId) {
 		if (question.getAsker() == null || !question.getAsker().getId().equals(userId)) {
 			throw new ForbiddenException("질문 작성자만 수정할 수 있습니다.");

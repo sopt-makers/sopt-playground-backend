@@ -5,6 +5,7 @@ import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
+import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.coffeechat.dto.request.MemberCoffeeChatPropertyDto;
 import org.sopt.makers.internal.member.util.MemberUtil;
@@ -53,6 +54,42 @@ public class MemberResponseMapper {
                 coffeeChatProperty.sentCoffeeChatCount(),
                 uploadSopticleCount,
                 uploadReviewCount
+        );
+    }
+
+    public MemberProfileResponse attachQuestionPreview(
+        MemberProfileResponse baseResponse,
+        MemberProfileResponse.MemberQuestionPreviewResponse questionPreview
+    ) {
+        if (questionPreview == null) {
+            return baseResponse;
+        }
+
+        return new MemberProfileResponse(
+            baseResponse.id(),
+            baseResponse.name(),
+            baseResponse.profileImage(),
+            baseResponse.birthday(),
+            baseResponse.phone(),
+            baseResponse.email(),
+            baseResponse.address(),
+            baseResponse.university(),
+            baseResponse.major(),
+            baseResponse.introduction(),
+            baseResponse.skill(),
+            baseResponse.mbti(),
+            baseResponse.mbtiDescription(),
+            baseResponse.sojuCapacity(),
+            baseResponse.interest(),
+            baseResponse.userFavor(),
+            baseResponse.idealType(),
+            baseResponse.selfIntroduction(),
+            baseResponse.activities(),
+            baseResponse.links(),
+            baseResponse.careers(),
+            questionPreview,
+            baseResponse.allowOfficial(),
+            baseResponse.isCoffeeChatActivate()
         );
     }
 }

@@ -191,4 +191,17 @@ public class MemberQuestionController {
 		MyLatestAnsweredQuestionLocationResponse response = memberQuestionService.getMyLatestAnsweredQuestionLocation(userId, memberId);
 		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
+
+	@Operation(
+		summary = "특정 사용자의 question 탭에서 특정 질문 위치 조회 API",
+		description = "특정 사용자의 question 탭에서 questionId에 해당하는 질문이 어느 탭(answered/unanswered)의 몇 페이지 몇 번째에 있는지 조회합니다."
+	)
+	@GetMapping("/{memberId}/questions/{questionId}/location")
+	public ResponseEntity<QuestionLocationResponse> getQuestionLocation(
+		@PathVariable Long memberId,
+		@PathVariable Long questionId
+	) {
+		QuestionLocationResponse response = memberQuestionService.getQuestionLocation(memberId, questionId);
+		return ResponseEntity.ok(response);
+	}
 }

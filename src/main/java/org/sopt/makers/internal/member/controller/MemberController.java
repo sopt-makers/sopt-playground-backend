@@ -234,7 +234,7 @@ public class MemberController {
                     orderBy :
                     1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \n
                     team :
-                    임원진, 운영팀, 미디어팀, 메이커스
+                    EXECUTIVE(임원진), OPERATION(운영팀), MEDIA(미디어팀), MAKERS(메이커스)
                     """
     )
     @GetMapping("/profile")
