@@ -140,7 +140,9 @@ public class MemberRecommendService {
 
         List<Long> currentCandidates = filterHasProfileMembers(
             response.currentGenerationUserIds().stream()
-                .map(u -> u.orgUserId().longValue())
+                .map(InternalUserWithMeetingUsersResponse.UserOrgId::orgUserId)
+                .filter(Objects::nonNull)
+                .map(Integer::longValue)
                 .collect(Collectors.toSet()),
             excludeIds
         );
@@ -150,7 +152,9 @@ public class MemberRecommendService {
 
         List<Long> pastCandidates = filterHasProfileMembers(
             response.pastGenerationUserIds().stream()
-                .map(u -> u.orgUserId().longValue())
+                .map(InternalUserWithMeetingUsersResponse.UserOrgId::orgUserId)
+                .filter(Objects::nonNull)
+                .map(Integer::longValue)
                 .collect(Collectors.toSet()),
             excludeIds
         );
