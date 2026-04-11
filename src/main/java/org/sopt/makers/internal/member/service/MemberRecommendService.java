@@ -40,7 +40,7 @@ public class MemberRecommendService {
     private final MakersCrewClient makersCrewClient;
 
     private static final int RECOMMENDATION_SET_SIZE = 5;
-    private static final int PLATFORM_SEARCH_LIMIT = 300;
+    private static final int PLATFORM_SEARCH_LIMIT = 200;
 
     private enum RecommendCriterion {
         SAME_PART, SAME_CREW, SAME_MBTI, SAME_UNIVERSITY, SAME_GENERATION
@@ -108,8 +108,10 @@ public class MemberRecommendService {
 
         Map<Long, InternalUserDetails> platformInfoMap = new HashMap<>();
         for (String part : myParts) {
+            String partEnumName = toPartEnumName(part);
+            if (partEnumName == null) continue;
             UserSearchResponse search = platformService.searchInternalUsers(
-                null, part, null, null, PLATFORM_SEARCH_LIMIT, 0, null);
+                null, partEnumName, null, null, PLATFORM_SEARCH_LIMIT, 0, null);
             search.profiles().forEach(d -> platformInfoMap.put(d.userId(), d));
         }
 
@@ -254,6 +256,25 @@ public class MemberRecommendService {
             part,
             type
         ));
+    }
+
+    private String toPartEnumName(String koreanPart) {
+        return switch (koreanPart) {
+            case "안드로이드" -> "ANDROID";
+            case "iOS" -> "IOS";
+            case "서버" -> "SERVER";
+            case "디자인" -> "DESIGN";
+            case "기획" -> "PLAN";
+            case "웹" -> "WEB";
+            case "PM" -> "PM";
+            case "프론트엔드" -> "FRONTEND";
+            case "백엔드" -> "BACKEND";
+            case "마케터" -> "MARKETER";
+            case "리서처" -> "RESEARCHER";
+            case "오거나이저" -> "ORGANIZER";
+            case "CX" -> "CX";
+            default -> null;
+        };
     }
 
     private List<Long> filterHasProfileMembers(Set<Long> participantIds, Set<Long> excludeIds) {
