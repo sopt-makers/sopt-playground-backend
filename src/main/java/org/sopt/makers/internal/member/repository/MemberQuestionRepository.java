@@ -55,7 +55,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	@Query("SELECT q FROM MemberQuestion q " +
 			"WHERE q.asker.id = :askerId AND q.receiver.id = :receiverId " +
 			"AND q.answer IS NOT NULL " +
-			"ORDER BY q.createdAt DESC")
+			"ORDER BY q.createdAt DESC, q.id DESC")
 	List<MemberQuestion> findAllAnsweredByAskerAndReceiverOrderByLatest(
 			@Param("askerId") Long askerId,
 			@Param("receiverId") Long receiverId
@@ -64,7 +64,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	@Query("SELECT q.id FROM MemberQuestion q " +
 			"WHERE q.receiver.id = :receiverId " +
 			"AND q.answer IS NOT NULL " +
-			"ORDER BY q.createdAt DESC")
+			"ORDER BY q.createdAt DESC, q.id DESC")
 	List<Long> findAllAnsweredQuestionIdsByReceiver(@Param("receiverId") Long receiverId);
 
 	@Query("""
@@ -124,6 +124,26 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 		@Param("createdAt") LocalDateTime createdAt,
 		@Param("questionId") Long questionId
 	);
+
+	@Query("""
+    SELECT CASE WHEN COUNT(q) > 0 THEN true ELSE false END
+    FROM MemberQuestion q
+    WHERE q.receiver.id = :receiverId
+      AND q.createdAt >= :since
+""")
+	boolean existsRecentQuestionByReceiver(
+		@Param("receiverId") Long receiverId,
+		@Param("since") LocalDateTime since
+	);
+
+	@Query("""
+    SELECT q
+    FROM MemberQuestion q
+    WHERE q.isReported = false
+      AND q.answer IS NOT NULL
+    ORDER BY q.createdAt DESC, q.id DESC
+""")
+	List<MemberQuestion> findLatestAnsweredQuestions(Pageable pageable);
 
 	// ------------------
 

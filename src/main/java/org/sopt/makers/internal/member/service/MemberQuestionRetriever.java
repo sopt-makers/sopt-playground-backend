@@ -87,4 +87,12 @@ public class MemberQuestionRetriever {
 			questionId
 		);
 	}
+
+	public boolean existsRecentQuestionByReceiver(Long receiverId, LocalDateTime since) {
+		return memberQuestionRepository.existsRecentQuestionByReceiver(receiverId, since);
+	}
+
+	public List<MemberQuestion> findLatestAnsweredQuestions(int size) {
+		return memberQuestionRepository.findLatestAnsweredQuestions(PageRequest.of(0, size));
+	}
 }

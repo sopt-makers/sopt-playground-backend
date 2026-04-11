@@ -27,8 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -55,6 +60,8 @@ public class MemberQuestionService {
 
 	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
 	private static final int NEW_QUESTION_DAYS = 7;
+	private static final int LATEST_QUESTION_CARD_COUNT = 5;
+	private static final int LATEST_QUESTION_FETCH_SIZE = 50;
 
 	@Transactional
 	public Long createQuestion(Long askerId, Long receiverId, QuestionSaveRequest request) {
@@ -318,30 +325,49 @@ public class MemberQuestionService {
 			throw new BadRequestException("해당 멤버의 질문이 아닙니다.");
 		}
 
-		QuestionTab tab;
-		long precedingQuestionCount;
+		return calculateQuestionLocation(question);
+	}
 
-		if (question.hasAnswer()) {
-			tab = QuestionTab.ANSWERED;
-			precedingQuestionCount = memberQuestionRetriever.countAnsweredQuestionsBeforeTargetInLatestOrder(
-				receiverId,
-				question.getCreatedAt(),
-				question.getId()
-			);
-		} else {
-			tab = QuestionTab.UNANSWERED;
-			precedingQuestionCount = memberQuestionRetriever.countUnansweredQuestionsBeforeTargetInLatestOrder(
-				receiverId,
-				question.getCreatedAt(),
-				question.getId()
-			);
+	@Transactional(readOnly = true)
+	public LatestAnsweredQuestionsResponse getLatestAnsweredQuestions() {
+		List<MemberQuestion> recentQuestions =
+			memberQuestionRetriever.findLatestAnsweredQuestions(LATEST_QUESTION_FETCH_SIZE);
+
+		if (recentQuestions.isEmpty()) {
+			return new LatestAnsweredQuestionsResponse(List.of());
 		}
 
-		int pageSize = 10;
-		int page = (int) (precedingQuestionCount / pageSize);
-		int index = (int) (precedingQuestionCount % pageSize);
+		List<MemberQuestion> selectedQuestions = selectLatestQuestionsForCards(recentQuestions);
 
-		return new QuestionLocationResponse(questionId, tab, page, index);
+		List<Long> receiverIds = selectedQuestions.stream()
+			.map(question -> question.getReceiver().getId())
+			.distinct()
+			.toList();
+
+		Map<Long, InternalUserDetails> receiverInfoMap = platformService.getInternalUsers(receiverIds).stream()
+			.collect(Collectors.toMap(
+				InternalUserDetails::userId,
+				Function.identity(),
+				(existing, replacement) -> existing
+			));
+
+		List<LatestAnsweredQuestionsResponse.LatestQuestionCardResponse> questions = selectedQuestions.stream()
+			.map(question -> {
+				Long receiverId = question.getReceiver().getId();
+				InternalUserDetails receiverInfo = receiverInfoMap.get(receiverId);
+
+				return new LatestAnsweredQuestionsResponse.LatestQuestionCardResponse(
+					receiverId,
+					receiverInfo != null ? receiverInfo.name() : null,
+					receiverInfo != null ? receiverInfo.profileImage() : null,
+					question.getId(),
+					question.getContent(),
+					calculateQuestionLocation(question)
+				);
+			})
+			.toList();
+
+		return new LatestAnsweredQuestionsResponse(questions);
 	}
 
 	/*
@@ -460,5 +486,71 @@ public class MemberQuestionService {
 			isMine,
 			isReceived
 		);
+	}
+
+	private QuestionLocationResponse calculateQuestionLocation(MemberQuestion question) {
+		QuestionTab tab;
+		long precedingQuestionCount;
+
+		if (question.hasAnswer()) {
+			tab = QuestionTab.ANSWERED;
+			precedingQuestionCount = memberQuestionRetriever.countAnsweredQuestionsBeforeTargetInLatestOrder(
+				question.getReceiver().getId(),
+				question.getCreatedAt(),
+				question.getId()
+			);
+		} else {
+			tab = QuestionTab.UNANSWERED;
+			precedingQuestionCount = memberQuestionRetriever.countUnansweredQuestionsBeforeTargetInLatestOrder(
+				question.getReceiver().getId(),
+				question.getCreatedAt(),
+				question.getId()
+			);
+		}
+
+		int pageSize = 10;
+		int page = (int) (precedingQuestionCount / pageSize);
+		int index = (int) (precedingQuestionCount % pageSize);
+
+		return new QuestionLocationResponse(question.getId(), tab, page, index);
+	}
+
+	private List<MemberQuestion> selectLatestQuestionsForCards(List<MemberQuestion> recentQuestions) {
+		List<MemberQuestion> selectedQuestions = new ArrayList<>();
+		Set<Long> selectedQuestionIds = new HashSet<>();
+		Set<Long> selectedReceiverIds = new HashSet<>();
+
+		// 1차: receiver 중복 없이 우선 채우기
+		for (MemberQuestion question : recentQuestions) {
+			Long receiverId = question.getReceiver().getId();
+
+			if (selectedReceiverIds.contains(receiverId)) {
+				continue;
+			}
+
+			selectedQuestions.add(question);
+			selectedQuestionIds.add(question.getId());
+			selectedReceiverIds.add(receiverId);
+
+			if (selectedQuestions.size() == LATEST_QUESTION_CARD_COUNT) {
+				return selectedQuestions;
+			}
+		}
+
+		// 2차: 부족하면 receiver 중복 허용해서 채우기
+		for (MemberQuestion question : recentQuestions) {
+			if (selectedQuestionIds.contains(question.getId())) {
+				continue;
+			}
+
+			selectedQuestions.add(question);
+			selectedQuestionIds.add(question.getId());
+
+			if (selectedQuestions.size() == LATEST_QUESTION_CARD_COUNT) {
+				break;
+			}
+		}
+
+		return selectedQuestions;
 	}
 }
