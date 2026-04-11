@@ -40,7 +40,7 @@ public class MemberRecommendService {
     private final MakersCrewClient makersCrewClient;
 
     private static final int RECOMMENDATION_SET_SIZE = 5;
-    private static final int PLATFORM_SEARCH_LIMIT = 300;
+    private static final int PLATFORM_SEARCH_LIMIT = 200;
 
     private enum RecommendCriterion {
         SAME_PART, SAME_CREW, SAME_MBTI, SAME_UNIVERSITY, SAME_GENERATION
@@ -106,10 +106,17 @@ public class MemberRecommendService {
     ) {
         if (myParts.isEmpty()) return Optional.empty();
 
+        Set<String> normalizedMyParts = myParts.stream()
+            .map(this::toPartEnumName)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        if (normalizedMyParts.isEmpty()) return Optional.empty();
+
         Map<Long, InternalUserDetails> platformInfoMap = new HashMap<>();
-        for (String part : myParts) {
+        for (String partEnumName : normalizedMyParts) {
             UserSearchResponse search = platformService.searchInternalUsers(
-                null, part, null, null, PLATFORM_SEARCH_LIMIT, 0, null);
+                null, partEnumName, null, null, PLATFORM_SEARCH_LIMIT, 0, null);
             search.profiles().forEach(d -> platformInfoMap.put(d.userId(), d));
         }
 
@@ -120,7 +127,7 @@ public class MemberRecommendService {
             .filter(hasProfileIds::contains)
             .filter(id -> !excludeIds.contains(id))
             .filter(id -> platformInfoMap.get(id).soptActivities().stream()
-                .anyMatch(a -> a.isSopt() && myParts.contains(a.part())))
+                .anyMatch(a -> a.isSopt() && normalizedMyParts.contains(toPartEnumName(a.part()))))
             .toList();
 
         return pickAndBuild(candidates, platformInfoMap, RecommendType.SAME_PART);
@@ -254,6 +261,26 @@ public class MemberRecommendService {
             part,
             type
         ));
+    }
+
+    private String toPartEnumName(String part) {
+        if (part == null) return null;
+        return switch (part.trim()) {
+            case "안드로이드", "ANDROID" -> "ANDROID";
+            case "iOS", "IOS" -> "IOS";
+            case "서버", "SERVER" -> "SERVER";
+            case "디자인", "DESIGN" -> "DESIGN";
+            case "기획", "PLAN" -> "PLAN";
+            case "웹", "WEB" -> "WEB";
+            case "PM" -> "PM";
+            case "프론트엔드", "FRONTEND" -> "FRONTEND";
+            case "백엔드", "BACKEND" -> "BACKEND";
+            case "마케터", "MARKETER" -> "MARKETER";
+            case "리서처", "RESEARCHER" -> "RESEARCHER";
+            case "오거나이저", "ORGANIZER" -> "ORGANIZER";
+            case "CX" -> "CX";
+            default -> null;
+        };
     }
 
     private List<Long> filterHasProfileMembers(Set<Long> participantIds, Set<Long> excludeIds) {
