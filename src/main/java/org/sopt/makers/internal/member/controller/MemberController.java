@@ -265,7 +265,7 @@ public class MemberController {
             새로고침할 때마다 각 슬롯에서 랜덤으로 1명씩 선택됩니다.
             """
     )
-    @GetMapping("/recommend")
+    @GetMapping("/recommend/me")
     public ResponseEntity<MemberRecommendResponse> getRecommendedMembers(
         @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
