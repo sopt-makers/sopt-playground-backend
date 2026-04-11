@@ -204,4 +204,14 @@ public class MemberQuestionController {
 		QuestionLocationResponse response = memberQuestionService.getQuestionLocation(memberId, questionId);
 		return ResponseEntity.ok(response);
 	}
+
+	@Operation(
+		summary = "최신 질문 5개 조회 API",
+		description = "삭제/신고 질문 제외, 최신순으로 최대 5개의 답변 완료된 질문을 조회합니다. 가능한 경우 서로 다른 멤버 질문을 우선 노출하고, 부족하면 동일 멤버의 다른 질문으로 채웁니다. 응답에는 질문별 탭(answered) 및 위치 정보도 함께 포함됩니다."
+	)
+	@GetMapping("/questions/latest")
+	public ResponseEntity<LatestAnsweredQuestionsResponse> getLatestAnsweredQuestions() {
+		LatestAnsweredQuestionsResponse response = memberQuestionService.getLatestAnsweredQuestions();
+		return ResponseEntity.ok(response);
+	}
 }
