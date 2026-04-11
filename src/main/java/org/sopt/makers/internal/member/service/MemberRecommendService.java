@@ -106,10 +106,15 @@ public class MemberRecommendService {
     ) {
         if (myParts.isEmpty()) return Optional.empty();
 
+        Set<String> normalizedMyParts = myParts.stream()
+            .map(this::toPartEnumName)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        if (normalizedMyParts.isEmpty()) return Optional.empty();
+
         Map<Long, InternalUserDetails> platformInfoMap = new HashMap<>();
-        for (String part : myParts) {
-            String partEnumName = toPartEnumName(part);
-            if (partEnumName == null) continue;
+        for (String partEnumName : normalizedMyParts) {
             UserSearchResponse search = platformService.searchInternalUsers(
                 null, partEnumName, null, null, PLATFORM_SEARCH_LIMIT, 0, null);
             search.profiles().forEach(d -> platformInfoMap.put(d.userId(), d));
@@ -122,7 +127,7 @@ public class MemberRecommendService {
             .filter(hasProfileIds::contains)
             .filter(id -> !excludeIds.contains(id))
             .filter(id -> platformInfoMap.get(id).soptActivities().stream()
-                .anyMatch(a -> a.isSopt() && myParts.contains(a.part())))
+                .anyMatch(a -> a.isSopt() && normalizedMyParts.contains(toPartEnumName(a.part()))))
             .toList();
 
         return pickAndBuild(candidates, platformInfoMap, RecommendType.SAME_PART);
@@ -258,20 +263,21 @@ public class MemberRecommendService {
         ));
     }
 
-    private String toPartEnumName(String koreanPart) {
-        return switch (koreanPart) {
-            case "안드로이드" -> "ANDROID";
-            case "iOS" -> "IOS";
-            case "서버" -> "SERVER";
-            case "디자인" -> "DESIGN";
-            case "기획" -> "PLAN";
-            case "웹" -> "WEB";
+    private String toPartEnumName(String part) {
+        if (part == null) return null;
+        return switch (part.trim()) {
+            case "안드로이드", "ANDROID" -> "ANDROID";
+            case "iOS", "IOS" -> "IOS";
+            case "서버", "SERVER" -> "SERVER";
+            case "디자인", "DESIGN" -> "DESIGN";
+            case "기획", "PLAN" -> "PLAN";
+            case "웹", "WEB" -> "WEB";
             case "PM" -> "PM";
-            case "프론트엔드" -> "FRONTEND";
-            case "백엔드" -> "BACKEND";
-            case "마케터" -> "MARKETER";
-            case "리서처" -> "RESEARCHER";
-            case "오거나이저" -> "ORGANIZER";
+            case "프론트엔드", "FRONTEND" -> "FRONTEND";
+            case "백엔드", "BACKEND" -> "BACKEND";
+            case "마케터", "MARKETER" -> "MARKETER";
+            case "리서처", "RESEARCHER" -> "RESEARCHER";
+            case "오거나이저", "ORGANIZER" -> "ORGANIZER";
             case "CX" -> "CX";
             default -> null;
         };
