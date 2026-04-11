@@ -31,12 +31,14 @@ import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.dto.response.MemberRecommendResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.service.MemberRecommendService;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +63,7 @@ import jakarta.validation.Valid;
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
     private final MemberService memberService;
+    private final MemberRecommendService memberRecommendService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final MakersCrewClient makersCrewClient;
@@ -250,6 +253,23 @@ public class MemberController {
             @RequestParam(required = false, name = "team") String team
     ) {
         MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, offset, search, generation, employed, orderBy, mbti, team);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+        summary = "멤버 추천 API",
+        description = """
+            현재 사용자 기준으로 추천 멤버 최대 5명을 반환합니다.
+            추천 기준 우선순위: 같은 파트 → 같은 모임 → 같은 MBTI → 같은 학교 → 같은 기수
+            해당 순서의 후보가 없으면 다음 순서 기준으로 대체됩니다.
+            새로고침할 때마다 각 슬롯에서 랜덤으로 1명씩 선택됩니다.
+            """
+    )
+    @GetMapping("/recommend")
+    public ResponseEntity<MemberRecommendResponse> getRecommendedMembers(
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        MemberRecommendResponse response = memberRecommendService.getRecommendations(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

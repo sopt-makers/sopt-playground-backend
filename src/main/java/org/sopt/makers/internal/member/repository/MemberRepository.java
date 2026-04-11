@@ -18,4 +18,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findAllByHasProfileTrueAndIdInWithCareers(@Param("memberIds") List<Long> memberIds);
 
     List<Member> findAllByWorkPreferenceNotNull();
+
+    List<Member> findAllByHasProfileTrue();
+
+    List<Member> findAllByMbtiAndHasProfileTrue(String mbti);
+
+    List<Member> findAllByUniversityAndHasProfileTrue(String university);
 }
