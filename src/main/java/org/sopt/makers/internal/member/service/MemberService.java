@@ -116,6 +116,7 @@ public class MemberService {
 	private final MemberQuestionRetriever memberQuestionRetriever;
 
 	private static final int QUESTION_PREVIEW_DAYS = 7;
+	private static final int RECENT_QUESTION_DAYS = 7;
 
 	@Value("${spring.profiles.active}")
 	private String activeProfile;
@@ -175,7 +176,13 @@ public class MemberService {
 			.stream()
 			.map(entry -> new MemberActivityResponse(entry.getKey(), entry.getValue()))
 			.collect(Collectors.toList());
+
 		boolean isCoffeeChatActivate = coffeeChatRetriever.existsCoffeeChat(member);
+		boolean hasRecentQuestion = memberQuestionRetriever.existsRecentQuestionByReceiver(
+			profileId,
+			LocalDateTime.now().minusDays(RECENT_QUESTION_DAYS)
+		);
+
 		MemberProfileSpecificResponse response = memberMapper.toProfileSpecificResponse(member, userDetails, isMine,
 			memberProfileProjects, activityResponses, isCoffeeChatActivate);
 
@@ -192,7 +199,7 @@ public class MemberService {
 			response.mbti(), response.mbtiDescription(), response.sojuCapacity(), response.interest(),
 			response.userFavor(), response.idealType(), response.selfIntroduction(), response.workPreference(), response.activities(),
 			updatedActivities, response.links(), response.projects(), response.careers(), response.allowOfficial(),
-			response.isCoffeeChatActivate(), response.isMine());
+			hasRecentQuestion, response.isCoffeeChatActivate(), response.isMine());
 		return MemberProfileSpecificResponse.applyPhoneMasking(updateResponse, isMine, isCoffeeChatActivate);
 	}
 
