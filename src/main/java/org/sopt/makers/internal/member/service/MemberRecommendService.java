@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.sopt.makers.internal.member.dto.response.SameGenerationAndPartRecommendResponse;
+import org.sopt.makers.internal.member.dto.response.SameGenerationAndPartRecommendResponse.SameGenerationAndPartMember;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class MemberRecommendService {
     private final MakersCrewClient makersCrewClient;
 
     private static final int RECOMMENDATION_SET_SIZE = 5;
+    private static final int SAME_GENERATION_AND_PART_SET_SIZE = 4;
     private static final int PLATFORM_SEARCH_LIMIT = 200;
 
     private enum RecommendCriterion {
@@ -281,6 +284,113 @@ public class MemberRecommendService {
             case "CX" -> "CX";
             default -> null;
         };
+    }
+
+    @Transactional(readOnly = true)
+    public SameGenerationAndPartRecommendResponse getSameGenerationAndPartRecommendations(Long userId) {
+        InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
+        List<SoptActivity> activities = currentUserDetails.soptActivities();
+
+        Optional<SoptActivity> latestSopt = activities.stream()
+            .filter(SoptActivity::isSopt)
+            .max(Comparator.comparingInt(SoptActivity::generation));
+
+        Optional<SoptActivity> latestMakers = activities.stream()
+            .filter(a -> !a.isSopt())
+            .max(Comparator.comparingInt(SoptActivity::normalizedGeneration));
+
+        // 메이커스 활동이 없으면 최신 SOPT 기준으로 처리
+        if (latestMakers.isEmpty()) {
+            if (latestSopt.isEmpty()) return new SameGenerationAndPartRecommendResponse(List.of());
+            return new SameGenerationAndPartRecommendResponse(
+                findSameGenerationAndPartSoptCandidates(userId, latestSopt.get())
+            );
+        }
+
+        int soptNormalized = latestSopt.map(SoptActivity::normalizedGeneration).orElse(-1);
+        int makersNormalized = latestMakers.get().normalizedGeneration();
+
+        // SOPT가 더 최신이거나 동일 기수 → SOPT 기준
+        if (soptNormalized >= makersNormalized) {
+            return new SameGenerationAndPartRecommendResponse(
+                findSameGenerationAndPartSoptCandidates(userId, latestSopt.get())
+            );
+        }
+
+        // 메이커스가 더 최신 → 메이커스 기준
+        return new SameGenerationAndPartRecommendResponse(
+            findSameGenerationAndPartMakersCandidates(userId, latestMakers.get())
+        );
+    }
+
+    private List<SameGenerationAndPartMember> findSameGenerationAndPartSoptCandidates(Long excludeId, SoptActivity latestSopt) {
+        int targetGeneration = latestSopt.generation();
+        String targetPartEnum = toPartEnumName(latestSopt.part());
+        if (targetPartEnum == null) return List.of();
+
+        UserSearchResponse search = platformService.searchInternalUsers(
+            targetGeneration, targetPartEnum, null, null, PLATFORM_SEARCH_LIMIT, 0, null);
+
+        Map<Long, InternalUserDetails> platformInfoMap = search.profiles().stream()
+            .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        Set<Long> hasProfileIds = memberRepository.findAllByHasProfileTrueAndIdIn(new ArrayList<>(platformInfoMap.keySet()))
+            .stream().map(Member::getId).collect(Collectors.toSet());
+
+        List<Long> candidates = new ArrayList<>(platformInfoMap.keySet().stream()
+            .filter(hasProfileIds::contains)
+            .filter(id -> !id.equals(excludeId))
+            .filter(id -> platformInfoMap.get(id).soptActivities().stream()
+                .anyMatch(a -> a.isSopt()
+                    && a.generation() == targetGeneration
+                    && targetPartEnum.equals(toPartEnumName(a.part()))))
+            .toList());
+
+        Collections.shuffle(candidates);
+
+        return candidates.stream()
+            .limit(SAME_GENERATION_AND_PART_SET_SIZE)
+            .map(id -> {
+                InternalUserDetails details = platformInfoMap.get(id);
+                String partName = details.soptActivities().stream()
+                    .filter(a -> a.isSopt() && a.generation() == targetGeneration && targetPartEnum.equals(toPartEnumName(a.part())))
+                    .map(SoptActivity::part)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(targetPartEnum);
+                return new SameGenerationAndPartMember(id, details.name(), details.profileImage(), targetGeneration, partName);
+            })
+            .toList();
+    }
+
+    private List<SameGenerationAndPartMember> findSameGenerationAndPartMakersCandidates(Long excludeId, SoptActivity latestMakers) {
+        int targetMakersGeneration = latestMakers.generation();
+
+        UserSearchResponse search = platformService.searchInternalUsers(
+            null, null, "메이커스", null, PLATFORM_SEARCH_LIMIT, 0, null);
+
+        Map<Long, InternalUserDetails> platformInfoMap = search.profiles().stream()
+            .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
+
+        Set<Long> hasProfileIds = memberRepository.findAllByHasProfileTrueAndIdIn(new ArrayList<>(platformInfoMap.keySet()))
+            .stream().map(Member::getId).collect(Collectors.toSet());
+
+        List<Long> candidates = new ArrayList<>(platformInfoMap.keySet().stream()
+            .filter(hasProfileIds::contains)
+            .filter(id -> !id.equals(excludeId))
+            .filter(id -> platformInfoMap.get(id).soptActivities().stream()
+                .anyMatch(a -> !a.isSopt() && a.generation() == targetMakersGeneration))
+            .toList());
+
+        Collections.shuffle(candidates);
+
+        return candidates.stream()
+            .limit(SAME_GENERATION_AND_PART_SET_SIZE)
+            .map(id -> {
+                InternalUserDetails details = platformInfoMap.get(id);
+                return new SameGenerationAndPartMember(id, details.name(), details.profileImage(), targetMakersGeneration, "메이커스");
+            })
+            .toList();
     }
 
     private List<Long> filterHasProfileMembers(Set<Long> participantIds, Set<Long> excludeIds) {
