@@ -34,6 +34,7 @@ import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
 import org.sopt.makers.internal.member.dto.response.MemberRecommendResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
+import org.sopt.makers.internal.member.dto.response.SameGenerationAndPartRecommendResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
@@ -287,6 +288,40 @@ public class MemberController {
         @PathVariable Long userId
     ) {
         MemberRecommendResponse response = memberRecommendService.getRecommendations(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "현재 사용자 기준 같은 기수 + 같은 파트 멤버 추천 API",
+        description = """
+            가장 최신 기수 활동을 기준으로 같은 기수 + 같은 파트 멤버를 반환합니다.
+            1. 솝트가 가장 최근 기수일 경우 → {최신 기수}기 {최신 기수 파트명} 멤버
+            2. 메이커스가 가장 최근 기수일 경우 → {최신 기수}기 메이커스 멤버
+            3. 솝트, 메이커스를 동시에 한 기수가 가장 최근 기수일 경우 → 솝트 기준으로 처리
+            """
+    )
+    @GetMapping("/recommend/me/generation-part")
+    public ResponseEntity<SameGenerationAndPartRecommendResponse> getSameGenerationAndPartMembersForMe(
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        SameGenerationAndPartRecommendResponse response = memberRecommendService.getSameGenerationAndPartRecommendations(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "특정 사용자 기준 같은 기수 + 같은 파트 멤버 추천 API",
+        description = """
+            가장 최신 기수 활동을 기준으로 같은 기수 + 같은 파트 멤버를 반환합니다.
+            1. 솝트가 가장 최근 기수일 경우 → {최신 기수}기 {최신 기수 파트명} 멤버
+            2. 메이커스가 가장 최근 기수일 경우 → {최신 기수}기 메이커스 멤버
+            3. 솝트, 메이커스를 동시에 한 기수가 가장 최근 기수일 경우 → 솝트 기준으로 처리
+            """
+    )
+    @GetMapping("/recommend/{userId}/generation-part")
+    public ResponseEntity<SameGenerationAndPartRecommendResponse> getSameGenerationAndPartMembersForUser(
+        @PathVariable Long userId
+    ) {
+        SameGenerationAndPartRecommendResponse response = memberRecommendService.getSameGenerationAndPartRecommendations(userId);
         return ResponseEntity.ok(response);
     }
 
