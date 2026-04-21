@@ -23,6 +23,7 @@ public record MemberRecommendResponse(
         SAME_PART,       // 같은 파트
         SAME_CREW,       // 같은 모임
         SAME_MBTI,       // 같은 MBTI
+        SAME_PROJECT,    // 같은 프로젝트
         SAME_UNIVERSITY, // 같은 학교
         SAME_GENERATION  // 같은 기수
     }

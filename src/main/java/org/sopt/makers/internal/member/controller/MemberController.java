@@ -278,7 +278,7 @@ public class MemberController {
         summary = "특정 사용자 기준 멤버 추천 API",
         description = """
         userId에 해당하는 사용자를 기준으로 추천 멤버 최대 5명을 반환합니다.
-        추천 기준 우선순위: 같은 파트 → 같은 모임 → 같은 MBTI → 같은 학교 → 같은 기수
+        추천 기준 우선순위: 같은 파트 → 같은 모임 → 같은 프로젝트 → 같은 학교 → 같은 기수
         해당 순서의 후보가 없으면 다음 순서 기준으로 대체됩니다.
         조회 시마다 각 슬롯에서 랜덤으로 1명씩 선택됩니다.
         """
@@ -287,7 +287,7 @@ public class MemberController {
     public ResponseEntity<MemberRecommendResponse> getRecommendedMembersForUser(
         @PathVariable Long userId
     ) {
-        MemberRecommendResponse response = memberRecommendService.getRecommendations(userId);
+        MemberRecommendResponse response = memberRecommendService.getRecommendationsForUser(userId);
         return ResponseEntity.ok(response);
     }
 

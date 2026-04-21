@@ -29,6 +29,7 @@ import org.sopt.makers.internal.member.dto.response.MemberRecommendResponse;
 import org.sopt.makers.internal.member.dto.response.MemberRecommendResponse.RecommendType;
 import org.sopt.makers.internal.member.dto.response.MemberRecommendResponse.RecommendedMember;
 import org.sopt.makers.internal.member.repository.MemberRepository;
+import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,17 +41,43 @@ public class MemberRecommendService {
     private final MemberRepository memberRepository;
     private final PlatformService platformService;
     private final MakersCrewClient makersCrewClient;
+    private final MemberProjectRelationRepository memberProjectRelationRepository;
 
     private static final int RECOMMENDATION_SET_SIZE = 5;
     private static final int SAME_GENERATION_AND_PART_SET_SIZE = 4;
     private static final int PLATFORM_SEARCH_LIMIT = 200;
 
     private enum RecommendCriterion {
-        SAME_PART, SAME_CREW, SAME_MBTI, SAME_UNIVERSITY, SAME_GENERATION
+        SAME_PART, SAME_CREW, SAME_MBTI, SAME_PROJECT, SAME_UNIVERSITY, SAME_GENERATION
     }
 
+    // /recommend/me - MBTI 기준
     @Transactional(readOnly = true)
     public MemberRecommendResponse getRecommendations(Long userId) {
+        List<RecommendCriterion> criteria = List.of(
+            RecommendCriterion.SAME_PART,
+            RecommendCriterion.SAME_CREW,
+            RecommendCriterion.SAME_MBTI,
+            RecommendCriterion.SAME_UNIVERSITY,
+            RecommendCriterion.SAME_GENERATION
+        );
+        return buildRecommendations(userId, criteria);
+    }
+
+    // /recommend/{userId} - 프로젝트 기준
+    @Transactional(readOnly = true)
+    public MemberRecommendResponse getRecommendationsForUser(Long userId) {
+        List<RecommendCriterion> criteria = List.of(
+            RecommendCriterion.SAME_PART,
+            RecommendCriterion.SAME_CREW,
+            RecommendCriterion.SAME_PROJECT,
+            RecommendCriterion.SAME_UNIVERSITY,
+            RecommendCriterion.SAME_GENERATION
+        );
+        return buildRecommendations(userId, criteria);
+    }
+
+    private MemberRecommendResponse buildRecommendations(Long userId, List<RecommendCriterion> criteria) {
         Member currentMember = memberRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("해당 id의 Member를 찾을 수 없습니다."));
         InternalUserDetails currentUserDetails = platformService.getInternalUser(userId);
@@ -71,13 +98,6 @@ public class MemberRecommendService {
         excludeIds.add(userId);
 
         List<RecommendedMember> recommendations = new ArrayList<>();
-        List<RecommendCriterion> criteria = List.of(
-            RecommendCriterion.SAME_PART,
-            RecommendCriterion.SAME_CREW,
-            RecommendCriterion.SAME_MBTI,
-            RecommendCriterion.SAME_UNIVERSITY,
-            RecommendCriterion.SAME_GENERATION
-        );
 
         // criteriaPointer는 슬롯 간 공유 - 한 번 소진된 기준은 재사용하지 않음
         int criteriaPointer = 0;
@@ -89,6 +109,7 @@ public class MemberRecommendService {
                     case SAME_PART -> findSamePartCandidate(myParts, excludeIds);
                     case SAME_CREW -> findSameCrewCandidate(userId, excludeIds);
                     case SAME_MBTI -> findSameMbtiCandidate(currentMember.getMbti(), excludeIds);
+                    case SAME_PROJECT -> findSameProjectCandidate(userId, excludeIds);
                     case SAME_UNIVERSITY -> findSameUniversityCandidate(currentMember.getUniversity(), excludeIds);
                     case SAME_GENERATION -> findSameGenerationCandidate(myLatestGeneration, excludeIds);
                 };
@@ -187,6 +208,29 @@ public class MemberRecommendService {
             .toList();
 
         return pickAndBuild(candidates, Collections.emptyMap(), RecommendType.SAME_MBTI);
+    }
+
+    private Optional<RecommendedMember> findSameProjectCandidate(
+        Long userId,
+        Set<Long> excludeIds
+    ) {
+        List<Long> myProjectIds = memberProjectRelationRepository.findAllByUserId(userId).stream()
+            .map(relation -> relation.getProjectId())
+            .toList();
+
+        if (myProjectIds.isEmpty()) return Optional.empty();
+
+        Set<Long> candidateIds = myProjectIds.stream()
+            .flatMap(projectId -> memberProjectRelationRepository.findAllByProjectId(projectId).stream())
+            .map(relation -> relation.getUserId())
+            .filter(id -> !excludeIds.contains(id))
+            .collect(Collectors.toSet());
+
+        List<Long> candidates = memberRepository.findAllByHasProfileTrueAndIdIn(new ArrayList<>(candidateIds)).stream()
+            .map(Member::getId)
+            .toList();
+
+        return pickAndBuild(candidates, Collections.emptyMap(), RecommendType.SAME_PROJECT);
     }
 
     private Optional<RecommendedMember> findSameUniversityCandidate(
