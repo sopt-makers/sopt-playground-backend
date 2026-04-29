@@ -121,6 +121,7 @@ public class MemberRecommendService {
             }
         }
 
+        Collections.shuffle(recommendations);
         return new MemberRecommendResponse(recommendations);
     }
 
