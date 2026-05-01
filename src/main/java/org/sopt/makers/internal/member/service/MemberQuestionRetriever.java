@@ -2,12 +2,12 @@ package org.sopt.makers.internal.member.service;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.NotFoundException;
-import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberQuestion;
 import org.sopt.makers.internal.member.repository.MemberQuestionRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -55,5 +55,44 @@ public class MemberQuestionRetriever {
 
 	public List<MemberQuestion> findByReceiverId(Long receiverId) {
 		return memberQuestionRepository.findByReceiverId(receiverId);
+	}
+
+	public List<MemberQuestion> findLatestRecentQuestionsByReceiverIds(List<Long> receiverIds, LocalDateTime since) {
+		if (receiverIds == null || receiverIds.isEmpty()) {
+			return List.of();
+		}
+		return memberQuestionRepository.findLatestRecentQuestionsByReceiverIds(receiverIds, since);
+	}
+
+	public long countAnsweredQuestionsBeforeTargetInLatestOrder(
+		Long receiverId,
+		LocalDateTime createdAt,
+		Long questionId
+	) {
+		return memberQuestionRepository.countAnsweredQuestionsBeforeTargetInLatestOrder(
+			receiverId,
+			createdAt,
+			questionId
+		);
+	}
+
+	public long countUnansweredQuestionsBeforeTargetInLatestOrder(
+		Long receiverId,
+		LocalDateTime createdAt,
+		Long questionId
+	) {
+		return memberQuestionRepository.countUnansweredQuestionsBeforeTargetInLatestOrder(
+			receiverId,
+			createdAt,
+			questionId
+		);
+	}
+
+	public boolean existsRecentQuestionByReceiver(Long receiverId, LocalDateTime since) {
+		return memberQuestionRepository.existsRecentQuestionByReceiver(receiverId, since);
+	}
+
+	public List<MemberQuestion> findLatestAnsweredQuestions(int size) {
+		return memberQuestionRepository.findLatestAnsweredQuestions(PageRequest.of(0, size));
 	}
 }

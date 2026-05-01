@@ -31,12 +31,15 @@ import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileSpecificResponse;
 import org.sopt.makers.internal.member.dto.response.MemberPropertiesResponse;
+import org.sopt.makers.internal.member.dto.response.MemberRecommendResponse;
 import org.sopt.makers.internal.member.dto.response.MemberResponse;
 import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
+import org.sopt.makers.internal.member.dto.response.SameGenerationAndPartRecommendResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceRecommendationResponse;
 import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
+import org.sopt.makers.internal.member.service.MemberRecommendService;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +64,7 @@ import jakarta.validation.Valid;
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
     private final MemberService memberService;
+    private final MemberRecommendService memberRecommendService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
     private final MakersCrewClient makersCrewClient;
@@ -234,7 +238,7 @@ public class MemberController {
                     orderBy :
                     1 -> 최근에 등록했순 / 2 -> 예전에 등록했순 / 3 -> 최근에 활동했순 / 4 -> 예전에 활동했순 \n
                     team :
-                    임원진, 운영팀, 미디어팀, 메이커스
+                    EXECUTIVE(임원진), OPERATION(운영팀), MEDIA(미디어팀), MAKERS(메이커스)
                     """
     )
     @GetMapping("/profile")
@@ -251,6 +255,74 @@ public class MemberController {
     ) {
         MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, offset, search, generation, employed, orderBy, mbti, team);
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+        summary = "현재 사용자 기준 멤버 추천 API",
+        description = """
+            현재 사용자 기준으로 추천 멤버 최대 5명을 반환합니다.
+            추천 기준 우선순위: 같은 파트 → 같은 모임 → 같은 MBTI → 같은 학교 → 같은 기수
+            해당 순서의 후보가 없으면 다음 순서 기준으로 대체됩니다.
+            새로고침할 때마다 각 슬롯에서 랜덤으로 1명씩 선택됩니다.
+            """
+    )
+    @GetMapping("/recommend/me")
+    public ResponseEntity<MemberRecommendResponse> getRecommendedMembersForMe(
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        MemberRecommendResponse response = memberRecommendService.getRecommendations(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+        summary = "특정 사용자 기준 멤버 추천 API",
+        description = """
+        userId에 해당하는 사용자를 기준으로 추천 멤버 최대 5명을 반환합니다.
+        추천 기준 우선순위: 같은 파트 → 같은 모임 → 같은 프로젝트 → 같은 학교 → 같은 기수
+        해당 순서의 후보가 없으면 다음 순서 기준으로 대체됩니다.
+        조회 시마다 각 슬롯에서 랜덤으로 1명씩 선택됩니다.
+        """
+    )
+    @GetMapping("/recommend/{userId}")
+    public ResponseEntity<MemberRecommendResponse> getRecommendedMembersForUser(
+        @PathVariable Long userId
+    ) {
+        MemberRecommendResponse response = memberRecommendService.getRecommendationsForUser(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "현재 사용자 기준 같은 기수 + 같은 파트 멤버 추천 API",
+        description = """
+            가장 최신 기수 활동을 기준으로 같은 기수 + 같은 파트 멤버를 반환합니다.
+            1. 솝트가 가장 최근 기수일 경우 → {최신 기수}기 {최신 기수 파트명} 멤버
+            2. 메이커스가 가장 최근 기수일 경우 → {최신 기수}기 메이커스 멤버
+            3. 솝트, 메이커스를 동시에 한 기수가 가장 최근 기수일 경우 → 솝트 기준으로 처리
+            """
+    )
+    @GetMapping("/recommend/me/generation-part")
+    public ResponseEntity<SameGenerationAndPartRecommendResponse> getSameGenerationAndPartMembersForMe(
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        SameGenerationAndPartRecommendResponse response = memberRecommendService.getSameGenerationAndPartRecommendations(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "특정 사용자 기준 같은 기수 + 같은 파트 멤버 추천 API",
+        description = """
+            가장 최신 기수 활동을 기준으로 같은 기수 + 같은 파트 멤버를 반환합니다.
+            1. 솝트가 가장 최근 기수일 경우 → {최신 기수}기 {최신 기수 파트명} 멤버
+            2. 메이커스가 가장 최근 기수일 경우 → {최신 기수}기 메이커스 멤버
+            3. 솝트, 메이커스를 동시에 한 기수가 가장 최근 기수일 경우 → 솝트 기준으로 처리
+            """
+    )
+    @GetMapping("/recommend/{userId}/generation-part")
+    public ResponseEntity<SameGenerationAndPartRecommendResponse> getSameGenerationAndPartMembersForUser(
+        @PathVariable Long userId
+    ) {
+        SameGenerationAndPartRecommendResponse response = memberRecommendService.getSameGenerationAndPartRecommendations(userId);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
