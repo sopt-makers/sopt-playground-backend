@@ -412,7 +412,7 @@ public class MemberRecommendService {
         int targetMakersGeneration = latestMakers.generation();
 
         UserSearchResponse search = platformService.searchInternalUsers(
-            null, null, "메이커스", null, PLATFORM_SEARCH_LIMIT, 0, null);
+            null, null, "MAKERS", null, PLATFORM_SEARCH_LIMIT, 0, null);
 
         Map<Long, InternalUserDetails> platformInfoMap = search.profiles().stream()
             .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity()));
