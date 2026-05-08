@@ -12,10 +12,10 @@ on:
         - info
         - warning
         - debug
-  repository_dispatch:
-    types: [deploy-to-test-event]
-  push:
-    branches: [ develop ]
+#  repository_dispatch:
+#    types: [deploy-to-test-event]
+#  push:
+#    branches: [ develop ]
 
 env:
   SPRING_PROFILES_ACTIVE: dev
