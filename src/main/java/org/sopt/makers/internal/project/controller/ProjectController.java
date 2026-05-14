@@ -15,6 +15,7 @@ import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
 import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
 import org.sopt.makers.internal.project.dto.response.allProject.ProjectAllResponse;
 import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.allProject.RandomProjectResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
 import org.sopt.makers.internal.project.service.ProjectService;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProjectController {
     private final ProjectService projectService;
     private final InfiniteScrollUtil infiniteScrollUtil;
+
+    @Operation(summary = "랜덤 Project 4개 조회 API")
+    @GetMapping("/random")
+    public ResponseEntity<List<RandomProjectResponse>> getRandomProjects() {
+        return ResponseEntity.status(HttpStatus.OK).body(projectService.getRandomProjects());
+    }
 
     @Operation(summary = "Project id로 조회 API")
     @GetMapping("/{id}")
