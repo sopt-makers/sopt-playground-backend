@@ -5,17 +5,17 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
-import org.sopt.makers.internal.vote.dto.response.VoteResponse;
+
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
 
 public record PostSaveResponse(
         @Schema(required = true)
         Long id,
-        Long categoryId,
+        CommunityCategoryCode code,
         String title,
         String content,
         Integer hits,
         List<String> images,
-        Boolean isQuestion,
         Boolean isBlindWriter,
         LocalDateTime createdAt
 ) {}

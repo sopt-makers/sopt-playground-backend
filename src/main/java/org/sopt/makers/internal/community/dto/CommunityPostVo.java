@@ -2,6 +2,8 @@ package org.sopt.makers.internal.community.dto;
 
 import java.util.List;
 
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryGroup;
 import org.springframework.aot.hint.annotation.Reflective;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 
@@ -10,16 +12,17 @@ import java.time.LocalDateTime;
 @Reflective
 public record CommunityPostVo(
         Long id,
-        Long categoryId,
+        CommunityCategoryGroup categoryGroup,
+        CommunityCategoryCode categoryCode,
         String title,
         String content,
         Integer hits,
         List<String> images,
-        Boolean isQuestion,
         Boolean isBlindWriter,
         String sopticleUrl,
         Boolean isReported,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         VoteResponse vote
-) {}
+) {
+}
