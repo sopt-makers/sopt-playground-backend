@@ -496,7 +496,7 @@ public class MemberQuestionService {
 			tab = QuestionTab.ANSWERED;
 			precedingQuestionCount = memberQuestionRetriever.countAnsweredQuestionsBeforeTargetInLatestOrder(
 				question.getReceiver().getId(),
-				question.getCreatedAt(),
+				question.getAnswer().getCreatedAt(),
 				question.getId()
 			);
 		} else {

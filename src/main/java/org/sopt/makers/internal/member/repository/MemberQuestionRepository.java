@@ -98,8 +98,8 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
         WHERE q.receiver.id = :receiverId
           AND q.answer IS NOT NULL
           AND (
-              q.createdAt > :createdAt
-              OR (q.createdAt = :createdAt AND q.id > :questionId)
+              q.answer.createdAt > :createdAt
+              OR (q.answer.createdAt = :createdAt AND q.id > :questionId)
           )
     """)
 	long countAnsweredQuestionsBeforeTargetInLatestOrder(
@@ -141,7 +141,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
     FROM MemberQuestion q
     WHERE q.isReported = false
       AND q.answer IS NOT NULL
-    ORDER BY q.createdAt DESC, q.id DESC
+    ORDER BY q.answer.createdAt DESC, q.id DESC
 """)
 	List<MemberQuestion> findLatestAnsweredQuestions(Pageable pageable);
 
