@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.val;
+
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryGroup;
+import org.sopt.makers.internal.community.domain.enums.CommunityPostSourceType;
+import org.sopt.makers.internal.community.domain.enums.CommunityPostTag;
 import org.sopt.makers.internal.community.utils.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
@@ -87,71 +92,145 @@ public class CommunityResponseMapper {
     }
 
     public PostUpdateResponse toPostUpdateResponse(CommunityPost post) {
-        return new PostUpdateResponse(post.getId(), post.getCategoryId(), post.getTitle(),
-                post.getContent(), post.getHits(), post.getImages(), post.getIsQuestion(),
+        return new PostUpdateResponse(post.getId(), post.getCategory().getCode(), post.getTitle(),
+                post.getContent(), post.getHits(), post.getImages(),
                 post.getIsBlindWriter(), post.getCreatedAt(), post.getUpdatedAt());
     }
 
     public PostSaveResponse toPostSaveResponse(CommunityPost post) {
-        return new PostSaveResponse(post.getId(), post.getCategoryId(), post.getTitle(),
-                post.getContent(), post.getHits(), post.getImages(), post.getIsQuestion(),
+        return new PostSaveResponse(post.getId(), post.getCategory().getCode(), post.getTitle(),
+                post.getContent(), post.getHits(), post.getImages(),
                 post.getIsBlindWriter(), post.getCreatedAt());
     }
 
-    public PostDetailResponse toPostDetailReponse(PostDetailData dto, Long viewerId, Boolean isLiked, Integer likes, AnonymousProfile anonymousProfile) {
+    public PostDetailResponse toPostDetailReponse(
+        PostDetailData dto,
+        Long viewerId,
+        Boolean isLiked,
+        Integer likes,
+        AnonymousProfile anonymousProfile
+    ) {
         val postEntity = dto.post();
         val authorDetails = dto.userDetails();
         val memberVo = postEntity.getIsBlindWriter()
-                ? null
-                : MemberVo.of(authorDetails, dto.authorCareer());
+            ? null
+            : MemberVo.of(authorDetails, dto.authorCareer());
 
         val isMine = Objects.equals(authorDetails.userId(), viewerId);
 
         val anonymousProfileVo = postEntity.getIsBlindWriter() && anonymousProfile != null
-                ? toAnonymousProfileVo(anonymousProfile)
-                : null;
+            ? toAnonymousProfileVo(anonymousProfile)
+            : null;
 
-        val postVo = toPostVo(postEntity, dto.vote());
+        val postVo = toPostVo(postEntity, dto.category(), dto.vote());
         val categoryVo = toCategoryResponse(dto.category());
 
         return new PostDetailResponse(memberVo, postVo, categoryVo, isMine, isLiked, likes, anonymousProfileVo);
     }
 
     public CategoryVo toCategoryResponse(Category category) {
-        if(category == null) return null;
-        val parentCategoryName = category.getParent() == null ? null : category.getParent().getName();
-        val parentId = category.getParent() == null ? null : category.getParent().getId();
-        return new CategoryVo(category.getId(), category.getName(), parentId, parentCategoryName);
+        if (category == null) {
+            return null;
+        }
+
+        CommunityCategoryCode parentCode = category.getParent() == null
+            ? null
+            : category.getParent().getCode();
+
+        String parentCategoryName = category.getParent() == null
+            ? null
+            : category.getParent().getName();
+
+        return new CategoryVo(
+            category.getCategoryGroup(),
+            category.getCode(),
+            category.getName(),
+            parentCode,
+            parentCategoryName
+        );
+    }
+
+    public CommunityPostVo toPostVo(
+        CommunityPost post,
+        Category category,
+        VoteResponse voteResponse
+    ) {
+        return new CommunityPostVo(
+            post.getId(),
+            category.getCategoryGroup(),
+            category.getCode(),
+            post.getTitle(),
+            post.getContent(),
+            post.getHits(),
+            post.getImages(),
+            post.getIsBlindWriter(),
+            post.getSopticleUrl(),
+            post.getIsReported(),
+            post.getCreatedAt(),
+            post.getUpdatedAt(),
+            voteResponse
+        );
     }
 
     public CommunityPostVo toPostVo(CommunityPost post, VoteResponse voteResponse) {
-        return new CommunityPostVo(post.getId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getHits(),
-                post.getImages(), post.getIsQuestion(), post.getIsBlindWriter(), post.getSopticleUrl(), post.getIsReported(), post.getCreatedAt(), post.getUpdatedAt(),
-                voteResponse);
+        return toPostVo(post, post.getCategory(), voteResponse);
     }
 
-    public PostResponse toPostResponse (CommunityPostMemberVo dao, List<CommentInfo> commentInfos, Long memberId, AnonymousProfile anonymousProfile, Boolean isLiked, Integer likes, Map<Long, Boolean> commentLikedMap, Map<Long, Integer> commentLikeCountMap) {
+    public PostResponse toPostResponse(
+        CommunityPostMemberVo dao,
+        List<CommentInfo> commentInfos,
+        Long memberId,
+        AnonymousProfile anonymousProfile,
+        Boolean isLiked,
+        Integer likes,
+        Map<Long, Boolean> commentLikedMap,
+        Map<Long, Integer> commentLikeCountMap
+    ) {
         val post = dao.post();
         val category = dao.category();
         val member = dao.post().isBlindWriter() ? null : dao.member();
         val writerId = dao.post().isBlindWriter() ? null : dao.member().id();
         val isMine = Objects.equals(dao.member().id(), memberId);
+
         val comments = commentInfos.stream()
-                .map(info -> {
-                    Long commentId = info.commentDao().comment().getId();
-                    Boolean commentIsLiked = commentLikedMap.getOrDefault(commentId, false);
-                    Integer commentLikeCount = commentLikeCountMap.getOrDefault(commentId, 0);
-                    return toCommentResponse(info, memberId, commentIsLiked, commentLikeCount);
-                })
-                .collect(toList());
-        val anonymousProfileVo = dao.post().isBlindWriter() && anonymousProfile != null ? toAnonymousProfileVo(anonymousProfile) : null;
+            .map(info -> {
+                Long commentId = info.commentDao().comment().getId();
+                Boolean commentIsLiked = commentLikedMap.getOrDefault(commentId, false);
+                Integer commentLikeCount = commentLikeCountMap.getOrDefault(commentId, 0);
+                return toCommentResponse(info, memberId, commentIsLiked, commentLikeCount);
+            })
+            .collect(toList());
+
+        val anonymousProfileVo = dao.post().isBlindWriter() && anonymousProfile != null
+            ? toAnonymousProfileVo(anonymousProfile)
+            : null;
+
         val createdAt = getRelativeTime(dao.post().createdAt());
 
         return new PostResponse(
-                post.id(), member, writerId, isMine, isLiked, likes, post.categoryId(),
-                category.name(), post.title(), post.content(), post.hits(),
-                (int) comments.stream().filter(c -> !c.isDeleted()).count(), post.images(), post.isQuestion(), post.isBlindWriter(),
-                post.sopticleUrl(), anonymousProfileVo, createdAt, comments, dao.post().vote(), null
+            post.id(),
+            CommunityPostSourceType.COMMUNITY,
+            member,
+            writerId,
+            isMine,
+            isLiked,
+            likes,
+            category.categoryGroup(),
+            category.code(),
+            category.name(),
+            List.of(),
+            post.title(),
+            post.content(),
+            post.hits(),
+            (int) comments.stream().filter(comment -> !comment.isDeleted()).count(),
+            post.images(),
+            post.isBlindWriter(),
+            post.sopticleUrl(),
+            anonymousProfileVo,
+            createdAt,
+            comments,
+            dao.post().vote(),
+            null
         );
     }
 
@@ -159,41 +238,43 @@ public class CommunityResponseMapper {
         val crewUser = crewPost.user();
 
         val soptActivityVo = new SoptActivityVo(
-                crewUser.partInfo().generation(),
-                crewUser.partInfo().part(),
-                null
+            crewUser.partInfo().generation(),
+            crewUser.partInfo().part(),
+            null
         );
 
         val memberVo = new MemberVo(
-                crewUser.id(),
-                crewUser.name(),
-                crewUser.profileImage(),
-                soptActivityVo,
-                null
+            crewUser.id(),
+            crewUser.name(),
+            crewUser.profileImage(),
+            soptActivityVo,
+            null
         );
 
         return new PostResponse(
-                crewPost.id(),
-                memberVo,
-                crewUser.id(),
-                Objects.equals(crewUser.orgId(), viewerId),
-                crewPost.isLiked(),
-                crewPost.likeCount(),
-                24L,
-                "모임",
-                crewPost.title(),
-                crewPost.contents(),
-                crewPost.viewCount(),
-                crewPost.commentCount(),
-                crewPost.images(),
-                false,
-                false,
-                null,
-                null,
-                getRelativeTime(crewPost.createdDate()),
-                Collections.emptyList(),
-                null, // vote
-                crewPost.meetingId()
+            crewPost.id(),
+            CommunityPostSourceType.MEETING,
+            memberVo,
+            crewUser.id(),
+            Objects.equals(crewUser.orgId(), viewerId),
+            crewPost.isLiked(),
+            crewPost.likeCount(),
+            CommunityCategoryGroup.FREE,
+            CommunityCategoryCode.FREE,
+            "자유",
+            List.of(CommunityPostTag.MEETING),
+            crewPost.title(),
+            crewPost.contents(),
+            crewPost.viewCount(),
+            crewPost.commentCount(),
+            crewPost.images(),
+            false,
+            null,
+            null,
+            getRelativeTime(crewPost.createdDate()),
+            Collections.emptyList(),
+            null,
+            crewPost.meetingId()
         );
     }
 
@@ -209,18 +290,39 @@ public class CommunityResponseMapper {
         );
     }
 
-    public RecentPostResponse toRecentPostResponse(CommunityPost post, int likeCount, int commentCount, Long categoryId, String categoryName, Integer totalVoteCount) {
+    public RecentPostResponse toRecentPostResponse(
+        CommunityPost post,
+        int likeCount,
+        int commentCount,
+        CommunityPostTag categoryTag,
+        Integer totalVoteCount
+    ) {
         return new RecentPostResponse(
-                post.getId(),
-                post.getTitle(),
-                post.getContent(),
-                getRelativeTime(post.getCreatedAt()),
-                likeCount,
-                commentCount,
-                categoryId,
-                categoryName,
-                totalVoteCount,
-                commentCount > 0
+            post.getId(),
+            post.getTitle(),
+            post.getContent(),
+            getRelativeTime(post.getCreatedAt()),
+            likeCount,
+            commentCount,
+            categoryTag,
+            categoryTag == null ? null : categoryTag.getLabel(),
+            totalVoteCount
+        );
+    }
+
+    public RecentPostResponse toRecentPostResponse(CrewPost crewPost) {
+        CommunityPostTag categoryTag = CommunityPostTag.MEETING;
+
+        return new RecentPostResponse(
+            crewPost.id(),
+            crewPost.title(),
+            crewPost.contents(),
+            getRelativeTime(crewPost.createdDate()),
+            crewPost.likeCount(),
+            crewPost.commentCount(),
+            categoryTag,
+            categoryTag.getLabel(),
+            null
         );
     }
 
@@ -262,20 +364,57 @@ public class CommunityResponseMapper {
         }
     }
 
-    public PopularPostResponse toPopularPostResponse(CommunityPost post, AnonymousProfile anonymousProfile, InternalUserDetails userDetails, String categoryName) {
+    public PopularPostResponse toPopularPostResponse(
+        CommunityPost post,
+        AnonymousProfile anonymousProfile,
+        InternalUserDetails userDetails,
+        int likeCount,
+        int commentCount,
+        CommunityPostTag categoryTag
+    ) {
         MemberNameAndProfileImageResponse memberResponse;
+
         if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile != null) {
             memberResponse = new MemberNameAndProfileImageResponse(
-                    anonymousProfile.getId(),
-                    anonymousProfile.getNickname().getNickname(),
-                    anonymousProfile.getProfileImg().getImageUrl()
+                anonymousProfile.getId(),
+                anonymousProfile.getNickname().getNickname(),
+                anonymousProfile.getProfileImg().getImageUrl()
             );
         } else {
             memberResponse = MemberNameAndProfileImageResponse.from(userDetails);
         }
 
         return new PopularPostResponse(
-                post.getId(), categoryName, post.getTitle(), memberResponse, post.getHits()
+            post.getId(),
+            post.getTitle(),
+            memberResponse,
+            post.getHits(),
+            likeCount,
+            commentCount,
+            categoryTag,
+            categoryTag == null ? null : categoryTag.getLabel()
+        );
+    }
+
+    public PopularPostResponse toPopularPostResponse(CrewPost crewPost) {
+        CrewPost.CrewUser crewUser = crewPost.user();
+        CommunityPostTag categoryTag = CommunityPostTag.MEETING;
+
+        MemberNameAndProfileImageResponse memberResponse = new MemberNameAndProfileImageResponse(
+            crewUser.id(),
+            crewUser.name(),
+            crewUser.profileImage()
+        );
+
+        return new PopularPostResponse(
+            crewPost.id(),
+            crewPost.title(),
+            memberResponse,
+            crewPost.viewCount(),       // hits 의미: 조회수
+            crewPost.likeCount(),
+            crewPost.commentCount(),
+            categoryTag,
+            categoryTag.getLabel()
         );
     }
 

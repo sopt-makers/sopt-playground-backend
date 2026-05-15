@@ -2,8 +2,12 @@ package org.sopt.makers.internal.community.dto.response;
 
 import java.util.List;
 
+import org.sopt.makers.internal.community.domain.enums.CommunityPostListCategory;
+
 public record PostAllResponse(
-        Long categoryId,
-        Boolean hasNext,
-        List<PostResponse> posts
-) {}
+	CommunityPostListCategory category,
+	Boolean hasNext,
+	String nextCursor,
+	List<PostResponse> posts
+) {
+}
