@@ -16,6 +16,7 @@ import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryTitleRe
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatReviewResponse;
+import org.sopt.makers.internal.coffeechat.dto.response.RandomCoffeeChatResponse;
 import org.sopt.makers.internal.coffeechat.service.CoffeeChatService;
 import org.sopt.makers.internal.common.CommonResponse;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,12 @@ import jakarta.validation.Valid;
 public class CoffeeChatController {
 
     private final CoffeeChatService coffeeChatService;
+
+    @Operation(summary = "랜덤 커피챗 4개 조회 API")
+    @GetMapping("/random")
+    public ResponseEntity<List<RandomCoffeeChatResponse>> getRandomCoffeeChatList() {
+        return ResponseEntity.status(HttpStatus.OK).body(coffeeChatService.getRandomCoffeeChatList());
+    }
 
     @Operation(summary = "최근 진행된 커피챗 유저 조회 API")
     @GetMapping("/recent")

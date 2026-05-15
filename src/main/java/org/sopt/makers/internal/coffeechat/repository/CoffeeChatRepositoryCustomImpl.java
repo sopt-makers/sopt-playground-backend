@@ -3,10 +3,12 @@ package org.sopt.makers.internal.coffeechat.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.QCoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.QCoffeeChatHistory;
 import org.sopt.makers.internal.coffeechat.domain.enums.Career;
@@ -115,6 +117,17 @@ public class CoffeeChatRepositoryCustomImpl implements CoffeeChatRepositoryCusto
                                 .from(coffeeChatHistory)
                                 .where(coffeeChatHistory.sender.id.eq(memberId))
                 ))
+                .fetch();
+    }
+
+    @Override
+    public List<CoffeeChat> findRandomActiveCoffeeChats(int limit) {
+        QCoffeeChat coffeeChat = QCoffeeChat.coffeeChat;
+
+        return queryFactory.selectFrom(coffeeChat)
+                .where(coffeeChat.isCoffeeChatActivate.isTrue())
+                .orderBy(Expressions.numberTemplate(Double.class, "random()").asc())
+                .limit(limit)
                 .fetch();
     }
 
