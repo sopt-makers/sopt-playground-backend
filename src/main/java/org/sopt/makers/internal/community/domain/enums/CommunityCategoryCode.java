@@ -1,0 +1,20 @@
+package org.sopt.makers.internal.community.domain.enums;
+
+public enum CommunityCategoryCode {
+	FREE,
+
+	PROMOTION,
+	PROMOTION_EVENT,
+	PROMOTION_PROJECT,
+	PROMOTION_RECRUIT,
+	PROMOTION_ETC,
+
+	SOPTICLE,
+	SOPTICLE_PLAN,
+	SOPTICLE_DESIGN,
+	SOPTICLE_SERVER,
+	SOPTICLE_WEB,
+	SOPTICLE_IOS,
+	SOPTICLE_ANDROID,
+	SOPTICLE_ETC
+}
