@@ -141,7 +141,7 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
     FROM MemberQuestion q
     WHERE q.isReported = false
       AND q.answer IS NOT NULL
-    ORDER BY q.createdAt DESC, q.id DESC
+    ORDER BY q.answer.createdAt DESC, q.id DESC
 """)
 	List<MemberQuestion> findLatestAnsweredQuestions(Pageable pageable);
 
