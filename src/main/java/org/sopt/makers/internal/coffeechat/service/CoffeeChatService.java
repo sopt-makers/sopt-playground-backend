@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.coffeechat.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +26,9 @@ import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatDetailResponse
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatHistoryResponse;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatResponse.CoffeeChatVo;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatReviewResponse.CoffeeChatReviewInfo;
+import org.sopt.makers.internal.coffeechat.dto.response.RandomCoffeeChatResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sopt.makers.internal.coffeechat.dto.response.CoffeeChatUserHistoryResponse;
 import org.sopt.makers.internal.coffeechat.mapper.CoffeeChatResponseMapper;
 import org.sopt.makers.internal.coffeechat.repository.CoffeeChatRepository;
@@ -35,6 +39,7 @@ import org.sopt.makers.internal.external.message.SmsChatSender;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberCareer;
 import org.sopt.makers.internal.member.service.MemberRetriever;
@@ -46,6 +51,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class CoffeeChatService {
+
+    public static final String RANDOM_COFFEE_CHAT_REDIS_KEY = "coffeeChat:random";
     private final SmsChatSender smsChatSender;
 
     private final MemberRetriever memberRetriever;
@@ -56,6 +63,8 @@ public class CoffeeChatService {
     private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
     private final CoffeeChatRepository coffeeChatRepository;
+    private final ObjectMapper objectMapper;
+    private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
 
     private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
@@ -281,6 +290,46 @@ public class CoffeeChatService {
                 review.getContent()
             );
         }).toList();
+    }
+
+    public List<RandomCoffeeChatResponse> getRandomCoffeeChatList() {
+        try {
+            Object cached = redisTemplate.opsForValue().get(RANDOM_COFFEE_CHAT_REDIS_KEY);
+            if (cached != null) {
+                return objectMapper.readValue(cached.toString(), new TypeReference<>() {});
+            }
+        } catch (Exception e) {
+            log.warn("[CoffeeChatService] Redis 캐시 조회 실패, DB fallback 실행", e);
+        }
+        return buildRandomCoffeeChatList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RandomCoffeeChatResponse> buildRandomCoffeeChatList() {
+        return coffeeChatRetriever.findRandomActiveCoffeeChats(4).stream()
+                .map(coffeeChat -> {
+                    Long memberId = coffeeChat.getMember().getId();
+                    InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+                    MemberCareer memberCareer = memberCareerRetriever.findMemberLastCareerByMemberId(memberId);
+                    List<String> soptActivities = userDetails.soptActivities().stream()
+                            .sorted(Comparator.comparing(SoptActivity::normalizedGeneration)
+                                    .thenComparing(a -> !a.isSopt()))
+                            .map(a -> a.isSopt()
+                                    ? String.format("%d기 %s", a.generation(), a.part())
+                                    : String.format("%d기 메이커스", a.generation()))
+                            .toList();
+                    return new RandomCoffeeChatResponse(
+                            memberId,
+                            coffeeChat.getCoffeeChatBio(),
+                            userDetails.profileImage(),
+                            userDetails.name(),
+                            coffeeChat.getCareer().getTitle(),
+                            memberCareer != null ? memberCareer.getCompanyName() : coffeeChat.getMember().getUniversity(),
+                            memberCareer != null ? memberCareer.getTitle() : null,
+                            soptActivities
+                    );
+                })
+                .toList();
     }
 
     public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
