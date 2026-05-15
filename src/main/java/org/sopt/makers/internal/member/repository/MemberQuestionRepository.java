@@ -98,8 +98,8 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
         WHERE q.receiver.id = :receiverId
           AND q.answer IS NOT NULL
           AND (
-              q.createdAt > :createdAt
-              OR (q.createdAt = :createdAt AND q.id > :questionId)
+              q.answer.createdAt > :createdAt
+              OR (q.answer.createdAt = :createdAt AND q.id > :questionId)
           )
     """)
 	long countAnsweredQuestionsBeforeTargetInLatestOrder(
