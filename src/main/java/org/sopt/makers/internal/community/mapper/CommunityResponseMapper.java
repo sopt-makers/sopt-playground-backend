@@ -155,10 +155,11 @@ public class CommunityResponseMapper {
         Category category,
         VoteResponse voteResponse
     ) {
+        Category resolvedCategory = category != null ? category : post.getCategory();
         return new CommunityPostVo(
             post.getId(),
-            category.getCategoryGroup(),
-            category.getCode(),
+            resolvedCategory == null ? null : resolvedCategory.getCategoryGroup(),
+            resolvedCategory == null ? null : resolvedCategory.getCode(),
             post.getTitle(),
             post.getContent(),
             post.getHits(),
@@ -237,6 +238,8 @@ public class CommunityResponseMapper {
     public PostResponse toPostResponse(CrewPost crewPost, Long viewerId) {
         val crewUser = crewPost.user();
 
+        Long writerId = crewUser.orgId();
+
         val soptActivityVo = new SoptActivityVo(
             crewUser.partInfo().generation(),
             crewUser.partInfo().part(),
@@ -244,7 +247,7 @@ public class CommunityResponseMapper {
         );
 
         val memberVo = new MemberVo(
-            crewUser.id(),
+            writerId,
             crewUser.name(),
             crewUser.profileImage(),
             soptActivityVo,
@@ -255,8 +258,8 @@ public class CommunityResponseMapper {
             crewPost.id(),
             CommunityPostSourceType.MEETING,
             memberVo,
-            crewUser.id(),
-            Objects.equals(crewUser.orgId(), viewerId),
+            writerId,
+            Objects.equals(writerId, viewerId),
             crewPost.isLiked(),
             crewPost.likeCount(),
             CommunityCategoryGroup.FREE,
@@ -330,38 +333,59 @@ public class CommunityResponseMapper {
         return new AnonymousProfileVo(anonymousProfile.getNickname().getNickname(), anonymousProfile.getProfileImg().getImageUrl());
     }
 
-    public InternalPopularPostResponse toInternalPopularPostResponse(CommunityPost post, AnonymousProfile anonymousProfile, InternalUserDetails userDetails, String categoryName, int rank, String baseUrl) {
-        if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile != null) {
+    public InternalPopularPostResponse toInternalPopularPostResponse(
+        CommunityPost post,
+        AnonymousProfile anonymousProfile,
+        InternalUserDetails userDetails,
+        String categoryName,
+        int rank,
+        String baseUrl
+    ) {
+        if (Boolean.TRUE.equals(post.getIsBlindWriter())) {
+            if (anonymousProfile == null) {
+                throw new IllegalStateException("anonymous profile is required for blind post");
+            }
+
             return InternalPopularPostResponse.builder()
-                    .id(post.getId())
-                    .userId(null)
-                    .profileImage(anonymousProfile.getProfileImg().getImageUrl())
-                    .name(anonymousProfile.getNickname().getNickname())
-                    .generationAndPart("")
-                    .rank(rank)
-                    .category(categoryName)
-                    .title(post.getTitle())
-                    .content(MentionCleaner.removeMentionIds(post.getContent()))
-                    .webLink(baseUrl + post.getId())
-                    .build();
-        } else {
-            SoptActivity lastActivity = userDetails.soptActivities().stream()
-                    .max(Comparator.comparing(SoptActivity::generation))
-                    .orElse(null);
-            String generationAndPart = String.format("%d기 %s", Objects.requireNonNull(lastActivity).generation(), lastActivity.part());
-            return InternalPopularPostResponse.builder()
-                    .id(post.getId())
-                    .userId(userDetails.userId())
-                    .profileImage(userDetails.profileImage())
-                    .name(userDetails.name())
-                    .generationAndPart(generationAndPart)
-                    .rank(rank)
-                    .category(categoryName)
-                    .title(post.getTitle())
-                    .content(MentionCleaner.removeMentionIds(post.getContent()))
-                    .webLink(baseUrl + post.getId())
-                    .build();
+                .id(post.getId())
+                .userId(null)
+                .profileImage(anonymousProfile.getProfileImg().getImageUrl())
+                .name(anonymousProfile.getNickname().getNickname())
+                .generationAndPart("")
+                .rank(rank)
+                .category(categoryName)
+                .title(post.getTitle())
+                .content(MentionCleaner.removeMentionIds(post.getContent()))
+                .webLink(baseUrl + post.getId())
+                .build();
         }
+
+        if (userDetails == null) {
+            throw new IllegalStateException("user details is required for non-blind post");
+        }
+
+        SoptActivity lastActivity = userDetails.soptActivities() == null
+            ? null
+            : userDetails.soptActivities().stream()
+              .max(Comparator.comparing(SoptActivity::generation))
+              .orElse(null);
+
+        String generationAndPart = lastActivity == null
+            ? ""
+            : String.format("%d기 %s", lastActivity.generation(), lastActivity.part());
+
+        return InternalPopularPostResponse.builder()
+            .id(post.getId())
+            .userId(userDetails.userId())
+            .profileImage(userDetails.profileImage())
+            .name(userDetails.name())
+            .generationAndPart(generationAndPart)
+            .rank(rank)
+            .category(categoryName)
+            .title(post.getTitle())
+            .content(MentionCleaner.removeMentionIds(post.getContent()))
+            .webLink(baseUrl + post.getId())
+            .build();
     }
 
     public PopularPostResponse toPopularPostResponse(
@@ -374,7 +398,11 @@ public class CommunityResponseMapper {
     ) {
         MemberNameAndProfileImageResponse memberResponse;
 
-        if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile != null) {
+        if (Boolean.TRUE.equals(post.getIsBlindWriter())) {
+            if (anonymousProfile == null) {
+                throw new IllegalStateException("anonymous profile is required for blind post");
+            }
+
             memberResponse = new MemberNameAndProfileImageResponse(
                 anonymousProfile.getId(),
                 anonymousProfile.getNickname().getNickname(),
@@ -401,7 +429,7 @@ public class CommunityResponseMapper {
         CommunityPostTag categoryTag = CommunityPostTag.MEETING;
 
         MemberNameAndProfileImageResponse memberResponse = new MemberNameAndProfileImageResponse(
-            crewUser.id(),
+            crewUser.orgId(),
             crewUser.name(),
             crewUser.profileImage()
         );

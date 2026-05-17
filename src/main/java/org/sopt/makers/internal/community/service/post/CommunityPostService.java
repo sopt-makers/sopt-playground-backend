@@ -651,10 +651,11 @@ public class CommunityPostService {
             AnonymousProfile anonymousProfile = anonymousProfileMap.get(postId);
             InternalUserDetails userDetails = userDetailsMap.get(authorId);
 
-            if (
-                userDetails == null
-                    && !(Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile != null)
-            ) {
+            if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile == null) {
+                continue;
+            }
+
+            if (!Boolean.TRUE.equals(post.getIsBlindWriter()) && userDetails == null) {
                 continue;
             }
 
@@ -733,21 +734,34 @@ public class CommunityPostService {
             ? "https://playground.sopt.org/?feed="
             : "https://sopt-internal-dev.pages.dev/?feed=";
 
-        return IntStream.range(0, posts.size())
-            .mapToObj(index -> {
-                CommunityPost post = posts.get(index);
-                Long authorId = post.getMember().getId();
+        List<InternalPopularPostResponse> responses = new ArrayList<>();
+        int rank = 1;
 
-                return communityResponseMapper.toInternalPopularPostResponse(
-                    post,
-                    anonymousProfileMap.get(post.getId()),
-                    userDetailsMap.get(authorId),
-                    resolveRootCategoryName(post.getCategory()),
-                    index + 1,
-                    baseUrl
-                );
-            })
-            .toList();
+        for (CommunityPost post : posts) {
+            Long authorId = post.getMember().getId();
+
+            AnonymousProfile anonymousProfile = anonymousProfileMap.get(post.getId());
+            InternalUserDetails userDetails = userDetailsMap.get(authorId);
+
+            if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile == null) {
+                continue;
+            }
+
+            if (!Boolean.TRUE.equals(post.getIsBlindWriter()) && userDetails == null) {
+                continue;
+            }
+
+            responses.add(communityResponseMapper.toInternalPopularPostResponse(
+                post,
+                anonymousProfile,
+                userDetails,
+                resolveRootCategoryName(post.getCategory()),
+                rank++,
+                baseUrl
+            ));
+        }
+
+        return responses;
     }
 
     private List<CommunityPost> getPopularPostsBase(int limitCount) {

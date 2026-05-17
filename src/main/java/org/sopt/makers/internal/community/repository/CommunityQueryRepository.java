@@ -41,6 +41,9 @@ public class CommunityQueryRepository {
         Long memberId,
         boolean filterBlockedUsers
     ) {
+        if (filterBlockedUsers && memberId == null) {
+            throw new IllegalArgumentException("memberId is required when filterBlockedUsers is true");
+        }
         val post = QCommunityPost.communityPost;
         val member = QMember.member;
         val category = QCategory.category;
@@ -110,6 +113,10 @@ public class CommunityQueryRepository {
     }
 
     public List<CommentDao> findCommentByPostId(Long postId, Long memberId, boolean isBlockedOn) {
+        if (isBlockedOn && memberId == null) {
+            throw new IllegalArgumentException("memberId is required when isBlockedOn is true");
+        }
+
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
         val memberBlock = QMemberBlock.memberBlock;
@@ -200,6 +207,9 @@ public class CommunityQueryRepository {
         Long memberId,
         boolean isBlockedOn
     ) {
+        if (isBlockedOn && memberId == null) {
+            throw new IllegalArgumentException("memberId is required when isBlockedOn is true");
+        }
         if (postIds == null || postIds.isEmpty()) {
             return List.of();
         }

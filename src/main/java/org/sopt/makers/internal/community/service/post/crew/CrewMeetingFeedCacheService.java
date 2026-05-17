@@ -31,6 +31,12 @@ public class CrewMeetingFeedCacheService {
 	private final RedisTemplate<String, Object> redisTemplate;
 	private final ObjectMapper objectMapper;
 
+	private record CacheRebuildResult(
+		CrewMeetingFeedCache cache,
+		boolean failed
+	) {
+	}
+
 	public CrewMeetingFeedCache getOrBuildCache(
 		Long userId,
 		LocalDateTime snapshotTime,
@@ -69,18 +75,26 @@ public class CrewMeetingFeedCacheService {
 			return cache;
 		}
 
-		CrewMeetingFeedCache rebuiltCache = rebuildCacheUntil(
+		CacheRebuildResult rebuildResult = rebuildCacheUntil(
 			userId,
 			snapshotTime,
 			since,
 			maxPageCount
 		);
 
-		writeCache(userId, snapshotTime, rebuiltCache);
-		return rebuiltCache;
+		if (rebuildResult.failed()) {
+			log.warn("모임 인기글 캐시 재구성 실패. 기존 캐시를 유지합니다. userId: {}, snapshotTime: {}",
+				userId,
+				snapshotTime
+			);
+			return fallbackWithoutMore(cache);
+		}
+
+		writeCache(userId, snapshotTime, rebuildResult.cache());
+		return rebuildResult.cache();
 	}
 
-	private CrewMeetingFeedCache rebuildCacheUntil(
+	private CacheRebuildResult rebuildCacheUntil(
 		Long userId,
 		LocalDateTime snapshotTime,
 		LocalDateTime since,
@@ -91,15 +105,13 @@ public class CrewMeetingFeedCacheService {
 		List<CachedCrewPost> cachedPosts = new java.util.ArrayList<>();
 
 		while (page <= maxPageCount && hasMorePage) {
-			CrewPostListResponse crewResponse = makersCrewClient.getPosts(
-				userId,
-				page,
-				CREW_POST_CACHE_TAKE
-			);
+			CrewPostListResponse crewResponse = safeGetPosts(userId, page);
 
 			if (crewResponse == null || crewResponse.posts() == null) {
-				hasMorePage = false;
-				break;
+				return new CacheRebuildResult(
+					new CrewMeetingFeedCache(normalize(cachedPosts), true),
+					true
+				);
 			}
 
 			boolean reachedOlderThanSince = false;
@@ -126,9 +138,12 @@ public class CrewMeetingFeedCacheService {
 			page++;
 		}
 
-		return new CrewMeetingFeedCache(
-			normalize(cachedPosts),
-			hasMorePage
+		return new CacheRebuildResult(
+			new CrewMeetingFeedCache(
+				normalize(cachedPosts),
+				hasMorePage
+			),
+			false
 		);
 	}
 
@@ -153,13 +168,21 @@ public class CrewMeetingFeedCacheService {
 		}
 
 		int targetCount = minimumRequiredCount + prefetchBufferCount;
-		CrewMeetingFeedCache rebuiltCache = rebuildCache(userId, snapshotTime, targetCount);
+		CacheRebuildResult rebuildResult = rebuildCache(userId, snapshotTime, targetCount);
 
-		writeCache(userId, snapshotTime, rebuiltCache);
-		return rebuiltCache;
+		if (rebuildResult.failed()) {
+			log.warn("모임 피드 캐시 재구성 실패. 기존 캐시를 유지합니다. userId: {}, snapshotTime: {}",
+				userId,
+				snapshotTime
+			);
+			return fallbackWithoutMore(cache);
+		}
+
+		writeCache(userId, snapshotTime, rebuildResult.cache());
+		return rebuildResult.cache();
 	}
 
-	private CrewMeetingFeedCache rebuildCache(
+	private CacheRebuildResult rebuildCache(
 		Long userId,
 		LocalDateTime snapshotTime,
 		int targetCount
@@ -169,15 +192,13 @@ public class CrewMeetingFeedCacheService {
 		List<CachedCrewPost> cachedPosts = new java.util.ArrayList<>();
 
 		while (cachedPosts.size() < targetCount && hasMorePage) {
-			CrewPostListResponse crewResponse = makersCrewClient.getPosts(
-				userId,
-				page,
-				CREW_POST_CACHE_TAKE
-			);
+			CrewPostListResponse crewResponse = safeGetPosts(userId, page);
 
 			if (crewResponse == null || crewResponse.posts() == null) {
-				hasMorePage = false;
-				break;
+				return new CacheRebuildResult(
+					new CrewMeetingFeedCache(normalize(cachedPosts), true),
+					true
+				);
 			}
 
 			for (CrewPost crewPost : crewResponse.posts()) {
@@ -194,9 +215,12 @@ public class CrewMeetingFeedCacheService {
 			page++;
 		}
 
-		return new CrewMeetingFeedCache(
-			normalize(cachedPosts),
-			hasMorePage
+		return new CacheRebuildResult(
+			new CrewMeetingFeedCache(
+				normalize(cachedPosts),
+				hasMorePage
+			),
+			false
 		);
 	}
 
@@ -249,5 +273,21 @@ public class CrewMeetingFeedCacheService {
 			+ userId
 			+ ":"
 			+ snapshotTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+	}
+
+	private CrewPostListResponse safeGetPosts(Long userId, int page) {
+		try {
+			return makersCrewClient.getPosts(userId, page, CREW_POST_CACHE_TAKE);
+		} catch (Exception exception) {
+			log.warn("모임 피드 조회 실패. userId: {}, page: {}", userId, page, exception);
+			return null;
+		}
+	}
+
+	private CrewMeetingFeedCache fallbackWithoutMore(CrewMeetingFeedCache cache) {
+		return new CrewMeetingFeedCache(
+			cache.safePosts(),
+			false
+		);
 	}
 }

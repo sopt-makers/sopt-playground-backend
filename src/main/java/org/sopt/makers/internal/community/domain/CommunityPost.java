@@ -13,6 +13,7 @@ import org.sopt.makers.internal.vote.domain.Vote;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -88,7 +89,7 @@ public class CommunityPost extends AuditingTimeEntity {
         Boolean isBlindWriter,
         String sopticleUrl
     ) {
-        this.category = category;
+        this.category = Objects.requireNonNull(category, "category must not be null");
         this.title = title;
         this.content = content;
         this.images = images;

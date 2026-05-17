@@ -19,11 +19,11 @@ public class Category {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private CommunityCategoryCode code;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "category_group")
+    @Column(name = "category_group", nullable = false)
     private CommunityCategoryGroup categoryGroup;
 
     @Column

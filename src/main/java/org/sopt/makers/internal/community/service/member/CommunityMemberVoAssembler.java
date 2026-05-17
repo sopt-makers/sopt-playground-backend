@@ -58,6 +58,9 @@ public class CommunityMemberVoAssembler {
 	}
 
 	public MemberVo getMemberVo(Long memberId) {
+		if (memberId == null) {
+			return null;
+		}
 		return getMemberVoMap(List.of(memberId)).get(memberId);
 	}
 }
