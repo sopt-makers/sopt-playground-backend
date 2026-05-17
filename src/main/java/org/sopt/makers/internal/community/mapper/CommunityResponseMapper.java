@@ -216,9 +216,9 @@ public class CommunityResponseMapper {
             isMine,
             isLiked,
             likes,
-            category.categoryGroup(),
-            category.code(),
-            category.name(),
+            category == null ? null : category.categoryGroup(),
+            category == null ? null : category.code(),
+            category == null ? null : category.name(),
             List.of(),
             post.title(),
             post.content(),
@@ -409,6 +409,9 @@ public class CommunityResponseMapper {
                 anonymousProfile.getProfileImg().getImageUrl()
             );
         } else {
+            if (userDetails == null) {
+                throw new IllegalStateException("user details is required for non-blind post");
+            }
             memberResponse = MemberNameAndProfileImageResponse.from(userDetails);
         }
 
