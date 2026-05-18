@@ -3,6 +3,7 @@ package org.sopt.makers.internal.member.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sopt.makers.internal.common.event.PushNotificationEvent;
+import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
@@ -19,6 +20,7 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfileImage
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileImageRetriever;
 import org.sopt.makers.internal.external.pushNotification.message.member.AnswerNotificationMessage;
+import org.sopt.makers.internal.external.pushNotification.message.member.QuestionNotificationMessage;
 import org.sopt.makers.internal.external.sms.SmsNotificationService;
 import org.sopt.makers.internal.external.sms.message.member.QuestionNotificationSmsMessage;
 import org.springframework.context.ApplicationEventPublisher;
@@ -68,9 +70,9 @@ public class MemberQuestionService {
 		Member asker = memberRetriever.findMemberById(askerId);
 		Member receiver = memberRetriever.findMemberById(receiverId);
 
-		if (askerId.equals(receiverId)) {
-			throw new BadRequestException("자기 자신에게 질문할 수 없습니다.");
-		}
+		// if (askerId.equals(receiverId)) {
+		// 	throw new BadRequestException("자기 자신에게 질문할 수 없습니다.");
+		// }
 
 		AnonymousNickname anonymousNickname = null;
 		AnonymousProfileImage anonymousProfileImage = null;
@@ -385,15 +387,23 @@ public class MemberQuestionService {
 			InternalUserDetails receiver = platformService.getInternalUser(receiverId);
 			String askProfileLink = String.format("https://playground.sopt.org/members/%d?tab=ask", receiverId);
 
-			QuestionNotificationSmsMessage message = QuestionNotificationSmsMessage.of(
-				question.getContent(),
-				askProfileLink,
-				receiver.phone()
-			);
-
-			smsNotificationService.sendSms(message);
+			if (receiver.lastGeneration() == Constant.CURRENT_GENERATION) {
+				QuestionNotificationMessage message = QuestionNotificationMessage.of(
+					receiverId,
+					question.getContent(),
+					null
+				);
+				eventPublisher.publishEvent(PushNotificationEvent.of(message));
+			} else {
+				QuestionNotificationSmsMessage message = QuestionNotificationSmsMessage.of(
+					question.getContent(),
+					askProfileLink,
+					receiver.phone()
+				);
+				smsNotificationService.sendSms(message);
+			}
 		} catch (Exception e) {
-			log.error("질문 SMS 알림 발송 실패: questionId={}, receiverId={}, error={}", question.getId(), receiverId, e.getMessage(), e);
+			log.error("질문 알림 발송 실패: questionId={}, receiverId={}, error={}", question.getId(), receiverId, e.getMessage(), e);
 		}
 	}
 
