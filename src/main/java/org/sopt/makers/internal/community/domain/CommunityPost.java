@@ -4,6 +4,7 @@ import lombok.*;
 import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import org.hibernate.annotations.Type;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
+import org.sopt.makers.internal.community.domain.category.Category;
 import org.sopt.makers.internal.community.domain.comment.CommunityComment;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.common.AuditingTimeEntity;
@@ -12,6 +13,7 @@ import org.sopt.makers.internal.vote.domain.Vote;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -29,8 +31,9 @@ public class CommunityPost extends AuditingTimeEntity {
     @JoinColumn(name = "writer_id", nullable = false)
     private Member member;
 
-    @Column(nullable = false)
-    private Long categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @Column
     private String title;
@@ -78,13 +81,19 @@ public class CommunityPost extends AuditingTimeEntity {
     @JoinColumn(name = "anonymous_profile_id")
     private AnonymousProfile anonymousProfile;
 
-    public void updatePost(Long categoryId, String title, String content,
-                           List<String> images, Boolean isQuestion, Boolean isBlindWriter, String sopticleUrl) {
-        this.categoryId = categoryId;
+    public void updatePost(
+        Category category,
+        String title,
+        String content,
+        List<String> images,
+        Boolean isBlindWriter,
+        String sopticleUrl
+    ) {
+        this.category = Objects.requireNonNull(category, "category must not be null");
         this.title = title;
         this.content = content;
         this.images = images;
-        this.isQuestion = isQuestion;
+        this.isQuestion = false;
         this.isBlindWriter = isBlindWriter;
         this.sopticleUrl = sopticleUrl;
     }

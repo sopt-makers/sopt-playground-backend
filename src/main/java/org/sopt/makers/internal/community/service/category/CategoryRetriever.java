@@ -1,10 +1,9 @@
 package org.sopt.makers.internal.community.service.category;
 
-import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.domain.category.Category;
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
 import org.sopt.makers.internal.community.repository.category.CategoryRepository;
-import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,38 +16,25 @@ public class CategoryRetriever {
 
     private final CategoryRepository categoryRepository;
 
-    public List<Category> getAllCategories() {
-
-        return categoryRepository.findAll();
-    }
-
-    public void checkExistsCategoryById(Long categoryId) {
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new NotFoundException("존재하지 않는 category id 값입니다.");
-        }
-    }
-
-    public List<Category> findAllByIds(List<Long> ids) {
-        return categoryRepository.findAllById(ids);
+    @Transactional(readOnly = true)
+    public Category findActiveCategoryByCode(CommunityCategoryCode code) {
+        return categoryRepository.findByCodeAndIsActiveTrue(code)
+            .orElseThrow(() -> new NotFoundException("존재하지 않는 category code 값입니다."));
     }
 
     @Transactional(readOnly = true)
-    public List<Long> findAllDescendantIds(Long parentId) {
-        List<Category> allCategories = categoryRepository.findAll();
-        Category parent = allCategories.stream()
-                .filter(c -> c.getId().equals(parentId))
-                .findFirst()
-                .orElseThrow(() -> new BadRequestException("존재하지 않는 카테고리입니다."));
-
-        List<Long> descendantIds = new ArrayList<>();
-        collectDescendantIds(parent, descendantIds, allCategories);
-        return descendantIds;
+    public List<Category> findActiveRootListCategories() {
+        return categoryRepository.findAllByIsActiveTrueAndParentIsNullAndCodeInOrderByDisplayOrderAsc(
+            List.of(
+                CommunityCategoryCode.FREE,
+                CommunityCategoryCode.PROMOTION,
+                CommunityCategoryCode.SOPTICLE
+            )
+        );
     }
 
-    private void collectDescendantIds(Category category, List<Long> ids, List<Category> allCategories) {
-        ids.add(category.getId());
-        allCategories.stream()
-                .filter(c -> category.getId().equals(c.getParent() != null ? c.getParent().getId() : null))
-                .forEach(child -> collectDescendantIds(child, ids, allCategories));
+    @Transactional(readOnly = true)
+    public List<Category> findActiveCategoriesByCodes(List<CommunityCategoryCode> codes) {
+        return categoryRepository.findAllByCodeInAndIsActiveTrue(codes);
     }
 }

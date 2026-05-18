@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -27,11 +28,7 @@ public class CommunityCommentLikeService {
 
 	@Transactional
 	public void addCommentLike(Long memberId, Long postId, Long commentId) {
-		CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
-		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
-		if (!post.getComments().contains(comment)) {
-			throw new BadRequestException("해당 게시글의 댓글이 아닙니다.");
-		}
+		CommunityComment comment = validateCommentBelongsToPost(postId, commentId);
 		Member member = memberRetriever.findMemberById(memberId);
 
 		boolean alreadyLiked = commentLikeRetriever.isLiked(memberId, commentId);
@@ -44,13 +41,11 @@ public class CommunityCommentLikeService {
 
 	@Transactional
 	public void cancelCommentLike(Long memberId, Long postId, Long commentId) {
-		CommunityPost post = communityPostRetriever.findCommunityPostById(postId);
-		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
-		if (!post.getComments().contains(comment)) {
-			throw new BadRequestException("해당 게시글의 댓글이 아닙니다.");
-		}
+		validateCommentBelongsToPost(postId, commentId);
 
-		Optional<CommunityCommentLike> existingLike = commentLikeRetriever.findByMemberIdAndCommentId(memberId, commentId);
+		Optional<CommunityCommentLike> existingLike =
+			commentLikeRetriever.findByMemberIdAndCommentId(memberId, commentId);
+
 		if (existingLike.isEmpty()) {
 			throw new BadRequestException("좋아요를 누르지 않은 댓글입니다.");
 		}
@@ -76,5 +71,15 @@ public class CommunityCommentLikeService {
 	@Transactional(readOnly = true)
 	public Map<Long, Integer> getLikeCountMapByCommentIds(List<Long> commentIds) {
 		return commentLikeRetriever.getLikeCountMapByCommentIds(commentIds);
+	}
+
+	private CommunityComment validateCommentBelongsToPost(Long postId, Long commentId) {
+		CommunityComment comment = commentsRetriever.findCommunityCommentById(commentId);
+
+		if (!Objects.equals(comment.getPostId(), postId)) {
+			throw new BadRequestException("해당 게시글의 댓글이 아닙니다.");
+		}
+
+		return comment;
 	}
 }

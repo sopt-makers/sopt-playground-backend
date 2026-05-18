@@ -4,12 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
-import org.sopt.makers.internal.community.dto.CommunityPostMemberVo;
-import org.sopt.makers.internal.community.dto.comment.CommentInfo;
+// import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
+import org.sopt.makers.internal.community.domain.enums.CommunityPostListCategory;
+import org.sopt.makers.internal.community.domain.enums.CommunityPostListFilter;
 import org.sopt.makers.internal.community.dto.request.CommunityHitRequest;
 import org.sopt.makers.internal.community.dto.request.PostSaveRequest;
 import org.sopt.makers.internal.community.dto.request.PostUpdateRequest;
@@ -17,7 +16,7 @@ import org.sopt.makers.internal.community.dto.response.*;
 import org.sopt.makers.internal.community.service.post.CommunityPostService;
 import org.sopt.makers.internal.community.mapper.CommunityResponseMapper;
 import org.sopt.makers.internal.community.service.comment.CommunityCommentService;
-import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
+// import org.sopt.makers.internal.community.service.comment.CommunityCommentLikeService;
 import org.sopt.makers.internal.vote.dto.request.VoteSelectionRequest;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
 import org.sopt.makers.internal.vote.service.VoteService;
@@ -27,10 +26,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -42,11 +39,9 @@ public class CommunityController {
     private final CommunityPostService communityPostService;
     private final VoteService voteService;
     private final CommunityCommentService communityCommentService;
-    private final CommunityCommentLikeService commentLikeService;
+    // private final CommunityCommentLikeService commentLikeService;
     private final CommunityResponseMapper communityResponseMapper;
-    private final InfiniteScrollUtil infiniteScrollUtil;
-
-    private static final Long MEETING_CATEGORY_ID = 24L;
+    // private final InfiniteScrollUtil infiniteScrollUtil;
 
     @Operation(summary = "커뮤니티 글 상세 조회")
     @GetMapping("/posts/{postId}")
@@ -65,53 +60,34 @@ public class CommunityController {
     }
 
     @Operation(
-            summary = "커뮤니티 글 전체 조회",
-            description = """
-                        categoryId: 카테고리 전체조회시 id값, 전체일 경우 null
-                        cursor: 처음 조회시 null, 이외에 마지막 글 id
-            """
+        summary = "커뮤니티 글 목록 조회",
+        description = """
+                category: FREE, PROMOTION, SOPTICLE
+                filter:
+                  - FREE: 사용하지 않음
+                  - PROMOTION: ALL, EVENT, PROJECT, RECRUIT, ETC
+                  - SOPTICLE: ALL, PLAN, DESIGN, SERVER, WEB, IOS, ANDROID, ETC
+                cursor: 처음 조회 시 null, 이후 응답의 nextCursor 사용
+                """
     )
     @GetMapping("/posts")
     public ResponseEntity<PostAllResponse> getAllPosts(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @RequestParam(required = false, name = "categoryId") Long categoryId,
-            @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn,
-            @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Long cursor,
-            @RequestParam(required = false, name = "page", defaultValue = "1") Integer page
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+        @RequestParam(name = "category") CommunityPostListCategory category,
+        @RequestParam(name = "filter", required = false) CommunityPostListFilter filter,
+        @RequestParam(value = "isBlockOn", required = false, defaultValue = "true") Boolean isBlockOn,
+        @RequestParam(required = false, name = "limit") Integer limit,
+        @RequestParam(required = false, name = "cursor") String cursor
     ) {
-        if(Objects.equals(categoryId, MEETING_CATEGORY_ID)){
-            PostAllResponse response = communityPostService.getMeetingPosts(userId, page, limit);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        }
+        PostAllResponse response = communityPostService.getPosts(
+            userId,
+            category,
+            filter,
+            isBlockOn,
+            limit,
+            cursor
+        );
 
-        List<CommunityPostMemberVo> posts = communityPostService.getAllPosts(categoryId, isBlockOn, userId,
-                infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        Boolean hasNextPosts = infiniteScrollUtil.checkHasNextElement(limit, posts);
-        Map<Long, List<CommentInfo>> postCommentsMap = posts.stream()
-                .collect(Collectors.toMap(
-                        post -> post.post().id(),
-                        post -> communityCommentService.getPostCommentList(post.post().id(), userId, isBlockOn)
-                ));
-        List<Long> allCommentIds = postCommentsMap.values().stream()
-                .flatMap(List::stream)
-                .map(c -> c.commentDao().comment().getId())
-                .collect(Collectors.toList());
-
-        Map<Long, Boolean> commentLikedMap = commentLikeService.getLikedMapByCommentIds(userId, allCommentIds);
-        Map<Long, Integer> commentLikeCountMap = commentLikeService.getLikeCountMapByCommentIds(allCommentIds);
-
-        val postResponse = posts.stream().map(post -> {
-            List<CommentInfo> comments = postCommentsMap.get(post.post().id());
-            val anonymousPostProfile = communityPostService.getAnonymousPostProfile(post.post().id());
-            val isLiked = communityPostService.isLiked(userId, post.post().id());
-            val likes = communityPostService.getLikes(post.post().id());
-
-            return communityResponseMapper.toPostResponse(post, comments, userId, anonymousPostProfile,
-                    isLiked, likes, commentLikedMap, commentLikeCountMap);
-        }).collect(Collectors.toList());
-
-        val response = new PostAllResponse(categoryId, hasNextPosts, postResponse);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -202,9 +178,11 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 홈 인기글 조회 API")
     @GetMapping("/posts/popular")
     public ResponseEntity<List<PopularPostResponse>> getPopularPost(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Parameter(description = "조회할 인기글 개수 (기본값: 3)")
-            @RequestParam(defaultValue = "3") int limit) {
-        return ResponseEntity.ok(communityPostService.getPopularPosts(limit));
+            @RequestParam(defaultValue = "3") int limit
+    ) {
+        return ResponseEntity.ok(communityPostService.getPopularPosts(userId, limit));
     }
 
     @Operation(summary = "커뮤니티 홈 최근 솝티클 목록 조회 API")

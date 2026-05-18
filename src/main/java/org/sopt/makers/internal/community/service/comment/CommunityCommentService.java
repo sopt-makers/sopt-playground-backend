@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
@@ -16,6 +18,7 @@ import org.sopt.makers.internal.community.dto.request.comment.CommentUpdateReque
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileService;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousProfileRetriever;
 import org.sopt.makers.internal.community.service.anonymous.AnonymousNicknameRetriever;
+import org.sopt.makers.internal.community.service.member.CommunityMemberVoAssembler;
 import org.sopt.makers.internal.community.service.post.CommunityPostRetriever;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
@@ -38,7 +41,6 @@ import org.sopt.makers.internal.community.repository.comment.DeletedCommunityCom
 import org.sopt.makers.internal.community.repository.comment.ReportCommentRepository;
 import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.member.service.MemberRetriever;
-import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +55,7 @@ import lombok.val;
 public class CommunityCommentService {
 
     private final PlatformService platformService;
-    private final MemberCareerRetriever memberCareerRetriever;
+    private final CommunityMemberVoAssembler communityMemberVoAssembler;
 
     private final DeletedCommunityCommentRepository deletedCommunityCommentRepository;
     private final CommunityCommentRepository communityCommentsRepository;
@@ -104,15 +106,53 @@ public class CommunityCommentService {
     @Transactional(readOnly = true)
     public List<CommentInfo> getPostCommentList(Long postId, Long memberId, Boolean isBlockedOn) {
         communityPostRetriever.checkExistsCommunityPostById(postId);
-        List<CommentDao> commentDaos = communityQueryRepository.findCommentByPostId(postId, memberId, isBlockedOn);
 
-        return commentDaos.stream().map(dao -> {
-            val authorDetails = platformService.getInternalUser(dao.member().getId());
-            val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(dao.member().getId());
-            val memberVo = MemberVo.of(authorDetails, authorCareer);
-            val anonymousProfile = getAnonymousCommentProfile(dao.comment());
-            return new CommentInfo(dao, memberVo, anonymousProfile);
-        }).toList();
+        return getPostCommentMap(List.of(postId), memberId, isBlockedOn)
+            .getOrDefault(postId, List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, List<CommentInfo>> getPostCommentMap(
+        List<Long> postIds,
+        Long memberId,
+        Boolean isBlockedOn
+    ) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<CommentDao> commentDaos = communityQueryRepository.findCommentsByPostIds(
+            postIds,
+            memberId,
+            Boolean.TRUE.equals(isBlockedOn)
+        );
+
+        List<Long> commentWriterIds = commentDaos.stream()
+            .map(commentDao -> commentDao.member().getId())
+            .distinct()
+            .toList();
+
+        Map<Long, MemberVo> memberVoMap = communityMemberVoAssembler.getMemberVoMap(commentWriterIds);
+
+        Map<Long, List<CommentInfo>> commentInfoMap = commentDaos.stream()
+            .map(commentDao -> {
+                Long commentWriterId = commentDao.member().getId();
+
+                return new CommentInfo(
+                    commentDao,
+                    memberVoMap.get(commentWriterId),
+                    getAnonymousCommentProfile(commentDao.comment())
+                );
+            })
+            .collect(Collectors.groupingBy(
+                commentInfo -> commentInfo.commentDao().comment().getPostId()
+            ));
+
+        return postIds.stream()
+            .collect(Collectors.toMap(
+                postId -> postId,
+                postId -> commentInfoMap.getOrDefault(postId, List.of())
+            ));
     }
 
     @Transactional(readOnly = true)

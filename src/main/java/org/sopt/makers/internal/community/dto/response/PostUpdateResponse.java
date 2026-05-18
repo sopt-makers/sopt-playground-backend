@@ -6,15 +6,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
+
 public record PostUpdateResponse(
         @Schema(required = true)
         Long id,
-        Long categoryId,
+        CommunityCategoryCode code,
         String title,
         String content,
         Integer hits,
         List<String> images,
-        Boolean isQuestion,
         Boolean isBlindWriter,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

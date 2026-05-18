@@ -12,7 +12,9 @@ import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
 import org.sopt.makers.internal.community.domain.anonymous.QAnonymousProfile;
 import org.sopt.makers.internal.community.domain.category.QCategory;
 import org.sopt.makers.internal.community.domain.comment.QCommunityComment;
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
 import org.sopt.makers.internal.community.dto.CategoryPostMemberDao;
+import org.sopt.makers.internal.community.dto.CommunityDbCursor;
 import org.sopt.makers.internal.community.dto.comment.CommentDao;
 import org.sopt.makers.internal.member.domain.QMember;
 import org.sopt.makers.internal.member.domain.QMemberBlock;
@@ -31,80 +33,58 @@ public class CommunityQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    private static final long CATEGORY_PART_TALK = 2L;
-    private static final long CATEGORY_PROMOTION = 4L;
-
-    public List<CategoryPostMemberDao> findAllParentCategoryPostByCursor(Long categoryId, Integer limit, Long cursor, Long memberId, boolean filterBlockedUsers) {
-        val posts = QCommunityPost.communityPost;
+    public List<CategoryPostMemberDao> findPostsByCategoryCodes(
+        List<CommunityCategoryCode> categoryCodes,
+        CommunityDbCursor cursor,
+        LocalDateTime snapshotTime,
+        Integer limit,
+        Long memberId,
+        boolean filterBlockedUsers
+    ) {
+        if (filterBlockedUsers && memberId == null) {
+            throw new IllegalArgumentException("memberId is required when filterBlockedUsers is true");
+        }
+        val post = QCommunityPost.communityPost;
         val member = QMember.member;
         val category = QCategory.category;
-        val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
 
-        JPAQuery<CategoryPostMemberDao> query;
-        if (categoryId == CATEGORY_PART_TALK || categoryId == CATEGORY_PROMOTION) {
-            query = queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
-                    .from(posts)
-                    .innerJoin(posts.member, member)
-                    .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
-                    .innerJoin(category).on(posts.categoryId.eq(category.id))
-                    .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
-                    .limit(limit)
-                    .distinct()
-                    .orderBy(posts.createdAt.desc());
-        } else {
-            query = queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
-                    .from(posts)
-                    .innerJoin(posts.member, member)
-                    .leftJoin(member.careers, careers).on(member.id.eq(careers.memberId))
-                    .innerJoin(category).on(posts.categoryId.eq(category.id))
-                    .where(ltPostId(cursor), category.id.eq(categoryId).or(category.parent.id.eq(categoryId)))
-                    .limit(limit)
-                    .distinct()
-                    .orderBy(category.displayOrder.asc(), posts.createdAt.desc());
-        }
+        JPAQuery<CategoryPostMemberDao> query = queryFactory
+            .select(Projections.constructor(CategoryPostMemberDao.class, post, member, category))
+            .from(post)
+            .innerJoin(post.member, member)
+            .innerJoin(post.category, category)
+            .where(
+                category.code.in(categoryCodes),
+                post.createdAt.loe(snapshotTime),
+                ltCursor(cursor)
+            )
+            .limit(limit)
+            .orderBy(post.createdAt.desc(), post.id.desc());
 
         if (filterBlockedUsers) {
             query.leftJoin(memberBlock).on(
-                            memberBlock.blocker.id.eq(memberId)
-                                    .and(memberBlock.blockedMember.id.eq(member.id))
-                                    .and(memberBlock.isBlocked.isTrue())
-                    )
-                    .where(memberBlock.isNull());
+                    memberBlock.blocker.id.eq(memberId)
+                        .and(memberBlock.blockedMember.id.eq(member.id))
+                        .and(memberBlock.isBlocked.isTrue())
+                )
+                .where(memberBlock.isNull());
         }
 
         return query.fetch();
     }
 
     public CategoryPostMemberDao getPostById(Long postId) {
-        val posts = QCommunityPost.communityPost;
+        val post = QCommunityPost.communityPost;
         val category = QCategory.category;
         val member = QMember.member;
 
-        return queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, posts, member, category))
-                .from(posts)
-                .innerJoin(posts.member, member)
-                .innerJoin(category).on(posts.categoryId.eq(category.id))
-                .where(posts.id.eq(postId)).distinct().fetchOne();
-    }
-
-    public Map<Long, String> getCategoryNamesByIds(List<Long> categoryIds) {
-        if (categoryIds == null || categoryIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        QCategory category = QCategory.category;
-
-        return queryFactory
-                .select(category.id, category.name)
-                .from(category)
-                .where(category.id.in(categoryIds))
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(
-                        tuple -> tuple.get(category.id),
-                        tuple -> tuple.get(category.name) // category.name은 NOT NULL 보장
-                ));
+        return queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, post, member, category))
+            .from(post)
+            .innerJoin(post.member, member)
+            .innerJoin(post.category, category)
+            .where(post.id.eq(postId))
+            .fetchOne();
     }
 
     public Map<Long, AnonymousProfile> getAnonymousProfilesByPostId(List<Long> postIds) {
@@ -116,47 +96,48 @@ public class CommunityQueryRepository {
         QCommunityPost post = QCommunityPost.communityPost;
 
         return queryFactory
-                .selectFrom(anonymousProfile)
-                .join(anonymousProfile.post, post).fetchJoin()
-                .leftJoin(anonymousProfile.nickname).fetchJoin()
-                .leftJoin(anonymousProfile.profileImg).fetchJoin()
-                .where(
-                        anonymousProfile.post.id.in(postIds),
-                        anonymousProfile.member.id.eq(post.member.id)
-                )
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(
-                        profile -> profile.getPost().getId(),
-                        profile -> profile
-                ));
+            .selectFrom(anonymousProfile)
+            .join(anonymousProfile.post, post).fetchJoin()
+            .leftJoin(anonymousProfile.nickname).fetchJoin()
+            .leftJoin(anonymousProfile.profileImg).fetchJoin()
+            .where(
+                anonymousProfile.post.id.in(postIds),
+                anonymousProfile.member.id.eq(post.member.id)
+            )
+            .fetch()
+            .stream()
+            .collect(Collectors.toMap(
+                profile -> profile.getPost().getId(),
+                profile -> profile
+            ));
     }
 
     public List<CommentDao> findCommentByPostId(Long postId, Long memberId, boolean isBlockedOn) {
+        if (isBlockedOn && memberId == null) {
+            throw new IllegalArgumentException("memberId is required when isBlockedOn is true");
+        }
+
         val comment = QCommunityComment.communityComment;
         val member = QMember.member;
-        val careers = QMemberCareer.memberCareer;
         val memberBlock = QMemberBlock.memberBlock;
         val anonymousProfile = QAnonymousProfile.anonymousProfile;
 
         JPAQuery<CommentDao> query = queryFactory.select(Projections.constructor(CommentDao.class, member, comment))
-                .from(comment)
-                .innerJoin(member).on(member.id.eq(comment.writerId))
-                .leftJoin(member.careers, careers)
-                .leftJoin(comment.anonymousProfile, anonymousProfile).fetchJoin()
-                .leftJoin(anonymousProfile.nickname).fetchJoin()
-                .leftJoin(anonymousProfile.profileImg).fetchJoin()
-                .where(comment.postId.eq(postId))
-                .distinct()
-                .orderBy(comment.id.asc());
+            .from(comment)
+            .innerJoin(member).on(member.id.eq(comment.writerId))
+            .leftJoin(comment.anonymousProfile, anonymousProfile).fetchJoin()
+            .leftJoin(anonymousProfile.nickname).fetchJoin()
+            .leftJoin(anonymousProfile.profileImg).fetchJoin()
+            .where(comment.postId.eq(postId))
+            .orderBy(comment.id.asc());
 
         if (isBlockedOn) {
             query.leftJoin(memberBlock).on(
-                            memberBlock.blocker.id.eq(memberId)
-                                    .and(memberBlock.blockedMember.id.eq(member.id))
-                                    .and(memberBlock.isBlocked.isTrue())
-                    )
-                    .where(memberBlock.isNull());
+                    memberBlock.blocker.id.eq(memberId)
+                        .and(memberBlock.blockedMember.id.eq(member.id))
+                        .and(memberBlock.isBlocked.isTrue())
+                )
+                .where(memberBlock.isNull());
         }
 
         return query.fetch();
@@ -181,24 +162,93 @@ public class CommunityQueryRepository {
             .execute();
     }
 
+    // 조회수 기준 인기 게시글 - 현재 앱팀 internal api에 사용중
     public List<CommunityPost> findPopularPosts(int limitCount) {
         QCommunityPost communityPost = QCommunityPost.communityPost;
         QMember member = QMember.member;
+        QCategory category = QCategory.category;
+        QCategory parentCategory = new QCategory("parentCategory");
 
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
 
         return queryFactory
-                .selectFrom(communityPost)
-                .leftJoin(communityPost.member, member).fetchJoin()
-                .where(communityPost.createdAt.after(oneMonthAgo))
-                .orderBy(communityPost.hits.desc())
-                .limit(limitCount)
-                .fetch();
+            .selectFrom(communityPost)
+            .leftJoin(communityPost.member, member).fetchJoin()
+            .leftJoin(communityPost.category, category).fetchJoin()
+            .leftJoin(category.parent, parentCategory).fetchJoin()
+            .where(communityPost.createdAt.after(oneMonthAgo))
+            .orderBy(communityPost.hits.desc())
+            .limit(limitCount)
+            .fetch();
     }
-    
-    private BooleanExpression ltPostId(Long cursor) {
-        val posts = QCommunityPost.communityPost;
-        if(cursor == null || cursor == 0) return null;
-        return posts.id.lt(cursor);
+
+    // 인기글 후보용 최근 1달 게시글 조회 - 38기부터 인기글 조회에 사용중
+    public List<CommunityPost> findPopularCandidatePosts(LocalDateTime since) {
+        QCommunityPost communityPost = QCommunityPost.communityPost;
+        QMember member = QMember.member;
+        QCategory category = QCategory.category;
+        QCategory parentCategory = new QCategory("parentCategory");
+
+        return queryFactory
+            .selectFrom(communityPost)
+            .leftJoin(communityPost.member, member).fetchJoin()
+            .leftJoin(communityPost.category, category).fetchJoin()
+            .leftJoin(category.parent, parentCategory).fetchJoin()
+            .where(
+                communityPost.createdAt.goe(since),
+                communityPost.isReported.isFalse()
+            )
+            .orderBy(communityPost.createdAt.desc(), communityPost.id.desc())
+            .fetch();
+    }
+
+    public List<CommentDao> findCommentsByPostIds(
+        List<Long> postIds,
+        Long memberId,
+        boolean isBlockedOn
+    ) {
+        if (isBlockedOn && memberId == null) {
+            throw new IllegalArgumentException("memberId is required when isBlockedOn is true");
+        }
+        if (postIds == null || postIds.isEmpty()) {
+            return List.of();
+        }
+
+        val comment = QCommunityComment.communityComment;
+        val member = QMember.member;
+        val memberBlock = QMemberBlock.memberBlock;
+        val anonymousProfile = QAnonymousProfile.anonymousProfile;
+
+        JPAQuery<CommentDao> query = queryFactory
+            .select(Projections.constructor(CommentDao.class, member, comment))
+            .from(comment)
+            .innerJoin(member).on(member.id.eq(comment.writerId))
+            .leftJoin(comment.anonymousProfile, anonymousProfile).fetchJoin()
+            .leftJoin(anonymousProfile.nickname).fetchJoin()
+            .leftJoin(anonymousProfile.profileImg).fetchJoin()
+            .where(comment.postId.in(postIds))
+            .orderBy(comment.postId.asc(), comment.id.asc());
+
+        if (isBlockedOn) {
+            query.leftJoin(memberBlock).on(
+                    memberBlock.blocker.id.eq(memberId)
+                        .and(memberBlock.blockedMember.id.eq(member.id))
+                        .and(memberBlock.isBlocked.isTrue())
+                )
+                .where(memberBlock.isNull());
+        }
+
+        return query.fetch();
+    }
+
+    private BooleanExpression ltCursor(CommunityDbCursor cursor) {
+        val post = QCommunityPost.communityPost;
+
+        if (cursor == null || cursor.createdAt() == null || cursor.postId() == null) {
+            return null;
+        }
+
+        return post.createdAt.lt(cursor.createdAt())
+            .or(post.createdAt.eq(cursor.createdAt()).and(post.id.lt(cursor.postId())));
     }
 }
