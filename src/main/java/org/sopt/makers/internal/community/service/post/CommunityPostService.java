@@ -2,7 +2,6 @@ package org.sopt.makers.internal.community.service.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.LocalDate;
-import org.hibernate.Hibernate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -14,7 +13,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -182,6 +180,7 @@ public class CommunityPostService {
     }
 
     // 커뮤니티글 목록 조회 entrypoint
+    @Transactional(readOnly = true)
     public PostAllResponse getPosts(
         Long userId,
         CommunityPostListCategory category,
@@ -429,11 +428,7 @@ public class CommunityPostService {
         val authorDetails = platformService.getInternalUser(authorId);
         val authorCareer = memberCareerRetriever.findMemberLastCareerByMemberId(authorId);
         val voteResponse = voteService.getVoteByPostId(postId, memberId);
-
         val category = postDao.category();
-        if (category != null) {
-            Hibernate.initialize(category.getParent());
-        }
 
         return new PostDetailData(postDao.post(), authorDetails, authorCareer, category, voteResponse);
     }
