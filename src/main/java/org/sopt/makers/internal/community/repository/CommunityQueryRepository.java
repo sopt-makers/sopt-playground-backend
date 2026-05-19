@@ -44,16 +44,18 @@ public class CommunityQueryRepository {
         if (filterBlockedUsers && memberId == null) {
             throw new IllegalArgumentException("memberId is required when filterBlockedUsers is true");
         }
+
         val post = QCommunityPost.communityPost;
         val member = QMember.member;
         val category = QCategory.category;
+        val parentCategory = new QCategory("parentCategory");
         val memberBlock = QMemberBlock.memberBlock;
 
-        JPAQuery<CategoryPostMemberDao> query = queryFactory
-            .select(Projections.constructor(CategoryPostMemberDao.class, post, member, category))
-            .from(post)
-            .innerJoin(post.member, member)
-            .innerJoin(post.category, category)
+        JPAQuery<CommunityPost> query = queryFactory
+            .selectFrom(post)
+            .innerJoin(post.member, member).fetchJoin()
+            .innerJoin(post.category, category).fetchJoin()
+            .leftJoin(category.parent, parentCategory).fetchJoin()
             .where(
                 category.code.in(categoryCodes),
                 post.createdAt.loe(snapshotTime),
@@ -71,20 +73,38 @@ public class CommunityQueryRepository {
                 .where(memberBlock.isNull());
         }
 
-        return query.fetch();
+        return query.fetch().stream()
+            .map(fetchedPost -> new CategoryPostMemberDao(
+                fetchedPost,
+                fetchedPost.getMember(),
+                fetchedPost.getCategory()
+            ))
+            .toList();
     }
 
     public CategoryPostMemberDao getPostById(Long postId) {
         val post = QCommunityPost.communityPost;
         val category = QCategory.category;
+        val parentCategory = new QCategory("parentCategory");
         val member = QMember.member;
 
-        return queryFactory.select(Projections.constructor(CategoryPostMemberDao.class, post, member, category))
-            .from(post)
-            .innerJoin(post.member, member)
-            .innerJoin(post.category, category)
+        CommunityPost fetchedPost = queryFactory
+            .selectFrom(post)
+            .innerJoin(post.member, member).fetchJoin()
+            .innerJoin(post.category, category).fetchJoin()
+            .leftJoin(category.parent, parentCategory).fetchJoin()
             .where(post.id.eq(postId))
             .fetchOne();
+
+        if (fetchedPost == null) {
+            return null;
+        }
+
+        return new CategoryPostMemberDao(
+            fetchedPost,
+            fetchedPost.getMember(),
+            fetchedPost.getCategory()
+        );
     }
 
     public Map<Long, AnonymousProfile> getAnonymousProfilesByPostId(List<Long> postIds) {

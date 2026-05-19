@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.val;
 
+import org.hibernate.Hibernate;
 import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
 import org.sopt.makers.internal.community.domain.enums.CommunityCategoryGroup;
 import org.sopt.makers.internal.community.domain.enums.CommunityPostSourceType;
@@ -133,13 +134,15 @@ public class CommunityResponseMapper {
             return null;
         }
 
-        CommunityCategoryCode parentCode = category.getParent() == null
-            ? null
-            : category.getParent().getCode();
+        Category parent = category.getParent();
 
-        String parentCategoryName = category.getParent() == null
-            ? null
-            : category.getParent().getName();
+        CommunityCategoryCode parentCode = null;
+        String parentCategoryName = null;
+
+        if (parent != null && Hibernate.isInitialized(parent)) {
+            parentCode = parent.getCode();
+            parentCategoryName = parent.getName();
+        }
 
         return new CategoryVo(
             category.getCategoryGroup(),

@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.community.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.community.dto.response.CommunityCategoryResponse;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/community/category")
+@SecurityRequirement(name = "Authorization")
 @Tag(name = "커뮤니티 카테고리 관련 API", description = "커뮤니티 카테고리 관련 API List")
 public class CommunityCategoryController {
 
