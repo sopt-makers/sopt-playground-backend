@@ -1,18 +1,18 @@
 #!/bin/bash
 
 HEALTH_CHECK_URL=/actuator/health
-RETRIES=${RETRIES:-10}
+RETRIES=${RETRIES:-12}
 
 # Health check to verify if the server is up
 health_check() {
   local PORT="$1"
 
   echo "▶️ Start health check after 15 seconds"
-  sleep 15
+  sleep 30
 
   for retry_count in $(seq 1 "$RETRIES"); do
     echo "Health Check on Port ${PORT} ..."
-    sleep 3
+    sleep 5
 
     RESPONSE=$(curl -s "http://localhost:${PORT}${HEALTH_CHECK_URL}")
     UP_COUNT=$(echo "$RESPONSE" | grep 'UP' | wc -l)
