@@ -21,6 +21,8 @@ public record RandomProjectResponse(
         LocalDate endAt,
         @Schema(description = "서비스 운영 여부")
         Boolean isAvailable,
+        @Schema(description = "창업 여부")
+        Boolean isFounding,
         @Schema(required = true)
         String logoImage,
         @Schema(required = true)
