@@ -7,7 +7,7 @@ RETRIES=${RETRIES:-12}
 health_check() {
   local PORT="$1"
 
-  echo "▶️ Start health check after 15 seconds"
+  echo "▶️ Start health check after 30 seconds"
   sleep 30
 
   for retry_count in $(seq 1 "$RETRIES"); do
