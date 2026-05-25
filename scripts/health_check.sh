@@ -12,7 +12,7 @@ health_check() {
 
   for retry_count in $(seq 1 "$RETRIES"); do
     echo "Health Check on Port ${PORT} ..."
-    sleep 3
+    sleep 5
 
     RESPONSE=$(curl -s "http://localhost:${PORT}${HEALTH_CHECK_URL}")
     UP_COUNT=$(echo "$RESPONSE" | grep 'UP' | wc -l)
