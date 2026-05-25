@@ -239,6 +239,7 @@ public class ProjectService {
                         project.getStartAt(),
                         project.getEndAt(),
                         project.getIsAvailable(),
+                        project.getIsFounding(),
                         project.getLogoImage(),
                         project.getThumbnailImage()
                 ))
