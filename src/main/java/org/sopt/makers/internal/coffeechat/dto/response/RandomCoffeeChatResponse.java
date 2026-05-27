@@ -26,5 +26,8 @@ public record RandomCoffeeChatResponse(
         String companyJob,
 
         @Schema(description = "솝트 활동 정보 (예: [\"35기 서버\", \"3기 메이커스\"])")
-        List<String> soptActivities
+        List<String> soptActivities,
+
+        @Schema(description = "커피챗 주제 타입 목록 (예: [\"커리어\", \"네트워킹\"])")
+        List<String> topicTypeList
 ) {}

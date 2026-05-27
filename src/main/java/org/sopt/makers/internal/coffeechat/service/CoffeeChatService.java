@@ -326,7 +326,8 @@ public class CoffeeChatService {
                             coffeeChat.getCareer().getTitle(),
                             memberCareer != null ? memberCareer.getCompanyName() : coffeeChat.getMember().getUniversity(),
                             memberCareer != null ? memberCareer.getTitle() : null,
-                            soptActivities
+                            soptActivities,
+                            coffeeChat.getCoffeeChatTopicType().stream().map(CoffeeChatTopicType::getTitle).toList()
                     );
                 })
                 .toList();
