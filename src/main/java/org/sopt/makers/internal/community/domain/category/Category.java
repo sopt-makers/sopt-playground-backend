@@ -49,6 +49,7 @@ public class Category {
     private Category parent;
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC")
     private List<Category> children = new ArrayList<>();
 
     @Column
