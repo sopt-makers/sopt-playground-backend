@@ -46,8 +46,10 @@ public class CoffeeChatController {
 
     @Operation(summary = "랜덤 커피챗 4개 조회 API")
     @GetMapping("/random")
-    public ResponseEntity<List<RandomCoffeeChatResponse>> getRandomCoffeeChatList() {
-        return ResponseEntity.status(HttpStatus.OK).body(coffeeChatService.getRandomCoffeeChatList());
+    public ResponseEntity<List<RandomCoffeeChatResponse>> getRandomCoffeeChatList(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(coffeeChatService.getRandomCoffeeChatList(userId));
     }
 
     @Operation(summary = "최근 진행된 커피챗 유저 조회 API")

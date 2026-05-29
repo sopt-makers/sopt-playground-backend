@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CoffeeChatScheduler {
 
-    private static final Duration RANDOM_COFFEE_CHAT_TTL = Duration.ofHours(25);
 
     private final CoffeeChatService coffeeChatService;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -32,7 +31,7 @@ public class CoffeeChatScheduler {
         try {
             List<RandomCoffeeChatResponse> result = coffeeChatService.buildRandomCoffeeChatList();
             String json = objectMapper.writeValueAsString(result);
-            redisTemplate.opsForValue().set(CoffeeChatService.RANDOM_COFFEE_CHAT_REDIS_KEY, json, RANDOM_COFFEE_CHAT_TTL);
+            redisTemplate.opsForValue().set(CoffeeChatService.RANDOM_COFFEE_CHAT_REDIS_KEY, json, CoffeeChatService.RANDOM_COFFEE_CHAT_TTL);
             log.info("[CoffeeChatScheduler] 랜덤 커피챗 캐시 갱신 완료");
         } catch (Exception e) {
             log.error("[CoffeeChatScheduler] 랜덤 커피챗 캐시 갱신 실패", e);
