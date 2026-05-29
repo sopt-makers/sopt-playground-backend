@@ -23,14 +23,8 @@ public class CategoryRetriever {
     }
 
     @Transactional(readOnly = true)
-    public List<Category> findActiveRootListCategories() {
-        return categoryRepository.findAllByIsActiveTrueAndParentIsNullAndCodeInOrderByDisplayOrderAsc(
-            List.of(
-                CommunityCategoryCode.FREE,
-                CommunityCategoryCode.PROMOTION,
-                CommunityCategoryCode.SOPTICLE
-            )
-        );
+    public List<Category> findAllActiveCategoriesWithParent() {
+        return categoryRepository.findAllActiveWithParentOrderByDisplayOrderAsc();
     }
 
     @Transactional(readOnly = true)

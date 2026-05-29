@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.domain.enums;
 
 public enum CommunityCategoryCode {
 	FREE,
+	MEETING,
 
 	PROMOTION,
 	PROMOTION_EVENT,

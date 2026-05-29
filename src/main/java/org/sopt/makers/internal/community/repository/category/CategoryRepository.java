@@ -14,7 +14,12 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findAllByCodeInAndIsActiveTrue(List<CommunityCategoryCode> codes);
 
-	List<Category> findAllByIsActiveTrueAndParentIsNullAndCodeInOrderByDisplayOrderAsc(
-		List<CommunityCategoryCode> codes
-	);
+	@Query("""
+        select category
+        from Category category
+        left join fetch category.parent
+        where category.isActive = true
+        order by category.displayOrder asc, category.id asc
+    """)
+	List<Category> findAllActiveWithParentOrderByDisplayOrderAsc();
 }
