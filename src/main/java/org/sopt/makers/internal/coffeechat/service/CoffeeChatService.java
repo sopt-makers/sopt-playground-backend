@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.coffeechat.service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CoffeeChatService {
 
     public static final String RANDOM_COFFEE_CHAT_REDIS_KEY = "coffeeChat:random";
+
     private final SmsChatSender smsChatSender;
 
     private final MemberRetriever memberRetriever;
@@ -63,10 +65,10 @@ public class CoffeeChatService {
     private final CoffeeChatModifier coffeeChatModifier;
     private final CoffeeChatRetriever coffeeChatRetriever;
     private final CoffeeChatRepository coffeeChatRepository;
+    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
+
     private final ObjectMapper objectMapper;
     private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
-
-    private final AnonymousProfileImageRetriever anonymousProfileImageRetriever;
 
     private final CoffeeChatResponseMapper coffeeChatResponseMapper;
 
@@ -292,21 +294,45 @@ public class CoffeeChatService {
         }).toList();
     }
 
-    public List<RandomCoffeeChatResponse> getRandomCoffeeChatList() {
+    public List<RandomCoffeeChatResponse> getRandomCoffeeChatList(Long userId) {
+        List<RandomCoffeeChatResponse> pool;
         try {
             Object cached = redisTemplate.opsForValue().get(RANDOM_COFFEE_CHAT_REDIS_KEY);
             if (cached != null) {
-                return objectMapper.readValue(cached.toString(), new TypeReference<>() {});
+                pool = objectMapper.readValue(cached.toString(), new TypeReference<>() {});
+            } else {
+                pool = buildRandomCoffeeChatList();
             }
         } catch (Exception e) {
             log.warn("[CoffeeChatService] Redis 캐시 조회 실패, DB fallback 실행", e);
+            pool = buildRandomCoffeeChatList();
         }
-        return buildRandomCoffeeChatList();
+
+        InternalUserDetails currentUser = platformService.getInternalUser(userId);
+        String userPart = currentUser.soptActivities().stream()
+                .max(Comparator.comparing(SoptActivity::normalizedGeneration))
+                .map(SoptActivity::part)
+                .orElseThrow();
+
+        List<RandomCoffeeChatResponse> samePart = pool.stream()
+                .filter(r -> r.soptActivities().stream()
+                        .anyMatch(a -> a.endsWith(" " + userPart)))
+                .toList();
+        List<RandomCoffeeChatResponse> otherPart = pool.stream()
+                .filter(r -> r.soptActivities().stream()
+                        .noneMatch(a -> a.endsWith(" " + userPart)))
+                .toList();
+
+        List<RandomCoffeeChatResponse> result = new ArrayList<>(samePart.subList(0, Math.min(samePart.size(), 4)));
+        if (result.size() < 4) {
+            result.addAll(otherPart.subList(0, Math.min(otherPart.size(), 4 - result.size())));
+        }
+        return result;
     }
 
     @Transactional(readOnly = true)
     public List<RandomCoffeeChatResponse> buildRandomCoffeeChatList() {
-        return coffeeChatRetriever.findRandomActiveCoffeeChats(4).stream()
+        return coffeeChatRetriever.findRandomActiveCoffeeChats(20).stream()
                 .map(coffeeChat -> {
                     Long memberId = coffeeChat.getMember().getId();
                     InternalUserDetails userDetails = platformService.getInternalUser(memberId);
