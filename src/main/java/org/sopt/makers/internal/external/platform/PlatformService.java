@@ -2,7 +2,10 @@ package org.sopt.makers.internal.external.platform;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +51,50 @@ public class PlatformService {
         }
 
         return Collections.emptyList();
+    }
+
+    /**
+     * batch map helper
+     */
+    public Map<Long, InternalUserDetails> getInternalUserDetailsMap(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> distinctUserIds = userIds.stream()
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (distinctUserIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, InternalUserDetails> userDetailsMap = getInternalUsers(distinctUserIds).stream()
+            .collect(Collectors.toMap(
+                InternalUserDetails::userId,
+                userDetails -> userDetails,
+                (previous, current) -> previous,
+                LinkedHashMap::new
+            ));
+
+        List<Long> missingUserIds = distinctUserIds.stream()
+            .filter(userId -> !userDetailsMap.containsKey(userId))
+            .toList();
+
+        for (Long missingUserId : missingUserIds) {
+            try {
+                InternalUserDetails userDetails = getInternalUser(missingUserId);
+                userDetailsMap.put(missingUserId, userDetails);
+            } catch (Exception exception) {
+                log.warn("[INTERNAL-PLATFORM] 단건 fallback 유저 정보 조회 실패. userId: {}, error: {}",
+                    missingUserId,
+                    exception.getMessage()
+                );
+            }
+        }
+
+        return userDetailsMap;
     }
 
     /**

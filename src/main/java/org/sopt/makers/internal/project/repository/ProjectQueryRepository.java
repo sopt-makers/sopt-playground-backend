@@ -167,4 +167,13 @@ public class ProjectQueryRepository {
                 .fetch()
                 .size();
     }
+
+    public List<Project> findRandomProjects(int limit) {
+        val project = QProject.project;
+
+        return queryFactory.selectFrom(project)
+                .orderBy(Expressions.numberTemplate(Double.class, "random()").asc())
+                .limit(limit)
+                .fetch();
+    }
 }

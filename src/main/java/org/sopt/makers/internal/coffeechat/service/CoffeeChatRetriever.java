@@ -92,4 +92,8 @@ public class CoffeeChatRetriever {
 
         return coffeeChatReviewRepository.findTop6ByOrderByIdDesc();
     }
+
+    public List<CoffeeChat> findRandomActiveCoffeeChats(int limit) {
+        return coffeeChatRepository.findRandomActiveCoffeeChats(limit);
+    }
 }

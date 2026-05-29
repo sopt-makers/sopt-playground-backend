@@ -6,6 +6,7 @@ import lombok.Builder;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
 import org.sopt.makers.internal.vote.dto.request.VoteRequest;
 
 import java.util.List;
@@ -13,18 +14,14 @@ import java.util.List;
 @Builder
 public record PostSaveRequest(
         @Schema(required = true)
-        @NotNull(message = "카테고리 id는 필수 입력값입니다.")
-        Long categoryId,
+        @NotNull(message = "카테고리 코드는 필수 입력값입니다.")
+		CommunityCategoryCode categoryCode,
 
         String title,
 
         @Schema(required = true)
         @NotBlank(message = "게시글 본문은 공백일 수 없습니다.")
         String content,
-
-        @Schema(required = true)
-        @NotNull(message = "질문글 여부 필드는 필수 입력값입니다.")
-        Boolean isQuestion,
 
         @Schema(required = true)
         @NotNull(message = "익명글 여부 필드는 필수 입력값입니다.")

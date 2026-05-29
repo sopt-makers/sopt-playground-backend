@@ -23,6 +23,7 @@ import org.sopt.makers.internal.project.domain.ProjectLink;
 import org.sopt.makers.internal.project.dto.request.ProjectSaveRequest;
 import org.sopt.makers.internal.project.dto.request.ProjectUpdateRequest;
 import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
+import org.sopt.makers.internal.project.dto.response.allProject.RandomProjectResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
@@ -224,6 +225,25 @@ public class ProjectService {
     public List<Long> getProjectUserIdsByProjectId(Long projectId) {
         List<MemberProjectRelation> projectUsers = memberProjectRelationRepository.findAllByProjectId(projectId);
         return projectUsers.stream().map(MemberProjectRelation::getUserId).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RandomProjectResponse> getRandomProjects() {
+        return projectQueryRepository.findRandomProjects(4).stream()
+                .map(project -> new RandomProjectResponse(
+                        project.getId(),
+                        project.getName(),
+                        project.getGeneration(),
+                        project.getCategory(),
+                        project.getServiceType(),
+                        project.getStartAt(),
+                        project.getEndAt(),
+                        project.getIsAvailable(),
+                        project.getIsFounding(),
+                        project.getLogoImage(),
+                        project.getThumbnailImage()
+                ))
+                .toList();
     }
 
     private void validateImageCount(int imageCount) {

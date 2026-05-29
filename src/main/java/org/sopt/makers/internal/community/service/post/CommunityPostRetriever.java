@@ -1,13 +1,14 @@
 package org.sopt.makers.internal.community.service.post;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.CommunityPostLike;
 import org.sopt.makers.internal.community.repository.post.CommunityPostLikeRepository;
-import org.sopt.makers.internal.community.domain.CommunityPost;
+import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.NotFoundException;
-import org.sopt.makers.internal.community.repository.post.CommunityPostRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -16,9 +17,10 @@ public class CommunityPostRetriever {
     private final CommunityPostRepository communityPostRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
 
+    @Transactional(readOnly = true)
     public CommunityPost findCommunityPostById(Long postId) {
-        return communityPostRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글의 id값 입니다."));
+        return communityPostRepository.findByIdWithCategoryAndMember(postId)
+            .orElseThrow(() -> new NotFoundException("존재하지 않는 게시글의 id값 입니다."));
     }
 
     public void checkExistsCommunityPostById(Long postId) {
@@ -35,6 +37,6 @@ public class CommunityPostRetriever {
 
     public CommunityPostLike findCommunityPostLike(Long memberId, Long postId) {
         return communityPostLikeRepository.findCommunityPostLikeByMemberIdAndPostId(memberId, postId)
-                .orElseThrow(() -> new NotFoundException("이 게시물에는 아직 좋아요를 누르지 않았습니다."));
+            .orElseThrow(() -> new NotFoundException("이 게시물에는 아직 좋아요를 누르지 않았습니다."));
     }
 }
