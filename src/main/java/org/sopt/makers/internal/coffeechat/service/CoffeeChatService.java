@@ -54,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CoffeeChatService {
 
     public static final String RANDOM_COFFEE_CHAT_REDIS_KEY = "coffeeChat:random";
+    public static final java.time.Duration RANDOM_COFFEE_CHAT_TTL = java.time.Duration.ofHours(25);
 
     private final SmsChatSender smsChatSender;
 
@@ -302,6 +303,8 @@ public class CoffeeChatService {
                 pool = objectMapper.readValue(cached.toString(), new TypeReference<>() {});
             } else {
                 pool = buildRandomCoffeeChatList();
+                String json = objectMapper.writeValueAsString(pool);
+                redisTemplate.opsForValue().set(RANDOM_COFFEE_CHAT_REDIS_KEY, json, RANDOM_COFFEE_CHAT_TTL);
             }
         } catch (Exception e) {
             log.warn("[CoffeeChatService] Redis 캐시 조회 실패, DB fallback 실행", e);
