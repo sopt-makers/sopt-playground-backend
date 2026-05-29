@@ -295,6 +295,7 @@ public class CoffeeChatService {
         }).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<RandomCoffeeChatResponse> getRandomCoffeeChatList(Long userId) {
         List<RandomCoffeeChatResponse> pool;
         try {
