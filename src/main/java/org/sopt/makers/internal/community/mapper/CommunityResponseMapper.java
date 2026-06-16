@@ -2,6 +2,7 @@ package org.sopt.makers.internal.community.mapper;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 import org.hibernate.Hibernate;
@@ -16,6 +19,7 @@ import org.sopt.makers.internal.community.domain.enums.CommunityCategoryCode;
 import org.sopt.makers.internal.community.domain.enums.CommunityCategoryGroup;
 import org.sopt.makers.internal.community.domain.enums.CommunityPostSourceType;
 import org.sopt.makers.internal.community.domain.enums.CommunityPostTag;
+import org.sopt.makers.internal.community.service.post.link.CommunityPostWebLinkBuilder;
 import org.sopt.makers.internal.community.utils.MentionCleaner;
 import org.sopt.makers.internal.community.domain.CommunityPost;
 import org.sopt.makers.internal.community.domain.anonymous.AnonymousProfile;
@@ -39,6 +43,7 @@ import org.sopt.makers.internal.community.dto.response.SopticlePostResponse;
 import org.sopt.makers.internal.external.makers.CrewPost;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.SoptActivity;
+import org.sopt.makers.internal.internal.dto.InternalLatestPostResponse;
 import org.sopt.makers.internal.internal.dto.InternalPopularPostResponse;
 import org.sopt.makers.internal.member.dto.response.MemberNameAndProfileImageResponse;
 import org.sopt.makers.internal.vote.dto.response.VoteResponse;
@@ -46,9 +51,16 @@ import org.springframework.stereotype.Component;
 
 import static java.util.stream.Collectors.*;
 
+@RequiredArgsConstructor
 @Component
 public class CommunityResponseMapper {
-    public CommentResponse toCommentResponse(CommentInfo info, Long memberId, Boolean isLiked, Integer likeCount) {
+
+    private static final DateTimeFormatter INTERNAL_DATE_TIME_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+
+    private final CommunityPostWebLinkBuilder communityPostWebLinkBuilder;
+
+	public CommentResponse toCommentResponse(CommentInfo info, Long memberId, Boolean isLiked, Integer likeCount) {
         val comment = info.commentDao().comment();
         if (Boolean.TRUE.equals(comment.getIsDeleted())) {
             return new CommentResponse(
@@ -332,8 +344,51 @@ public class CommunityResponseMapper {
         );
     }
 
-    private AnonymousProfileVo toAnonymousProfileVo(AnonymousProfile anonymousProfile) {
-        return new AnonymousProfileVo(anonymousProfile.getNickname().getNickname(), anonymousProfile.getProfileImg().getImageUrl());
+    public InternalLatestPostResponse toInternalLatestPostResponse(
+        CommunityPost post,
+        SoptActivity latestActivity,
+        InternalUserDetails userDetails,
+        String categoryName,
+        AnonymousProfile anonymousProfile
+    ) {
+        String webLink = communityPostWebLinkBuilder.build(post);
+        String cleanedContent = MentionCleaner.removeMentionIds(post.getContent());
+
+        if (Boolean.TRUE.equals(post.getIsBlindWriter())) {
+            if (anonymousProfile == null) {
+                throw new IllegalStateException("anonymous profile is required for blind post");
+            }
+
+            return InternalLatestPostResponse.builder()
+                .id(post.getId())
+                .userId(null)
+                .profileImage(anonymousProfile.getProfileImg().getImageUrl())
+                .name(anonymousProfile.getNickname().getNickname())
+                .generationAndPart("")
+                .category(categoryName)
+                .title(post.getTitle())
+                .content(cleanedContent)
+                .webLink(webLink)
+                .createdAt(post.getCreatedAt().format(INTERNAL_DATE_TIME_FORMATTER))
+                .build();
+        }
+
+        if (userDetails == null) {
+            throw new IllegalStateException("user details is required for non-blind post");
+        }
+
+        return InternalLatestPostResponse.builder()
+            .id(post.getId())
+            .userId(userDetails.userId())
+            .profileImage(userDetails.profileImage())
+            .name(userDetails.name())
+            .generationAndPart(resolveLatestGenerationAndPart(latestActivity))
+            .category(categoryName)
+            .title(post.getTitle())
+            .content(cleanedContent)
+            .webLink(webLink)
+            .createdAt(post.getCreatedAt().format(INTERNAL_DATE_TIME_FORMATTER))
+            .build();
     }
 
     public InternalPopularPostResponse toInternalPopularPostResponse(
@@ -341,9 +396,11 @@ public class CommunityResponseMapper {
         AnonymousProfile anonymousProfile,
         InternalUserDetails userDetails,
         String categoryName,
-        int rank,
-        String baseUrl
+        int rank
     ) {
+        String webLink = communityPostWebLinkBuilder.build(post);
+        String cleanedContent = MentionCleaner.removeMentionIds(post.getContent());
+
         if (Boolean.TRUE.equals(post.getIsBlindWriter())) {
             if (anonymousProfile == null) {
                 throw new IllegalStateException("anonymous profile is required for blind post");
@@ -358,8 +415,8 @@ public class CommunityResponseMapper {
                 .rank(rank)
                 .category(categoryName)
                 .title(post.getTitle())
-                .content(MentionCleaner.removeMentionIds(post.getContent()))
-                .webLink(baseUrl + post.getId())
+                .content(cleanedContent)
+                .webLink(webLink)
                 .build();
         }
 
@@ -367,27 +424,17 @@ public class CommunityResponseMapper {
             throw new IllegalStateException("user details is required for non-blind post");
         }
 
-        SoptActivity lastActivity = userDetails.soptActivities() == null
-            ? null
-            : userDetails.soptActivities().stream()
-              .max(Comparator.comparing(SoptActivity::generation))
-              .orElse(null);
-
-        String generationAndPart = lastActivity == null
-            ? ""
-            : String.format("%d기 %s", lastActivity.generation(), lastActivity.part());
-
         return InternalPopularPostResponse.builder()
             .id(post.getId())
             .userId(userDetails.userId())
             .profileImage(userDetails.profileImage())
             .name(userDetails.name())
-            .generationAndPart(generationAndPart)
+            .generationAndPart(resolvePopularGenerationAndPart(userDetails))
             .rank(rank)
             .category(categoryName)
             .title(post.getTitle())
-            .content(MentionCleaner.removeMentionIds(post.getContent()))
-            .webLink(baseUrl + post.getId())
+            .content(cleanedContent)
+            .webLink(webLink)
             .build();
     }
 
@@ -474,6 +521,13 @@ public class CommunityResponseMapper {
         return topLevelComments;
     }
 
+    // ==========================================
+    // Private Methods
+    // ==========================================
+    private AnonymousProfileVo toAnonymousProfileVo(AnonymousProfile anonymousProfile) {
+        return new AnonymousProfileVo(anonymousProfile.getNickname().getNickname(), anonymousProfile.getProfileImg().getImageUrl());
+    }
+
     private String getRelativeTime(LocalDateTime createdAt) {
         Duration duration = Duration.between(createdAt, LocalDateTime.now());
 
@@ -497,5 +551,29 @@ public class CommunityResponseMapper {
 
         long years = months / 12;
         return years + "년 전";
+    }
+
+    private String resolveLatestGenerationAndPart(SoptActivity latestActivity) {
+        if (latestActivity == null) {
+            return "";
+        }
+
+        if (!latestActivity.isSopt()) {
+            return String.format("%d기/메이커스", latestActivity.generation());
+        }
+
+        return String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
+    }
+
+    private String resolvePopularGenerationAndPart(InternalUserDetails userDetails) {
+        SoptActivity lastActivity = userDetails.soptActivities() == null
+            ? null
+            : userDetails.soptActivities().stream()
+              .max(Comparator.comparing(SoptActivity::generation))
+              .orElse(null);
+
+        return lastActivity == null
+            ? ""
+            : String.format("%d기 %s", lastActivity.generation(), lastActivity.part());
     }
 }

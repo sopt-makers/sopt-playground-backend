@@ -725,10 +725,6 @@ public class CommunityPostService {
 
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUserDetailsMap(authorIds);
 
-        String baseUrl = activeProfile.equals("prod")
-            ? "https://playground.sopt.org/?feed="
-            : "https://sopt-internal-dev.pages.dev/?feed=";
-
         List<InternalPopularPostResponse> responses = new ArrayList<>();
         int rank = 1;
 
@@ -751,8 +747,7 @@ public class CommunityPostService {
                 anonymousProfile,
                 userDetails,
                 resolveRootCategoryName(post.getCategory()),
-                rank++,
-                baseUrl
+                rank++
             ));
         }
 
@@ -904,15 +899,17 @@ public class CommunityPostService {
 
         List<InternalLatestPostResponse> responses = new ArrayList<>();
 
-        String baseUrl = activeProfile.equals("prod")
-            ? "https://playground.sopt.org/?feed="
-            : "https://sopt-internal-dev.pages.dev/?feed=";
-
         for (CommunityPost post : latestPosts) {
             Long authorId = post.getMember().getId();
             InternalUserDetails userDetails = userDetailsMap.get(authorId);
 
             if (userDetails == null) {
+                continue;
+            }
+
+            AnonymousProfile anonymousProfile = anonymousProfileMap.get(post.getId());
+
+            if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile == null) {
                 continue;
             }
 
@@ -923,19 +920,12 @@ public class CommunityPostService {
                        .thenComparing(activity -> !activity.isSopt()))
                   .orElse(null);
 
-            String categoryName = resolveRootCategoryName(post.getCategory());
-
-            Optional<AnonymousProfile> anonymousProfile = Boolean.TRUE.equals(post.getIsBlindWriter())
-                ? Optional.ofNullable(anonymousProfileMap.get(post.getId()))
-                : Optional.empty();
-
-            responses.add(InternalLatestPostResponse.of(
+            responses.add(communityResponseMapper.toInternalLatestPostResponse(
                 post,
                 latestActivity,
                 userDetails,
-                categoryName,
-                anonymousProfile,
-                baseUrl
+                resolveRootCategoryName(post.getCategory()),
+                anonymousProfile
             ));
         }
 
