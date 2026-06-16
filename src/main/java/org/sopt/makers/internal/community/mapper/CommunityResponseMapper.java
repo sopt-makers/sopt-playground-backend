@@ -346,7 +346,6 @@ public class CommunityResponseMapper {
 
     public InternalLatestPostResponse toInternalLatestPostResponse(
         CommunityPost post,
-        SoptActivity latestActivity,
         InternalUserDetails userDetails,
         String categoryName,
         AnonymousProfile anonymousProfile
@@ -382,7 +381,7 @@ public class CommunityResponseMapper {
             .userId(userDetails.userId())
             .profileImage(userDetails.profileImage())
             .name(userDetails.name())
-            .generationAndPart(resolveLatestGenerationAndPart(latestActivity))
+            .generationAndPart(resolveGenerationAndPart(resolveLatestActivity(userDetails)))
             .category(categoryName)
             .title(post.getTitle())
             .content(cleanedContent)
@@ -429,7 +428,7 @@ public class CommunityResponseMapper {
             .userId(userDetails.userId())
             .profileImage(userDetails.profileImage())
             .name(userDetails.name())
-            .generationAndPart(resolvePopularGenerationAndPart(userDetails))
+            .generationAndPart(resolveGenerationAndPart(resolveLatestActivity(userDetails)))
             .rank(rank)
             .category(categoryName)
             .title(post.getTitle())
@@ -553,27 +552,26 @@ public class CommunityResponseMapper {
         return years + "년 전";
     }
 
-    private String resolveLatestGenerationAndPart(SoptActivity latestActivity) {
-        if (latestActivity == null) {
+    private SoptActivity resolveLatestActivity(InternalUserDetails userDetails) {
+        if (userDetails == null || userDetails.soptActivities() == null || userDetails.soptActivities().isEmpty()) {
+            return null;
+        }
+
+        return userDetails.soptActivities().stream()
+            .max(Comparator.comparing(SoptActivity::normalizedGeneration)
+                .thenComparing(SoptActivity::isSopt))
+            .orElse(null);
+    }
+
+    private String resolveGenerationAndPart(SoptActivity activity) {
+        if (activity == null) {
             return "";
         }
 
-        if (!latestActivity.isSopt()) {
-            return String.format("%d기/메이커스", latestActivity.generation());
+        if (!activity.isSopt()) {
+            return String.format("%d기/메이커스", activity.generation());
         }
 
-        return String.format("%d기 %s", latestActivity.generation(), latestActivity.part());
-    }
-
-    private String resolvePopularGenerationAndPart(InternalUserDetails userDetails) {
-        SoptActivity lastActivity = userDetails.soptActivities() == null
-            ? null
-            : userDetails.soptActivities().stream()
-              .max(Comparator.comparing(SoptActivity::generation))
-              .orElse(null);
-
-        return lastActivity == null
-            ? ""
-            : String.format("%d기 %s", lastActivity.generation(), lastActivity.part());
+        return String.format("%d기 %s", activity.generation(), activity.part());
     }
 }

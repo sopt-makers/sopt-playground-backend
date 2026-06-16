@@ -72,7 +72,6 @@ import org.sopt.makers.internal.community.service.post.crew.CrewMeetingFetchResu
 import org.sopt.makers.internal.external.makers.CrewPost;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
-import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.external.pushNotification.message.SimplePushNotificationMessage;
 import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.external.slack.SlackClient;
@@ -913,16 +912,8 @@ public class CommunityPostService {
                 continue;
             }
 
-            SoptActivity latestActivity = userDetails.soptActivities() == null
-                ? null
-                : userDetails.soptActivities().stream()
-                  .max(Comparator.comparing(SoptActivity::generation)
-                       .thenComparing(activity -> !activity.isSopt()))
-                  .orElse(null);
-
             responses.add(communityResponseMapper.toInternalLatestPostResponse(
                 post,
-                latestActivity,
                 userDetails,
                 resolveRootCategoryName(post.getCategory()),
                 anonymousProfile
