@@ -72,7 +72,6 @@ import org.sopt.makers.internal.community.service.post.crew.CrewMeetingFetchResu
 import org.sopt.makers.internal.external.makers.CrewPost;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
-import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.external.pushNotification.message.SimplePushNotificationMessage;
 import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.external.slack.SlackClient;
@@ -725,10 +724,6 @@ public class CommunityPostService {
 
         Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUserDetailsMap(authorIds);
 
-        String baseUrl = activeProfile.equals("prod")
-            ? "https://playground.sopt.org/?feed="
-            : "https://sopt-internal-dev.pages.dev/?feed=";
-
         List<InternalPopularPostResponse> responses = new ArrayList<>();
         int rank = 1;
 
@@ -751,8 +746,7 @@ public class CommunityPostService {
                 anonymousProfile,
                 userDetails,
                 resolveRootCategoryName(post.getCategory()),
-                rank++,
-                baseUrl
+                rank++
             ));
         }
 
@@ -904,10 +898,6 @@ public class CommunityPostService {
 
         List<InternalLatestPostResponse> responses = new ArrayList<>();
 
-        String baseUrl = activeProfile.equals("prod")
-            ? "https://playground.sopt.org/?feed="
-            : "https://sopt-internal-dev.pages.dev/?feed=";
-
         for (CommunityPost post : latestPosts) {
             Long authorId = post.getMember().getId();
             InternalUserDetails userDetails = userDetailsMap.get(authorId);
@@ -916,26 +906,17 @@ public class CommunityPostService {
                 continue;
             }
 
-            SoptActivity latestActivity = userDetails.soptActivities() == null
-                ? null
-                : userDetails.soptActivities().stream()
-                  .max(Comparator.comparing(SoptActivity::generation)
-                       .thenComparing(activity -> !activity.isSopt()))
-                  .orElse(null);
+            AnonymousProfile anonymousProfile = anonymousProfileMap.get(post.getId());
 
-            String categoryName = resolveRootCategoryName(post.getCategory());
+            if (Boolean.TRUE.equals(post.getIsBlindWriter()) && anonymousProfile == null) {
+                continue;
+            }
 
-            Optional<AnonymousProfile> anonymousProfile = Boolean.TRUE.equals(post.getIsBlindWriter())
-                ? Optional.ofNullable(anonymousProfileMap.get(post.getId()))
-                : Optional.empty();
-
-            responses.add(InternalLatestPostResponse.of(
+            responses.add(communityResponseMapper.toInternalLatestPostResponse(
                 post,
-                latestActivity,
                 userDetails,
-                categoryName,
-                anonymousProfile,
-                baseUrl
+                resolveRootCategoryName(post.getCategory()),
+                anonymousProfile
             ));
         }
 
