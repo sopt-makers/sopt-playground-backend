@@ -64,16 +64,17 @@ public class ProjectController {
             @RequestParam(required = false, name = "name") String name,
             @RequestParam(required = false, name = "category") String category,
             @RequestParam(required = false, name = "isAvailable") Boolean isAvailable,
-            @RequestParam(required = false, name = "isFounding") Boolean isFounding
+            @RequestParam(required = false, name = "isFounding") Boolean isFounding,
+            @RequestParam(required = false, name = "generation") Integer generation
     ) {
         List<Project> projectList = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit),
-                        cursor, name, category, isAvailable, isFounding);
+                        cursor, name, category, isAvailable, isFounding, generation);
         List<ProjectResponse> projectResponseList = new ArrayList<>(
                 projectService.getAllProjectResponseList(projectList).stream()
                         .sorted(Comparator.comparing(ProjectResponse::id).reversed())
                         .toList());
         Boolean hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectResponseList);
-        int totalProjectsCount = projectService.getProjectsCount(name, category, isAvailable, isFounding);
+        int totalProjectsCount = projectService.getProjectsCount(name, category, isAvailable, isFounding, generation);
 
         ProjectAllResponse responses = new ProjectAllResponse(projectResponseList, hasNextProject, totalProjectsCount);
         return ResponseEntity.status(HttpStatus.OK).body(responses);

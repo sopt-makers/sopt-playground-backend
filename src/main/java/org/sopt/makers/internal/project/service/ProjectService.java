@@ -168,15 +168,15 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding) {
+    public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
         if(limit != null && name != null) {
-            return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
+            return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding, generation);
         } else if(limit != null) {
-            return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding);
+            return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding, generation);
         } else if(name != null) {
-            return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding);
+            return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding, generation);
         }
-        return projectRepository.findAll();
+        return projectQueryRepository.findAllProjects(category, isAvailable, isFounding, generation);
     }
 
     public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
@@ -208,8 +208,8 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public int getProjectsCount(String name, String category, Boolean isAvailable, Boolean isFounding) {
-        return projectQueryRepository.countAllProjects(name, category, isAvailable, isFounding);
+    public int getProjectsCount(String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
+        return projectQueryRepository.countAllProjects(name, category, isAvailable, isFounding, generation);
     }
 
     @Transactional(readOnly = true)

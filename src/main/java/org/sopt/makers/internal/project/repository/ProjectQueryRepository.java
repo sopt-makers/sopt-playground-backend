@@ -80,6 +80,10 @@ public class ProjectQueryRepository {
         return checkIsAvailableIsEmpty || isAvailable.equals(Boolean.FALSE) ? null : QProject.project.isAvailable.eq(isAvailable);
     }
 
+    private BooleanExpression checkProjectGeneration(Integer generation) {
+        return Objects.isNull(generation) ? null : QProject.project.generation.eq(generation);
+    }
+
     private BooleanExpression ltProjectId(Long projectId) {
         val project = QProject.project;
         if(projectId == null || projectId == 0) return null;
@@ -100,27 +104,42 @@ public class ProjectQueryRepository {
         return getProjectLinkQuery().fetch();
     }
 
+    public List<Project> findAllProjects(
+            String category, Boolean isAvailable, Boolean isFounding, Integer generation
+    ) {
+        val project = QProject.project;
+
+        return queryFactory.selectFrom(project)
+                .where(checkProjectIsFounding(isFounding), checkProjectCategory(category),
+                        checkProjectIsAvailable(isAvailable), checkProjectGeneration(generation))
+                .orderBy(project.id.desc())
+                .groupBy(project.id)
+                .fetch();
+    }
+
     public List<Project> findAllNameProjects(
-            String name, String category, Boolean isAvailable, Boolean isFounding
+            String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation
     ) {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
                 .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
+                        checkProjectGeneration(generation))
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
                 .fetch();
     }
 
     public List<Project> findAllLimitedProjects(
-            Integer limit, Long cursor, String category, Boolean isAvailable, Boolean isFounding
+            Integer limit, Long cursor, String category, Boolean isAvailable, Boolean isFounding, Integer generation
     ) {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
                 .where(ltProjectId(cursor), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
+                        checkProjectGeneration(generation))
                 .limit(limit)
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
@@ -128,25 +147,27 @@ public class ProjectQueryRepository {
     }
 
     public List<Project> findAllLimitedProjectsContainsName(
-            Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding
+            Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation
     ) {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
                 .where(ltProjectId(cursor), checkProjectContainsName(name), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
+                        checkProjectGeneration(generation))
                 .limit(limit)
                 .orderBy(project.id.desc())
                 .groupBy(project.id)
                 .fetch();
     }
 
-    public int countAllProjects(String name, String category, Boolean isAvailable, Boolean isFounding) {
+    public int countAllProjects(String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
         val project = QProject.project;
         return queryFactory.select(project.id)
                 .from(project)
                 .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable))
+                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
+                        checkProjectGeneration(generation))
                 .groupBy(project.id)
                 .fetch()
                 .size();
