@@ -72,12 +72,12 @@ public class ProjectQueryRepository {
 
     private BooleanExpression checkProjectIsFounding(Boolean isFounding) {
         val checkIsFoundingIsEmpty = Objects.isNull(isFounding);
-        return checkIsFoundingIsEmpty || isFounding.equals(Boolean.FALSE) ? null : QProject.project.isFounding.eq(isFounding);
+        return checkIsFoundingIsEmpty ? null : QProject.project.isFounding.eq(isFounding);
     }
 
     private BooleanExpression checkProjectIsAvailable(Boolean isAvailable) {
         val checkIsAvailableIsEmpty = Objects.isNull(isAvailable);
-        return checkIsAvailableIsEmpty || isAvailable.equals(Boolean.FALSE) ? null : QProject.project.isAvailable.eq(isAvailable);
+        return checkIsAvailableIsEmpty ? null : QProject.project.isAvailable.eq(isAvailable);
     }
 
     private BooleanExpression checkProjectGeneration(Integer generation) {
@@ -163,14 +163,13 @@ public class ProjectQueryRepository {
 
     public int countAllProjects(String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
         val project = QProject.project;
-        return queryFactory.select(project.id)
+        Long count = queryFactory.select(project.id.countDistinct())
                 .from(project)
                 .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
                         checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
                         checkProjectGeneration(generation))
-                .groupBy(project.id)
-                .fetch()
-                .size();
+                .fetchOne();
+        return count == null ? 0 : count.intValue();
     }
 
     public int countProjectsExcludeSopkathon(Long memberId) {
