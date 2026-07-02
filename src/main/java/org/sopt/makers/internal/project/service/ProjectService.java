@@ -13,7 +13,6 @@ import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberRepository;
@@ -26,6 +25,7 @@ import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
 import org.sopt.makers.internal.project.dto.response.allProject.RandomProjectResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectLinkResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
 import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
@@ -179,17 +179,22 @@ public class ProjectService {
         return projectQueryRepository.findAllProjects(category, isAvailable, isFounding, generation);
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
-        return projectList.stream()
-                .map(project -> {
-                    List<Long> userIds = getProjectUserIdsByProjectId(project.getId());
-                    List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
-                            authConfig.getPlatformServiceName(), userIds).getBody()).getData();
-                    List<MemberSimpleResonse> memberResponses = projectUsersDetails.stream()
-                            .map(p-> new MemberSimpleResonse(p.userId(), p.name(), p.profileImage())).toList();
+        List<Long> projectIds = projectList.stream().map(Project::getId).toList();
+        Map<Long, List<ProjectLinkResponse>> linksByProjectId = projectLinkRepository.findAllByProjectIdIn(projectIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        ProjectLink::getProjectId,
+                        Collectors.mapping(link -> new ProjectLinkResponse(link.getId(), link.getTitle(), link.getUrl()), Collectors.toList())
+                ));
 
-                    return projectResponseMapper.toProjectResponse(project, memberResponses);
-                }).toList();
+        return projectList.stream()
+                .map(project -> projectResponseMapper.toProjectResponse(
+                        project,
+                        linksByProjectId.getOrDefault(project.getId(), List.of())
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
