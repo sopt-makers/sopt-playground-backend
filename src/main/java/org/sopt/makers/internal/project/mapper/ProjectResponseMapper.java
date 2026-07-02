@@ -2,7 +2,6 @@ package org.sopt.makers.internal.project.mapper;
 
 import java.util.List;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.internal.dto.InternalProjectResponse;
 import org.sopt.makers.internal.member.domain.Member;
@@ -24,7 +23,7 @@ public class ProjectResponseMapper {
         return new ProjectLinkResponse(project.getId(), project.getTitle(), project.getUrl());
     }
 
-    public ProjectResponse toProjectResponse(Project project, List<MemberSimpleResonse> projectMemberResponses) {
+    public ProjectResponse toProjectResponse(Project project, List<ProjectLinkResponse> links) {
         return new ProjectResponse(
                 project.getId(),
                 project.getName(),
@@ -37,7 +36,7 @@ public class ProjectResponseMapper {
                 truncateString(project.getDetail()),
                 project.getLogoImage(),
                 project.getThumbnailImage(),
-                projectMemberResponses
+                links
         );
     }
 
