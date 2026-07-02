@@ -8,5 +8,7 @@ import java.util.List;
 public interface ProjectLinkRepository extends JpaRepository<ProjectLink, Long> {
     List<ProjectLink> findAllByProjectId(Long projectId);
 
+    List<ProjectLink> findAllByProjectIdIn(List<Long> projectIds);
+
     void deleteAllByProjectId(Long projectId);
 }

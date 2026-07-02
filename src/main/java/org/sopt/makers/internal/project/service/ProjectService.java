@@ -181,14 +181,20 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
-        return projectList.stream()
-                .map(project -> {
-                    List<ProjectLinkResponse> links = projectLinkRepository.findAllByProjectId(project.getId()).stream()
-                            .map(link -> new ProjectLinkResponse(link.getId(), link.getTitle(), link.getUrl()))
-                            .toList();
+        List<Long> projectIds = projectList.stream().map(Project::getId).toList();
+        Map<Long, List<ProjectLinkResponse>> linksByProjectId = projectLinkRepository.findAllByProjectIdIn(projectIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        ProjectLink::getProjectId,
+                        Collectors.mapping(link -> new ProjectLinkResponse(link.getId(), link.getTitle(), link.getUrl()), Collectors.toList())
+                ));
 
-                    return projectResponseMapper.toProjectResponse(project, links);
-                }).toList();
+        return projectList.stream()
+                .map(project -> projectResponseMapper.toProjectResponse(
+                        project,
+                        linksByProjectId.getOrDefault(project.getId(), List.of())
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
