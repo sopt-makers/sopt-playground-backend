@@ -129,21 +129,12 @@ public class ProjectQueryRepository {
         }
 
         val project = QProject.project;
-        String likeSearchWord = "%" + escapeLikePattern(searchWord.trim().toLowerCase(Locale.ROOT)) + "%";
+        String normalizedSearchWord = searchWord.trim().toLowerCase(Locale.ROOT);
+        String likeSearchWord = "%" + escapeLikePattern(normalizedSearchWord) + "%";
 
-        return Expressions.booleanTemplate(
-            """
-			(
-				lower({0}) like {1} escape '\\'
-				or lower({2}) like {1} escape '\\'
-				or lower({3}) like {1} escape '\\'
-			)
-			""",
-            project.name,
-            likeSearchWord,
-            project.summary,
-            project.detail
-        );
+        return project.name.lower().like(likeSearchWord, '!')
+            .or(project.summary.lower().like(likeSearchWord, '!'))
+            .or(project.detail.lower().like(likeSearchWord, '!'));
     }
 
     private BooleanExpression checkProjectCategory(String category) {
@@ -188,8 +179,8 @@ public class ProjectQueryRepository {
 
     private String escapeLikePattern(String value) {
         return value
-            .replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_");
+            .replace("!", "!!")
+            .replace("%", "!%")
+            .replace("_", "!_");
     }
 }
