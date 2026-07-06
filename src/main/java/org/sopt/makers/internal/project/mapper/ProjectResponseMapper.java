@@ -32,8 +32,8 @@ public class ProjectResponseMapper {
                 project.getServiceType(),
                 project.getIsAvailable(),
                 project.getIsFounding(),
-                truncateString(project.getSummary()),
-                truncateString(project.getDetail()),
+                project.getSummary(),
+                project.getDetail(),
                 project.getLogoImage(),
                 project.getThumbnailImage(),
                 links
@@ -127,13 +127,5 @@ public class ProjectResponseMapper {
 
     public ProjectLinkResponse toIntenralProjectLinkResponse (ProjectLinkDao project) {
         return new ProjectLinkResponse(project.linkId(), project.linkTitle(), project.linkUrl());
-    }
-
-
-    private String truncateString(String str) {
-        if (str != null && str.length() > 20) {
-            return str.substring(0, 20) + "...";
-        }
-        return str;
     }
 }
