@@ -9,17 +9,19 @@ import java.util.List;
 @Component
 public class InfiniteScrollUtil {
     public Integer checkLimitForPagination(Integer limit) {
-        val isLimitEmpty = (limit == null || limit == 0);
+        val isLimitEmpty = (limit == null || limit <= 0);
         return isLimitEmpty ? null : limit + 1;
     }
 
-    public <T extends Record> Boolean checkHasNextElement(Integer limit, List<T> elementList) {
-        val hasNextElement = ((limit != null && limit != 0) && elementList.size() > limit);
+    public <T> Boolean checkHasNextElement(Integer limit, List<T> elementList) {
+        return (limit != null && limit > 0) && elementList.size() > limit;
+    }
 
-        elementList = new ArrayList<>(elementList);
-        if (hasNextElement) {
-            elementList.remove(elementList.size() - 1);
+    public <T> List<T> removeNextElementIfExist(Integer limit, List<T> elementList) {
+        if (!checkHasNextElement(limit, elementList)) {
+            return elementList;
         }
-        return hasNextElement;
+
+        return new ArrayList<>(elementList.subList(0, limit));
     }
 }
