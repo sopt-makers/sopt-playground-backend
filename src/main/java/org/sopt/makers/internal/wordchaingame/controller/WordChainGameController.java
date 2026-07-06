@@ -99,9 +99,11 @@ public class WordChainGameController {
         @RequestParam(required = false, name = "limit") Integer limit,
         @RequestParam(required = false, name = "cursor") Integer cursor
     ) {
+        int checkedCursor = cursor == null ? 0 : cursor;
+
         val winners = wordChainGameService.getAllWinner(
             infiniteScrollUtil.checkLimitForPagination(limit),
-            cursor
+            checkedCursor
         );
 
         val hasNextWinner = infiniteScrollUtil.checkHasNextElement(limit, winners);
