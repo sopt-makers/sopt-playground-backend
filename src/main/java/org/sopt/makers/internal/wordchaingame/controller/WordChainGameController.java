@@ -62,11 +62,19 @@ public class WordChainGameController {
             @RequestParam(required = false, name = "limit") Integer limit,
             @RequestParam(required = false, name = "cursor") Long cursor
     ) {
-        List<WordChainGameRoom> rooms = wordChainGameService.getAllRoom(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
-        Map<Long, InternalUserDetails> startUserMap = wordChainGameService.getUserMapFromCreatedUserIds(rooms);;
+        List<WordChainGameRoom> rooms = wordChainGameService.getAllRoom(
+            infiniteScrollUtil.checkLimitForPagination(limit),
+            cursor
+        );
 
-        List<WordChainGameRoomResponse> roomList = rooms.stream().map(room -> wordChainGameService.toRoomResponse(room, startUserMap)).toList();
-        boolean hasNextGame = infiniteScrollUtil.checkHasNextElement(limit, roomList);
+        boolean hasNextGame = infiniteScrollUtil.checkHasNextElement(limit, rooms);
+        List<WordChainGameRoom> responseRooms = infiniteScrollUtil.removeNextElementIfExist(limit, rooms);
+
+        Map<Long, InternalUserDetails> startUserMap = wordChainGameService.getUserMapFromCreatedUserIds(responseRooms);
+
+        List<WordChainGameRoomResponse> roomList = responseRooms.stream()
+            .map(room -> wordChainGameService.toRoomResponse(room, startUserMap))
+            .toList();
 
         WordChainGameAllResponse response = new WordChainGameAllResponse(roomList, hasNextGame);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -91,9 +99,15 @@ public class WordChainGameController {
         @RequestParam(required = false, name = "limit") Integer limit,
         @RequestParam(required = false, name = "cursor") Integer cursor
     ) {
-        val winners = wordChainGameService.getAllWinner(infiniteScrollUtil.checkLimitForPagination(limit), cursor);
+        val winners = wordChainGameService.getAllWinner(
+            infiniteScrollUtil.checkLimitForPagination(limit),
+            cursor
+        );
+
         val hasNextWinner = infiniteScrollUtil.checkHasNextElement(limit, winners);
-        val response = new WordChainGameWinnerAllResponse(winners, hasNextWinner);
+        val responseWinners = infiniteScrollUtil.removeNextElementIfExist(limit, winners);
+
+        val response = new WordChainGameWinnerAllResponse(responseWinners, hasNextWinner);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

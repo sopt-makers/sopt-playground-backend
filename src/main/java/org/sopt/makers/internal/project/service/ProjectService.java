@@ -168,33 +168,50 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
-        if(limit != null && name != null) {
-            return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding, generation);
-        } else if(limit != null) {
-            return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding, generation);
-        } else if(name != null) {
-            return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding, generation);
-        }
-        return projectQueryRepository.findAllProjects(category, isAvailable, isFounding, generation);
+    public List<Project> fetchAll (
+        Integer limit,
+        Long cursor,
+        String searchWord,
+        String category,
+        Boolean isAvailable,
+        Boolean isFounding,
+        Integer generation
+    ) {
+        return projectQueryRepository.findProjects(
+            limit,
+            cursor,
+            searchWord,
+            category,
+            isAvailable,
+            isFounding,
+            generation
+        );
     }
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
+        if (projectList.isEmpty()) {
+            return List.of();
+        }
+
         List<Long> projectIds = projectList.stream().map(Project::getId).toList();
+
         Map<Long, List<ProjectLinkResponse>> linksByProjectId = projectLinkRepository.findAllByProjectIdIn(projectIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        ProjectLink::getProjectId,
-                        Collectors.mapping(link -> new ProjectLinkResponse(link.getId(), link.getTitle(), link.getUrl()), Collectors.toList())
-                ));
+            .stream()
+            .collect(Collectors.groupingBy(
+                ProjectLink::getProjectId,
+                Collectors.mapping(
+                    link -> new ProjectLinkResponse(link.getId(), link.getTitle(), link.getUrl()),
+                    Collectors.toList()
+                )
+            ));
 
         return projectList.stream()
-                .map(project -> projectResponseMapper.toProjectResponse(
-                        project,
-                        linksByProjectId.getOrDefault(project.getId(), List.of())
-                ))
-                .toList();
+            .map(project -> projectResponseMapper.toProjectResponse(
+                project,
+                linksByProjectId.getOrDefault(project.getId(), List.of())
+            ))
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -213,8 +230,20 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public int getProjectsCount(String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
-        return projectQueryRepository.countAllProjects(name, category, isAvailable, isFounding, generation);
+    public int getProjectsCount(
+        String searchWord,
+        String category,
+        Boolean isAvailable,
+        Boolean isFounding,
+        Integer generation
+    ) {
+        return projectQueryRepository.countAllProjects(
+            searchWord,
+            category,
+            isAvailable,
+            isFounding,
+            generation
+        );
     }
 
     @Transactional(readOnly = true)
