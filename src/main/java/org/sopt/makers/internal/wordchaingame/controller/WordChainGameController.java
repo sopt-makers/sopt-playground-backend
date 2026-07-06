@@ -97,7 +97,7 @@ public class WordChainGameController {
     @GetMapping("/winners")
     public ResponseEntity<WordChainGameWinnerAllResponse> getGameWinners(
         @RequestParam(required = false, name = "limit") Integer limit,
-        @RequestParam(required = false, name = "cursor") Integer cursor
+        @RequestParam(defaultValue = "0", name = "cursor") int cursor
     ) {
         val winners = wordChainGameService.getAllWinner(
             infiniteScrollUtil.checkLimitForPagination(limit),
