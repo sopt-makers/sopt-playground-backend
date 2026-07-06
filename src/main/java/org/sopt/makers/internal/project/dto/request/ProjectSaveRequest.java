@@ -39,6 +39,20 @@ public record ProjectSaveRequest(
         List<ProjectMemberSaveRequest> members,
         List<ProjectLinkSaveRequest> links
 ) {
+    public ProjectSaveRequest {
+        if (images == null) {
+            images = List.of();
+        }
+
+        if (members == null) {
+            members = List.of();
+        }
+
+        if (links == null) {
+            links = List.of();
+        }
+    }
+
     public record ProjectMemberSaveRequest(
             Long memberId,
             String memberRole,
