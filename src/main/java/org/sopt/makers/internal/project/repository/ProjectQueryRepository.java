@@ -150,11 +150,7 @@ public class ProjectQueryRepository {
     }
 
     private BooleanExpression containsByLocate(StringExpression target, String searchWord) {
-        return Expressions.booleanTemplate(
-            "locate({0}, lower({1})) > 0",
-            searchWord,
-            target
-        );
+        return target.lower().locate(searchWord).gt(0);
     }
 
     private BooleanExpression checkProjectCategory(String category) {
