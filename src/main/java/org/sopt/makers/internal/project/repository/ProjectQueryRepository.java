@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -128,14 +129,14 @@ public class ProjectQueryRepository {
         }
 
         val project = QProject.project;
-        String likeSearchWord = "%" + escapeLikePattern(searchWord.trim()) + "%";
+        String likeSearchWord = "%" + escapeLikePattern(searchWord.trim().toLowerCase(Locale.ROOT)) + "%";
 
         return Expressions.booleanTemplate(
             """
 			(
-				lower({0}) like lower({1}) escape '\\'
-				or lower({2}) like lower({1}) escape '\\'
-				or lower({3}) like lower({1}) escape '\\'
+				lower({0}) like {1} escape '\\'
+				or lower({2}) like {1} escape '\\'
+				or lower({3}) like {1} escape '\\'
 			)
 			""",
             project.name,
