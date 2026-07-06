@@ -22,178 +22,173 @@ import org.springframework.stereotype.Repository;
 public class ProjectQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-//    private JPAQuery<ProjectMemberDao> getProjectQuery () {
-//        val project = QProject.project;
-//        val member = QMember.member;
-//        val relation = QMemberProjectRelation.memberProjectRelation;
-//
-//        return queryFactory.select(
-//                        new QProjectMemberDao(
-//                                project.id, project.name, project.writerId, project.generation, project.category,
-//                                project.startAt, project.endAt, project.serviceType, project.isAvailable, project.isFounding,
-//                                project.summary, project.detail, project.logoImage, project.thumbnailImage, project.images,
-//                                project.createdAt, project.updatedAt,
-//                                member.id, member.hasProfile,
-//                                relation.role, relation.description, relation.isTeamMember
-//                        )).from(project)
-//                .innerJoin(relation).on(relation.projectId.eq(project.id))
-//                .innerJoin(member).on(relation.userId.eq(member.id));
-//    }
-
-    private JPAQuery<ProjectLinkDao> getProjectLinkQuery () {
+    private JPAQuery<ProjectLinkDao> getProjectLinkQuery() {
         val project = QProject.project;
         val projectLink = QProjectLink.projectLink;
 
         return queryFactory.select(
-                        Projections.constructor(ProjectLinkDao.class,
-                                project.id, project.name,
-                                projectLink.id, projectLink.title, projectLink.url
-                        )).from(project)
-                .innerJoin(projectLink).on(projectLink.projectId.eq(project.id));
+                Projections.constructor(
+                    ProjectLinkDao.class,
+                    project.id,
+                    project.name,
+                    projectLink.id,
+                    projectLink.title,
+                    projectLink.url
+                )
+            ).from(project)
+            .innerJoin(projectLink).on(projectLink.projectId.eq(project.id));
     }
 
-    private BooleanExpression checkProjectContainsName(String name) {
-        val checkNameIsEmpty = Objects.isNull(name);
-        if (checkNameIsEmpty) {
-            return null;
-        }
-        // Expressions.stringTemplate를 사용하여 직접 SQL 작성 (escape 없이)
-        return Expressions.booleanTemplate(
-            "lower({0}) like lower({1})",
-            QProject.project.name,
-            "%" + name + "%"
-        );
-    }
-
-    private BooleanExpression checkProjectCategory(String category) {
-        val checkCategoryIsEmpty = Objects.isNull(category);
-        return checkCategoryIsEmpty ? null : QProject.project.category.eq(category);
-    }
-
-    private BooleanExpression checkProjectIsFounding(Boolean isFounding) {
-        val checkIsFoundingIsEmpty = Objects.isNull(isFounding);
-        return checkIsFoundingIsEmpty ? null : QProject.project.isFounding.eq(isFounding);
-    }
-
-    private BooleanExpression checkProjectIsAvailable(Boolean isAvailable) {
-        val checkIsAvailableIsEmpty = Objects.isNull(isAvailable);
-        return checkIsAvailableIsEmpty ? null : QProject.project.isAvailable.eq(isAvailable);
-    }
-
-    private BooleanExpression checkProjectGeneration(Integer generation) {
-        return Objects.isNull(generation) ? null : QProject.project.generation.eq(generation);
-    }
-
-    private BooleanExpression ltProjectId(Long projectId) {
-        val project = QProject.project;
-        if(projectId == null || projectId == 0) return null;
-        return project.id.lt(projectId);
-    }
-
-//    public List<ProjectMemberDao> findById(Long id) {
-//        val project = QProject.project;
-//        return getProjectQuery().where(project.id.eq(id)).fetch();
-//    }
-
-//    public List<ProjectLinkDao> findLinksById(Long id) {
-//        val project = QProject.project;
-//        return getProjectLinkQuery().where(project.id.eq(id)).fetch();
-//    }
-    
     public List<ProjectLinkDao> findAllLinks() {
         return getProjectLinkQuery().fetch();
     }
 
-    public List<Project> findAllProjects(
-            String category, Boolean isAvailable, Boolean isFounding, Integer generation
+    public List<Project> findProjects(
+        Integer limit,
+        Long cursor,
+        String searchWord,
+        String category,
+        Boolean isAvailable,
+        Boolean isFounding,
+        Integer generation
     ) {
         val project = QProject.project;
 
-        return queryFactory.selectFrom(project)
-                .where(checkProjectIsFounding(isFounding), checkProjectCategory(category),
-                        checkProjectIsAvailable(isAvailable), checkProjectGeneration(generation))
-                .orderBy(project.id.desc())
-                .groupBy(project.id)
-                .fetch();
+        JPAQuery<Project> query = queryFactory.selectFrom(project)
+            .where(
+                ltProjectId(cursor),
+                checkProjectContainsSearchWord(searchWord),
+                checkProjectIsFounding(isFounding),
+                checkProjectCategory(category),
+                checkProjectIsAvailable(isAvailable),
+                checkProjectGeneration(generation)
+            )
+            .orderBy(project.id.desc());
+
+        if (limit != null) {
+            query.limit(limit);
+        }
+
+        return query.fetch();
     }
 
-    public List<Project> findAllNameProjects(
-            String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation
+    public int countAllProjects(
+        String searchWord,
+        String category,
+        Boolean isAvailable,
+        Boolean isFounding,
+        Integer generation
     ) {
         val project = QProject.project;
 
-        return queryFactory.selectFrom(project)
-                .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
-                        checkProjectGeneration(generation))
-                .orderBy(project.id.desc())
-                .groupBy(project.id)
-                .fetch();
-    }
+        Long count = queryFactory.select(project.id.count())
+            .from(project)
+            .where(
+                checkProjectContainsSearchWord(searchWord),
+                checkProjectIsFounding(isFounding),
+                checkProjectCategory(category),
+                checkProjectIsAvailable(isAvailable),
+                checkProjectGeneration(generation)
+            )
+            .fetchOne();
 
-    public List<Project> findAllLimitedProjects(
-            Integer limit, Long cursor, String category, Boolean isAvailable, Boolean isFounding, Integer generation
-    ) {
-        val project = QProject.project;
-
-        return queryFactory.selectFrom(project)
-                .where(ltProjectId(cursor), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
-                        checkProjectGeneration(generation))
-                .limit(limit)
-                .orderBy(project.id.desc())
-                .groupBy(project.id)
-                .fetch();
-    }
-
-    public List<Project> findAllLimitedProjectsContainsName(
-            Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation
-    ) {
-        val project = QProject.project;
-
-        return queryFactory.selectFrom(project)
-                .where(ltProjectId(cursor), checkProjectContainsName(name), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
-                        checkProjectGeneration(generation))
-                .limit(limit)
-                .orderBy(project.id.desc())
-                .groupBy(project.id)
-                .fetch();
-    }
-
-    public int countAllProjects(String name, String category, Boolean isAvailable, Boolean isFounding, Integer generation) {
-        val project = QProject.project;
-        Long count = queryFactory.select(project.id.countDistinct())
-                .from(project)
-                .where(checkProjectContainsName(name), checkProjectIsFounding(isFounding),
-                        checkProjectCategory(category), checkProjectIsAvailable(isAvailable),
-                        checkProjectGeneration(generation))
-                .fetchOne();
         return count == null ? 0 : count.intValue();
     }
 
     public int countProjectsExcludeSopkathon(Long memberId) {
-        QMember member = QMember.member;
-        QProject project = QProject.project;
-        QMemberProjectRelation relation = QMemberProjectRelation.memberProjectRelation;
+        val member = QMember.member;
+        val project = QProject.project;
+        val relation = QMemberProjectRelation.memberProjectRelation;
 
-        return queryFactory.select(project.id)
-                .from(project)
-                .innerJoin(relation).on(relation.projectId.eq(project.id))
-                .innerJoin(member).on(relation.userId.eq(member.id))
-                .where(
-                    member.id.eq(memberId)
-                    .and(project.category.ne("SOPKATHON")))
-                .fetch()
-                .size();
+        Long count = queryFactory.select(project.id.countDistinct())
+            .from(project)
+            .innerJoin(relation).on(relation.projectId.eq(project.id))
+            .innerJoin(member).on(relation.userId.eq(member.id))
+            .where(
+                member.id.eq(memberId),
+                project.category.ne("SOPKATHON")
+            )
+            .fetchOne();
+
+        return count == null ? 0 : count.intValue();
     }
 
     public List<Project> findRandomProjects(int limit) {
         val project = QProject.project;
 
         return queryFactory.selectFrom(project)
-                .orderBy(Expressions.numberTemplate(Double.class, "random()").asc())
-                .limit(limit)
-                .fetch();
+            .orderBy(Expressions.numberTemplate(Double.class, "random()").asc())
+            .limit(limit)
+            .fetch();
+    }
+
+    private BooleanExpression checkProjectContainsSearchWord(String searchWord) {
+        if (searchWord == null || searchWord.trim().isEmpty()) {
+            return null;
+        }
+
+        val project = QProject.project;
+        String likeSearchWord = "%" + escapeLikePattern(searchWord.trim()) + "%";
+
+        return Expressions.booleanTemplate(
+            """
+			(
+				lower({0}) like lower({1}) escape '\\'
+				or lower({2}) like lower({1}) escape '\\'
+				or lower({3}) like lower({1}) escape '\\'
+			)
+			""",
+            project.name,
+            likeSearchWord,
+            project.summary,
+            project.detail
+        );
+    }
+
+    private BooleanExpression checkProjectCategory(String category) {
+        if (Objects.isNull(category)) {
+            return null;
+        }
+
+        return QProject.project.category.eq(category);
+    }
+
+    private BooleanExpression checkProjectIsFounding(Boolean isFounding) {
+        if (Objects.isNull(isFounding)) {
+            return null;
+        }
+
+        return QProject.project.isFounding.eq(isFounding);
+    }
+
+    private BooleanExpression checkProjectIsAvailable(Boolean isAvailable) {
+        if (Objects.isNull(isAvailable)) {
+            return null;
+        }
+
+        return QProject.project.isAvailable.eq(isAvailable);
+    }
+
+    private BooleanExpression checkProjectGeneration(Integer generation) {
+        if (Objects.isNull(generation)) {
+            return null;
+        }
+
+        return QProject.project.generation.eq(generation);
+    }
+
+    private BooleanExpression ltProjectId(Long projectId) {
+        if (projectId == null || projectId == 0) {
+            return null;
+        }
+
+        return QProject.project.id.lt(projectId);
+    }
+
+    private String escapeLikePattern(String value) {
+        return value
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_");
     }
 }

@@ -4,10 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.common.util.InfiniteScrollUtil;
 import org.sopt.makers.internal.project.domain.Project;
@@ -54,35 +54,57 @@ public class ProjectController {
     }
 
     @Operation(
-            summary = "Project 전체 조회 API",
-            description = "cursor : 처음에는 null 또는 0, 이후 마지막으로 조회된 project id"
+        summary = "Project 전체 조회 API",
+        description = """
+                cursor : 처음에는 null 또는 0, 이후 마지막으로 조회된 project id
+                name : 프로젝트명, 요약, 상세 설명을 대상으로 검색하는 통합 검색어
+                """
     )
     @GetMapping("")
     public ResponseEntity<ProjectAllResponse> getProjects (
-            @RequestParam(required = false, name = "limit") Integer limit,
-            @RequestParam(required = false, name = "cursor") Long cursor,
-            @RequestParam(required = false, name = "name") String name,
-            @RequestParam(required = false, name = "category") String category,
-            @RequestParam(required = false, name = "isAvailable") Boolean isAvailable,
-            @RequestParam(required = false, name = "isFounding") Boolean isFounding,
-            @RequestParam(required = false, name = "generation") Integer generation
+        @RequestParam(required = false, name = "limit") Integer limit,
+        @RequestParam(required = false, name = "cursor") Long cursor,
+        @RequestParam(required = false, name = "name") String searchWord,
+        @RequestParam(required = false, name = "category") String category,
+        @RequestParam(required = false, name = "isAvailable") Boolean isAvailable,
+        @RequestParam(required = false, name = "isFounding") Boolean isFounding,
+        @RequestParam(required = false, name = "generation") Integer generation
     ) {
-        List<Project> projectList = projectService.fetchAll(infiniteScrollUtil.checkLimitForPagination(limit),
-                        cursor, name, category, isAvailable, isFounding, generation);
-        List<ProjectResponse> projectResponseList = new ArrayList<>(
-                projectService.getAllProjectResponseList(projectList).stream()
-                        .sorted(Comparator.comparing(ProjectResponse::id).reversed())
-                        .toList());
-        Boolean hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectResponseList);
-        int totalProjectsCount = projectService.getProjectsCount(name, category, isAvailable, isFounding, generation);
+        List<Project> projectList = projectService.fetchAll(
+            infiniteScrollUtil.checkLimitForPagination(limit),
+            cursor,
+            searchWord,
+            category,
+            isAvailable,
+            isFounding,
+            generation
+        );
 
-        ProjectAllResponse responses = new ProjectAllResponse(projectResponseList, hasNextProject, totalProjectsCount);
+        Boolean hasNextProject = infiniteScrollUtil.checkHasNextElement(limit, projectList);
+        List<Project> responseProjectList = infiniteScrollUtil.removeNextElementIfExist(limit, projectList);
+
+        List<ProjectResponse> projectResponseList = projectService.getAllProjectResponseList(responseProjectList);
+
+        int totalProjectsCount = projectService.getProjectsCount(
+            searchWord,
+            category,
+            isAvailable,
+            isFounding,
+            generation
+        );
+
+        ProjectAllResponse responses = new ProjectAllResponse(
+            projectResponseList,
+            hasNextProject,
+            totalProjectsCount
+        );
+
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
     @Operation(summary = "Project 생성 API")
     @PostMapping("")
-    public ResponseEntity<Map<String, Boolean>> createProject (@RequestBody ProjectSaveRequest request) {
+    public ResponseEntity<Map<String, Boolean>> createProject (@RequestBody @Valid ProjectSaveRequest request) {
         projectService.createProject(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true));
     }
@@ -92,7 +114,7 @@ public class ProjectController {
     public ResponseEntity<Map<String, Boolean>> updateProject (
             @PathVariable("id") Long projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @RequestBody ProjectUpdateRequest request
+            @RequestBody @Valid ProjectUpdateRequest request
     ) {
         projectService.updateProject(userId, projectId, request);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of("success", true));
