@@ -3,6 +3,7 @@ package org.sopt.makers.internal.project.repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -130,11 +131,26 @@ public class ProjectQueryRepository {
 
         val project = QProject.project;
         String normalizedSearchWord = searchWord.trim().toLowerCase(Locale.ROOT);
-        String likeSearchWord = "%" + escapeLikePattern(normalizedSearchWord) + "%";
 
-        return project.name.lower().like(likeSearchWord, '!')
-            .or(project.summary.lower().like(likeSearchWord, '!'))
-            .or(project.detail.lower().like(likeSearchWord, '!'));
+        if (containsLikeMetaCharacter(normalizedSearchWord)) {
+            return containsByLocate(project.name, normalizedSearchWord)
+                .or(containsByLocate(project.summary, normalizedSearchWord))
+                .or(containsByLocate(project.detail, normalizedSearchWord));
+        }
+
+        String likeSearchWord = "%" + normalizedSearchWord + "%";
+
+        return project.name.lower().like(likeSearchWord)
+            .or(project.summary.lower().like(likeSearchWord))
+            .or(project.detail.lower().like(likeSearchWord));
+    }
+
+    private boolean containsLikeMetaCharacter(String value) {
+        return value.contains("%") || value.contains("_") || value.contains("\\");
+    }
+
+    private BooleanExpression containsByLocate(StringExpression target, String searchWord) {
+        return target.lower().locate(searchWord).gt(0);
     }
 
     private BooleanExpression checkProjectCategory(String category) {
@@ -175,12 +191,5 @@ public class ProjectQueryRepository {
         }
 
         return QProject.project.id.lt(projectId);
-    }
-
-    private String escapeLikePattern(String value) {
-        return value
-            .replace("!", "!!")
-            .replace("%", "!%")
-            .replace("_", "!_");
     }
 }
