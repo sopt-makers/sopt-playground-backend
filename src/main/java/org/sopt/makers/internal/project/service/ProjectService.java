@@ -13,7 +13,6 @@ import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
 import org.sopt.makers.internal.external.platform.PlatformClient;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.repository.MemberRepository;
@@ -26,6 +25,7 @@ import org.sopt.makers.internal.project.dto.response.allProject.ProjectResponse;
 import org.sopt.makers.internal.project.dto.response.allProject.RandomProjectResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailMemberResponse;
 import org.sopt.makers.internal.project.dto.response.detailProject.ProjectDetailResponse;
+import org.sopt.makers.internal.project.dto.response.detailProject.ProjectLinkResponse;
 import org.sopt.makers.internal.project.mapper.ProjectResponseMapper;
 import org.sopt.makers.internal.project.repository.MemberProjectRelationRepository;
 import org.sopt.makers.internal.project.repository.ProjectLinkRepository;
@@ -168,28 +168,50 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<Project> fetchAll (Integer limit, Long cursor, String name, String category, Boolean isAvailable, Boolean isFounding) {
-        if(limit != null && name != null) {
-            return projectQueryRepository.findAllLimitedProjectsContainsName(limit, cursor, name, category, isAvailable, isFounding);
-        } else if(limit != null) {
-            return projectQueryRepository.findAllLimitedProjects(limit, cursor, category, isAvailable, isFounding);
-        } else if(name != null) {
-            return projectQueryRepository.findAllNameProjects(name, category, isAvailable, isFounding);
-        }
-        return projectRepository.findAll();
+    public List<Project> fetchAll (
+        Integer limit,
+        Long cursor,
+        String searchWord,
+        String category,
+        Boolean isAvailable,
+        Boolean isFounding,
+        Integer generation
+    ) {
+        return projectQueryRepository.findProjects(
+            limit,
+            cursor,
+            searchWord,
+            category,
+            isAvailable,
+            isFounding,
+            generation
+        );
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjectResponseList(List<Project> projectList) {
-        return projectList.stream()
-                .map(project -> {
-                    List<Long> userIds = getProjectUserIdsByProjectId(project.getId());
-                    List<InternalUserDetails> projectUsersDetails = Objects.requireNonNull(platformClient.getInternalUserDetails(authConfig.getPlatformApiKey(),
-                            authConfig.getPlatformServiceName(), userIds).getBody()).getData();
-                    List<MemberSimpleResonse> memberResponses = projectUsersDetails.stream()
-                            .map(p-> new MemberSimpleResonse(p.userId(), p.name(), p.profileImage())).toList();
+        if (projectList.isEmpty()) {
+            return List.of();
+        }
 
-                    return projectResponseMapper.toProjectResponse(project, memberResponses);
-                }).toList();
+        List<Long> projectIds = projectList.stream().map(Project::getId).toList();
+
+        Map<Long, List<ProjectLinkResponse>> linksByProjectId = projectLinkRepository.findAllByProjectIdIn(projectIds)
+            .stream()
+            .collect(Collectors.groupingBy(
+                ProjectLink::getProjectId,
+                Collectors.mapping(
+                    link -> new ProjectLinkResponse(link.getId(), link.getTitle(), link.getUrl()),
+                    Collectors.toList()
+                )
+            ));
+
+        return projectList.stream()
+            .map(project -> projectResponseMapper.toProjectResponse(
+                project,
+                linksByProjectId.getOrDefault(project.getId(), List.of())
+            ))
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -208,8 +230,20 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public int getProjectsCount(String name, String category, Boolean isAvailable, Boolean isFounding) {
-        return projectQueryRepository.countAllProjects(name, category, isAvailable, isFounding);
+    public int getProjectsCount(
+        String searchWord,
+        String category,
+        Boolean isAvailable,
+        Boolean isFounding,
+        Integer generation
+    ) {
+        return projectQueryRepository.countAllProjects(
+            searchWord,
+            category,
+            isAvailable,
+            isFounding,
+            generation
+        );
     }
 
     @Transactional(readOnly = true)
