@@ -4,7 +4,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.dto.profile.MemberProfileSummaryVo;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.service.sorting.comparator.DefaultMemberComparator;
 import org.sopt.makers.internal.member.service.sorting.comparator.EmployedMemberComparator;
@@ -42,7 +42,7 @@ public class MemberSortingService {
 	 * @return 조건에 맞게 결정된 Comparator
 	 */
 	public Comparator<InternalUserDetails> createComparator(
-		Map<Long, Member> memberMap,
+		Map<Long, MemberProfileSummaryVo> memberMap,
 		Integer employed,
 		String team) {
 
@@ -105,7 +105,7 @@ public class MemberSortingService {
 	 * orderBy 파라미터가 있으면 필터별 정렬 정책보다 우선적으로 처리
 	 */
 	public Comparator<InternalUserDetails> createComparatorByOrderCondition(
-		Map<Long, Member> memberMap,
+		Map<Long, MemberProfileSummaryVo> memberMap,
 		OrderByCondition orderBy,
 		Integer employed) {
 

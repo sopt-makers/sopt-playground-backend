@@ -52,7 +52,6 @@ import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.member.dto.request.WorkPreferenceUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
-import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
 import org.sopt.makers.internal.member.dto.response.MemberCareerResponse;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
@@ -74,6 +73,8 @@ import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
 import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
+import org.sopt.makers.internal.member.dto.profile.MemberProfileSummaryVo;
+import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
 import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
@@ -92,6 +93,8 @@ import lombok.val;
 @RequiredArgsConstructor
 @Service
 public class MemberService {
+	private static final int QUESTION_PREVIEW_DAYS = 7;
+
 	private final MemberRetriever memberRetriever;
 	private final TlMemberRetriever tlMemberRetriever;
 	private final CoffeeChatRetriever coffeeChatRetriever;
@@ -115,7 +118,6 @@ public class MemberService {
 	private final AskMemberId askMemberId;
 	private final MemberQuestionRetriever memberQuestionRetriever;
 
-	private static final int QUESTION_PREVIEW_DAYS = 7;
 	private static final int RECENT_QUESTION_DAYS = 7;
 
 	@Value("${spring.profiles.active}")
@@ -322,14 +324,15 @@ public class MemberService {
 			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
 		}
 
-		// 3) DB 멤버 로드
-		Map<Long, Member> memberMap = memberRepository.findAllByIdIn(
+		// 3) 정렬·검색에 필요한 값만 Projection 으로 조회한다.
+		//    엔티티를 로드하지 않으므로 가중치 계산 중 LAZY 컬렉션(links/careers) 접근이 발생하지 않는다.
+		Map<Long, MemberProfileSummaryVo> memberProfileSummaryMap = memberProfileQueryRepository.findMemberProfileSummariesByIds(
 			filteredByPlatform.stream().map(InternalUserDetails::userId).toList()
-		).stream().collect(Collectors.toMap(Member::getId, Function.identity()));
+		).stream().collect(Collectors.toMap(MemberProfileSummaryVo::id, Function.identity()));
 
 		// 검색어가 이름/대학교/회사 모두에 적용되도록 추가 필터링 (토큰 AND, 필드 OR)
 		List<InternalUserDetails> filteredBySearch = filteredByPlatform.stream()
-			.filter(u -> matchesSearchAcrossFields(u, memberMap.get(u.userId()), search))
+			.filter(u -> matchesSearchAcrossFields(u, memberProfileSummaryMap.get(u.userId()), search))
 			.toList();
 
 		if (filteredBySearch.isEmpty()) {
@@ -346,12 +349,12 @@ public class MemberService {
 			// orderBy 파라미터가 있을 때: OrderByCondition 기준으로 정렬
 			OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
 			sortedUsers = filteredBySearch.stream()
-				.sorted(memberSortingService.createComparatorByOrderCondition(memberMap, orderByCondition, employed))
+				.sorted(memberSortingService.createComparatorByOrderCondition(memberProfileSummaryMap, orderByCondition, employed))
 				.toList();
 		} else {
 			// orderBy가 없을 때: 필터별 정렬 정책 적용
 			sortedUsers = filteredBySearch.stream()
-				.sorted(memberSortingService.createComparator(memberMap, employed, checkedTeam))
+				.sorted(memberSortingService.createComparator(memberProfileSummaryMap, employed, checkedTeam))
 				.toList();
 		}
 		
@@ -367,6 +370,14 @@ public class MemberService {
 			.map(InternalUserDetails::userId)
 			.toList();
 
+		// 응답 매핑에는 Member 엔티티가 필요하지만, 페이지 대상(기본 30건)에 대해서만 로드한다.
+		// links/careers 는 둘 다 List(bag) 이라 한 쿼리에서 동시에 fetch join 할 수 없어(MultipleBagFetchException)
+		// 두 번에 나눈다. 같은 트랜잭션이므로 두 번째 쿼리가 동일한 영속 인스턴스에 links 를 채운다.
+		List<Member> pagedMembers = memberRepository.findAllByIdInWithCareers(pagedMemberIds);
+		memberRepository.findAllByIdInWithLinks(pagedMemberIds);
+		Map<Long, Member> pagedMemberMap = pagedMembers.stream()
+			.collect(Collectors.toMap(Member::getId, Function.identity()));
+
 		Map<Long, MemberProfileResponse.MemberQuestionPreviewResponse> questionPreviewByReceiverId =
 			memberQuestionRetriever.findLatestRecentQuestionsByReceiverIds(
 				pagedMemberIds,
@@ -381,7 +392,7 @@ public class MemberService {
 
 		List<MemberProfileResponse> memberList = pagedByServer.stream()
 			.map(userDetails -> {
-				Member member = memberMap.get(userDetails.userId());
+				Member member = pagedMemberMap.get(userDetails.userId());
 				boolean isCoffeeChatActivate = member != null && coffeeChatRetriever.existsCoffeeChat(member);
 
 				MemberProfileResponse baseResponse = memberMapper.toProfileResponse(
@@ -454,23 +465,17 @@ public class MemberService {
 	/**
 	 * 검색어 기반 필터링
 	 */
-	private boolean matchesSearchAcrossFields(InternalUserDetails userDetails, Member member, String search) {
+	private boolean matchesSearchAcrossFields(InternalUserDetails userDetails, MemberProfileSummaryVo member, String search) {
 		if (search == null || search.isBlank()) {
 			return true;
 		}
 		String keyword = search.trim();
 		String name = userDetails != null ? userDetails.name() : null;
-		String university = (member != null && member.getUniversity() != null) ? member.getUniversity() : null;
-		List<MemberCareer> careers = (member != null && member.getCareers() != null) ? member.getCareers() : Collections.emptyList();
 
 		boolean inName = name != null && name.contains(keyword);
-		boolean inUniv = university != null && university.contains(keyword);
-		boolean inCompany = careers.stream()
-			.map(MemberCareer::getCompanyName)
-			.filter(Objects::nonNull)
-			.anyMatch(c -> c.contains(keyword));
+		boolean inUniversityOrCompany = member != null && member.matchesUniversityOrCompany(keyword);
 
-		return inName || inUniv || inCompany;
+		return inName || inUniversityOrCompany;
 	}
 
 	private String normalizeMemberTabPartFilterActivityPart(String activityPart) {

@@ -3,7 +3,7 @@ package org.sopt.makers.internal.member.service.sorting.comparator;
 import java.util.Map;
 
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.dto.profile.MemberProfileSummaryVo;
 import org.sopt.makers.internal.member.service.sorting.strategy.ProfileWeightStrategy;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ public class DefaultMemberComparator implements MemberSortingComparator {
 
 	@Override
 	public int compare(InternalUserDetails a, InternalUserDetails b,
-	                   Map<Long, Member> memberMap,
+	                   Map<Long, MemberProfileSummaryVo> memberMap,
 	                   ProfileWeightStrategy weightStrategy) {
 
 		// 1순위: 최신 기수 비교 (내림차순)
@@ -29,8 +29,8 @@ public class DefaultMemberComparator implements MemberSortingComparator {
 		}
 
 		// 2순위: 프로필 정보 가중치 비교 (내림차순)
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
+		MemberProfileSummaryVo memberA = memberMap.get(a.userId());
+		MemberProfileSummaryVo memberB = memberMap.get(b.userId());
 		int weightA = weightStrategy.calculate(a, memberA);
 		int weightB = weightStrategy.calculate(b, memberB);
 		int weightCompare = Integer.compare(weightB, weightA);
