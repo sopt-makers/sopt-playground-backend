@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -153,6 +154,18 @@ class MemberProfileListServiceTest {
 	}
 
 	@Test
+	@DisplayName("커피챗 활성 여부는 페이지 인원마다 묻지 않고 한 번에 조회한다")
+	void 커피챗_여부는_벌크로_조회한다() {
+		givenMembers(100);
+
+		getProfiles(30, 0, null);
+
+		// 멤버마다 존재 여부를 물으면 페이지 크기만큼 쿼리가 나간다
+		verify(coffeeChatRetriever, never()).existsCoffeeChat(any());
+		verify(coffeeChatRetriever).findActivatedMemberIds(argThat(ids -> ids.size() == 30));
+	}
+
+	@Test
 	@DisplayName("Projection 조회는 플랫폼 필터를 통과한 전원에 대해 한 번만 호출한다")
 	void projection은_전원에_대해_한_번() {
 		givenMembers(100);
@@ -187,6 +200,7 @@ class MemberProfileListServiceTest {
 		});
 		when(memberQuestionRetriever.findLatestRecentQuestionsByReceiverIds(anyList(), any()))
 			.thenReturn(List.of());
+		when(coffeeChatRetriever.findActivatedMemberIds(anyList())).thenReturn(Set.of());
 		when(memberMapper.toProfileResponse(any(), any(), any())).thenReturn(profileResponse());
 		when(memberResponseMapper.attachQuestionPreview(any(), any())).thenReturn(profileResponse());
 	}

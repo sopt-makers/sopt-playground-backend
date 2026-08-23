@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -148,10 +149,13 @@ public class MemberProfileListService {
 				)
 			));
 
+		// 커피챗 활성 여부도 페이지 인원만큼 물으면 인원수만큼 쿼리가 나가므로 한 번에 조회한다.
+		Set<Long> coffeeChatActivatedIds = coffeeChatRetriever.findActivatedMemberIds(pagedMemberIds);
+
 		List<MemberProfileResponse> memberList = pagedByServer.stream()
 			.map(userDetails -> {
 				Member member = pagedMemberMap.get(userDetails.userId());
-				boolean isCoffeeChatActivate = member != null && coffeeChatRetriever.existsCoffeeChat(member);
+				boolean isCoffeeChatActivate = member != null && coffeeChatActivatedIds.contains(member.getId());
 
 				MemberProfileResponse baseResponse = memberMapper.toProfileResponse(
 					member,
