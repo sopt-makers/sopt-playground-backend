@@ -5,28 +5,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sopt.makers.internal.coffeechat.service.CoffeeChatRetriever;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
+import org.sopt.makers.internal.member.dto.profile.MemberProfilePageDataVo;
 import org.sopt.makers.internal.member.dto.profile.MemberProfileSummaryVo;
 import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberProfileResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
-import org.sopt.makers.internal.member.repository.MemberProfileQueryRepository;
-import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 멤버 프로필 목록 조회(GET /api/v1/members/profile) 전용 서비스.
@@ -37,12 +31,18 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>조회 흐름:
  * <ol>
- *   <li>DB 필터(mbti, employed)로 대상 ID 를 모두 조회</li>
+ *   <li>DB 필터(mbti, employed)로 대상 ID 를 모두 조회 <b>[tx]</b></li>
  *   <li>플랫폼 서버에서 해당 유저들의 기본 정보를 가져와 part/team/generation 으로 걸러냄</li>
- *   <li>정렬·검색용 Projection 조회 (엔티티를 로드하지 않는다)</li>
+ *   <li>정렬·검색용 Projection 조회 (엔티티를 로드하지 않는다) <b>[tx]</b></li>
  *   <li>검색어 필터 → 정렬 → 페이징</li>
- *   <li>페이지 대상(기본 30건)에 대해서만 엔티티를 fetch join 으로 로드해 응답 매핑</li>
+ *   <li>페이지 대상(기본 30건)의 엔티티·질문 미리보기·커피챗 여부를 한 번에 로드 <b>[tx]</b></li>
+ *   <li>응답 매핑</li>
  * </ol>
+ *
+ * <p><b>이 서비스에는 트랜잭션이 없다.</b> DB 접근은 전부 {@link MemberProfileListRetriever} 의
+ * 짧은 readOnly 트랜잭션 안에서만 일어난다. 예전에는 메서드 전체가 {@code @Transactional} 이라
+ * 플랫폼 HTTP 왕복과 전원 정렬(약 1,300건) 동안에도 DB 커넥션을 잡고 있었다.
+ * 위 흐름에서 {@code [tx]} 가 아닌 단계는 커넥션을 점유하지 않는다.
  */
 @Slf4j
 @Service
@@ -51,20 +51,16 @@ public class MemberProfileListService {
 
 	private static final int QUESTION_PREVIEW_DAYS = 7;
 
-	private final MemberRepository memberRepository;
-	private final MemberProfileQueryRepository memberProfileQueryRepository;
-	private final MemberQuestionRetriever memberQuestionRetriever;
-	private final CoffeeChatRetriever coffeeChatRetriever;
+	private final MemberProfileListRetriever memberProfileListRetriever;
 	private final PlatformService platformService;
 	private final MemberSortingService memberSortingService;
 	private final MemberMapper memberMapper;
 	private final MemberResponseMapper memberResponseMapper;
 
-	@Transactional(readOnly = true)
 	public MemberAllProfileResponse getMemberProfiles(Integer filter, Integer limit, Integer offset, String search,
 		Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
 		// 1) DB에서 먼저 서버 필터(mbti, employed)로 해당하는 모든 userId 조회
-		List<Long> allFilteredIds = memberProfileQueryRepository.findAllMemberIdsByDbFilters(mbti, employed, search);
+		List<Long> allFilteredIds = memberProfileListRetriever.findFilteredMemberIds(mbti, employed, search);
 		if (allFilteredIds.isEmpty()) {
 			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
 		}
@@ -85,9 +81,9 @@ public class MemberProfileListService {
 
 		// 3) 정렬·검색에 필요한 값만 Projection 으로 조회한다.
 		//    엔티티를 로드하지 않으므로 가중치 계산 중 LAZY 컬렉션(links/careers) 접근이 발생하지 않는다.
-		Map<Long, MemberProfileSummaryVo> memberProfileSummaryMap = memberProfileQueryRepository.findMemberProfileSummariesByIds(
+		Map<Long, MemberProfileSummaryVo> memberProfileSummaryMap = memberProfileListRetriever.findProfileSummariesByIds(
 			filteredByPlatform.stream().map(InternalUserDetails::userId).toList()
-		).stream().collect(Collectors.toMap(MemberProfileSummaryVo::id, Function.identity()));
+		);
 
 		// 검색어가 이름/대학교/회사 모두에 적용되도록 추가 필터링 (토큰 AND, 필드 OR)
 		List<InternalUserDetails> filteredBySearch = filteredByPlatform.stream()
@@ -129,33 +125,19 @@ public class MemberProfileListService {
 			.map(InternalUserDetails::userId)
 			.toList();
 
-		// 응답 매핑에는 Member 엔티티가 필요하지만, 페이지 대상(기본 30건)에 대해서만 로드한다.
-		// links/careers 는 둘 다 List(bag) 이라 한 쿼리에서 동시에 fetch join 할 수 없어(MultipleBagFetchException)
-		// 두 번에 나눈다. 같은 트랜잭션이므로 두 번째 쿼리가 동일한 영속 인스턴스에 links 를 채운다.
-		List<Member> pagedMembers = memberRepository.findAllByIdInWithCareers(pagedMemberIds);
-		memberRepository.findAllByIdInWithLinks(pagedMemberIds);
-		Map<Long, Member> pagedMemberMap = pagedMembers.stream()
-			.collect(Collectors.toMap(Member::getId, Function.identity()));
+		// 응답 매핑에 필요한 DB 자료는 페이지 대상(기본 30건)에 대해서만, 한 트랜잭션 안에서 모아온다.
+		MemberProfilePageDataVo pageData = memberProfileListRetriever.loadPageData(
+			pagedMemberIds,
+			LocalDateTime.now().minusDays(QUESTION_PREVIEW_DAYS)
+		);
 
-		Map<Long, MemberProfileResponse.MemberQuestionPreviewResponse> questionPreviewByReceiverId =
-			memberQuestionRetriever.findLatestRecentQuestionsByReceiverIds(
-				pagedMemberIds,
-				LocalDateTime.now().minusDays(QUESTION_PREVIEW_DAYS)
-			).stream().collect(Collectors.toMap(
-				question -> question.getReceiver().getId(),
-				question -> new MemberProfileResponse.MemberQuestionPreviewResponse(
-					question.getId(),
-					question.getContent()
-				)
-			));
-
-		// 커피챗 활성 여부도 페이지 인원만큼 물으면 인원수만큼 쿼리가 나가므로 한 번에 조회한다.
-		Set<Long> coffeeChatActivatedIds = coffeeChatRetriever.findActivatedMemberIds(pagedMemberIds);
-
+		// 아래 매핑은 트랜잭션 밖이다. Member 는 준영속 상태지만 links/careers 가 fetch join 으로
+		// 이미 초기화돼 있어 읽을 수 있다. 매퍼가 그 외 LAZY 필드를 건드리게 바뀌면 여기서 깨진다.
 		List<MemberProfileResponse> memberList = pagedByServer.stream()
 			.map(userDetails -> {
-				Member member = pagedMemberMap.get(userDetails.userId());
-				boolean isCoffeeChatActivate = member != null && coffeeChatActivatedIds.contains(member.getId());
+				Member member = pageData.membersById().get(userDetails.userId());
+				boolean isCoffeeChatActivate =
+					member != null && pageData.coffeeChatActivatedMemberIds().contains(member.getId());
 
 				MemberProfileResponse baseResponse = memberMapper.toProfileResponse(
 					member,
@@ -164,7 +146,7 @@ public class MemberProfileListService {
 				);
 
 				MemberProfileResponse.MemberQuestionPreviewResponse questionPreview =
-					questionPreviewByReceiverId.get(userDetails.userId());
+					pageData.questionPreviewsByReceiverId().get(userDetails.userId());
 
 				return memberResponseMapper.attachQuestionPreview(baseResponse, questionPreview);
 			})
