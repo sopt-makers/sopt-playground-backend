@@ -14,10 +14,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -49,6 +49,8 @@ import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
  *   <li>페이징 계산(hasNext / totalCount)이 맞는가</li>
  *   <li><b>엔티티를 페이지 대상에 대해서만 fetch join 으로 로드하는가</b></li>
  * </ul>
+ *
+ * <p>트랜잭션 경계 자체(플랫폼 호출이 트랜잭션 밖인지)는 프록시가 없는 단위 테스트로 검증할 수 없다.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -63,7 +65,30 @@ class MemberProfileListServiceTest {
 	@Mock MemberMapper memberMapper;
 	@Mock MemberResponseMapper memberResponseMapper;
 
-	@InjectMocks MemberProfileListService memberProfileListService;
+	private MemberProfileListService memberProfileListService;
+
+	/**
+	 * DB 접근 구간을 담당하는 {@link MemberProfileListRetriever} 는 mock 이 아니라 실제 인스턴스를 쓴다.
+	 * 리트리버가 트랜잭션 경계일 뿐 조회 로직 자체는 얇은 위임이라, mock 으로 덮으면
+	 * "페이지 대상만 fetch join 으로 로드한다" 같은 검증이 통째로 사라진다.
+	 * (트랜잭션은 프록시가 없는 단위 테스트에서 어차피 동작하지 않는다.)
+	 */
+	@BeforeEach
+	void setUp() {
+		MemberProfileListRetriever memberProfileListRetriever = new MemberProfileListRetriever(
+			memberRepository,
+			memberProfileQueryRepository,
+			memberQuestionRetriever,
+			coffeeChatRetriever
+		);
+		memberProfileListService = new MemberProfileListService(
+			memberProfileListRetriever,
+			platformService,
+			memberSortingService,
+			memberMapper,
+			memberResponseMapper
+		);
+	}
 
 	@Test
 	@DisplayName("DB 필터 결과가 없으면 플랫폼을 호출하지 않고 빈 응답을 반환한다")
