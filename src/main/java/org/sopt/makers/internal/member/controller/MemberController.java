@@ -40,6 +40,7 @@ import org.sopt.makers.internal.member.dto.response.WorkPreferenceResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.service.MemberRecommendService;
+import org.sopt.makers.internal.member.service.MemberProfileListService;
 import org.sopt.makers.internal.member.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +65,7 @@ import jakarta.validation.Valid;
 @Tag(name = "Member 관련 API", description = "Member와 관련 API들")
 public class MemberController {
     private final MemberService memberService;
+    private final MemberProfileListService memberProfileListService;
     private final MemberRecommendService memberRecommendService;
     private final CoffeeChatService coffeeChatService;
     private final MemberMapper memberMapper;
@@ -253,7 +255,7 @@ public class MemberController {
             @RequestParam(required = false, name = "mbti") String mbti,
             @RequestParam(required = false, name = "team") String team
     ) {
-        MemberAllProfileResponse response = memberService.getMemberProfiles(filter, limit, offset, search, generation, employed, orderBy, mbti, team);
+        MemberAllProfileResponse response = memberProfileListService.getMemberProfiles(filter, limit, offset, search, generation, employed, orderBy, mbti, team);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

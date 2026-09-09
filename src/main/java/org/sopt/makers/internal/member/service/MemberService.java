@@ -52,7 +52,6 @@ import org.sopt.makers.internal.member.dto.request.MemberProfileSaveRequest;
 import org.sopt.makers.internal.member.dto.request.MemberProfileUpdateRequest;
 import org.sopt.makers.internal.member.dto.request.WorkPreferenceUpdateRequest;
 import org.sopt.makers.internal.member.dto.response.MakersMemberProfileResponse;
-import org.sopt.makers.internal.member.dto.response.MemberAllProfileResponse;
 import org.sopt.makers.internal.member.dto.response.MemberBlockResponse;
 import org.sopt.makers.internal.member.dto.response.MemberCareerResponse;
 import org.sopt.makers.internal.member.dto.response.MemberInfoResponse;
@@ -75,7 +74,6 @@ import org.sopt.makers.internal.member.repository.MemberReportRepository;
 import org.sopt.makers.internal.member.repository.MemberRepository;
 import org.sopt.makers.internal.member.repository.career.MemberCareerRepository;
 import org.sopt.makers.internal.member.service.career.MemberCareerRetriever;
-import org.sopt.makers.internal.member.service.sorting.MemberSortingService;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceRetriever;
 import org.sopt.makers.internal.member.service.workpreference.WorkPreferenceModifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,13 +107,11 @@ public class MemberService {
 	private final SlackMessageUtil slackMessageUtil;
 	private final ReviewService reviewService;
 	private final PlatformService platformService;
-	private final MemberSortingService memberSortingService;
 	private final WorkPreferenceRetriever workPreferenceRetriever;
 	private final WorkPreferenceModifier workPreferenceModifier;
 	private final AskMemberId askMemberId;
 	private final MemberQuestionRetriever memberQuestionRetriever;
 
-	private static final int QUESTION_PREVIEW_DAYS = 7;
 	private static final int RECENT_QUESTION_DAYS = 7;
 
 	@Value("${spring.profiles.active}")
@@ -297,233 +293,6 @@ public class MemberService {
 					.collect(Collectors.toList());
 				return memberMapper.toSoptMemberProfileProjectVo(m, projects);
 			}).collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public MemberAllProfileResponse getMemberProfiles(Integer filter, Integer limit, Integer offset, String search,
-		Integer generation, Integer employed, Integer orderBy, String mbti, String team) {
-		// 1) DB에서 먼저 서버 필터(mbti, employed)로 해당하는 모든 userId 조회
-		List<Long> allFilteredIds = memberProfileQueryRepository.findAllMemberIdsByDbFilters(mbti, employed, search);
-		if (allFilteredIds.isEmpty()) {
-			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
-		}
-
-		// 2) part/team/generation, name 정렬/검색은 플랫폼 데이터로 보정 필요 → 해당 ID 리스트로 플랫폼 조회
-		List<InternalUserDetails> internalUsers = platformService.getInternalUsers(allFilteredIds);
-		
-		// part/team/generation, name 필터 적용
-		String part = getMemberPart(filter);
-		String checkedTeam = checkActivityTeamConditions(team);
-		List<InternalUserDetails> filteredByPlatform = internalUsers.stream()
-			.filter(u -> filterPlatformConditions(u, part, checkedTeam, generation))
-			.toList();
-
-		if (filteredByPlatform.isEmpty()) {
-			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
-		}
-
-		// 3) DB 멤버 로드
-		Map<Long, Member> memberMap = memberRepository.findAllByIdIn(
-			filteredByPlatform.stream().map(InternalUserDetails::userId).toList()
-		).stream().collect(Collectors.toMap(Member::getId, Function.identity()));
-
-		// 검색어가 이름/대학교/회사 모두에 적용되도록 추가 필터링 (토큰 AND, 필드 OR)
-		List<InternalUserDetails> filteredBySearch = filteredByPlatform.stream()
-			.filter(u -> matchesSearchAcrossFields(u, memberMap.get(u.userId()), search))
-			.toList();
-
-		if (filteredBySearch.isEmpty()) {
-			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
-		}
-
-		// 3-1) Member 정보를 포함한 정렬 및 페이지네이션 처리
-		int offsetValue = (offset == null || offset < 0) ? 0 : offset;
-		int limitValue = (limit == null || limit <= 0) ? 30 : limit;
-
-		// orderBy 파라미터가 있으면 orderBy 우선, 없으면 필터별 정렬 정책 적용
-		List<InternalUserDetails> sortedUsers;
-		if (orderBy != null) {
-			// orderBy 파라미터가 있을 때: OrderByCondition 기준으로 정렬
-			OrderByCondition orderByCondition = OrderByCondition.valueOf(orderBy);
-			sortedUsers = filteredBySearch.stream()
-				.sorted(memberSortingService.createComparatorByOrderCondition(memberMap, orderByCondition, employed))
-				.toList();
-		} else {
-			// orderBy가 없을 때: 필터별 정렬 정책 적용
-			sortedUsers = filteredBySearch.stream()
-				.sorted(memberSortingService.createComparator(memberMap, employed, checkedTeam))
-				.toList();
-		}
-		
-		List<InternalUserDetails> pagedByServer = sortedUsers.stream()
-			.skip(offsetValue)
-			.limit(limitValue)
-			.toList();
-
-		if (pagedByServer.isEmpty()) {
-			return new MemberAllProfileResponse(Collections.emptyList(), false, 0);
-		}
-		List<Long> pagedMemberIds = pagedByServer.stream()
-			.map(InternalUserDetails::userId)
-			.toList();
-
-		Map<Long, MemberProfileResponse.MemberQuestionPreviewResponse> questionPreviewByReceiverId =
-			memberQuestionRetriever.findLatestRecentQuestionsByReceiverIds(
-				pagedMemberIds,
-				LocalDateTime.now().minusDays(QUESTION_PREVIEW_DAYS)
-			).stream().collect(Collectors.toMap(
-				question -> question.getReceiver().getId(),
-				question -> new MemberProfileResponse.MemberQuestionPreviewResponse(
-					question.getId(),
-					question.getContent()
-				)
-			));
-
-		List<MemberProfileResponse> memberList = pagedByServer.stream()
-			.map(userDetails -> {
-				Member member = memberMap.get(userDetails.userId());
-				boolean isCoffeeChatActivate = member != null && coffeeChatRetriever.existsCoffeeChat(member);
-
-				MemberProfileResponse baseResponse = memberMapper.toProfileResponse(
-					member,
-					userDetails,
-					isCoffeeChatActivate
-				);
-
-				MemberProfileResponse.MemberQuestionPreviewResponse questionPreview =
-					questionPreviewByReceiverId.get(userDetails.userId());
-
-				return memberResponseMapper.attachQuestionPreview(baseResponse, questionPreview);
-			})
-			.toList();
-
-		// 4) hasNext 및 totalCount 계산 (서버 기준)
-		boolean hasNext = (offsetValue + limitValue) < sortedUsers.size();
-		int totalCount = sortedUsers.size();
-
-		return new MemberAllProfileResponse(memberList, hasNext, totalCount);
-	}
-
-	private boolean filterPlatformConditions(
-		InternalUserDetails userDetails,
-		String part,
-		String team,
-		Integer generation
-	) {
-		if (part == null && team == null && generation == null) {
-			return true;
-		}
-
-		List<SoptActivity> activities = userDetails.soptActivities();
-
-		return activities.stream().anyMatch(activity -> {
-			// 공통 조건: generation과 part 체크
-			boolean generationMatch = (generation == null || Objects.equals(activity.generation(), generation));
-			boolean partMatch = (
-				part == null ||
-					Objects.equals(normalizeMemberTabPartFilterActivityPart(activity.part()), part)
-			);
-
-			if (!generationMatch || !partMatch) {
-				return false;
-			}
-
-			if (team == null) {
-				return true;
-			}
-
-			// 팀 조건 체크
-			if ("임원진".equals(team)) {
-				// 임원진: 솝트 활동인 동시에 미디어팀, 운영팀이 아닌 다른 팀이 있는 경우
-				String activityTeam = activity.team();
-				return activityTeam != null
-					&& activity.isSopt()
-					&& !activityTeam.isEmpty()
-					&& !"미디어팀".equals(activityTeam)
-					&& !"운영팀".equals(activityTeam);
-			}
-
-			if ("메이커스".equals(team)) {
-				return !activity.isSopt() || Objects.equals(activity.team(), "메이커스");
-			}
-
-			return Objects.equals(activity.team(), team);
-		});
-	}
-
-	/**
-	 * 검색어 기반 필터링
-	 */
-	private boolean matchesSearchAcrossFields(InternalUserDetails userDetails, Member member, String search) {
-		if (search == null || search.isBlank()) {
-			return true;
-		}
-		String keyword = search.trim();
-		String name = userDetails != null ? userDetails.name() : null;
-		String university = (member != null && member.getUniversity() != null) ? member.getUniversity() : null;
-		List<MemberCareer> careers = (member != null && member.getCareers() != null) ? member.getCareers() : Collections.emptyList();
-
-		boolean inName = name != null && name.contains(keyword);
-		boolean inUniv = university != null && university.contains(keyword);
-		boolean inCompany = careers.stream()
-			.map(MemberCareer::getCompanyName)
-			.filter(Objects::nonNull)
-			.anyMatch(c -> c.contains(keyword));
-
-		return inName || inUniv || inCompany;
-	}
-
-	private String normalizeMemberTabPartFilterActivityPart(String activityPart) {
-		if (activityPart == null || activityPart.isBlank()) {
-			return null;
-		}
-
-		return switch (activityPart) {
-			case "기획", "PLAN", "PM" -> "PLAN";
-			case "디자인", "DESIGN" -> "DESIGN";
-			case "웹", "WEB", "FRONTEND", "프론트엔드" -> "WEB";
-			case "서버", "SERVER", "BACKEND", "백엔드" -> "SERVER";
-			case "안드로이드", "ANDROID" -> "ANDROID";
-			case "iOS", "IOS" -> "IOS";
-			default -> activityPart;
-		};
-	}
-
-	private String getMemberPart(Integer filter) {
-		if (filter == null) {
-			return null;
-		}
-
-		return switch (filter) {
-			case 1 -> "PLAN";
-			case 2 -> "DESIGN";
-			case 3 -> "WEB";
-			case 4 -> "SERVER";
-			case 5 -> "ANDROID";
-			case 6 -> "IOS";
-			default -> null;
-		};
-	}
-
-	private String checkActivityTeamConditions(String team) {
-		if (team == null || team.equals("해당 없음")) {
-			return null;
-		}
-
-		if (team.equals("MAKERS")) {
-			return "메이커스";
-		}
-		if (team.equals("OPERATION")) {
-			return "운영팀";
-		}
-		if (team.equals("MEDIA")) {
-			return "미디어팀";
-		}
-		if (team.equals("EXECUTIVE")) {
-			return "임원진";
-		}
-
-		return null;
 	}
 
 	public Member saveDefaultMemberProfile(Long userId) {
