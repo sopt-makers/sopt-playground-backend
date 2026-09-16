@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public class Constant {
 
 	// TODO: 새 기수 시작 전 값 변경 필수
-	public final static int CURRENT_GENERATION = 38;
+	public final static int CURRENT_GENERATION = 39;
 
 	public final static Integer REPORT_FILTER_YEAR = 2024;
 	public final static LocalDateTime START_DATE_OF_YEAR = LocalDateTime.of(REPORT_FILTER_YEAR, 1, 1, 0, 0);
