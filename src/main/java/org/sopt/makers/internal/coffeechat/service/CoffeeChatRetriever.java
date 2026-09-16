@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.coffeechat.service;
 
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChat;
 import org.sopt.makers.internal.coffeechat.domain.CoffeeChatReview;
@@ -42,6 +43,19 @@ public class CoffeeChatRetriever {
 
     public boolean existsCoffeeChat(Member member) {
         return coffeeChatRepository.existsCoffeeChatByMemberAndIsCoffeeChatActivate(member, true);
+    }
+
+    /**
+     * 활성화된 커피챗을 가진 멤버 ID 집합을 한 번에 조회한다.
+     *
+     * <p>목록 응답처럼 여러 멤버의 커피챗 여부가 한꺼번에 필요할 때 사용한다.
+     * 멤버마다 {@link #existsCoffeeChat} 을 부르면 인원수만큼 쿼리가 나간다.
+     */
+    public Set<Long> findActivatedMemberIds(List<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Set.of();
+        }
+        return coffeeChatRepository.findActivatedMemberIdsIn(memberIds);
     }
 
     public CoffeeChat findCoffeeChatAndCheckIsActivated(Member member, Boolean isMine) {

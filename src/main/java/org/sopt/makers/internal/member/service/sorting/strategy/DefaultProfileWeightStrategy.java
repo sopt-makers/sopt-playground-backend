@@ -1,10 +1,7 @@
 package org.sopt.makers.internal.member.service.sorting.strategy;
 
-import java.util.Objects;
-
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.member.domain.Member;
-import org.sopt.makers.internal.member.domain.UserFavor;
+import org.sopt.makers.internal.member.dto.profile.MemberProfileSummaryVo;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,6 +11,9 @@ import org.springframework.stereotype.Component;
  * - 커리어 정보: 개당 3점
  * - 링크: 개당 1점
  * - 기타 정보: 각 1점
+ *
+ * <p>필드가 채워졌는지 판정하는 책임은 {@link MemberProfileSummaryVo} 하위 VO 들이 가진다.
+ * 이 클래스는 각 항목에 몇 점을 줄지만 결정한다.
  */
 @Component
 public class DefaultProfileWeightStrategy implements ProfileWeightStrategy {
@@ -25,90 +25,49 @@ public class DefaultProfileWeightStrategy implements ProfileWeightStrategy {
 	private static final int OTHER_FIELD_WEIGHT = 1;
 
 	@Override
-	public int calculate(InternalUserDetails userDetails, Member member) {
+	public int calculate(InternalUserDetails userDetails, MemberProfileSummaryVo member) {
 		int weight = 0;
 
-		if (userDetails.profileImage() != null && !userDetails.profileImage().isBlank()) {
+		// 플랫폼 서버에서 오는 값
+		if (isFilled(userDetails.profileImage())) {
 			weight += PROFILE_IMAGE_WEIGHT;
 		}
-
-		if (userDetails.birthday() != null && !userDetails.birthday().isBlank()) {
+		if (isFilled(userDetails.birthday())) {
 			weight += OTHER_FIELD_WEIGHT;
 		}
-		if (userDetails.phone() != null && !userDetails.phone().isBlank()) {
+		if (isFilled(userDetails.phone())) {
 			weight += OTHER_FIELD_WEIGHT;
 		}
-		if (userDetails.email() != null && !userDetails.email().isBlank()) {
+		if (isFilled(userDetails.email())) {
 			weight += OTHER_FIELD_WEIGHT;
 		}
 
-		if (member != null) {
-			if (member.getIntroduction() != null && !member.getIntroduction().isBlank()) {
-				weight += INTRODUCTION_WEIGHT;
-			}
-
-			if (member.getAddress() != null && !member.getAddress().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getUniversity() != null && !member.getUniversity().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getMajor() != null && !member.getMajor().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getSkill() != null && !member.getSkill().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getMbti() != null && !member.getMbti().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getMbtiDescription() != null && !member.getMbtiDescription().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getSojuCapacity() != null) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getInterest() != null && !member.getInterest().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getIdealType() != null && !member.getIdealType().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-			if (member.getSelfIntroduction() != null && !member.getSelfIntroduction().isBlank()) {
-				weight += OTHER_FIELD_WEIGHT;
-			}
-
-			UserFavor favor = member.getUserFavor();
-			if (favor != null) {
-				if (favor.getIsPourSauceLover() != null) {
-					weight += OTHER_FIELD_WEIGHT;
-				}
-				if (favor.getIsHardPeachLover() != null) {
-					weight += OTHER_FIELD_WEIGHT;
-				}
-				if (favor.getIsMintChocoLover() != null) {
-					weight += OTHER_FIELD_WEIGHT;
-				}
-				if (favor.getIsRedBeanFishBreadLover() != null) {
-					weight += OTHER_FIELD_WEIGHT;
-				}
-				if (favor.getIsSojuLover() != null) {
-					weight += OTHER_FIELD_WEIGHT;
-				}
-				if (favor.getIsRiceTteokLover() != null) {
-					weight += OTHER_FIELD_WEIGHT;
-				}
-			}
-
-			if (member.getLinks() != null && !member.getLinks().isEmpty()) {
-				weight += member.getLinks().size() * LINK_WEIGHT;
-			}
-
-			if (member.getCareers() != null && !member.getCareers().isEmpty()) {
-				weight += member.getCareers().size() * CAREER_WEIGHT;
-			}
+		if (member == null) {
+			return weight;
 		}
+
+		// 플레이그라운드 로컬 프로필
+		if (member.intro().hasIntroduction()) {
+			weight += INTRODUCTION_WEIGHT;
+		}
+		if (member.intro().hasSelfIntroduction()) {
+			weight += OTHER_FIELD_WEIGHT;
+		}
+		if (member.intro().hasSkill()) {
+			weight += OTHER_FIELD_WEIGHT;
+		}
+
+		weight += member.basicInfo().filledCount() * OTHER_FIELD_WEIGHT;
+		weight += member.personality().filledCount() * OTHER_FIELD_WEIGHT;
+		weight += member.favor().answeredCount() * OTHER_FIELD_WEIGHT;
+
+		weight += member.activity().linkCount() * LINK_WEIGHT;
+		weight += member.activity().careerCount() * CAREER_WEIGHT;
 
 		return weight;
+	}
+
+	private boolean isFilled(String value) {
+		return value != null && !value.isBlank();
 	}
 }

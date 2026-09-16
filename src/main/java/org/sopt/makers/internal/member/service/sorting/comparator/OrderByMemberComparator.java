@@ -3,7 +3,7 @@ package org.sopt.makers.internal.member.service.sorting.comparator;
 import java.util.Map;
 
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
-import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.dto.profile.MemberProfileSummaryVo;
 import org.sopt.makers.internal.member.domain.enums.OrderByCondition;
 import org.sopt.makers.internal.member.service.sorting.strategy.ProfileWeightStrategy;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,7 @@ public class OrderByMemberComparator implements MemberSortingComparator {
 
 	@Override
 	public int compare(InternalUserDetails a, InternalUserDetails b,
-	                   Map<Long, Member> memberMap,
+	                   Map<Long, MemberProfileSummaryVo> memberMap,
 	                   ProfileWeightStrategy weightStrategy) {
 		if (orderByCondition == null) {
 			throw new IllegalStateException("OrderByCondition이 설정되지 않았습니다.");
@@ -45,39 +45,39 @@ public class OrderByMemberComparator implements MemberSortingComparator {
 	}
 
 	private int compareLatestRegistered(InternalUserDetails a, InternalUserDetails b,
-	                                    Map<Long, Member> memberMap) {
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
+	                                    Map<Long, MemberProfileSummaryVo> memberMap) {
+		MemberProfileSummaryVo memberA = memberMap.get(a.userId());
+		MemberProfileSummaryVo memberB = memberMap.get(b.userId());
 
 		if (memberA == null && memberB == null) return 0;
 		if (memberA == null) return 1;
 		if (memberB == null) return -1;
 
-		return Long.compare(memberB.getId(), memberA.getId());
+		return Long.compare(memberB.id(), memberA.id());
 	}
 
 	private int compareOldestRegistered(InternalUserDetails a, InternalUserDetails b,
-	                                    Map<Long, Member> memberMap) {
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
+	                                    Map<Long, MemberProfileSummaryVo> memberMap) {
+		MemberProfileSummaryVo memberA = memberMap.get(a.userId());
+		MemberProfileSummaryVo memberB = memberMap.get(b.userId());
 
 		if (memberA == null && memberB == null) return 0;
 		if (memberA == null) return 1;
 		if (memberB == null) return -1;
 
-		return Long.compare(memberA.getId(), memberB.getId());
+		return Long.compare(memberA.id(), memberB.id());
 	}
 
 	private int compareLatestGeneration(InternalUserDetails a, InternalUserDetails b,
-	                                    Map<Long, Member> memberMap,
+	                                    Map<Long, MemberProfileSummaryVo> memberMap,
 	                                    ProfileWeightStrategy weightStrategy) {
 		// 1순위: 최신 기수
 		int generationCompare = Integer.compare(b.lastGeneration(), a.lastGeneration());
 		if (generationCompare != 0) return generationCompare;
 
 		// 2순위: 프로필 가중치
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
+		MemberProfileSummaryVo memberA = memberMap.get(a.userId());
+		MemberProfileSummaryVo memberB = memberMap.get(b.userId());
 		int weightA = weightStrategy.calculate(a, memberA);
 		int weightB = weightStrategy.calculate(b, memberB);
 		int weightCompare = Integer.compare(weightB, weightA);
@@ -88,15 +88,15 @@ public class OrderByMemberComparator implements MemberSortingComparator {
 	}
 
 	private int compareOldestGeneration(InternalUserDetails a, InternalUserDetails b,
-	                                    Map<Long, Member> memberMap,
+	                                    Map<Long, MemberProfileSummaryVo> memberMap,
 	                                    ProfileWeightStrategy weightStrategy) {
 		// 1순위: 오래된 기수
 		int generationCompare = Integer.compare(a.lastGeneration(), b.lastGeneration());
 		if (generationCompare != 0) return generationCompare;
 
 		// 2순위: 프로필 가중치
-		Member memberA = memberMap.get(a.userId());
-		Member memberB = memberMap.get(b.userId());
+		MemberProfileSummaryVo memberA = memberMap.get(a.userId());
+		MemberProfileSummaryVo memberB = memberMap.get(b.userId());
 		int weightA = weightStrategy.calculate(a, memberA);
 		int weightB = weightStrategy.calculate(b, memberB);
 		int weightCompare = Integer.compare(weightB, weightA);
