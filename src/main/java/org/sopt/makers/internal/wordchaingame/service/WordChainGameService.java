@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -229,28 +231,33 @@ public class WordChainGameService {
     private boolean checkWordExistInDictionary(String search) {
         StringBuffer result = new StringBuffer();
         try {
-            String apiUrl = "https://opendict.korean.go.kr/api/search?key=" + authConfig.getDictionaryKey() + "&req_type=json&q=" + search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
+            String filteredSearch = search.replaceAll("[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z]", "");
+            String encodedSearch = URLEncoder.encode(filteredSearch, StandardCharsets.UTF_8);
+            String apiUrl = "https://opendict.korean.go.kr/api/search?key=" + authConfig.getDictionaryKey() + "&req_type=json&q=" + encodedSearch;
             URL url = new URL(apiUrl);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
-            String returnLine;
-            while ((returnLine = bufferedReader.readLine()) != null) {
-                result.append(returnLine);
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.setReadTimeout(5000);
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), StandardCharsets.UTF_8))) {
+                String returnLine;
+                while ((returnLine = bufferedReader.readLine()) != null) {
+                    result.append(returnLine);
+                }
+            } finally {
+                urlConnection.disconnect();
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new BadRequestException("표준국어대사전 API 호출에 실패했어요. 잠시 후 다시 시도해주세요.");
         }
 
         // Jackson ObjectMapper 사용 (deprecated JSONParser 대체)
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode = null;
+        JsonNode rootNode;
         try {
             rootNode = objectMapper.readTree(String.valueOf(result));
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            throw new BadRequestException("표준국어대사전 응답을 파싱하는 데 실패했어요. 잠시 후 다시 시도해주세요.");
         }
         JsonNode channelNode = rootNode.get("channel");
         if (channelNode == null) return false;
