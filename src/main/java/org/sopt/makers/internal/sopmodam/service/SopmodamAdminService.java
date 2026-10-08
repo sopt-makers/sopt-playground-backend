@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,28 @@ public class SopmodamAdminService {
     private final SopmodamRoundRetriever roundRetriever;
     private final SopmodamQuestionRetriever questionRetriever;
     private final SopmodamAnswerRetriever answerRetriever;
+    private final SopmodamRoundModifier roundModifier;
+    private final SopmodamQuestionModifier questionModifier;
+    private final SopmodamRoundPolicy roundPolicy;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    @Transactional
+    public SopmodamRoundDetailResponse createRound(SopmodamRoundCreateRequest request) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        roundPolicy.validateScheduleOrder(request.voteStartAt(), request.voteEndAt(), request.answerEndAt());
+        roundRetriever.validateNotOverlapping(request.voteStartAt(), request.answerEndAt());
+
+        SopmodamRound round = roundModifier.createRound(
+            request.generation(),
+            request.eventName(),
+            request.voteStartAt(),
+            request.voteEndAt(),
+            request.answerEndAt()
+        );
+        questionModifier.createQuestions(round, request.questions());
+        return buildRoundDetail(round, now);
+    }
 
     @Transactional(readOnly = true)
     public SopmodamRoundDetailResponse getRound(Long roundId) {
