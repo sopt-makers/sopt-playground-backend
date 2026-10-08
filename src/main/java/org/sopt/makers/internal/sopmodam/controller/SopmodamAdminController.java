@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.sopmodam.controller;
 
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +50,22 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamAdminService.createRound(request));
+    }
+
+    @Operation(
+        summary = "솝모담 회차 목록 조회 API",
+        description = """
+            모든 회차를 투표 시작 시각(voteStartAt) 내림차순으로 조회합니다. 페이지네이션은 없습니다.
+            - phase: SCHEDULED(투표 시작 전) / VOTING / ANSWERING / REVEALED. 다음 회차가 시작된 지난 회차도 REVEALED 입니다.
+            """
+    )
+    @GetMapping("/rounds")
+    public ResponseEntity<List<SopmodamRoundSummaryResponse>> getRounds(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getRounds());
     }
 
     @Operation(
