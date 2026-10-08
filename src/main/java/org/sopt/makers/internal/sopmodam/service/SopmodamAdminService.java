@@ -9,6 +9,7 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
@@ -59,6 +60,25 @@ public class SopmodamAdminService {
     public SopmodamRoundDetailResponse getRound(Long roundId) {
         LocalDateTime now = LocalDateTime.now(KST);
         SopmodamRound round = roundRetriever.findRoundById(roundId);
+        return buildRoundDetail(round, now);
+    }
+
+    @Transactional
+    public SopmodamRoundDetailResponse updateRound(Long roundId, SopmodamRoundUpdateRequest request) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+        roundPolicy.validateScheduleOrder(request.voteStartAt(), request.voteEndAt(), request.answerEndAt());
+        roundPolicy.validateScheduleChange(round, request.voteStartAt(), request.voteEndAt(), now);
+        roundRetriever.validateNotOverlapping(roundId, request.voteStartAt(), request.answerEndAt());
+
+        roundModifier.updateRound(
+            round,
+            request.generation(),
+            request.eventName(),
+            request.voteStartAt(),
+            request.voteEndAt(),
+            request.answerEndAt()
+        );
         return buildRoundDetail(round, now);
     }
 

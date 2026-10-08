@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -85,5 +87,25 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getRound(roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 회차 수정 API",
+        description = """
+            회차의 기수·주제·일정을 수정합니다. 질문은 이 API로 바꾸지 않습니다. 응답은 회차 상세 조회와 같은 형식입니다.
+            - 모든 필드를 덮어씁니다. 바꾸지 않을 필드도 기존 값을 그대로 보내야 합니다.
+            - 회차 생성과 같은 일정 순서 검증(400)과 겹침 검사(409)를 합니다. 수정하는 회차 자신과는 겹침 검사를 하지 않습니다.
+            - 투표가 시작된 뒤에는 voteStartAt, 투표가 끝난 뒤에는 voteEndAt 을 바꿀 수 없습니다(400).
+            """
+    )
+    @PutMapping("/rounds/{roundId}")
+    public ResponseEntity<SopmodamRoundDetailResponse> updateRound(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId,
+        @RequestBody @Valid SopmodamRoundUpdateRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.updateRound(roundId, request));
     }
 }
