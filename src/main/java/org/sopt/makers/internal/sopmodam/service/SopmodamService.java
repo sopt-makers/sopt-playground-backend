@@ -8,15 +8,20 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.domain.Member;
+import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamMemberType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
 import org.sopt.makers.internal.sopmodam.util.DdayUtil;
 import org.springframework.stereotype.Service;
 
 // Platform 호출 동안 DB 커넥션을 잡지 않도록 서비스 메서드에는 트랜잭션을 걸지 않는다.
+// 쓰기 트랜잭션은 SopmodamVoteModifier 가 잡는다.
 @Service
 @RequiredArgsConstructor
 public class SopmodamService {
@@ -24,7 +29,9 @@ public class SopmodamService {
     private final SopmodamRoundRetriever roundRetriever;
     private final SopmodamQuestionRetriever questionRetriever;
     private final SopmodamVoteRetriever voteRetriever;
+    private final SopmodamVoteModifier voteModifier;
     private final SopmodamMemberPolicy memberPolicy;
+    private final MemberRetriever memberRetriever;
     private final PlatformService platformService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -57,6 +64,24 @@ public class SopmodamService {
             myVoteQuestionId,
             questions
         );
+    }
+
+    public SopmodamVoteResponse vote(Long userId, Long roundId, Long questionId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+        validateCanVote(userId, round);
+
+        if (SopmodamPhase.of(round, now) != SopmodamPhase.VOTING) {
+            throw new BadRequestException("투표 기간이 아닙니다.");
+        }
+
+        SopmodamQuestion question = questionRetriever.findQuestionInRound(questionId, roundId);
+        voteRetriever.validateNotVoted(roundId, userId);
+        // 회원을 먼저 확인해 두면 투표 저장 시 무결성 위반은 회차당 1표 유니크 제약뿐이다
+        Member member = memberRetriever.findMemberById(userId);
+
+        voteModifier.createVote(round, question, member);
+        return new SopmodamVoteResponse(roundId, questionId);
     }
 
     private void validateCanVote(Long userId, SopmodamRound round) {
