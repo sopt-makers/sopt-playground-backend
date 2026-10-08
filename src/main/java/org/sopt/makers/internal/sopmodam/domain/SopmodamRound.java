@@ -38,4 +38,18 @@ public class SopmodamRound extends AuditingTimeEntity {
 
     @Column(nullable = false)
     private LocalDateTime answerEndAt;
+
+    public void updateRound(
+        Integer generation,
+        String eventName,
+        LocalDateTime voteStartAt,
+        LocalDateTime voteEndAt,
+        LocalDateTime answerEndAt
+    ) {
+        this.generation = generation;
+        this.eventName = eventName;
+        this.voteStartAt = voteStartAt;
+        this.voteEndAt = voteEndAt;
+        this.answerEndAt = answerEndAt;
+    }
 }
