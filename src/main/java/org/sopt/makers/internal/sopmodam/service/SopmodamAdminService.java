@@ -11,6 +11,7 @@ import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,15 @@ public class SopmodamAdminService {
         );
         questionModifier.createQuestions(round, request.questions());
         return buildRoundDetail(round, now);
+    }
+
+    // 다음 회차가 시작된 지난 회차도 SopmodamPhase.of 가 REVEALED 를 돌려준다
+    @Transactional(readOnly = true)
+    public List<SopmodamRoundSummaryResponse> getRounds() {
+        LocalDateTime now = LocalDateTime.now(KST);
+        return roundRetriever.findAllRounds().stream()
+            .map(round -> SopmodamRoundSummaryResponse.of(round, SopmodamPhase.of(round, now)))
+            .toList();
     }
 
     @Transactional(readOnly = true)
