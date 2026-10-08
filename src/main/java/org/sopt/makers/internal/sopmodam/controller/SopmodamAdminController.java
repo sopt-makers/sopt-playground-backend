@@ -3,14 +3,18 @@ package org.sopt.makers.internal.sopmodam.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +28,26 @@ public class SopmodamAdminController {
 
     private final SopmodamAdminService sopmodamAdminService;
     private final AdminKeyValidator adminKeyValidator;
+
+    @Operation(
+        summary = "솝모담 회차 생성 API",
+        description = """
+            회차를 질문과 함께 생성합니다. 응답은 회차 상세 조회와 같은 형식입니다.
+            - 일정은 voteStartAt < voteEndAt < answerEndAt 순서여야 합니다. 모든 일시는 KST 이며 시작 포함·종료 미포함으로 판단합니다.
+            - 마감 시각은 다음 날 00:00:00 으로 넣는 것을 권장합니다.
+            - 다른 회차와 [voteStartAt, answerEndAt) 구간이 겹치면 409 입니다.
+            - 질문은 2개 이상이어야 하고, 입력한 순서대로 등록됩니다.
+            """
+    )
+    @PostMapping("/rounds")
+    public ResponseEntity<SopmodamRoundDetailResponse> createRound(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @RequestBody @Valid SopmodamRoundCreateRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamAdminService.createRound(request));
+    }
 
     @Operation(
         summary = "솝모담 회차 상세 조회 API",
