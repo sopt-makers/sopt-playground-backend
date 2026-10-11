@@ -16,4 +16,7 @@ public class SopmodamAnswerRetriever {
             throw new ConflictException("이미 답변하셨습니다.");
         }
     }
+    public long countByRoundId(Long roundId) {
+        return answerRepository.countByRoundId(roundId);
+    }
 }

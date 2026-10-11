@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 환경 안내 Callout. prod 면 danger, 그 외에는 information -->
+<div th:fragment="env-notice(prodMessage, devMessage)" class="mds-callout"
+     th:classappend="${environment == 'prod'} ? 'mds-callout-danger' : 'mds-callout-information'">
+    <span class="mds-callout-icon">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 8.75v5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="6" r="1" fill="currentColor"/>
+        </svg>
+    </span>
+    <p class="mds-callout-body" th:text="${environment == 'prod'} ? ${prodMessage} : ${devMessage}"></p>
+</div>
+
+</body>
+</html>
