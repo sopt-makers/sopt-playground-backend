@@ -2,6 +2,7 @@ package org.sopt.makers.internal.sopmodam.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,6 +27,7 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
@@ -33,9 +35,9 @@ import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
 
 /**
- * 솝모담 어드민 질문 추가 흐름 테스트.
+ * 솝모담 어드민 질문 추가·수정 흐름 테스트.
  *
- * <p>검사 순서는 회차 없음(404) → 투표 시작됨(400) 이고, 실패하면 질문을 저장하지 않아야 한다.
+ * <p>검사 순서는 회차·질문 없음(404) → 투표 시작됨(400) 이고, 실패하면 질문을 저장하지 않아야 한다.
  *
  * <p>리트리버·정책·쓰기 컴포넌트는 얇은 위임이라 실제 인스턴스를 쓰고, 리포지토리만 mock 으로 둔다.
  * 서비스는 {@code LocalDateTime.now(KST)} 를 직접 쓰므로, 회차 일정은 오늘(KST) 기준 상대 날짜로 만든다.
@@ -45,6 +47,7 @@ class SopmodamAdminServiceTest {
 
 	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	private static final Long ROUND_ID = 1L;
+	private static final Long QUESTION_ID = 10L;
 
 	@Mock SopmodamRoundRepository roundRepository;
 	@Mock SopmodamQuestionRepository questionRepository;
@@ -122,6 +125,62 @@ class SopmodamAdminServiceTest {
 				.isInstanceOf(NotFoundException.class)
 				.hasMessageContaining("존재하지 않는 솝모담 회차입니다.");
 			verify(questionRepository, never()).saveAll(anyList());
+		}
+	}
+
+	@Nested
+	@DisplayName("질문 수정")
+	class UpdateQuestion {
+
+		@Test
+		@DisplayName("투표 시작 전이면 질문 내용을 바꾸고 질문이 속한 회차 상세를 돌려준다")
+		void 투표_시작_전이면_수정() {
+			SopmodamRound round = roundStartingIn(1);
+			SopmodamQuestion question = question(QUESTION_ID, round, "기존 질문");
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question));
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID)).thenReturn(List.of(
+				question,
+				question(11L, round, "다른 질문")
+			));
+			when(answerRepository.countByRoundId(ROUND_ID)).thenReturn(0L);
+
+			SopmodamRoundDetailResponse response =
+				sopmodamAdminService.updateQuestion(QUESTION_ID, new SopmodamQuestionUpdateRequest("수정한 질문"));
+
+			verify(questionRepository).save(question);
+			assertThat(question.getContent()).isEqualTo("수정한 질문");
+
+			assertThat(response.roundId()).isEqualTo(ROUND_ID);
+			assertThat(response.phase()).isEqualTo(SopmodamPhase.SCHEDULED);
+			assertThat(response.questions())
+				.extracting(SopmodamQuestionResultResponse::content)
+				.containsExactly("수정한 질문", "다른 질문");
+		}
+
+		@Test
+		@DisplayName("투표가 시작된 회차의 질문이면 400 이고 질문을 바꾸지 않는다")
+		void 투표_시작_후면_400() {
+			SopmodamQuestion question = question(QUESTION_ID, roundStartingIn(0), "기존 질문");
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question));
+
+			assertThatThrownBy(() ->
+				sopmodamAdminService.updateQuestion(QUESTION_ID, new SopmodamQuestionUpdateRequest("수정한 질문")))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("투표가 시작된 회차의 질문은 변경할 수 없습니다.");
+			assertThat(question.getContent()).isEqualTo("기존 질문");
+			verify(questionRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("질문이 없으면 404 이고 질문을 저장하지 않는다")
+		void 질문_없으면_404() {
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() ->
+				sopmodamAdminService.updateQuestion(QUESTION_ID, new SopmodamQuestionUpdateRequest("수정한 질문")))
+				.isInstanceOf(NotFoundException.class)
+				.hasMessageContaining("존재하지 않는 질문입니다.");
+			verify(questionRepository, never()).save(any());
 		}
 	}
 
