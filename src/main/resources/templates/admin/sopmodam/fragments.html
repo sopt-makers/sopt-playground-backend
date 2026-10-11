@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 솝모담 화면 전용 리소스. admin/layout.html 을 팝업 화면과 같이 쓰므로 본문(content) 맨 앞에서 불러온다 -->
+<th:block th:fragment="assets">
+    <link rel="stylesheet" th:href="@{/css/sopmodam-admin.css}">
+    <script th:src="@{/admin/js/sopmodam-admin.js}"></script>
+</th:block>
+
+<div th:fragment="env-notice"
+     th:replace="~{admin/fragments :: env-notice(
+        '운영 환경이에요. 저장하면 실제 서비스에 바로 반영돼요.',
+        '개발 환경이에요. 저장한 내용은 개발 서버에만 반영돼요.')}"></div>
+
+<!-- 회차 생성(A1)·수정(A4) 공통 입력 필드. 값 읽기·검증은 sopmodam-admin.js 의 readRoundFields / validateRoundFields -->
+<th:block th:fragment="round-fields">
+    <div class="mds-form-grid">
+        <div class="mds-field" data-field="generation">
+            <label class="mds-field-label" for="generation">기수<span class="mds-field-required">*</span></label>
+            <input class="mds-input" id="generation" name="generation" type="number" min="1" step="1"
+                   inputmode="numeric" th:value="${currentGeneration}">
+            <div class="mds-field-helper-row">
+                <span class="mds-field-helper">사용자 유형(활동 YB·OB, 명예기수)을 나누는 기준이에요.</span>
+            </div>
+        </div>
+        <div class="mds-field" data-field="eventName">
+            <label class="mds-field-label" for="eventName">주제<span class="mds-field-required">*</span></label>
+            <input class="mds-input" id="eventName" name="eventName" type="text" maxlength="255"
+                   placeholder="예: SOPT 첫 협업" autocomplete="off">
+            <div class="mds-field-helper-row">
+                <span class="mds-field-helper"></span>
+                <span class="mds-field-counter" data-counter-for="eventName">0/255</span>
+            </div>
+        </div>
+    </div>
+    <div class="mds-form-grid">
+        <div class="mds-field" data-field="voteStartAt">
+            <label class="mds-field-label" for="voteStartAt">투표 시작<span class="mds-field-required">*</span></label>
+            <input class="mds-input" id="voteStartAt" name="voteStartAt" type="datetime-local" step="60">
+            <div class="mds-field-helper-row"><span class="mds-field-helper"></span></div>
+        </div>
+        <div class="mds-field" data-field="voteEndAt">
+            <label class="mds-field-label" for="voteEndAt">투표 마감<span class="mds-field-required">*</span></label>
+            <input class="mds-input" id="voteEndAt" name="voteEndAt" type="datetime-local" step="60">
+            <div class="mds-field-helper-row"><span class="mds-field-helper"></span></div>
+        </div>
+        <div class="mds-field" data-field="answerEndAt">
+            <label class="mds-field-label" for="answerEndAt">답변 마감·공개<span class="mds-field-required">*</span></label>
+            <input class="mds-input" id="answerEndAt" name="answerEndAt" type="datetime-local" step="60">
+            <div class="mds-field-helper-row"><span class="mds-field-helper"></span></div>
+        </div>
+    </div>
+    <p class="mds-form-note">
+        모든 시각은 KST예요. 시작 시각은 포함하고 마감 시각은 포함하지 않아요. 14일까지 받으려면 마감을 15일 00:00으로 넣어 주세요.<br>
+        다른 회차와 투표 시작부터 답변 마감까지의 기간이 겹치면 저장할 수 없어요.
+    </p>
+</th:block>
+
+</body>
+</html>

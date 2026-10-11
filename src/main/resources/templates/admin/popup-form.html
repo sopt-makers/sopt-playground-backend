@@ -5,73 +5,75 @@
 </head>
 <body>
     <div th:fragment="content">
-        <div class="content-header">
-            <h2 th:text="${isEdit} ? '팝업 수정' : '팝업 추가'">팝업 추가</h2>
-            <a th:href="@{/admin/popups}" class="btn btn-secondary">목록으로</a>
-        </div>
+        <div class="mds-page">
+            <a th:href="@{/admin/popups}" class="mds-text-button mds-back">← 목록으로</a>
+            <div class="mds-page-header">
+                <h2 class="mds-heading2" th:text="${isEdit} ? '팝업 수정' : '팝업 추가'">팝업 추가</h2>
+            </div>
 
-        <div class="env-warning" th:classappend="${environment == 'prod' ? 'env-warning-prod' : 'env-warning-dev'}">
-            <span th:text="${environment == 'prod' ?
-                '저장 시 실제 서비스에 반영됩니다.' :
-                '저장 시 개발 환경에만 반영됩니다.'}">
-            </span>
-        </div>
+            <form id="popupForm" class="mds-stack" onsubmit="return handleSubmit(event)">
+                <div th:replace="~{admin/fragments :: env-notice(
+                    '저장 시 실제 서비스에 반영됩니다.',
+                    '저장 시 개발 환경에만 반영됩니다.')}"></div>
 
-        <div class="form-container">
-            <form id="popupForm" onsubmit="return handleSubmit(event)">
                 <input type="hidden" id="popupId" th:value="${popup.id}">
                 <input type="hidden" id="isEdit" th:value="${isEdit}">
 
-                <div class="form-group">
-                    <label for="startDate">시작 날짜 *</label>
-                    <input type="date" id="startDate" th:value="${popup.startDate}" required>
-                </div>
+                <section class="mds-card">
+                    <div class="mds-form-grid">
+                        <div class="mds-field">
+                            <label class="mds-field-label" for="startDate">시작 날짜<span class="mds-field-required">*</span></label>
+                            <input class="mds-input" type="date" id="startDate" th:value="${popup.startDate}" required>
+                        </div>
 
-                <div class="form-group">
-                    <label for="endDate">종료 날짜 *</label>
-                    <input type="date" id="endDate" th:value="${popup.endDate}" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="pcImageFile">PC 이미지 *</label>
-                    <input type="file" id="pcImageFile" accept="image/*" onchange="handleFileSelect('pc')">
-                    <input type="hidden" id="pcImageUrl" th:value="${popup.pcImageUrl}">
-                    <div id="pcImagePreview" class="image-preview-container">
-                        <img th:if="${popup.pcImageUrl}" th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-preview-large">
+                        <div class="mds-field">
+                            <label class="mds-field-label" for="endDate">종료 날짜<span class="mds-field-required">*</span></label>
+                            <input class="mds-input" type="date" id="endDate" th:value="${popup.endDate}" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="mobileImageFile">모바일 이미지 *</label>
-                    <input type="file" id="mobileImageFile" accept="image/*" onchange="handleFileSelect('mobile')">
-                    <input type="hidden" id="mobileImageUrl" th:value="${popup.mobileImageUrl}">
-                    <div id="mobileImagePreview" class="image-preview-container">
-                        <img th:if="${popup.mobileImageUrl}" th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-preview-large">
+                    <div class="mds-form-grid">
+                        <div class="mds-field">
+                            <label class="mds-field-label" for="pcImageFile">PC 이미지<span class="mds-field-required">*</span></label>
+                            <input class="mds-input" type="file" id="pcImageFile" accept="image/*" onchange="handleFileSelect('pc')">
+                            <input type="hidden" id="pcImageUrl" th:value="${popup.pcImageUrl}">
+                            <div id="pcImagePreview" class="image-preview-container">
+                                <img th:if="${popup.pcImageUrl}" th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-preview-large">
+                            </div>
+                        </div>
+
+                        <div class="mds-field">
+                            <label class="mds-field-label" for="mobileImageFile">모바일 이미지<span class="mds-field-required">*</span></label>
+                            <input class="mds-input" type="file" id="mobileImageFile" accept="image/*" onchange="handleFileSelect('mobile')">
+                            <input type="hidden" id="mobileImageUrl" th:value="${popup.mobileImageUrl}">
+                            <div id="mobileImagePreview" class="image-preview-container">
+                                <img th:if="${popup.mobileImageUrl}" th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-preview-large">
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="linkUrl">링크 URL (선택)</label>
-                    <input type="url" id="linkUrl" th:value="${popup.linkUrl}" placeholder="https://sopt.org">
-                </div>
+                    <div class="mds-form-grid">
+                        <div class="mds-field mds-form-grid-wide">
+                            <label class="mds-field-label" for="linkUrl">링크 URL (선택)</label>
+                            <input class="mds-input" type="url" id="linkUrl" th:value="${popup.linkUrl}" placeholder="https://sopt.org">
+                        </div>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="openInNewTab" th:checked="${popup.openInNewTab}">
-                        새 탭에서 열기
-                    </label>
-                </div>
+                        <div class="mds-field mds-form-grid-wide">
+                            <label class="mds-checkbox">
+                                <input type="checkbox" id="openInNewTab" th:checked="${popup.openInNewTab}">
+                                새 탭에서 열기
+                            </label>
+                            <label class="mds-checkbox">
+                                <input type="checkbox" id="showOnlyToRecentGeneration" th:checked="${popup.showOnlyToRecentGeneration}">
+                                최근 기수에게만 보여주기
+                            </label>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="showOnlyToRecentGeneration" th:checked="${popup.showOnlyToRecentGeneration}">
-                        최근 기수에게만 보여주기
-                    </label>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" th:text="${isEdit} ? '수정하기' : '추가하기'">추가하기</button>
-                    <a th:href="@{/admin/popups}" class="btn btn-secondary">취소</a>
+                <div class="mds-form-actions">
+                    <a th:href="@{/admin/popups}" class="mds-btn mds-btn-md mds-btn-secondary">취소</a>
+                    <button type="submit" class="mds-btn mds-btn-md mds-btn-primary" th:text="${isEdit} ? '수정하기' : '추가하기'">추가하기</button>
                 </div>
             </form>
         </div>
