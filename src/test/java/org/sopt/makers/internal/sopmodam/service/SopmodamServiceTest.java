@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -30,11 +31,15 @@ import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
+import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionVoteRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
@@ -62,7 +67,9 @@ class SopmodamServiceTest {
 	@Mock SopmodamRoundRepository roundRepository;
 	@Mock SopmodamQuestionRepository questionRepository;
 	@Mock SopmodamQuestionVoteRepository questionVoteRepository;
+	@Mock SopmodamAnswerRepository answerRepository;
 	@Mock SopmodamVoteModifier voteModifier;
+	@Mock SopmodamAnswerModifier answerModifier;
 	@Mock MemberRetriever memberRetriever;
 	@Mock PlatformService platformService;
 
@@ -76,6 +83,8 @@ class SopmodamServiceTest {
 			new SopmodamQuestionRetriever(questionRepository),
 			new SopmodamVoteRetriever(questionVoteRepository),
 			voteModifier,
+			new SopmodamAnswerRetriever(answerRepository),
+			answerModifier,
 			new SopmodamMemberPolicy(),
 			memberRetriever,
 			platformService
@@ -390,6 +399,265 @@ class SopmodamServiceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("U4 답변 작성")
+	class CreateAnswer {
+
+		private static final String VALID_CONTENT = "솝트에서 배운 협업 경험을 바탕으로 말씀드리겠습니다.";
+
+		@Test
+		@DisplayName("활동 OB 가 답변 모집 기간에 유효한 내용으로 처음 작성하면 저장한다")
+		void 정상_답변_저장() {
+			SopmodamRound round = answeringRound();
+			SopmodamQuestion selected = selectedQuestion(10L, round);
+			Member member = Member.builder().id(USER_ID).build();
+			SopmodamAnswer answer = mock(SopmodamAnswer.class);
+			when(answer.getId()).thenReturn(10L);
+			when(answer.getContent()).thenReturn(VALID_CONTENT);
+			when(answer.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+			when(answer.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+
+			givenRound(round);
+			givenUser(activeOb());
+			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
+			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
+			when(answerModifier.createAnswer(selected, member, VALID_CONTENT)).thenReturn(answer);
+
+			SopmodamAnswerCreateResponse response = sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT));
+
+			assertThat(response.answerId()).isEqualTo(10L);
+			assertThat(response.content()).isEqualTo(VALID_CONTENT);
+			verify(answerModifier).createAnswer(selected, member, VALID_CONTENT);
+		}
+
+		@Test
+		@DisplayName("명예기수도 답변할 수 있다")
+		void 명예기수도_답변_가능() {
+			SopmodamRound round = answeringRound();
+			SopmodamQuestion selected = selectedQuestion(10L, round);
+			Member member = Member.builder().id(USER_ID).build();
+			SopmodamAnswer answer = mock(SopmodamAnswer.class);
+			when(answer.getId()).thenReturn(10L);
+			when(answer.getContent()).thenReturn(VALID_CONTENT);
+			when(answer.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+			when(answer.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+
+			givenRound(round);
+			givenUser(honorary());
+			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
+			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
+			when(answerModifier.createAnswer(selected, member, VALID_CONTENT)).thenReturn(answer);
+
+			assertThat(sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)).answerId()).isEqualTo(10L);
+		}
+
+		// ── 내용 검증 ──────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("content 가 null 이면 400 이고 DB 를 조회하지 않는다")
+		void content가_null이면_400() {
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(null)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 글자수가 초과되었습니다.");
+			verifyNoInteractions(roundRepository, platformService, answerModifier);
+		}
+
+		@Test
+		@DisplayName("content 가 501자 이상이면 400")
+		void content가_500자_초과면_400() {
+			String over500 = "가".repeat(501);
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(over500)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 글자수가 초과되었습니다.");
+			verifyNoInteractions(roundRepository, platformService, answerModifier);
+		}
+
+		@Test
+		@DisplayName("공백·줄바꿈 제외 실제 글자가 20자 미만이면 400")
+		void 공백제외_20자_미만이면_400() {
+			String onlySpaces = "  짧은글  ";  // 공백 제외 3자
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(onlySpaces)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 글자수가 너무 적습니다.");
+			verifyNoInteractions(roundRepository, platformService, answerModifier);
+		}
+
+		@Test
+		@DisplayName("공백으로만 이루어진 content 는 400")
+		void 공백만_이루어진_content는_400() {
+			String allSpaces = " ".repeat(100);
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(allSpaces)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 글자수가 너무 적습니다.");
+			verifyNoInteractions(roundRepository, platformService, answerModifier);
+		}
+
+		@Test
+		@DisplayName("공백 제외 정확히 20자면 유효하다")
+		void 공백제외_정확히_20자면_유효() {
+			String exactly20 = "가".repeat(20);  // 공백 없이 20자
+			SopmodamRound round = answeringRound();
+			SopmodamQuestion selected = selectedQuestion(10L, round);
+			Member member = Member.builder().id(USER_ID).build();
+			SopmodamAnswer answer = mock(SopmodamAnswer.class);
+			when(answer.getId()).thenReturn(10L);
+			when(answer.getContent()).thenReturn(exactly20);
+			when(answer.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+			when(answer.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+
+			givenRound(round);
+			givenUser(activeOb());
+			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
+			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
+			when(answerModifier.createAnswer(selected, member, exactly20)).thenReturn(answer);
+
+			assertThat(sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(exactly20)).answerId()).isEqualTo(10L);
+		}
+
+		// ── 회차 검증 ──────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("내용 검증 통과 후 회차가 없으면 404 이고 Platform 을 호출하지 않는다")
+		void 회차가_없으면_404() {
+			when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(NotFoundException.class)
+				.hasMessageContaining("존재하지 않는 솝모담 회차입니다.");
+			verifyNoInteractions(platformService, questionRepository, answerModifier);
+		}
+
+		// ── 권한 검증 ──────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("활동 YB 는 403 이고 phase 검사로 넘어가지 않는다")
+		void 활동_YB는_403() {
+			givenRound(answeringRound());
+			givenUser(activeYb());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(ForbiddenException.class)
+				.hasMessageContaining("답변 권한이 없습니다.");
+			verifyNoInteractions(questionRepository, answerModifier);
+		}
+
+		@Test
+		@DisplayName("회차 기수보다 뒤 기수인 사용자도 403")
+		void 뒤_기수_사용자는_403() {
+			givenRound(answeringRound());
+			givenUser(laterGeneration());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(ForbiddenException.class)
+				.hasMessageContaining("답변 권한이 없습니다.");
+			verifyNoInteractions(answerModifier);
+		}
+
+		@Test
+		@DisplayName("권한이 없는 사용자가 투표 기간 회차에 요청해도 권한(403)이 기간(400)보다 먼저다")
+		void 활동_YB_투표기간_회차는_403이_먼저() {
+			givenRound(votingRound());
+			givenUser(activeYb());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(ForbiddenException.class);
+		}
+
+		// ── Phase 검증 ─────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("투표 기간(VOTING)에는 400")
+		void 투표_기간이면_400() {
+			givenRound(votingRound());
+			givenUser(activeOb());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 모집 기간이 아닙니다.");
+			verifyNoInteractions(questionRepository, answerModifier);
+		}
+
+		@Test
+		@DisplayName("투표 시작 전(SCHEDULED)이면 400")
+		void 투표_시작전이면_400() {
+			givenRound(scheduledRound());
+			givenUser(activeOb());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 모집 기간이 아닙니다.");
+			verifyNoInteractions(questionRepository, answerModifier);
+		}
+
+		@Test
+		@DisplayName("공개 단계(REVEALED)면 400")
+		void 공개_단계면_400() {
+			givenRound(revealedRound());
+			givenUser(activeOb());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 모집 기간이 아닙니다.");
+			verifyNoInteractions(answerModifier);
+		}
+
+		// ── 선정 질문 검증 ─────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("선정된 질문이 없으면 400 이고 회원 조회·저장으로 넘어가지 않는다")
+		void 선정_질문_없으면_400() {
+			givenRound(answeringRound());
+			givenUser(activeOb());
+			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("최종 질문이 선정되지 않았습니다.");
+			verifyNoInteractions(memberRetriever, answerModifier);
+		}
+
+		// ── 회원·중복 검증 ─────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("이미 답변했으면 409 이고 회원 조회·저장으로 넘어가지 않는다")
+		void 이미_답변했으면_409() {
+			SopmodamRound round = answeringRound();
+			SopmodamQuestion selected = selectedQuestion(10L, round);
+			givenRound(round);
+			givenUser(activeOb());
+			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(true);
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(ConflictException.class)
+				.hasMessageContaining("이미 답변하셨습니다.");
+			verify(memberRetriever, never()).findMemberById(anyLong());
+			verify(answerModifier, never()).createAnswer(any(), any(), any());
+		}
+
+		@Test
+		@DisplayName("플레이그라운드 회원이 없으면 저장하지 않는다")
+		void 회원이_없으면_저장하지_않는다() {
+			SopmodamRound round = answeringRound();
+			SopmodamQuestion selected = selectedQuestion(10L, round);
+			givenRound(round);
+			givenUser(activeOb());
+			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
+			when(memberRetriever.findMemberById(USER_ID)).thenThrow(new NotFoundException("존재하지 않는 사용자의 id값 입니다."));
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
+				.isInstanceOf(NotFoundException.class);
+			verify(answerModifier, never()).createAnswer(any(), any(), any());
+		}
+	}
+
 	private void givenRound(SopmodamRound round) {
 		when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(round));
 	}
@@ -439,6 +707,10 @@ class SopmodamServiceTest {
 
 	private SopmodamQuestion question(Long questionId, SopmodamRound round, String content) {
 		return SopmodamQuestion.builder().id(questionId).round(round).content(content).build();
+	}
+
+	private SopmodamQuestion selectedQuestion(Long questionId, SopmodamRound round) {
+		return SopmodamQuestion.builder().id(questionId).round(round).content("선정된 질문").isSelected(true).build();
 	}
 
 	private InternalUserDetails activeYb() {
