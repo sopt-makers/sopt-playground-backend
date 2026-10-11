@@ -15,7 +15,7 @@ public record SopmodamRoundUpdateRequest(
     @Positive(message = "기수는 양수여야 합니다.")
     Integer generation,
 
-    @Schema(required = true, description = "회차 주제", example = "SOPT 첫 협업")
+    @Schema(required = true, description = "회차 주제. 앞뒤 공백은 제거하고 저장", example = "SOPT 첫 협업")
     @NotBlank(message = "필요한 값이 없습니다")
     @Size(max = 255, message = "회차 주제는 255자 이하로 입력해야 합니다.")
     String eventName,
@@ -32,4 +32,8 @@ public record SopmodamRoundUpdateRequest(
     @NotNull(message = "필요한 값이 없습니다")
     LocalDateTime answerEndAt
 ) {
+    // 어드민 화면과 같이 앞뒤 공백을 제거한 뒤 검증·저장한다
+    public SopmodamRoundUpdateRequest {
+        eventName = eventName == null ? null : eventName.strip();
+    }
 }
