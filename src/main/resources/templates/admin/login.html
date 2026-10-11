@@ -129,9 +129,13 @@
     </div>
 
     <script>
+        // 로그인 후 돌아갈 페이지. 오픈 리다이렉트를 막기 위해 /admin/ 아래 경로만 허용한다
+        const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+        const nextPage = redirectParam && redirectParam.startsWith('/admin/') ? redirectParam : '/admin/popups';
+
         // 이미 로그인된 경우 리다이렉트
         if (localStorage.getItem('adminKey')) {
-            window.location.href = '/admin/popups';
+            window.location.href = nextPage;
         }
 
         function showError(message) {
@@ -160,8 +164,8 @@
                 if (response.ok) {
                     // 로컬 스토리지에 저장
                     localStorage.setItem('adminKey', adminKey);
-                    // 팝업 관리 페이지로 이동
-                    window.location.href = '/admin/popups';
+                    // 요청한 페이지(기본: 팝업 관리)로 이동
+                    window.location.href = nextPage;
                 } else if (response.status === 403) {
                     showError('잘못된 관리자 키입니다.');
                 } else {
