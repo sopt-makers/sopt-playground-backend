@@ -30,11 +30,14 @@ import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamCardType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamCurrentCardResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamMyAnswerResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
@@ -42,9 +45,10 @@ import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionVoteRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * 솝모담 홈 카드 조회(U1)·투표 화면 조회(U2)·질문 투표(U3) 흐름 테스트.
+ * 솝모담 홈 카드 조회(U1)·투표 화면 조회(U2)·질문 투표(U3)·내 답변 조회(U4) 흐름 테스트.
  *
  * <p>검사 순서가 응답 코드를 결정하므로 순서 자체를 검증한다.
  * <pre>
@@ -567,6 +571,139 @@ class SopmodamServiceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("U4 내 답변 조회")
+	class GetMyAnswer {
+
+		@Test
+		@DisplayName("회차가 없으면 404 이고 Platform 을 호출하지 않는다")
+		void 회차가_없으면_404() {
+			when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> sopmodamService.getMyAnswer(USER_ID, ROUND_ID))
+				.isInstanceOf(NotFoundException.class)
+				.hasMessageContaining("존재하지 않는 솝모담 회차입니다.");
+			verifyNoInteractions(platformService, questionRepository, answerRepository);
+		}
+
+		@Test
+		@DisplayName("활동 YB 는 403 이고 질문·답변을 조회하지 않는다")
+		void 활동_YB는_403() {
+			givenRound(answeringRound());
+			givenUser(activeYb());
+
+			assertThatThrownBy(() -> sopmodamService.getMyAnswer(USER_ID, ROUND_ID))
+				.isInstanceOf(ForbiddenException.class)
+				.hasMessageContaining("답변할 수 없는 사용자입니다.");
+			verifyNoInteractions(questionRepository, answerRepository);
+		}
+
+		@Test
+		@DisplayName("회차 기수보다 뒤 기수인 사용자는 403")
+		void 뒤_기수_사용자는_403() {
+			givenRound(answeringRound());
+			givenUser(laterGeneration());
+
+			assertThatThrownBy(() -> sopmodamService.getMyAnswer(USER_ID, ROUND_ID))
+				.isInstanceOf(ForbiddenException.class)
+				.hasMessageContaining("답변할 수 없는 사용자입니다.");
+		}
+
+		@Test
+		@DisplayName("활동 YB 가 투표 중 회차를 조회하면 미선정(400)보다 권한(403)이 먼저다")
+		void 활동_YB_투표_중_회차는_403이_먼저() {
+			givenRound(votingRound());
+			givenUser(activeYb());
+
+			assertThatThrownBy(() -> sopmodamService.getMyAnswer(USER_ID, ROUND_ID))
+				.isInstanceOf(ForbiddenException.class);
+		}
+
+		@Test
+		@DisplayName("투표 중에는 단독 1위 질문이 있어도 400 이고 답변을 조회하지 않는다")
+		void 투표_중이면_400() {
+			SopmodamRound round = votingRound();
+			givenRound(round);
+			givenUser(activeOb());
+			givenQuestions(question(1L, round, "질문 1", 5, false), question(2L, round, "질문 2", 3, false));
+
+			assertThatThrownBy(() -> sopmodamService.getMyAnswer(USER_ID, ROUND_ID))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("최종 질문이 아직 선정되지 않았습니다.");
+			verifyNoInteractions(answerRepository);
+		}
+
+		@Test
+		@DisplayName("투표가 끝났어도 최다 득표가 동률이고 어드민 지정이 없으면 400")
+		void 최종_질문_미선정이면_400() {
+			SopmodamRound round = answeringRound();
+			givenRound(round);
+			givenUser(activeOb());
+			givenQuestions(question(1L, round, "질문 1", 5, false), question(2L, round, "질문 2", 5, false));
+
+			assertThatThrownBy(() -> sopmodamService.getMyAnswer(USER_ID, ROUND_ID))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("최종 질문이 아직 선정되지 않았습니다.");
+			verifyNoInteractions(answerRepository);
+		}
+
+		@Test
+		@DisplayName("답변 모집 중이고 아직 작성하지 않았으면 answer 는 null, 수정할 수 있다")
+		void 답변_모집_중_작성_전() {
+			SopmodamRound round = answeringRound();
+			givenRound(round);
+			givenUser(activeOb());
+			givenQuestions(question(1L, round, "질문 1", 2, false), question(2L, round, "질문 2", 5, false));
+			when(answerRepository.findByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(Optional.empty());
+
+			SopmodamMyAnswerResponse response = sopmodamService.getMyAnswer(USER_ID, ROUND_ID);
+
+			assertThat(response.roundId()).isEqualTo(ROUND_ID);
+			assertThat(response.question()).isEqualTo(new SopmodamQuestionResponse(2L, "질문 2"));
+			assertThat(response.answerEndAt()).isEqualTo(round.getAnswerEndAt());
+			assertThat(response.canEdit()).isTrue();
+			assertThat(response.answer()).isNull();
+		}
+
+		@Test
+		@DisplayName("답변 모집 중이고 이미 작성했으면 내 답변을 내려주고, 수정할 수 있다")
+		void 답변_모집_중_작성_후() {
+			SopmodamRound round = answeringRound();
+			givenRound(round);
+			givenUser(honorary());
+			SopmodamQuestion finalQuestion = question(1L, round, "질문 1", 0, true);
+			givenQuestions(finalQuestion, question(2L, round, "질문 2", 5, false));
+			LocalDateTime createdAt = today.minusDays(1).atTime(13, 2, 11);
+			LocalDateTime updatedAt = today.atTime(9, 40);
+			when(answerRepository.findByRoundIdAndMemberId(ROUND_ID, USER_ID))
+				.thenReturn(Optional.of(answer(10L, finalQuestion, "내용\n두 번째 줄", createdAt, updatedAt)));
+
+			SopmodamMyAnswerResponse response = sopmodamService.getMyAnswer(USER_ID, ROUND_ID);
+
+			assertThat(response.question()).isEqualTo(new SopmodamQuestionResponse(1L, "질문 1"));
+			assertThat(response.canEdit()).isTrue();
+			assertThat(response.answer())
+				.isEqualTo(new SopmodamAnswerResponse(10L, "내용\n두 번째 줄", createdAt, updatedAt));
+		}
+
+		@Test
+		@DisplayName("답변 마감이 지나면 작성한 답변은 조회되지만 수정할 수 없다")
+		void 답변_마감_후() {
+			SopmodamRound round = revealedRound();
+			givenRound(round);
+			givenUser(activeOb());
+			SopmodamQuestion finalQuestion = question(1L, round, "질문 1", 0, true);
+			givenQuestions(finalQuestion);
+			when(answerRepository.findByRoundIdAndMemberId(ROUND_ID, USER_ID))
+				.thenReturn(Optional.of(answer(10L, finalQuestion, "내용", null, null)));
+
+			SopmodamMyAnswerResponse response = sopmodamService.getMyAnswer(USER_ID, ROUND_ID);
+
+			assertThat(response.canEdit()).isFalse();
+			assertThat(response.answer().answerId()).isEqualTo(10L);
+		}
+	}
+
 	private void givenRound(SopmodamRound round) {
 		when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(round));
 	}
@@ -636,6 +773,14 @@ class SopmodamServiceTest {
 			.voteCount(voteCount)
 			.isSelected(isSelected)
 			.build();
+	}
+
+	// 작성·수정 시각은 JPA Auditing 이 채우므로 테스트에서는 직접 넣는다
+	private SopmodamAnswer answer(Long answerId, SopmodamQuestion question, String content, LocalDateTime createdAt, LocalDateTime updatedAt) {
+		SopmodamAnswer answer = SopmodamAnswer.builder().id(answerId).question(question).content(content).build();
+		ReflectionTestUtils.setField(answer, "createdAt", createdAt);
+		ReflectionTestUtils.setField(answer, "updatedAt", updatedAt);
+		return answer;
 	}
 
 	private InternalUserDetails activeYb() {
