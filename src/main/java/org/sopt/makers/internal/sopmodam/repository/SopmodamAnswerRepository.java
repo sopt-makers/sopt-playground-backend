@@ -9,4 +9,15 @@ public interface SopmodamAnswerRepository extends JpaRepository<SopmodamAnswer, 
 
     @Query("SELECT COUNT(answer) FROM SopmodamAnswer answer WHERE answer.question.round.id = :roundId")
     long countByRoundId(@Param("roundId") Long roundId);
+
+    @Query("""
+        SELECT CASE WHEN COUNT(answer) > 0 THEN true ELSE false END
+        FROM SopmodamAnswer answer
+        WHERE answer.question.round.id = :roundId
+          AND answer.member.id = :memberId
+    """)
+    boolean existsByRoundIdAndMemberId(
+        @Param("roundId") Long roundId,
+        @Param("memberId") Long memberId
+    );
 }

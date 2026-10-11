@@ -13,4 +13,8 @@ public class SopmodamAnswerRetriever {
     public long countByRoundId(Long roundId) {
         return answerRepository.countByRoundId(roundId);
     }
+
+    public boolean hasAnswered(Long roundId, Long memberId) {
+        return answerRepository.existsByRoundIdAndMemberId(roundId, memberId);
+    }
 }
