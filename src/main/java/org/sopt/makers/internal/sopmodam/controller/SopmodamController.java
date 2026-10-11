@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamVoteRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamCurrentCardResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamMyAnswerResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamService;
@@ -91,5 +92,23 @@ public class SopmodamController {
         @RequestBody @Valid SopmodamVoteRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamService.vote(userId, roundId, request.questionId()));
+    }
+
+    @Operation(
+        summary = "솝모담 내 답변 조회 API",
+        description = """
+            회차의 최종 질문과 내 답변을 조회합니다. 답변 작성·수정 화면에서 사용합니다.
+            - 활동 OB·명예기수만 조회할 수 있습니다. 사용자 유형은 회차의 기수 기준으로 판단합니다.
+            - 투표가 끝나기 전이거나 최종 질문이 정해지지 않았으면 400 입니다.
+            - answer 는 아직 작성하지 않았으면 null 입니다.
+            - canEdit 은 답변 모집 기간(voteEndAt <= now < answerEndAt)일 때 true 입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/answers/me")
+    public ResponseEntity<SopmodamMyAnswerResponse> getMyAnswer(
+        @PathVariable("roundId") Long roundId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.getMyAnswer(userId, roundId));
     }
 }
