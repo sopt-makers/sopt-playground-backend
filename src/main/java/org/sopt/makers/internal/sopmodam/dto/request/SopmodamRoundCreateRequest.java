@@ -35,7 +35,7 @@ public record SopmodamRoundCreateRequest(
 
     @Schema(required = true, description = "투표 후보 질문. 2개 이상, 각 항목은 255자 이하. 앞뒤 공백은 제거하고 저장")
     @NotNull(message = "필요한 값이 없습니다")
-    @Size(min = 2, message = "질문은 2개 이상 등록해야 합니다.")
+    @Size(min = 2, message = "질문은 2개 이상이어야 합니다.")
     List<
         @NotBlank(message = "필요한 값이 없습니다")
         @Size(max = 255, message = "질문은 255자 이하로 입력해야 합니다.")
