@@ -9,6 +9,7 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
@@ -90,6 +91,17 @@ public class SopmodamAdminService {
         roundPolicy.validateQuestionEditable(round, now);
 
         questionModifier.createQuestions(round, List.of(request.content()));
+        return buildRoundDetail(round, now);
+    }
+
+    @Transactional
+    public SopmodamRoundDetailResponse updateQuestion(Long questionId, SopmodamQuestionUpdateRequest request) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamQuestion question = questionRetriever.findQuestionById(questionId);
+        SopmodamRound round = question.getRound();
+        roundPolicy.validateQuestionEditable(round, now);
+
+        questionModifier.updateContent(question, request.content());
         return buildRoundDetail(round, now);
     }
 

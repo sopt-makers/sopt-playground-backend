@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
@@ -127,5 +128,24 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamAdminService.addQuestion(roundId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 질문 수정 API",
+        description = """
+            투표 후보 질문의 내용을 수정합니다. 응답은 질문이 속한 회차의 상세 조회와 같은 형식입니다.
+            - 투표가 시작되기 전(phase = SCHEDULED)에만 수정할 수 있습니다. voteStartAt 정각부터는 400 입니다.
+            - 질문은 255자 이하이며, 앞뒤 공백을 제거한 뒤 검증·저장합니다.
+            """
+    )
+    @PutMapping("/questions/{questionId}")
+    public ResponseEntity<SopmodamRoundDetailResponse> updateQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("questionId") Long questionId,
+        @RequestBody @Valid SopmodamQuestionUpdateRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.updateQuestion(questionId, request));
     }
 }
