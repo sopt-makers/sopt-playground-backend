@@ -15,7 +15,13 @@ import jakarta.persistence.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-@Table(name = "sopmodam_answer")
+@Table(
+    name = "sopmodam_answer",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_sopmodam_answer_question_member",
+        columnNames = {"question_id", "member_id"}
+    )
+)
 public class SopmodamAnswer extends AuditingTimeEntity {
 
     @Id
