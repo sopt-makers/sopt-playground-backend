@@ -18,6 +18,10 @@ public class SopmodamQuestionRetriever {
         return questionRepository.findAllByRoundIdOrderByIdAsc(roundId);
     }
 
+    public long countByRoundId(Long roundId) {
+        return questionRepository.countByRoundId(roundId);
+    }
+
     public SopmodamQuestion findQuestionById(Long questionId) {
         return questionRepository.findById(questionId)
             .orElseThrow(() -> new NotFoundException("존재하지 않는 질문입니다."));
