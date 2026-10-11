@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamVoteRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamCurrentCardResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamService;
@@ -28,6 +29,32 @@ import org.springframework.web.bind.annotation.RestController;
 public class SopmodamController {
 
     private final SopmodamService sopmodamService;
+
+    @Operation(
+        summary = "솝모담 홈 카드 조회 API",
+        description = """
+            커뮤니티 홈에 보여줄 솝모담 카드를 조회합니다. 카드 유형과 버튼 활성화 여부는 서버가 정합니다.
+            - 현재 회차는 투표가 시작된 회차 중 가장 늦게 시작한 회차입니다.
+            - cardType 은 진행 단계(phase)와 사용자 유형으로 정합니다. 사용자 유형은 회차의 기수 기준으로 판단합니다.
+              - VOTING: 활동 YB·OB → VOTE
+              - ANSWERING: 활동 YB → ANSWER_PREPARING, 활동 OB·명예기수 → ANSWER_COLLECTING
+              - REVEALED: 활동 YB·OB·명예기수 → REVEALED
+            - dDay = (마감시각 - 1초)의 날짜 - 오늘 날짜(KST). VOTING 은 voteEndAt, ANSWERING 은 answerEndAt 기준이고 REVEALED 는 null 입니다.
+            - selectedQuestion 은 VOTING 이 아닐 때, answerCount 는 REVEALED 일 때만 내려줍니다.
+            - 보여줄 카드가 없으면 204 입니다.
+              - 현재 회차가 없는 경우
+              - VOTING 단계의 명예기수, 회차 기수보다 뒤 기수인 회원
+              - VOTING 이후 단계인데 최종 질문이 정해지지 않은 경우
+            """
+    )
+    @GetMapping("/current")
+    public ResponseEntity<SopmodamCurrentCardResponse> getCurrentCard(
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        return sopmodamService.getCurrentCard(userId)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.noContent().build());
+    }
 
     @Operation(
         summary = "솝모담 투표 화면 조회 API",

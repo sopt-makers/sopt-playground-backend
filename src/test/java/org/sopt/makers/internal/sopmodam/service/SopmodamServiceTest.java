@@ -35,6 +35,7 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
+import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionVoteRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
@@ -62,6 +63,7 @@ class SopmodamServiceTest {
 	@Mock SopmodamRoundRepository roundRepository;
 	@Mock SopmodamQuestionRepository questionRepository;
 	@Mock SopmodamQuestionVoteRepository questionVoteRepository;
+	@Mock SopmodamAnswerRepository answerRepository;
 	@Mock SopmodamVoteModifier voteModifier;
 	@Mock MemberRetriever memberRetriever;
 	@Mock PlatformService platformService;
@@ -75,6 +77,7 @@ class SopmodamServiceTest {
 			new SopmodamRoundRetriever(roundRepository),
 			new SopmodamQuestionRetriever(questionRepository),
 			new SopmodamVoteRetriever(questionVoteRepository),
+			new SopmodamAnswerRetriever(answerRepository),
 			voteModifier,
 			new SopmodamMemberPolicy(),
 			memberRetriever,
