@@ -59,6 +59,7 @@
     --color-bg-danger-ghost: var(--color-base-red950);
     --color-bg-layer-basement: var(--color-base-gray950);
     --color-bg-layer-default: var(--color-base-gray900);
+    --color-bg-dim-default: rgba(15, 16, 18, 0.8);
 
     /* stroke */
     --color-stroke-neutral-default: var(--color-base-gray600);
@@ -720,6 +721,45 @@ p {
 .mds-checkbox input:focus-visible {
     outline: 2px solid var(--color-stroke-neutral-default-focused);
     outline-offset: 2px;
+}
+
+/* Dialog */
+.mds-dialog {
+    width: 400px;
+    max-width: calc(100vw - 32px);
+    padding: 24px;
+    border: none;
+    border-radius: 14px;
+    background-color: var(--color-bg-neutral-ghost);
+    color: var(--color-fg-neutral-bold);
+    font-family: var(--mds-font-family);
+}
+
+.mds-dialog::backdrop {
+    background-color: var(--color-bg-dim-default);
+}
+
+.mds-dialog-title {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: -0.02em;
+}
+
+.mds-dialog-description {
+    margin-top: 12px;
+    color: var(--color-fg-neutral-default);
+    font-size: 16px;
+    line-height: 26px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.mds-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
 }
 
 /* 이미지 미리보기 (홈팝업) */

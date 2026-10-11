@@ -130,3 +130,38 @@
 .mds-question-result.is-selected .mds-vote-bar-fill {
     background-color: var(--color-bg-brand-default);
 }
+
+/* 질문 관리 (A5~A8) */
+.mds-question-guide {
+    margin: -8px 0 20px;
+}
+
+.mds-question-result-side {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+}
+
+.mds-question-result-side .mds-question-result-count {
+    margin-right: 4px;
+}
+
+.mds-question-edit,
+.mds-question-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mds-question-edit .mds-input,
+.mds-question-add .mds-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.mds-question-add {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-stroke-neutral-ghost);
+}

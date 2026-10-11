@@ -295,6 +295,42 @@ const SopmodamAdmin = (() => {
         return errors;
     }
 
+    // 네이티브 confirm() 대신 MDS Dialog 모양의 확인 창. 확인을 누르면 true
+    function confirmDialog({ title, description, confirmText = '확인', danger = false }) {
+        return new Promise((resolve) => {
+            let confirmed = false;
+            const dialog = h('dialog', { className: 'mds-dialog' }, [
+                h('h3', { className: 'mds-dialog-title', text: title }),
+                description ? h('p', { className: 'mds-dialog-description', text: description }) : null,
+                h('div', { className: 'mds-dialog-actions' }, [
+                    h('button', {
+                        className: 'mds-btn mds-btn-md mds-btn-secondary',
+                        text: '취소',
+                        attrs: { type: 'button' },
+                        on: { click: () => dialog.close() },
+                    }),
+                    h('button', {
+                        className: `mds-btn mds-btn-md ${danger ? 'mds-btn-danger' : 'mds-btn-primary'}`,
+                        text: confirmText,
+                        attrs: { type: 'button' },
+                        on: {
+                            click: () => {
+                                confirmed = true;
+                                dialog.close();
+                            },
+                        },
+                    }),
+                ]),
+            ]);
+            dialog.addEventListener('close', () => {
+                dialog.remove();
+                resolve(confirmed);
+            });
+            document.body.append(dialog);
+            dialog.showModal();
+        });
+    }
+
     return {
         ApiError,
         requireLogin,
@@ -318,5 +354,6 @@ const SopmodamAdmin = (() => {
         fillRoundFields,
         toRoundRequest,
         validateRoundFields,
+        confirmDialog,
     };
 })();
