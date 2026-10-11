@@ -1,0 +1,30 @@
+/*
+ * 어드민 로그인 화면 전용 스타일. 공통 토큰·컴포넌트는 admin.css 에 있다.
+ */
+
+.mds-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+}
+
+.mds-login-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 32px;
+}
+
+.mds-login-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.mds-login-submit {
+    width: 100%;
+    margin-top: 8px;
+}
