@@ -52,7 +52,7 @@
             (() => {
                 const {
                     api, h, phaseTag, callout, formatDateTime, showError, showNotice, clearMessage, requireLogin,
-                    withPending, bindCounters, clearFieldErrors, applyFieldErrors,
+                    withPending, bindCounters, bindErrorReset, clearFieldErrors, applyFieldErrors,
                     readRoundFields, fillRoundFields, toRoundRequest, validateRoundFields,
                 } = SopmodamAdmin;
                 const roundId = /*[[${roundId}]]*/ 0;
@@ -182,6 +182,7 @@
                     return;
                 }
                 bindCounters(form);
+                bindErrorReset(form);
                 document.getElementById('edit-round').addEventListener('click', startEdit);
                 document.getElementById('cancel-edit').addEventListener('click', () => {
                     clearMessage();

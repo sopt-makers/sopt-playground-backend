@@ -187,12 +187,24 @@ const SopmodamAdmin = (() => {
         }
     }
 
+    function clearFieldError(field) {
+        const helper = field.querySelector('.mds-field-helper');
+        field.classList.remove('is-error');
+        if (helper && helper.dataset.default !== undefined) {
+            helper.textContent = helper.dataset.default;
+        }
+    }
+
     function clearFieldErrors(root) {
-        root.querySelectorAll('.mds-field.is-error').forEach((field) => {
-            const helper = field.querySelector('.mds-field-helper');
-            field.classList.remove('is-error');
-            if (helper && helper.dataset.default !== undefined) {
-                helper.textContent = helper.dataset.default;
+        root.querySelectorAll('.mds-field.is-error').forEach(clearFieldError);
+    }
+
+    // 값을 고치면 그 필드의 에러 표시를 바로 지운다. 나중에 추가되는 입력칸도 위임으로 처리한다
+    function bindErrorReset(form) {
+        form.addEventListener('input', (event) => {
+            const field = event.target.closest('.mds-field.is-error');
+            if (field) {
+                clearFieldError(field);
             }
         });
     }
@@ -300,6 +312,7 @@ const SopmodamAdmin = (() => {
         setFieldError,
         clearFieldErrors,
         applyFieldErrors,
+        bindErrorReset,
         bindCounters,
         readRoundFields,
         fillRoundFields,

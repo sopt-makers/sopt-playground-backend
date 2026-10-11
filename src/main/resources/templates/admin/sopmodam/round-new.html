@@ -45,7 +45,7 @@
         <script>
             (() => {
                 const {
-                    api, h, showError, clearMessage, requireLogin, withPending, bindCounters, setFieldError,
+                    api, h, showError, clearMessage, requireLogin, withPending, bindCounters, bindErrorReset, setFieldError,
                     readRoundFields, toRoundRequest, validateRoundFields, applyFieldErrors,
                 } = SopmodamAdmin;
                 const MIN_QUESTION_COUNT = 2;
@@ -139,6 +139,7 @@
                     addQuestionRow();
                 }
                 bindCounters(form);
+                bindErrorReset(form);
                 document.getElementById('add-question').addEventListener('click', () => {
                     addQuestionRow().querySelector('.mds-input').focus();
                 });
