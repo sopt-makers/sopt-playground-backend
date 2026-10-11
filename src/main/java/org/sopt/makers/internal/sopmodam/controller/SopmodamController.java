@@ -41,6 +41,7 @@ public class SopmodamController {
               - REVEALED: 활동 YB·OB·명예기수 → REVEALED
             - dDay = (마감시각 - 1초)의 날짜 - 오늘 날짜(KST). VOTING 은 voteEndAt, ANSWERING 은 answerEndAt 기준이고 REVEALED 는 null 입니다.
             - selectedQuestion 은 VOTING 이 아닐 때, answerCount 는 REVEALED 일 때만 내려줍니다.
+            - canVote, canAnswer 는 지금 버튼을 누를 수 있는지 여부입니다. 이미 참여했으면 false 입니다.
             - 보여줄 카드가 없으면 204 입니다.
               - 현재 회차가 없는 경우
               - VOTING 단계의 명예기수, 회차 기수보다 뒤 기수인 회원
