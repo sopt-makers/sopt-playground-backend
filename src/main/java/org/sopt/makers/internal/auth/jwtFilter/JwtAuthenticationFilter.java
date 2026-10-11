@@ -48,6 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || uri.startsWith("/internal/api/v1")
                 || (uri.startsWith("/api/v1/popups") && !uri.equals("/api/v1/popups/current"))
                 || uri.startsWith("/admin")
+                // 솝모담 어드민 API 는 admin-key 헤더로 보호한다
+                || uri.startsWith("/api/v1/admin/sopmodam")
                 || uri.startsWith("/css")
                 || (uri.startsWith("/api/v1/projects") && "GET".equalsIgnoreCase(request.getMethod()))
         ) {

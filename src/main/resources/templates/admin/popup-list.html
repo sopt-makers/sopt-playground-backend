@@ -5,61 +5,64 @@
 </head>
 <body>
     <div th:fragment="content">
-        <div class="content-header">
-            <h2>홈팝업 관리</h2>
-            <a th:href="@{/admin/popups/new}" class="btn btn-primary">새 팝업 추가</a>
-        </div>
+        <div class="mds-page">
+            <div class="mds-page-header">
+                <h2 class="mds-heading2">홈팝업 관리</h2>
+                <a th:href="@{/admin/popups/new}" class="mds-btn mds-btn-primary">새 팝업 추가</a>
+            </div>
 
-        <div class="env-warning" th:classappend="${environment == 'prod' ? 'env-warning-prod' : 'env-warning-dev'}">
-            <span th:text="${environment == 'prod' ?
-                '해당 페이지에서 관리하는 팝업은 실제 서비스에 반영됩니다.' :
-                '해당 페이지에서 관리하는 팝업은 개발 환경에만 표시됩니다.'}">
-            </span>
-        </div>
+            <div class="mds-stack">
+                <div th:replace="~{admin/fragments :: env-notice(
+                    '해당 페이지에서 관리하는 팝업은 실제 서비스에 반영됩니다.',
+                    '해당 페이지에서 관리하는 팝업은 개발 환경에만 표시됩니다.')}"></div>
 
-        <div class="popup-list">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>시작 날짜</th>
-                        <th>종료 날짜</th>
-                        <th>PC 이미지</th>
-                        <th>모바일 이미지</th>
-                        <th>링크 URL</th>
-                        <th>새 탭</th>
-                        <th>최근 기수만</th>
-                        <th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:if="${popups.empty}">
-                        <td colspan="9" class="empty-message">등록된 팝업이 없습니다.</td>
-                    </tr>
-                    <tr th:each="popup : ${popups}">
-                        <td th:text="${popup.id}">1</td>
-                        <td th:text="${popup.startDate}">2024-01-01</td>
-                        <td th:text="${popup.endDate}">2024-01-31</td>
-                        <td class="image-cell">
-                            <a th:href="${popup.pcImageUrl}" target="_blank">
-                                <img th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-thumbnail">
-                            </a>
-                        </td>
-                        <td class="image-cell">
-                            <a th:href="${popup.mobileImageUrl}" target="_blank">
-                                <img th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-thumbnail">
-                            </a>
-                        </td>
-                        <td th:text="${popup.linkUrl}">-</td>
-                        <td th:text="${popup.openInNewTab != null ? (popup.openInNewTab ? 'O' : 'X') : '-'}">-</td>
-                        <td th:text="${popup.showOnlyToRecentGeneration != null ? (popup.showOnlyToRecentGeneration ? 'O' : 'X') : '-'}">-</td>
-                        <td class="action-cell">
-                            <a th:href="@{/admin/popups/{id}/edit(id=${popup.id})}" class="btn btn-sm btn-secondary">수정</a>
-                            <button th:onclick="'deletePopup(' + ${popup.id} + ')'" class="btn btn-sm btn-danger">삭제</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                <section class="mds-card mds-card-flush">
+                    <div class="mds-table-wrap">
+                        <table class="mds-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>시작 날짜</th>
+                                    <th>종료 날짜</th>
+                                    <th>PC 이미지</th>
+                                    <th>모바일 이미지</th>
+                                    <th>링크 URL</th>
+                                    <th>새 탭</th>
+                                    <th>최근 기수만</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${popups.empty}">
+                                    <td colspan="9" class="mds-empty">등록된 팝업이 없습니다.</td>
+                                </tr>
+                                <tr th:each="popup : ${popups}">
+                                    <td th:text="${popup.id}">1</td>
+                                    <td class="mds-cell-nowrap" th:text="${popup.startDate}">2024-01-01</td>
+                                    <td class="mds-cell-nowrap" th:text="${popup.endDate}">2024-01-31</td>
+                                    <td>
+                                        <a th:href="${popup.pcImageUrl}" target="_blank">
+                                            <img th:src="${popup.pcImageUrl}" alt="PC 이미지" class="image-thumbnail">
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a th:href="${popup.mobileImageUrl}" target="_blank">
+                                            <img th:src="${popup.mobileImageUrl}" alt="모바일 이미지" class="image-thumbnail">
+                                        </a>
+                                    </td>
+                                    <td th:text="${popup.linkUrl}">-</td>
+                                    <td th:text="${popup.openInNewTab != null ? (popup.openInNewTab ? 'O' : 'X') : '-'}">-</td>
+                                    <td th:text="${popup.showOnlyToRecentGeneration != null ? (popup.showOnlyToRecentGeneration ? 'O' : 'X') : '-'}">-</td>
+                                    <td class="mds-cell-actions">
+                                        <a th:href="@{/admin/popups/{id}/edit(id=${popup.id})}" class="mds-btn mds-btn-xs mds-btn-secondary">수정</a>
+                                        <button th:onclick="'deletePopup(' + ${popup.id} + ')'" class="mds-btn mds-btn-xs mds-btn-danger">삭제</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </div>
 
         <script th:inline="javascript">

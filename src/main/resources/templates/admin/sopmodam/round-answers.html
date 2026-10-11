@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>솝모담 답변</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <th:block th:replace="~{admin/sopmodam/fragments :: assets}"></th:block>
+
+        <div class="mds-page">
+            <a th:href="@{/admin/sopmodam/rounds/{roundId}(roundId=${roundId})}" class="mds-text-button mds-back">← 회차 상세</a>
+            <div class="mds-page-header">
+                <div class="mds-page-title">
+                    <h2 id="answers-title" class="mds-heading2">답변</h2>
+                    <span id="answer-count" class="mds-tag mds-tag-default-solid" hidden></span>
+                </div>
+            </div>
+
+            <div class="mds-stack">
+                <div th:replace="~{admin/sopmodam/fragments :: env-notice}"></div>
+                <div id="page-alert" class="mds-stack"></div>
+
+                <section id="answer-question" class="mds-card" hidden>
+                    <p class="mds-body3 mds-text-subtle">최종 질문</p>
+                    <p id="answer-question-content" class="mds-answer-question"></p>
+                </section>
+
+                <ol id="answer-list" class="mds-answer-list"></ol>
+            </div>
+        </div>
+
+        <script th:inline="javascript">
+            (() => {
+                const { api, h, formatDateTime, showError, requireLogin } = SopmodamAdmin;
+                const roundId = /*[[${roundId}]]*/ 0;
+
+                // 프로필 사진이 없거나 불러오지 못하면 이름 첫 글자로 대신한다
+                function avatar(writer) {
+                    const fallback = h('span', { className: 'mds-avatar', text: (writer.name ?? '?').slice(0, 1), attrs: { 'aria-hidden': 'true' } });
+                    if (!writer.profileImage) {
+                        return fallback;
+                    }
+                    const image = h('img', { className: 'mds-avatar', attrs: { src: writer.profileImage, alt: '', loading: 'lazy' } });
+                    image.addEventListener('error', () => image.replaceWith(fallback));
+                    return image;
+                }
+
+                function writerMeta(writer) {
+                    return [writer.generation ? `${writer.generation}기` : null, writer.part].filter(Boolean).join(' ');
+                }
+
+                function answerTime(answer) {
+                    const edited = answer.updatedAt !== answer.createdAt;
+                    return h('span', {
+                        className: 'mds-answer-time',
+                        text: formatDateTime(answer.createdAt) + (edited ? ' · 수정됨' : ''),
+                        attrs: { title: edited ? `수정 ${formatDateTime(answer.updatedAt)}` : null },
+                    });
+                }
+
+                function answerItem(answer) {
+                    return h('li', { className: 'mds-card mds-answer' }, [
+                        h('div', { className: 'mds-answer-head' }, [
+                            avatar(answer.writer),
+                            h('div', { className: 'mds-answer-writer' }, [
+                                h('p', { className: 'mds-answer-name', text: answer.writer.name }),
+                                h('p', { className: 'mds-answer-meta', text: writerMeta(answer.writer) }),
+                            ]),
+                            answerTime(answer),
+                        ]),
+                        h('p', { className: 'mds-answer-content', text: answer.content }),
+                    ]);
+                }
+
+                function render(data) {
+                    document.getElementById('answers-title').textContent = `${data.eventName} 답변`;
+                    const count = document.getElementById('answer-count');
+                    count.textContent = `${data.answerCount}개`;
+                    count.hidden = false;
+
+                    const questionContent = document.getElementById('answer-question-content');
+                    questionContent.textContent = data.question?.content ?? '아직 최종 질문이 정해지지 않았어요.';
+                    questionContent.classList.toggle('is-empty', !data.question);
+                    document.getElementById('answer-question').hidden = false;
+
+                    const list = document.getElementById('answer-list');
+                    if (data.answers.length === 0) {
+                        list.replaceChildren(h('li', { className: 'mds-card mds-empty', text: '아직 작성된 답변이 없어요.' }));
+                        return;
+                    }
+                    list.replaceChildren(...data.answers.map(answerItem));
+                }
+
+                async function loadAnswers() {
+                    try {
+                        render(await api('GET', `/rounds/${roundId}/answers`));
+                    } catch (error) {
+                        showError(error.message);
+                    }
+                }
+
+                if (requireLogin()) {
+                    loadAnswers();
+                }
+            })();
+        </script>
+    </div>
+</body>
+</html>
