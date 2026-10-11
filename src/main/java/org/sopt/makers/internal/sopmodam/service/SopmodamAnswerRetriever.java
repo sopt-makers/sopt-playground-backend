@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.sopmodam.service;
 
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ConflictException;
 import org.sopt.makers.internal.exception.NotFoundException;
@@ -25,5 +27,9 @@ public class SopmodamAnswerRetriever {
     public SopmodamAnswer findAnswerById(Long answerId) {
         return answerRepository.findByIdWithDetails(answerId)
             .orElseThrow(() -> new NotFoundException("존재하지 않는 답변입니다."));
+    }
+
+    public List<SopmodamAnswer> findAllByRoundId(Long roundId) {
+        return answerRepository.findAllByRoundIdOrderByUpdatedAtAscIdAsc(roundId);
     }
 }
