@@ -83,6 +83,20 @@ class SopmodamAnswerModifierTest {
 	}
 
 	@Test
+	@DisplayName("기존 답변의 내용을 수정하고 저장한다")
+	void 답변_수정() {
+		SopmodamAnswer answer = SopmodamAnswer.builder()
+			.question(question).member(member).content(CONTENT).build();
+		String newContent = "수정된 답변입니다. 공백 제외 이십 자 이상이어야 합니다요.";
+		when(answerRepository.save(answer)).thenReturn(answer);
+
+		SopmodamAnswer result = answerModifier.updateAnswer(answer, newContent);
+
+		verify(answerRepository).save(answer);
+		assertThat(result.getContent()).isEqualTo(newContent);
+	}
+
+	@Test
 	@DisplayName("다른 종류의 DB 제약 위반은 그대로 재던진다")
 	void 다른_제약_위반은_재던진다() {
 		DataIntegrityViolationException otherViolation = new DataIntegrityViolationException(
