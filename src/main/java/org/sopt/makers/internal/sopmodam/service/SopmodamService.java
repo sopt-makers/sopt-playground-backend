@@ -6,6 +6,7 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.ForbiddenException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
@@ -16,7 +17,9 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamMemberType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
@@ -111,13 +114,31 @@ public class SopmodamService {
         return SopmodamAnswerCreateResponse.from(answer);
     }
 
+    public SopmodamAnswerUpdateResponse updateAnswer(Long userId, Long answerId, SopmodamAnswerUpdateRequest request) {
+        validateAnswerContent(request.content());
+
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamAnswer answer = answerRetriever.findAnswerById(answerId);
+
+        if (!answer.getMember().getId().equals(userId)) {
+            throw new ForbiddenException("본인의 답변이 아닙니다.");
+        }
+
+        SopmodamRound round = answer.getQuestion().getRound();
+        if (SopmodamPhase.of(round, now) != SopmodamPhase.ANSWERING) {
+            throw new BadRequestException("답변 모집 기간이 아닙니다.");
+        }
+
+        SopmodamAnswer updated = answerModifier.updateAnswer(answer, request.content());
+        return SopmodamAnswerUpdateResponse.from(updated);
+    }
+
     private void validateAnswerContent(String content) {
         if (content == null || content.length() > 500) {
             throw new BadRequestException("답변 글자수가 초과되었습니다.");
         }
-        String stripped = content.replaceAll("[\\s]", "");
-        if (stripped.length() < 20) {
-            throw new BadRequestException("답변 글자수가 너무 적습니다.");
+        if (content.isBlank()) {
+            throw new BadRequestException("답변 내용을 입력해주세요.");
         }
     }
 

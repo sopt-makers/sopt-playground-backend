@@ -38,4 +38,8 @@ public class SopmodamAnswer extends AuditingTimeEntity {
 
     @Column(nullable = false, length = 500)
     private String content;
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }

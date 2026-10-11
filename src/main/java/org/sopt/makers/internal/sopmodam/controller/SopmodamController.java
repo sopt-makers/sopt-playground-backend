@@ -7,8 +7,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamVoteRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamService;
@@ -18,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,6 +69,24 @@ public class SopmodamController {
         @RequestBody @Valid SopmodamAnswerCreateRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamService.createAnswer(userId, roundId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 수정 API",
+        description = """
+            작성한 답변을 수정합니다.
+            - 답변 모집 기간(ANSWERING)에만 수정할 수 있습니다.
+            - 본인의 답변만 수정할 수 있습니다.
+            - content: 전체 500자 이하, 공백·줄바꿈 제외 20자 이상
+            """
+    )
+    @PutMapping("/answers/{answerId}")
+    public ResponseEntity<SopmodamAnswerUpdateResponse> updateAnswer(
+        @PathVariable("answerId") Long answerId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+        @RequestBody @Valid SopmodamAnswerUpdateRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.updateAnswer(userId, answerId, request));
     }
 
     @Operation(

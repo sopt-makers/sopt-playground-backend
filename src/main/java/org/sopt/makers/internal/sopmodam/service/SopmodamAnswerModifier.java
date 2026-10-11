@@ -20,6 +20,12 @@ public class SopmodamAnswerModifier {
     private final SopmodamAnswerRepository answerRepository;
 
     @Transactional
+    public SopmodamAnswer updateAnswer(SopmodamAnswer answer, String content) {
+        answer.updateContent(content);
+        return answerRepository.save(answer);
+    }
+
+    @Transactional
     public SopmodamAnswer createAnswer(SopmodamQuestion question, Member member, String content) {
         SopmodamAnswer answer = SopmodamAnswer.builder()
             .question(question)
