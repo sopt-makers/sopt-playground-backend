@@ -59,7 +59,7 @@ public class SopmodamController {
             - 답변 모집 기간(ANSWERING)에만 작성할 수 있습니다.
             - 회차당 1개의 답변만 허용됩니다.
             - 활동 OB·명예 회원만 답변할 수 있습니다. (활동 YB 불가)
-            - content: 전체 500자 이하, 공백·줄바꿈 제외 20자 이상
+            - content: 1자 이상 500자 이하, 공백·줄바꿈만으로 이루어진 경우 불가
             """
     )
     @PostMapping("/rounds/{roundId}/answers")
@@ -77,7 +77,7 @@ public class SopmodamController {
             작성한 답변을 수정합니다.
             - 답변 모집 기간(ANSWERING)에만 수정할 수 있습니다.
             - 본인의 답변만 수정할 수 있습니다.
-            - content: 전체 500자 이하, 공백·줄바꿈 제외 20자 이상
+            - content: 1자 이상 500자 이하, 공백·줄바꿈만으로 이루어진 경우 불가
             """
     )
     @PutMapping("/answers/{answerId}")
