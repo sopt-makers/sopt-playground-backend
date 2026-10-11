@@ -24,4 +24,9 @@ public class SopmodamQuestionModifier {
             .toList();
         return questionRepository.saveAll(questions);
     }
+
+    public void updateContent(SopmodamQuestion question, String content) {
+        question.updateContent(content);
+        questionRepository.save(question);
+    }
 }
