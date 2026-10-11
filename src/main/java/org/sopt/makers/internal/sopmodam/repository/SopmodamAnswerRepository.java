@@ -1,5 +1,7 @@
 package org.sopt.makers.internal.sopmodam.repository;
 
+import java.util.Optional;
+
 import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +19,17 @@ public interface SopmodamAnswerRepository extends JpaRepository<SopmodamAnswer, 
           AND answer.member.id = :memberId
     """)
     boolean existsByRoundIdAndMemberId(
+        @Param("roundId") Long roundId,
+        @Param("memberId") Long memberId
+    );
+
+    @Query("""
+        SELECT answer
+        FROM SopmodamAnswer answer
+        WHERE answer.question.round.id = :roundId
+          AND answer.member.id = :memberId
+    """)
+    Optional<SopmodamAnswer> findByRoundIdAndMemberId(
         @Param("roundId") Long roundId,
         @Param("memberId") Long memberId
     );
