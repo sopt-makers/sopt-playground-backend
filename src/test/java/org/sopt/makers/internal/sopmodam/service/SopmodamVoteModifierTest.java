@@ -9,7 +9,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,7 +77,8 @@ class SopmodamVoteModifierTest {
 	@DisplayName("동시 요청으로 유니크 제약에 걸리면 409 로 바꾸고 득표수를 올리지 않는다")
 	void 유니크_제약_위반이면_409() {
 		when(questionVoteRepository.saveAndFlush(any(SopmodamQuestionVote.class)))
-			.thenThrow(new DataIntegrityViolationException("uk_sopmodam_question_vote_round_member"));
+			.thenThrow(new DataIntegrityViolationException("duplicate", new ConstraintViolationException(
+				"duplicate", new SQLException("duplicate", "23505"), "uk_sopmodam_question_vote_round_member")));
 
 		assertThatThrownBy(() -> voteModifier.createVote(round, question, member))
 			.isInstanceOf(ConflictException.class)

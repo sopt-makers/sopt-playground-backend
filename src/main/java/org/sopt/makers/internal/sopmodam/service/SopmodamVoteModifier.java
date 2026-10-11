@@ -1,6 +1,7 @@
 package org.sopt.makers.internal.sopmodam.service;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.common.util.ConstraintViolationUtil;
 import org.sopt.makers.internal.exception.ConflictException;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
@@ -15,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class SopmodamVoteModifier {
+
+    private static final String VOTE_ROUND_MEMBER_UNIQUE_CONSTRAINT = "uk_sopmodam_question_vote_round_member";
 
     private final SopmodamQuestionVoteRepository questionVoteRepository;
     private final SopmodamQuestionRepository questionRepository;
@@ -33,7 +36,10 @@ public class SopmodamVoteModifier {
         try {
             questionVoteRepository.saveAndFlush(vote);
         } catch (DataIntegrityViolationException exception) {
-            throw new ConflictException("이미 투표한 회차입니다.");
+            if (ConstraintViolationUtil.isViolated(exception, VOTE_ROUND_MEMBER_UNIQUE_CONSTRAINT)) {
+                throw new ConflictException("이미 투표한 회차입니다.");
+            }
+            throw exception;
         }
 
         questionRepository.increaseVoteCount(question.getId());
