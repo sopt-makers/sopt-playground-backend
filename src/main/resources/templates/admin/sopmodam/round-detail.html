@@ -14,6 +14,8 @@
                     <h2 id="round-title" class="mds-heading2">회차 상세</h2>
                     <span id="round-phase"></span>
                 </div>
+                <a id="answers-link" class="mds-btn mds-btn-secondary"
+                   th:href="@{/admin/sopmodam/rounds/{roundId}/answers(roundId=${roundId})}">답변 보기</a>
             </div>
 
             <div class="mds-stack">
@@ -75,6 +77,7 @@
                 function renderHeader() {
                     document.getElementById('round-title').textContent = `#${round.roundId} ${round.eventName}`;
                     document.getElementById('round-phase').replaceChildren(phaseTag(round.phase));
+                    document.getElementById('answers-link').textContent = `답변 보기 (${round.answerCount})`;
                 }
 
                 function renderNotice() {

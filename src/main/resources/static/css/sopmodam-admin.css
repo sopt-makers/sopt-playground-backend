@@ -165,3 +165,79 @@
     padding-top: 20px;
     border-top: 1px solid var(--color-stroke-neutral-ghost);
 }
+
+/* 답변 목록 (A9) */
+.mds-answer-question {
+    margin-top: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+}
+
+.mds-answer-question.is-empty {
+    color: var(--color-fg-neutral-ghost);
+}
+
+.mds-answer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mds-answer-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.mds-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    background-color: var(--color-bg-neutral-subtle);
+    color: var(--color-fg-neutral-bold);
+    font-size: 16px;
+    font-weight: 600;
+    object-fit: cover;
+}
+
+.mds-answer-writer {
+    flex: 1;
+    min-width: 0;
+}
+
+.mds-answer-name {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.02em;
+}
+
+.mds-answer-meta,
+.mds-answer-time {
+    color: var(--color-fg-neutral-subtle);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.mds-answer-time {
+    flex-shrink: 0;
+}
+
+.mds-answer-content {
+    color: var(--color-fg-neutral-default);
+    font-size: 16px;
+    line-height: 26px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

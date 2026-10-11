@@ -39,6 +39,13 @@ public class SopmodamAdminPageController {
         return "admin/sopmodam/round-detail";
     }
 
+    @GetMapping("/rounds/{roundId}/answers")
+    public String roundAnswers(@PathVariable("roundId") Long roundId, Model model) {
+        addCommonAttributes(model);
+        model.addAttribute("roundId", roundId);
+        return "admin/sopmodam/round-answers";
+    }
+
     private void addCommonAttributes(Model model) {
         model.addAttribute("environment", authConfig.getActiveProfile());
         model.addAttribute("activeMenu", ACTIVE_MENU);
