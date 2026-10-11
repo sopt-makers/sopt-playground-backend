@@ -17,6 +17,7 @@ import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryRespon
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -147,5 +148,23 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.updateQuestion(questionId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 질문 삭제 API",
+        description = """
+            투표 후보 질문을 삭제합니다. 응답은 질문이 속한 회차의 상세 조회와 같은 형식입니다.
+            - 투표가 시작되기 전(phase = SCHEDULED)에만 삭제할 수 있습니다. voteStartAt 정각부터는 400 입니다.
+            - 삭제 후 회차에 남는 질문이 2개 미만이면 400 입니다.
+            """
+    )
+    @DeleteMapping("/questions/{questionId}")
+    public ResponseEntity<SopmodamRoundDetailResponse> deleteQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("questionId") Long questionId
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.deleteQuestion(questionId));
     }
 }
