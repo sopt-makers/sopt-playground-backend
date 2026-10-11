@@ -39,3 +39,94 @@
 .mds-question-inputs .mds-field-helper-row {
     padding-left: 34px;
 }
+
+/* 회차 정보 */
+.mds-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px 24px;
+    margin: 0;
+}
+
+.mds-info-item dt {
+    margin-bottom: 4px;
+    color: var(--color-fg-neutral-subtle);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.mds-info-item dd {
+    margin: 0;
+    color: var(--color-fg-neutral-bold);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.02em;
+}
+
+/* 질문별 득표 */
+.mds-question-results {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mds-question-result {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-stroke-neutral-ghost);
+}
+
+.mds-question-result:first-child {
+    padding-top: 0;
+}
+
+.mds-question-result:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.mds-question-result-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.mds-question-result-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+    color: var(--color-fg-neutral-bold);
+    font-size: 16px;
+    line-height: 26px;
+    overflow-wrap: anywhere;
+}
+
+.mds-question-result-count {
+    flex-shrink: 0;
+    color: var(--color-fg-neutral-default);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 26px;
+    letter-spacing: -0.02em;
+}
+
+.mds-vote-bar {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 9999px;
+    background-color: var(--color-bg-neutral-ghost);
+}
+
+.mds-vote-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background-color: var(--color-bg-neutral-bold);
+}
+
+.mds-question-result.is-selected .mds-vote-bar-fill {
+    background-color: var(--color-bg-brand-default);
+}

@@ -237,6 +237,15 @@ const SopmodamAdmin = (() => {
         };
     }
 
+    function fillRoundFields(form, round) {
+        form.elements.generation.value = round.generation;
+        form.elements.eventName.value = round.eventName;
+        form.elements.voteStartAt.value = toInputValue(round.voteStartAt);
+        form.elements.voteEndAt.value = toInputValue(round.voteEndAt);
+        form.elements.answerEndAt.value = toInputValue(round.answerEndAt);
+        form.elements.eventName.dispatchEvent(new Event('input'));
+    }
+
     function toRoundRequest(fields) {
         return {
             generation: fields.generation,
@@ -293,6 +302,7 @@ const SopmodamAdmin = (() => {
         applyFieldErrors,
         bindCounters,
         readRoundFields,
+        fillRoundFields,
         toRoundRequest,
         validateRoundFields,
     };
