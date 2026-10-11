@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>솝모담 회차</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <th:block th:replace="~{admin/sopmodam/fragments :: assets}"></th:block>
+
+        <div class="mds-page">
+            <div class="mds-page-header">
+                <h2 class="mds-heading2">솝모담 회차</h2>
+                <a th:href="@{/admin/sopmodam/rounds/new}" class="mds-btn mds-btn-primary">새 회차 만들기</a>
+            </div>
+
+            <div class="mds-stack">
+                <div th:replace="~{admin/sopmodam/fragments :: env-notice}"></div>
+                <div id="page-alert" class="mds-stack"></div>
+
+                <section class="mds-card mds-card-flush">
+                    <div class="mds-table-wrap">
+                        <table class="mds-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>기수</th>
+                                    <th>주제</th>
+                                    <th>단계</th>
+                                    <th>투표 기간</th>
+                                    <th>답변 마감·공개</th>
+                                </tr>
+                            </thead>
+                            <tbody id="round-rows">
+                                <tr>
+                                    <td colspan="6" class="mds-empty">회차를 불러오는 중이에요.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <script>
+            (() => {
+                const { api, h, phaseTag, formatDateTime, showError, requireLogin } = SopmodamAdmin;
+                const rows = document.getElementById('round-rows');
+
+                function emptyRow(message) {
+                    return h('tr', {}, h('td', { className: 'mds-empty', text: message, attrs: { colspan: 6 } }));
+                }
+
+                function roundRow(round) {
+                    const detailUrl = `/admin/sopmodam/rounds/${round.roundId}`;
+                    return h('tr', { className: 'is-clickable', on: { click: () => { location.href = detailUrl; } } }, [
+                        h('td', { text: round.roundId }),
+                        h('td', { className: 'mds-cell-nowrap', text: `${round.generation}기` }),
+                        h('td', { className: 'mds-cell-strong' },
+                            h('a', { className: 'mds-link', text: round.eventName, attrs: { href: detailUrl } })),
+                        h('td', {}, phaseTag(round.phase)),
+                        h('td', { className: 'mds-cell-nowrap' }, [
+                            formatDateTime(round.voteStartAt),
+                            h('br'),
+                            `~ ${formatDateTime(round.voteEndAt)}`,
+                        ]),
+                        h('td', { className: 'mds-cell-nowrap', text: formatDateTime(round.answerEndAt) }),
+                    ]);
+                }
+
+                async function loadRounds() {
+                    try {
+                        const rounds = await api('GET', '/rounds');
+                        if (rounds.length === 0) {
+                            rows.replaceChildren(emptyRow('아직 만든 회차가 없어요.'));
+                            return;
+                        }
+                        rows.replaceChildren(...rounds.map(roundRow));
+                    } catch (error) {
+                        showError(error.message);
+                        rows.replaceChildren(emptyRow('회차를 불러오지 못했어요.'));
+                    }
+                }
+
+                if (requireLogin()) {
+                    loadRounds();
+                }
+            })();
+        </script>
+    </div>
+</body>
+</html>

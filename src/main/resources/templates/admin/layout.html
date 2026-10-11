@@ -19,8 +19,13 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li>
-                        <a th:href="@{/admin/popups}" class="active">
+                        <a th:href="@{/admin/popups}" th:classappend="${activeMenu == null} ? 'active'">
                             홈팝업
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/admin/sopmodam/rounds}" th:classappend="${activeMenu == 'sopmodam'} ? 'active'">
+                            솝모담
                         </a>
                     </li>
                 </ul>

@@ -1,0 +1,41 @@
+/*
+ * 솝모담 어드민 화면 전용 스타일. 공통 토큰·컴포넌트는 admin.css 에 있다.
+ */
+
+/* 질문 입력 목록 (회차 생성) */
+.mds-question-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.mds-question-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mds-question-index {
+    flex-shrink: 0;
+    width: 20px;
+    color: var(--color-fg-neutral-subtle);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.mds-question-input-row .mds-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.mds-question-inputs .mds-field {
+    gap: 6px;
+}
+
+.mds-question-inputs .mds-field-helper-row {
+    padding-left: 34px;
+}
