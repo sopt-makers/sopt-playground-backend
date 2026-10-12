@@ -214,6 +214,7 @@ public class SopmodamService {
 
     private SopmodamCurrentCardResponse toVoteCard(SopmodamRound round, SopmodamPhase phase, Long userId, LocalDateTime now) {
         boolean hasVoted = voteRetriever.findVotedQuestionId(round.getId(), userId).isPresent();
+        boolean hasAnswered = answerRetriever.hasAnswered(round.getId(), userId);
 
         return new SopmodamCurrentCardResponse(
             round.getId(),
@@ -227,7 +228,7 @@ public class SopmodamService {
             !hasVoted,
             hasVoted,
             false,
-            false,
+            hasAnswered,
             null
         );
     }
@@ -241,7 +242,8 @@ public class SopmodamService {
         LocalDateTime now
     ) {
         boolean isCollecting = cardType == SopmodamCardType.ANSWER_COLLECTING;
-        boolean hasAnswered = isCollecting && answerRetriever.hasAnswered(round.getId(), userId);
+        boolean hasVoted = voteRetriever.findVotedQuestionId(round.getId(), userId).isPresent();
+        boolean hasAnswered = answerRetriever.hasAnswered(round.getId(), userId);
         boolean isRevealed = cardType == SopmodamCardType.REVEALED;
 
         return new SopmodamCurrentCardResponse(
@@ -254,7 +256,7 @@ public class SopmodamService {
             isRevealed ? null : DdayUtil.calculateDDay(round.getAnswerEndAt(), now),
             SopmodamQuestionResponse.from(finalQuestion),
             false,
-            false,
+            hasVoted,
             isCollecting && !hasAnswered,
             hasAnswered,
             isRevealed ? answerRetriever.countByRoundId(round.getId()) : null

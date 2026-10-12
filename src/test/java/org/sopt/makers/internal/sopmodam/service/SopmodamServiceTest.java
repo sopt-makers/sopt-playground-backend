@@ -454,7 +454,8 @@ class SopmodamServiceTest {
 			assertThat(response.canAnswer()).isFalse();
 			assertThat(response.hasAnswered()).isFalse();
 			assertThat(response.answerCount()).isNull();
-			verifyNoInteractions(questionRepository, answerRepository);
+			verifyNoInteractions(questionRepository);
+			verify(answerRepository).existsByRoundIdAndMemberId(ROUND_ID, USER_ID);
 		}
 
 		@Test
@@ -478,6 +479,7 @@ class SopmodamServiceTest {
 			givenCurrentRound(round);
 			givenUser(activeYb());
 			givenFinalQuestion(round, question(2L, round, "질문 2", 5, false));
+			when(questionVoteRepository.findQuestionIdByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(Optional.of(2L));
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
 
@@ -489,7 +491,8 @@ class SopmodamServiceTest {
 			assertThat(response.canAnswer()).isFalse();
 			assertThat(response.hasAnswered()).isFalse();
 			assertThat(response.answerCount()).isNull();
-			verifyNoInteractions(questionVoteRepository, answerRepository);
+			assertThat(response.hasVoted()).isTrue();
+			verify(answerRepository).existsByRoundIdAndMemberId(ROUND_ID, USER_ID);
 		}
 
 		@Test
@@ -500,6 +503,7 @@ class SopmodamServiceTest {
 			givenUser(activeOb());
 			givenFinalQuestion(round, question(1L, round, "질문 1", 5, false));
 			when(answerRepository.existsByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(false);
+			when(questionVoteRepository.findQuestionIdByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(Optional.empty());
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
 
@@ -507,6 +511,7 @@ class SopmodamServiceTest {
 			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(1L, "질문 1"));
 			assertThat(response.canAnswer()).isTrue();
 			assertThat(response.hasAnswered()).isFalse();
+			assertThat(response.hasVoted()).isFalse();
 			assertThat(response.answerCount()).isNull();
 		}
 
@@ -531,9 +536,11 @@ class SopmodamServiceTest {
 		void 답변_공개_단계() {
 			SopmodamRound round = revealedRound();
 			givenCurrentRound(round);
-			givenUser(honorary());
+			givenUser(activeOb());
 			givenFinalQuestion(round, question(1L, round, "질문 1", 5, false));
 			when(answerRepository.countByRoundId(ROUND_ID)).thenReturn(12L);
+			when(questionVoteRepository.findQuestionIdByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(Optional.of(1L));
+			when(answerRepository.existsByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(true);
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
 
@@ -543,9 +550,10 @@ class SopmodamServiceTest {
 			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(1L, "질문 1"));
 			assertThat(response.canVote()).isFalse();
 			assertThat(response.canAnswer()).isFalse();
-			assertThat(response.hasAnswered()).isFalse();
+			assertThat(response.hasAnswered()).isTrue();
+			assertThat(response.hasVoted()).isTrue();
 			assertThat(response.answerCount()).isEqualTo(12L);
-			verify(answerRepository, never()).existsByRoundIdAndMemberId(anyLong(), anyLong());
+			verify(answerRepository).existsByRoundIdAndMemberId(ROUND_ID, USER_ID);
 		}
 
 		@Test
