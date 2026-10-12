@@ -86,6 +86,7 @@ class SopmodamServiceTest {
 			new SopmodamAnswerRetriever(answerRepository),
 			answerModifier,
 			new SopmodamMemberPolicy(),
+			new SopmodamRoundPolicy(),
 			memberRetriever,
 			platformService
 		);
