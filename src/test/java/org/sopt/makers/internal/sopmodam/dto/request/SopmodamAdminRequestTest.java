@@ -41,6 +41,23 @@ class SopmodamAdminRequestTest {
 	}
 
 	@Test
+	@DisplayName("질문 수정 요청은 앞뒤 공백을 제거한다")
+	void 질문_수정_앞뒤_공백_제거() {
+		SopmodamQuestionUpdateRequest request = new SopmodamQuestionUpdateRequest("  수정한 질문\n");
+
+		assertThat(request.content()).isEqualTo("수정한 질문");
+		assertThat(validator.validate(request)).isEmpty();
+	}
+
+	@Test
+	@DisplayName("질문 수정 요청은 공백만 있으면 검증에 실패한다")
+	void 질문_수정_공백만_있으면_실패() {
+		assertThat(validator.validate(new SopmodamQuestionUpdateRequest("   ")))
+			.extracting(ConstraintViolation::getMessage)
+			.containsExactly("필요한 값이 없습니다");
+	}
+
+	@Test
 	@DisplayName("회차 생성 요청은 회차 주제와 각 질문의 앞뒤 공백을 제거한다")
 	void 회차_생성_앞뒤_공백_제거() {
 		SopmodamRoundCreateRequest request = new SopmodamRoundCreateRequest(

@@ -35,4 +35,8 @@ public class SopmodamQuestion extends AuditingTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private int voteCount = 0;
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }
