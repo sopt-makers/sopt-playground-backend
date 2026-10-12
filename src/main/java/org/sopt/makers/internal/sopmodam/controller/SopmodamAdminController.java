@@ -75,7 +75,8 @@ public class SopmodamAdminController {
         description = """
             회차 정보와 질문별 득표수를 조회합니다.
             - phase: SCHEDULED(투표 시작 전) / VOTING / ANSWERING / REVEALED
-            - needsSelection: 투표가 끝났는데 최다 득표가 동률이라 최종 질문이 정해지지 않았으면 true 입니다. 최종 질문을 직접 지정해야 합니다.
+            - 투표 종료 후 미선정 상태이면 단독 최다 득표 질문을 자동 선정하여 저장합니다.
+            - needsSelection: 투표 종료 후 자동 선정을 거쳐도 최종 질문이 없으면 true 입니다. 최종 질문을 직접 지정해야 합니다.
             - questions 는 등록 순서(questionId 오름차순)입니다.
             """
     )

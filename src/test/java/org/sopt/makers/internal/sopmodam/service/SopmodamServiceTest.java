@@ -79,6 +79,7 @@ class SopmodamServiceTest {
 	void setUp() {
 		sopmodamService = new SopmodamService(
 			new SopmodamRoundRetriever(roundRepository),
+			new SopmodamRoundModifier(roundRepository, questionRepository),
 			new SopmodamQuestionRetriever(questionRepository),
 			new SopmodamVoteRetriever(questionVoteRepository),
 			new SopmodamAnswerRetriever(answerRepository),
@@ -553,40 +554,61 @@ class SopmodamServiceTest {
 		}
 
 		@Test
-		@DisplayName("답변 모집 중 회차에 최종 질문 ID가 없으면 카드가 없다")
-		void 답변_모집_중_최종_질문_ID가_없으면_카드_없음() {
+		@DisplayName("답변 모집 중 최다 득표가 동률이면 저장하지 않고 카드가 없다")
+		void 답변_모집_중_동률이면_카드_없음() {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
 			givenUser(activeOb());
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID)).thenReturn(List.of(
+				question(1L, round, "질문 1", 5, false), question(2L, round, "질문 2", 5, false)));
+			when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(round));
 
 			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
-			verifyNoInteractions(questionRepository, answerRepository);
-		}
-
-		@Test
-		@DisplayName("답변 공개 단계에서도 회차에 최종 질문 ID가 없으면 카드가 없다")
-		void 답변_공개_중_최종_질문_ID가_없으면_카드_없음() {
-			SopmodamRound round = revealedRound();
-			givenCurrentRound(round);
-			givenUser(honorary());
-
-			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
-			verifyNoInteractions(questionRepository, answerRepository);
-		}
-
-		@Test
-		@DisplayName("저장된 ID의 질문이 해당 회차에 없으면 카드가 없다")
-		void 저장된_질문이_회차에_없으면_카드_없음() {
-			SopmodamRound round = answeringRound();
-			ReflectionTestUtils.setField(round, "selectedQuestionId", 2L);
-			givenCurrentRound(round);
-			givenUser(activeOb());
-			when(questionRepository.findByIdAndRoundId(2L, ROUND_ID)).thenReturn(Optional.empty());
-
-			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
-			verify(questionRepository).findByIdAndRoundId(2L, ROUND_ID);
-			verify(questionRepository, never()).findAllByRoundIdOrderByIdAsc(anyLong());
 			verifyNoInteractions(answerRepository);
+			verify(roundRepository, never()).selectQuestionIfAbsent(anyLong(), anyLong());
+		}
+
+		@Test
+		@DisplayName("단독 최다 득표를 저장하고 다시 읽은 질문으로 카드를 반환한다")
+		void 단독_최다_득표_자동_선정() {
+			SopmodamRound round = answeringRound();
+			SopmodamRound stored = answeringRound();
+			ReflectionTestUtils.setField(stored, "selectedQuestionId", 2L);
+			givenCurrentRound(round);
+			givenUser(activeYb());
+			SopmodamQuestion winner = question(2L, round, "질문 2", 5, false);
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID))
+				.thenReturn(List.of(question(1L, round, "질문 1", 3, false), winner));
+			when(roundRepository.selectQuestionIfAbsent(ROUND_ID, 2L)).thenReturn(1);
+			when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(stored));
+			when(questionRepository.findByIdAndRoundId(2L, ROUND_ID)).thenReturn(Optional.of(winner));
+
+			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
+
+			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(2L, "질문 2"));
+			verify(roundRepository).selectQuestionIfAbsent(ROUND_ID, 2L);
+			verify(roundRepository).findById(ROUND_ID);
+		}
+
+		@Test
+		@DisplayName("다른 요청이 먼저 저장했다면 계산한 후보 대신 실제 저장된 질문을 사용한다")
+		void 다른_요청이_선정한_질문_유지() {
+			SopmodamRound round = answeringRound();
+			SopmodamRound stored = answeringRound();
+			ReflectionTestUtils.setField(stored, "selectedQuestionId", 1L);
+			givenCurrentRound(round);
+			givenUser(activeYb());
+			SopmodamQuestion selected = question(1L, round, "질문 1", 3, false);
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID))
+				.thenReturn(List.of(selected, question(2L, round, "질문 2", 5, false)));
+			when(roundRepository.selectQuestionIfAbsent(ROUND_ID, 2L)).thenReturn(0);
+			when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(stored));
+			when(questionRepository.findByIdAndRoundId(1L, ROUND_ID)).thenReturn(Optional.of(selected));
+
+			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
+
+			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(1L, "질문 1"));
+			verify(questionRepository, never()).findByIdAndRoundId(2L, ROUND_ID);
 		}
 
 	}

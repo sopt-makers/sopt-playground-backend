@@ -6,10 +6,18 @@ import java.util.Optional;
 
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface SopmodamRoundRepository extends JpaRepository<SopmodamRound, Long> {
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE SopmodamRound r SET r.selectedQuestionId = :questionId
+        WHERE r.id = :roundId AND r.selectedQuestionId IS NULL
+    """)
+    int selectQuestionIfAbsent(@Param("roundId") Long roundId, @Param("questionId") Long questionId);
 
     List<SopmodamRound> findAllByOrderByVoteStartAtDesc();
 
