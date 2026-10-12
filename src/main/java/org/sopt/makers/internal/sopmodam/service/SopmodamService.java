@@ -4,13 +4,16 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.ForbiddenException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamCardType;
@@ -19,6 +22,12 @@ import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamCurrentCardResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamMyAnswerResponse;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerItemResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
@@ -32,11 +41,14 @@ import org.springframework.stereotype.Service;
 public class SopmodamService {
 
     private final SopmodamRoundRetriever roundRetriever;
+    private final SopmodamRoundModifier roundModifier;
     private final SopmodamQuestionRetriever questionRetriever;
     private final SopmodamVoteRetriever voteRetriever;
     private final SopmodamAnswerRetriever answerRetriever;
     private final SopmodamVoteModifier voteModifier;
+    private final SopmodamAnswerModifier answerModifier;
     private final SopmodamMemberPolicy memberPolicy;
+    private final SopmodamRoundPolicy roundPolicy;
     private final MemberRetriever memberRetriever;
     private final PlatformService platformService;
 
@@ -64,7 +76,8 @@ public class SopmodamService {
         }
 
         // 투표가 끝난 뒤의 카드는 모두 최종 질문을 보여주므로, 최종 질문이 정해지지 않았으면 카드를 숨긴다
-        Optional<SopmodamQuestion> finalQuestion = questionRetriever.findFinalQuestion(round.getId());
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        Optional<SopmodamQuestion> finalQuestion = questionRetriever.findFinalQuestion(round);
         if (finalQuestion.isEmpty()) {
             return Optional.empty();
         }
@@ -101,6 +114,36 @@ public class SopmodamService {
         );
     }
 
+    public SopmodamAnswerListResponse getAnswers(Long roundId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+
+        if (SopmodamPhase.of(round, now) != SopmodamPhase.REVEALED) {
+            throw new BadRequestException("아직 공개되지 않은 답변입니다.");
+        }
+
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(round);
+        List<SopmodamAnswer> answers = answerRetriever.findAllByRoundId(roundId);
+
+        List<Long> memberIds = answers.stream()
+            .map(a -> a.getMember().getId())
+            .toList();
+        Map<Long, InternalUserDetails> userMap = platformService.getInternalUserDetailsMap(memberIds);
+
+        List<SopmodamAnswerItemResponse> answerItems = answers.stream()
+            .map(a -> SopmodamAnswerItemResponse.of(a, userMap.get(a.getMember().getId())))
+            .toList();
+
+        return new SopmodamAnswerListResponse(
+            round.getId(),
+            round.getEventName(),
+            SopmodamQuestionResponse.from(selectedQuestion),
+            answers.size(),
+            answerItems
+        );
+    }
+
     public SopmodamVoteResponse vote(Long userId, Long roundId, Long questionId) {
         LocalDateTime now = LocalDateTime.now(KST);
         SopmodamRound round = roundRetriever.findRoundById(roundId);
@@ -124,11 +167,12 @@ public class SopmodamService {
         SopmodamRound round = roundRetriever.findRoundById(roundId);
         validateCanAnswer(userId, round);
 
-        // 투표 중에도 단독 1위 질문은 조회되므로, 투표가 끝나기 전에는 최종 질문이 없는 것으로 본다
         SopmodamPhase phase = SopmodamPhase.of(round, now);
-        boolean isVoteEnded = phase == SopmodamPhase.ANSWERING || phase == SopmodamPhase.REVEALED;
-        SopmodamQuestion finalQuestion = questionRetriever.findFinalQuestion(roundId)
-            .filter(question -> isVoteEnded)
+        if (phase == SopmodamPhase.SCHEDULED || phase == SopmodamPhase.VOTING) {
+            throw new BadRequestException("최종 질문이 아직 선정되지 않았습니다.");
+        }
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion finalQuestion = questionRetriever.findFinalQuestion(round)
             .orElseThrow(() -> new BadRequestException("최종 질문이 아직 선정되지 않았습니다."));
         SopmodamAnswerResponse answer = answerRetriever.findMyAnswer(roundId, userId)
             .map(SopmodamAnswerResponse::from)
@@ -146,6 +190,54 @@ public class SopmodamService {
         );
     }
 
+    public SopmodamAnswerCreateResponse createAnswer(Long userId, Long roundId, SopmodamAnswerCreateRequest request) {
+        validateAnswerContent(request.content());
+
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+
+        InternalUserDetails user = platformService.getInternalUser(userId);
+        SopmodamMemberType memberType = memberPolicy.resolveType(user, round.getGeneration());
+        memberPolicy.validateCanAnswer(memberType);
+
+        roundPolicy.validateAnsweringPhase(round, now);
+
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(round);
+        answerRetriever.validateNotAnswered(selectedQuestion.getId(), userId);
+        // 회원을 먼저 확인해 두면 답변 저장 시 무결성 위반은 유니크 제약뿐이다
+        Member member = memberRetriever.findMemberById(userId);
+
+        SopmodamAnswer answer = answerModifier.createAnswer(selectedQuestion, member, request.content());
+        return SopmodamAnswerCreateResponse.from(answer);
+    }
+
+    public SopmodamAnswerUpdateResponse updateAnswer(Long userId, Long answerId, SopmodamAnswerUpdateRequest request) {
+        validateAnswerContent(request.content());
+
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamAnswer answer = answerRetriever.findAnswerById(answerId);
+
+        if (!answer.getMember().getId().equals(userId)) {
+            throw new ForbiddenException("본인의 답변이 아닙니다.");
+        }
+
+        SopmodamRound round = answer.getQuestion().getRound();
+        roundPolicy.validateAnsweringPhase(round, now);
+
+        SopmodamAnswer updated = answerModifier.updateAnswer(answer, request.content());
+        return SopmodamAnswerUpdateResponse.from(updated);
+    }
+
+    private void validateAnswerContent(String content) {
+        if (content == null || content.length() > 500) {
+            throw new BadRequestException("답변 글자수가 초과되었습니다.");
+        }
+        if (content.isBlank()) {
+            throw new BadRequestException("답변 내용을 입력해주세요.");
+        }
+    }
+
     private void validateCanVote(Long userId, SopmodamRound round) {
         InternalUserDetails user = platformService.getInternalUser(userId);
         SopmodamMemberType memberType = memberPolicy.resolveType(user, round.getGeneration());
@@ -160,6 +252,7 @@ public class SopmodamService {
 
     private SopmodamCurrentCardResponse toVoteCard(SopmodamRound round, SopmodamPhase phase, Long userId, LocalDateTime now) {
         boolean hasVoted = voteRetriever.findVotedQuestionId(round.getId(), userId).isPresent();
+        boolean hasAnswered = answerRetriever.hasAnswered(round.getId(), userId);
 
         return new SopmodamCurrentCardResponse(
             round.getId(),
@@ -173,7 +266,7 @@ public class SopmodamService {
             !hasVoted,
             hasVoted,
             false,
-            false,
+            hasAnswered,
             null
         );
     }
@@ -187,7 +280,8 @@ public class SopmodamService {
         LocalDateTime now
     ) {
         boolean isCollecting = cardType == SopmodamCardType.ANSWER_COLLECTING;
-        boolean hasAnswered = isCollecting && answerRetriever.hasAnswered(round.getId(), userId);
+        boolean hasVoted = voteRetriever.findVotedQuestionId(round.getId(), userId).isPresent();
+        boolean hasAnswered = answerRetriever.hasAnswered(round.getId(), userId);
         boolean isRevealed = cardType == SopmodamCardType.REVEALED;
 
         return new SopmodamCurrentCardResponse(
@@ -200,8 +294,8 @@ public class SopmodamService {
             isRevealed ? null : DdayUtil.calculateDDay(round.getAnswerEndAt(), now),
             SopmodamQuestionResponse.from(finalQuestion),
             false,
-            false,
-            isCollecting && !hasAnswered,
+            hasVoted,
+            isCollecting,
             hasAnswered,
             isRevealed ? answerRetriever.countByRoundId(round.getId()) : null
         );

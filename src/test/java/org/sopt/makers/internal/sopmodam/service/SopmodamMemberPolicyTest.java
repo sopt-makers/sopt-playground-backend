@@ -183,7 +183,7 @@ class SopmodamMemberPolicyTest {
 		void 답변_자격이_없으면_답변_불가(SopmodamMemberType memberType) {
 			assertThatThrownBy(() -> memberPolicy.validateCanAnswer(memberType))
 				.isInstanceOf(ForbiddenException.class)
-				.hasMessageContaining("답변할 수 없는 사용자입니다.");
+				.hasMessageContaining("답변 권한이 없습니다.");
 		}
 	}
 

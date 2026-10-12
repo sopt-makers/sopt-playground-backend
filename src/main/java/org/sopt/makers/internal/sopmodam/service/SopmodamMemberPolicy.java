@@ -30,7 +30,7 @@ public class SopmodamMemberPolicy {
 
     public void validateCanAnswer(SopmodamMemberType memberType) {
         if (!memberType.isCanAnswer()) {
-            throw new ForbiddenException("답변할 수 없는 사용자입니다.");
+            throw new ForbiddenException("답변 권한이 없습니다.");
         }
     }
 }
