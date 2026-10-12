@@ -30,6 +30,7 @@ import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateReque
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
+import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
@@ -53,6 +54,7 @@ class SopmodamAdminServiceTest {
 	@Mock SopmodamRoundRepository roundRepository;
 	@Mock SopmodamQuestionRepository questionRepository;
 	@Mock SopmodamAnswerRepository answerRepository;
+	@Mock PlatformService platformService;
 
 	private SopmodamAdminService sopmodamAdminService;
 	private LocalDate today;
@@ -65,7 +67,8 @@ class SopmodamAdminServiceTest {
 			new SopmodamAnswerRetriever(answerRepository),
 			new SopmodamRoundModifier(roundRepository),
 			new SopmodamQuestionModifier(questionRepository),
-			new SopmodamRoundPolicy()
+			new SopmodamRoundPolicy(),
+			platformService
 		);
 		today = LocalDate.now(KST);
 	}
