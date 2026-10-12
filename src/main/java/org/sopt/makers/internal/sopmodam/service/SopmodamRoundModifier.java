@@ -32,7 +32,11 @@ public class SopmodamRoundModifier {
             .filter(question -> question.getVoteCount() == maxVotes)
             .toList();
         if (topQuestions.size() == 1) {
-            roundRepository.selectQuestionIfAbsent(round.getId(), topQuestions.get(0).getId());
+            Long questionId = topQuestions.get(0).getId();
+            if (roundRepository.selectQuestionIfAbsent(round.getId(), questionId) == 1) {
+                // 기존 isSelected 조회 API와 호환되도록 회차 ID 저장에 성공한 요청만 함께 갱신한다
+                questionRepository.updateSelectedQuestionInRound(round.getId(), questionId);
+            }
         }
 
         return roundRepository.findById(round.getId())

@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
+import org.sopt.makers.internal.sopmodam.service.SopmodamRoundModifier;
+import org.springframework.context.annotation.Import;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.jpa.persistenceunit.PersistenceManagedTypes;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,7 @@ class SopmodamRoundSelectionTest {
     @EnableJpaAuditing
     @EnableJpaRepositories(basePackageClasses = SopmodamRoundRepository.class,
         excludeFilters = @Filter(type = FilterType.REGEX, pattern = ".*Sopmodam(Answer|QuestionVote)Repository"))
+    @Import(SopmodamRoundModifier.class)
     static class JpaConfig {
         @Bean
         PersistenceManagedTypes managedTypes() {
@@ -36,17 +39,24 @@ class SopmodamRoundSelectionTest {
 
     @Autowired TestEntityManager entityManager;
     @Autowired SopmodamRoundRepository roundRepository;
+    @Autowired SopmodamQuestionRepository questionRepository;
+    @Autowired SopmodamRoundModifier roundModifier;
 
     @Test
     void 조건부_저장은_기존_선정값을_덮어쓰지_않는다() {
         SopmodamRound round = round(LocalDateTime.now().minusHours(1));
         SopmodamQuestion first = question(round, 5);
         SopmodamQuestion second = question(round, 3);
+        second.select();
+        entityManager.flush();
         Long roundId = round.getId();
         Long firstId = first.getId();
         Long secondId = second.getId();
 
-        assertThat(roundRepository.selectQuestionIfAbsent(roundId, firstId)).isEqualTo(1);
+        SopmodamRound selected = roundModifier.selectFinalQuestionIfAbsent(round, LocalDateTime.now());
+        assertThat(selected.getSelectedQuestionId()).isEqualTo(firstId);
+        assertThat(questionRepository.findByRoundIdAndIsSelectedTrue(roundId).orElseThrow().getId()).isEqualTo(firstId);
+        assertThat(questionRepository.findById(secondId).orElseThrow().isSelected()).isFalse();
         assertThat(roundRepository.selectQuestionIfAbsent(roundId, secondId)).isZero();
         assertThat(roundRepository.findById(roundId).orElseThrow().getSelectedQuestionId()).isEqualTo(firstId);
     }

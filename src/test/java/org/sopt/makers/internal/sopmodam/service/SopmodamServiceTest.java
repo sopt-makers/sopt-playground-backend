@@ -575,6 +575,7 @@ class SopmodamServiceTest {
 			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
 			verifyNoInteractions(answerRepository);
 			verify(roundRepository, never()).selectQuestionIfAbsent(anyLong(), anyLong());
+			verify(questionRepository, never()).updateSelectedQuestionInRound(anyLong(), anyLong());
 		}
 
 		@Test
@@ -596,6 +597,7 @@ class SopmodamServiceTest {
 
 			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(2L, "질문 2"));
 			verify(roundRepository).selectQuestionIfAbsent(ROUND_ID, 2L);
+			verify(questionRepository).updateSelectedQuestionInRound(ROUND_ID, 2L);
 			verify(roundRepository).findById(ROUND_ID);
 		}
 
@@ -618,6 +620,7 @@ class SopmodamServiceTest {
 
 			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(1L, "질문 1"));
 			verify(questionRepository, never()).findByIdAndRoundId(2L, ROUND_ID);
+			verify(questionRepository, never()).updateSelectedQuestionInRound(anyLong(), anyLong());
 		}
 
 	}
