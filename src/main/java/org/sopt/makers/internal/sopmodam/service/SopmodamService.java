@@ -36,6 +36,7 @@ public class SopmodamService {
     private final SopmodamAnswerRetriever answerRetriever;
     private final SopmodamAnswerModifier answerModifier;
     private final SopmodamMemberPolicy memberPolicy;
+    private final SopmodamRoundPolicy roundPolicy;
     private final MemberRetriever memberRetriever;
     private final PlatformService platformService;
 
@@ -99,9 +100,7 @@ public class SopmodamService {
         SopmodamMemberType memberType = memberPolicy.resolveType(user, round.getGeneration());
         memberPolicy.validateCanAnswer(memberType);
 
-        if (SopmodamPhase.of(round, now) != SopmodamPhase.ANSWERING) {
-            throw new BadRequestException("답변 모집 기간이 아닙니다.");
-        }
+        roundPolicy.validateAnsweringPhase(round, now);
 
         SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
         answerRetriever.validateNotAnswered(selectedQuestion.getId(), userId);
