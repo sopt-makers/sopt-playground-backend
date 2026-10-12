@@ -34,10 +34,14 @@ public class SopmodamRound extends AuditingTimeEntity {
     @Column(nullable = false)
     private LocalDateTime voteEndAt;
 
-    private String selectedQuestion;
+    private Long selectedQuestionId;
 
     @Column(nullable = false)
     private LocalDateTime answerEndAt;
+
+    public void selectQuestion(Long questionId) {
+        this.selectedQuestionId = questionId;
+    }
 
     public void updateRound(
         Integer generation,

@@ -97,6 +97,7 @@ public class SopmodamAdminService {
 
         SopmodamQuestion target = questionRetriever.findQuestionInRound(questionId, roundId);
         questionModifier.selectQuestion(roundId, target);
+        roundModifier.updateSelectedQuestion(round, target.getId());
 
         return buildRoundDetail(round, now);
     }

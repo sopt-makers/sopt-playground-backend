@@ -29,6 +29,11 @@ public class SopmodamRoundModifier {
             .build());
     }
 
+    public void updateSelectedQuestion(SopmodamRound round, Long questionId) {
+        round.selectQuestion(questionId);
+        roundRepository.save(round);
+    }
+
     public void updateRound(
         SopmodamRound round,
         Integer generation,
