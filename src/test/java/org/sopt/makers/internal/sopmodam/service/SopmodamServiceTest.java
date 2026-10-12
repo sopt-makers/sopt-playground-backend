@@ -42,6 +42,7 @@ import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionVoteRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 솝모담 홈 카드 조회(U1)·투표 화면 조회(U2)·질문 투표(U3) 흐름 테스트.
@@ -466,7 +467,7 @@ class SopmodamServiceTest {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
 			givenUser(activeYb());
-			givenQuestions(question(1L, round, "질문 1", 3, false), question(2L, round, "질문 2", 5, false));
+			givenFinalQuestion(round, question(2L, round, "질문 2", 5, false));
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
 
@@ -487,7 +488,7 @@ class SopmodamServiceTest {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
 			givenUser(activeOb());
-			givenQuestions(question(1L, round, "질문 1", 5, false), question(2L, round, "질문 2", 3, false));
+			givenFinalQuestion(round, question(1L, round, "질문 1", 5, false));
 			when(answerRepository.existsByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(false);
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
@@ -505,7 +506,7 @@ class SopmodamServiceTest {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
 			givenUser(honorary());
-			givenQuestions(question(1L, round, "질문 1", 5, false));
+			givenFinalQuestion(round, question(1L, round, "질문 1", 5, false));
 			when(answerRepository.existsByRoundIdAndMemberId(ROUND_ID, USER_ID)).thenReturn(true);
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
@@ -521,7 +522,7 @@ class SopmodamServiceTest {
 			SopmodamRound round = revealedRound();
 			givenCurrentRound(round);
 			givenUser(honorary());
-			givenQuestions(question(1L, round, "질문 1", 5, false));
+			givenFinalQuestion(round, question(1L, round, "질문 1", 5, false));
 			when(answerRepository.countByRoundId(ROUND_ID)).thenReturn(12L);
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
@@ -538,33 +539,56 @@ class SopmodamServiceTest {
 		}
 
 		@Test
-		@DisplayName("운영자가 지정한 질문이 있으면 득표수와 관계없이 그 질문이 최종 질문이다")
+		@DisplayName("회차에 저장된 질문 ID로 조회하고 전체 질문 목록은 조회하지 않는다")
 		void 지정된_질문이_최종_질문() {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
 			givenUser(activeYb());
-			givenQuestions(
-				question(1L, round, "질문 1", 5, false),
-				question(2L, round, "질문 2", 5, true),
-				question(3L, round, "질문 3", 7, false)
-			);
+			givenFinalQuestion(round, question(2L, round, "질문 2", 0, false));
 
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
 
 			assertThat(response.selectedQuestion()).isEqualTo(new SopmodamQuestionResponse(2L, "질문 2"));
+			verify(questionRepository, never()).findAllByRoundIdOrderByIdAsc(anyLong());
 		}
 
 		@Test
-		@DisplayName("답변 모집 중인데 최다 득표가 동률이고 지정된 질문이 없으면 카드가 없다")
-		void 답변_모집_중_동률이면_카드_없음() {
+		@DisplayName("답변 모집 중 회차에 최종 질문 ID가 없으면 카드가 없다")
+		void 답변_모집_중_최종_질문_ID가_없으면_카드_없음() {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
 			givenUser(activeOb());
-			givenQuestions(question(1L, round, "질문 1", 5, false), question(2L, round, "질문 2", 5, false));
 
 			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
+			verifyNoInteractions(questionRepository, answerRepository);
+		}
+
+		@Test
+		@DisplayName("답변 공개 단계에서도 회차에 최종 질문 ID가 없으면 카드가 없다")
+		void 답변_공개_중_최종_질문_ID가_없으면_카드_없음() {
+			SopmodamRound round = revealedRound();
+			givenCurrentRound(round);
+			givenUser(honorary());
+
+			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
+			verifyNoInteractions(questionRepository, answerRepository);
+		}
+
+		@Test
+		@DisplayName("저장된 ID의 질문이 해당 회차에 없으면 카드가 없다")
+		void 저장된_질문이_회차에_없으면_카드_없음() {
+			SopmodamRound round = answeringRound();
+			ReflectionTestUtils.setField(round, "selectedQuestionId", 2L);
+			givenCurrentRound(round);
+			givenUser(activeOb());
+			when(questionRepository.findByIdAndRoundId(2L, ROUND_ID)).thenReturn(Optional.empty());
+
+			assertThat(sopmodamService.getCurrentCard(USER_ID)).isEmpty();
+			verify(questionRepository).findByIdAndRoundId(2L, ROUND_ID);
+			verify(questionRepository, never()).findAllByRoundIdOrderByIdAsc(anyLong());
 			verifyNoInteractions(answerRepository);
 		}
+
 	}
 
 	private void givenRound(SopmodamRound round) {
@@ -587,8 +611,10 @@ class SopmodamServiceTest {
 		));
 	}
 
-	private void givenQuestions(SopmodamQuestion... questions) {
-		when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID)).thenReturn(List.of(questions));
+	private void givenFinalQuestion(SopmodamRound round, SopmodamQuestion question) {
+		ReflectionTestUtils.setField(round, "selectedQuestionId", question.getId());
+		when(questionRepository.findByIdAndRoundId(question.getId(), round.getId()))
+			.thenReturn(Optional.of(question));
 	}
 
 	private SopmodamRound scheduledRound() {

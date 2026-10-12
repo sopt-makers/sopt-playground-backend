@@ -62,7 +62,7 @@ public class SopmodamService {
         }
 
         // 투표가 끝난 뒤의 카드는 모두 최종 질문을 보여주므로, 최종 질문이 정해지지 않았으면 카드를 숨긴다
-        Optional<SopmodamQuestion> finalQuestion = questionRetriever.findFinalQuestion(round.getId());
+        Optional<SopmodamQuestion> finalQuestion = questionRetriever.findFinalQuestion(round);
         if (finalQuestion.isEmpty()) {
             return Optional.empty();
         }
