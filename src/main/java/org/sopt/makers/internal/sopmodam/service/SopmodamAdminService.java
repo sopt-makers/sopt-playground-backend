@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
@@ -79,6 +80,16 @@ public class SopmodamAdminService {
             request.voteEndAt(),
             request.answerEndAt()
         );
+        return buildRoundDetail(round, now);
+    }
+
+    @Transactional
+    public SopmodamRoundDetailResponse addQuestion(Long roundId, SopmodamQuestionCreateRequest request) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+        roundPolicy.validateQuestionEditable(round, now);
+
+        questionModifier.createQuestions(round, List.of(request.content()));
         return buildRoundDetail(round, now);
     }
 

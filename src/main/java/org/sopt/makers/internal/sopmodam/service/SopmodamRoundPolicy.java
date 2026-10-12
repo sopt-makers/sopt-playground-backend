@@ -38,4 +38,11 @@ public class SopmodamRoundPolicy {
             throw new BadRequestException("투표가 종료된 회차는 투표 마감 시각을 변경할 수 없습니다.");
         }
     }
+
+    // 투표가 시작되면 득표가 쌓이므로 질문은 투표 시작 전에만 추가·수정·삭제할 수 있다
+    public void validateQuestionEditable(SopmodamRound round, LocalDateTime now) {
+        if (SopmodamPhase.of(round, now) != SopmodamPhase.SCHEDULED) {
+            throw new BadRequestException("투표가 시작된 회차의 질문은 변경할 수 없습니다.");
+        }
+    }
 }
