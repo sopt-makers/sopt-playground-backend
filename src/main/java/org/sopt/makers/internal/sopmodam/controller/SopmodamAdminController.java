@@ -120,7 +120,8 @@ public class SopmodamAdminController {
     @Operation(
         summary = "솝모담 답변 전체 조회 API (어드민)",
         description = """
-            해당 회차의 답변을 모두 조회합니다. ANSWERING 단계에서도 조회할 수 있으나 최종 질문이 선정돼 있어야 합니다(400).
+            해당 회차의 답변을 모두 조회합니다. phase 제한 없음.
+            - question: 최종 질문이 아직 선정되지 않았으면 null 입니다.
             - answers 는 updatedAt 오름차순, id 오름차순입니다.
             - writer.generation/part: 마지막 활동 기수 기준입니다.
             """
