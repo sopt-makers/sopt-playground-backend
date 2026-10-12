@@ -10,6 +10,7 @@ import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamVoteRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
@@ -50,6 +51,25 @@ public class SopmodamController {
         @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.getQuestions(userId, roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 공개 답변 목록 조회 API",
+        description = """
+            해당 회차의 공개된 답변 목록을 전체 조회합니다.
+            - REVEALED 단계에서만 조회 가능합니다. 그 외 phase는 400입니다.
+            - 로그인한 사용자라면 유형 무관 조회 가능합니다.
+            - answers는 updatedAt 오름차순, 동일하면 answerId 오름차순으로 정렬됩니다.
+            - writer.generation·part는 작성자의 가장 최근 SOPT·Makers 활동 기준입니다.
+            - writer.profileImage는 없으면 null입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerListResponse> getAnswers(
+        @PathVariable("roundId") Long roundId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.getAnswers(roundId));
     }
 
     @Operation(

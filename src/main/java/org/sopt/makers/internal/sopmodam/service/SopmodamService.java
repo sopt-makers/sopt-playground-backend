@@ -3,6 +3,7 @@ package org.sopt.makers.internal.sopmodam.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.BadRequestException;
@@ -19,6 +20,8 @@ import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerItemResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
@@ -72,6 +75,35 @@ public class SopmodamService {
             hasVoted,
             myVoteQuestionId,
             questions
+        );
+    }
+
+    public SopmodamAnswerListResponse getAnswers(Long roundId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+
+        if (SopmodamPhase.of(round, now) != SopmodamPhase.REVEALED) {
+            throw new BadRequestException("아직 공개되지 않은 답변입니다.");
+        }
+
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
+        List<SopmodamAnswer> answers = answerRetriever.findAllByRoundId(roundId);
+
+        List<Long> memberIds = answers.stream()
+            .map(a -> a.getMember().getId())
+            .toList();
+        Map<Long, InternalUserDetails> userMap = platformService.getInternalUserDetailsMap(memberIds);
+
+        List<SopmodamAnswerItemResponse> answerItems = answers.stream()
+            .map(a -> SopmodamAnswerItemResponse.of(a, userMap.get(a.getMember().getId())))
+            .toList();
+
+        return new SopmodamAnswerListResponse(
+            round.getId(),
+            round.getEventName(),
+            SopmodamQuestionResponse.from(selectedQuestion),
+            answers.size(),
+            answerItems
         );
     }
 
