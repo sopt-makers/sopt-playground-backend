@@ -5,6 +5,8 @@ import java.time.ZoneId;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.exception.BadRequestException;
+import org.sopt.makers.internal.exception.ConflictException;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
@@ -64,6 +66,29 @@ public class SopmodamAdminService {
     public SopmodamRoundDetailResponse getRound(Long roundId) {
         LocalDateTime now = LocalDateTime.now(KST);
         SopmodamRound round = roundRetriever.findRoundById(roundId);
+        return buildRoundDetail(round, now);
+    }
+
+    @Transactional
+    public SopmodamRoundDetailResponse selectQuestion(Long roundId, Long questionId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+
+        SopmodamPhase phase = SopmodamPhase.of(round, now);
+        if (phase == SopmodamPhase.SCHEDULED || phase == SopmodamPhase.VOTING) {
+            throw new BadRequestException("투표가 아직 끝나지 않았습니다.");
+        }
+        if (phase == SopmodamPhase.REVEALED) {
+            throw new BadRequestException("이미 답변 공개 단계입니다.");
+        }
+
+        if (answerRetriever.countByRoundId(roundId) > 0) {
+            throw new ConflictException("이미 답변이 존재하는 회차입니다.");
+        }
+
+        SopmodamQuestion target = questionRetriever.findQuestionInRound(questionId, roundId);
+        questionModifier.selectQuestion(roundId, target);
+
         return buildRoundDetail(round, now);
     }
 
