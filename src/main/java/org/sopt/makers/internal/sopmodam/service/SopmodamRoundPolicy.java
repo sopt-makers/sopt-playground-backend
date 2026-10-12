@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class SopmodamRoundPolicy {
 
-    private static final int MIN_QUESTION_COUNT = 2;
-
     public void validateScheduleOrder(LocalDateTime voteStartAt, LocalDateTime voteEndAt, LocalDateTime answerEndAt) {
         if (!voteStartAt.isBefore(voteEndAt) || !voteEndAt.isBefore(answerEndAt)) {
             throw new BadRequestException("일정은 투표 시작 < 투표 마감 < 답변 마감 순서여야 합니다.");
@@ -42,10 +40,4 @@ public class SopmodamRoundPolicy {
         }
     }
 
-    // 회차 생성과 같이 질문은 2개 이상 남아 있어야 한다. questionCount 는 삭제 전 회차의 질문 수다
-    public void validateQuestionDeletable(long questionCount) {
-        if (questionCount - 1 < MIN_QUESTION_COUNT) {
-            throw new BadRequestException("질문은 2개 이상이어야 합니다.");
-        }
-    }
 }

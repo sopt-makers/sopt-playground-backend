@@ -111,7 +111,6 @@ public class SopmodamAdminService {
         SopmodamQuestion question = questionRetriever.findQuestionById(questionId);
         SopmodamRound round = question.getRound();
         roundPolicy.validateQuestionEditable(round, now);
-        roundPolicy.validateQuestionDeletable(questionRetriever.countByRoundId(round.getId()));
 
         questionModifier.deleteQuestion(question);
         return buildRoundDetail(round, now);

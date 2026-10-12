@@ -155,7 +155,7 @@ public class SopmodamAdminController {
         description = """
             투표 후보 질문을 삭제합니다. 응답은 질문이 속한 회차의 상세 조회와 같은 형식입니다.
             - 투표가 시작되기 전(phase = SCHEDULED)에만 삭제할 수 있습니다. voteStartAt 정각부터는 400 입니다.
-            - 삭제 후 회차에 남는 질문이 2개 미만이면 400 입니다.
+            - 남은 질문 수와 관계없이 삭제할 수 있습니다. 마지막 질문도 삭제할 수 있습니다.
             """
     )
     @DeleteMapping("/questions/{questionId}")
