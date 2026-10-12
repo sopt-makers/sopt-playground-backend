@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface SopmodamAnswerRepository extends JpaRepository<SopmodamAnswer, Long> {
 
+    boolean existsByQuestionIdAndMemberId(Long questionId, Long memberId);
+
     @Query("SELECT COUNT(answer) FROM SopmodamAnswer answer WHERE answer.question.round.id = :roundId")
     long countByRoundId(@Param("roundId") Long roundId);
 }

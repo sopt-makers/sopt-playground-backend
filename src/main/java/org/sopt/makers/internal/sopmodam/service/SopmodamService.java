@@ -10,10 +10,13 @@ import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.service.MemberRetriever;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamMemberType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
@@ -30,7 +33,10 @@ public class SopmodamService {
     private final SopmodamQuestionRetriever questionRetriever;
     private final SopmodamVoteRetriever voteRetriever;
     private final SopmodamVoteModifier voteModifier;
+    private final SopmodamAnswerRetriever answerRetriever;
+    private final SopmodamAnswerModifier answerModifier;
     private final SopmodamMemberPolicy memberPolicy;
+    private final SopmodamRoundPolicy roundPolicy;
     private final MemberRetriever memberRetriever;
     private final PlatformService platformService;
 
@@ -82,6 +88,37 @@ public class SopmodamService {
 
         voteModifier.createVote(round, question, member);
         return new SopmodamVoteResponse(roundId, questionId);
+    }
+
+    public SopmodamAnswerCreateResponse createAnswer(Long userId, Long roundId, SopmodamAnswerCreateRequest request) {
+        validateAnswerContent(request.content());
+
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+
+        InternalUserDetails user = platformService.getInternalUser(userId);
+        SopmodamMemberType memberType = memberPolicy.resolveType(user, round.getGeneration());
+        memberPolicy.validateCanAnswer(memberType);
+
+        roundPolicy.validateAnsweringPhase(round, now);
+
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
+        answerRetriever.validateNotAnswered(selectedQuestion.getId(), userId);
+        // 회원을 먼저 확인해 두면 답변 저장 시 무결성 위반은 유니크 제약뿐이다
+        Member member = memberRetriever.findMemberById(userId);
+
+        SopmodamAnswer answer = answerModifier.createAnswer(selectedQuestion, member, request.content());
+        return SopmodamAnswerCreateResponse.from(answer);
+    }
+
+    private void validateAnswerContent(String content) {
+        if (content == null || content.length() > 500) {
+            throw new BadRequestException("답변 글자수가 초과되었습니다.");
+        }
+        String stripped = content.replaceAll("[\\s]", "");
+        if (stripped.length() < 20) {
+            throw new BadRequestException("답변 글자수가 너무 적습니다.");
+        }
     }
 
     private void validateCanVote(Long userId, SopmodamRound round) {

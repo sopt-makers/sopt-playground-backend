@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamVoteRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamService;
@@ -45,6 +47,25 @@ public class SopmodamController {
         @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.getQuestions(userId, roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 작성 API",
+        description = """
+            회차의 최종 선정 질문에 답변을 작성합니다.
+            - 답변 모집 기간(ANSWERING)에만 작성할 수 있습니다.
+            - 회차당 1개의 답변만 허용됩니다.
+            - 활동 OB·명예 회원만 답변할 수 있습니다. (활동 YB 불가)
+            - content: 전체 500자 이하, 공백·줄바꿈 제외 20자 이상
+            """
+    )
+    @PostMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerCreateResponse> createAnswer(
+        @PathVariable("roundId") Long roundId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+        @RequestBody @Valid SopmodamAnswerCreateRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamService.createAnswer(userId, roundId, request));
     }
 
     @Operation(
