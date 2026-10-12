@@ -16,6 +16,12 @@ public class SopmodamRoundPolicy {
         }
     }
 
+    public void validateAnsweringPhase(SopmodamRound round, LocalDateTime now) {
+        if (SopmodamPhase.of(round, now) != SopmodamPhase.ANSWERING) {
+            throw new BadRequestException("답변 모집 기간이 아닙니다.");
+        }
+    }
+
     // 이미 지난 일정 지점은 바꿀 수 없다. 진행 단계는 수정 전 회차 일정으로 판단한다
     public void validateScheduleChange(
         SopmodamRound round,
