@@ -27,4 +27,10 @@ public class SopmodamMemberPolicy {
             throw new ForbiddenException("질문 투표는 활동 기수만 참여할 수 있습니다.");
         }
     }
+
+    public void validateCanAnswer(SopmodamMemberType memberType) {
+        if (!memberType.isCanAnswer()) {
+            throw new ForbiddenException("답변 권한이 없습니다.");
+        }
+    }
 }

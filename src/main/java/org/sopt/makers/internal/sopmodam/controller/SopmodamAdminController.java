@@ -8,13 +8,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamSelectQuestionRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,6 +97,47 @@ public class SopmodamAdminController {
     }
 
     @Operation(
+        summary = "솝모담 최종 질문 지정 API",
+        description = """
+            투표 결과 동률이 발생하거나 자동 선정된 질문을 변경할 때 운영자가 최종 질문을 직접 지정합니다.
+            - 답변 모집 기간(ANSWERING)에만 지정할 수 있습니다. 투표 미종료(400) / 공개 단계(400).
+            - 이미 답변이 존재하는 회차는 변경할 수 없습니다(409).
+            - 지정한 질문만 isSelected = true 가 되고 나머지는 모두 false 로 변경됩니다.
+            - 404: 회차 없음("존재하지 않는 솝모담 회차입니다.") / 질문 없음("해당 회차에 존재하지 않는 질문입니다.")
+            - 응답은 회차 상세 조회와 같은 형식입니다.
+            """
+    )
+    @PutMapping("/rounds/{roundId}/selected-question")
+    public ResponseEntity<SopmodamRoundDetailResponse> selectQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId,
+        @RequestBody @Valid SopmodamSelectQuestionRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.selectQuestion(roundId, request.questionId()));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 전체 조회 API (어드민)",
+        description = """
+            해당 회차의 답변을 모두 조회합니다. phase 제한 없음.
+            - question: 최종 질문이 아직 선정되지 않았으면 null 입니다.
+            - answers 는 updatedAt 오름차순, id 오름차순입니다.
+            - writer.generation/part: 마지막 활동 기수 기준입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerListResponse> getAnswers(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getAnswers(roundId));
+    }
+
+    @Operation(
         summary = "솝모담 회차 수정 API",
         description = """
             회차의 기수·주제·일정을 수정합니다. 질문은 이 API로 바꾸지 않습니다. 응답은 회차 상세 조회와 같은 형식입니다.
@@ -108,5 +155,61 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.updateRound(roundId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 질문 추가 API",
+        description = """
+            회차에 투표 후보 질문을 추가합니다. 응답은 회차 상세 조회와 같은 형식입니다.
+            - 투표가 시작되기 전(phase = SCHEDULED)에만 추가할 수 있습니다. voteStartAt 정각부터는 400 입니다.
+            - 질문은 255자 이하이며, 앞뒤 공백을 제거한 뒤 검증·저장합니다.
+            """
+    )
+    @PostMapping("/rounds/{roundId}/questions")
+    public ResponseEntity<SopmodamRoundDetailResponse> addQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId,
+        @RequestBody @Valid SopmodamQuestionCreateRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamAdminService.addQuestion(roundId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 질문 수정 API",
+        description = """
+            투표 후보 질문의 내용을 수정합니다. 응답은 질문이 속한 회차의 상세 조회와 같은 형식입니다.
+            - 투표가 시작되기 전(phase = SCHEDULED)에만 수정할 수 있습니다. voteStartAt 정각부터는 400 입니다.
+            - 질문은 255자 이하이며, 앞뒤 공백을 제거한 뒤 검증·저장합니다.
+            """
+    )
+    @PutMapping("/questions/{questionId}")
+    public ResponseEntity<SopmodamRoundDetailResponse> updateQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("questionId") Long questionId,
+        @RequestBody @Valid SopmodamQuestionUpdateRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.updateQuestion(questionId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 질문 삭제 API",
+        description = """
+            투표 후보 질문을 삭제합니다. 응답은 질문이 속한 회차의 상세 조회와 같은 형식입니다.
+            - 투표가 시작되기 전(phase = SCHEDULED)에만 삭제할 수 있습니다. voteStartAt 정각부터는 400 입니다.
+            - 남은 질문 수와 관계없이 삭제할 수 있습니다. 마지막 질문도 삭제할 수 있습니다.
+            """
+    )
+    @DeleteMapping("/questions/{questionId}")
+    public ResponseEntity<SopmodamRoundDetailResponse> deleteQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("questionId") Long questionId
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.deleteQuestion(questionId));
     }
 }
