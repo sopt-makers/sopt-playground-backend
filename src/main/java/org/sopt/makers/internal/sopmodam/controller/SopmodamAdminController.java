@@ -14,6 +14,7 @@ import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateReque
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamSelectQuestionRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
@@ -114,6 +115,24 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.selectQuestion(roundId, request.questionId()));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 전체 조회 API (어드민)",
+        description = """
+            해당 회차의 답변을 모두 조회합니다. ANSWERING 단계에서도 조회할 수 있으나 최종 질문이 선정돼 있어야 합니다(400).
+            - answers 는 updatedAt 오름차순, id 오름차순입니다.
+            - writer.generation/part: 마지막 활동 기수 기준입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerListResponse> getAnswers(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getAnswers(roundId));
     }
 
     @Operation(
