@@ -60,7 +60,7 @@ public class SopmodamController {
             - REVEALED 단계에서만 조회 가능합니다. 그 외 phase는 400입니다.
             - 로그인한 사용자라면 유형 무관 조회 가능합니다.
             - answers는 updatedAt 오름차순, 동일하면 answerId 오름차순으로 정렬됩니다.
-            - writer.generation·part는 작성자의 가장 최근 SOPT 활동 기준입니다.
+            - writer.generation·part는 작성자의 가장 최근 SOPT·Makers 활동 기준입니다.
             - writer.profileImage는 없으면 null입니다.
             """
     )
