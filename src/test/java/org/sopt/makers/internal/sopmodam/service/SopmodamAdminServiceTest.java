@@ -35,9 +35,10 @@ import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
 
 /**
- * 솝모담 어드민 질문 추가·수정 흐름 테스트.
+ * 솝모담 어드민 질문 추가·수정·삭제 흐름 테스트.
  *
- * <p>검사 순서는 회차·질문 없음(404) → 투표 시작됨(400) 이고, 실패하면 질문을 저장하지 않아야 한다.
+ * <p>검사 순서는 회차·질문 없음(404) → 투표 시작됨(400) 이고,
+ * 실패하면 질문을 저장·삭제하지 않아야 한다.
  *
  * <p>리트리버·정책·쓰기 컴포넌트는 얇은 위임이라 실제 인스턴스를 쓰고, 리포지토리만 mock 으로 둔다.
  * 서비스는 {@code LocalDateTime.now(KST)} 를 직접 쓰므로, 회차 일정은 오늘(KST) 기준 상대 날짜로 만든다.
@@ -181,6 +182,93 @@ class SopmodamAdminServiceTest {
 				.isInstanceOf(NotFoundException.class)
 				.hasMessageContaining("존재하지 않는 질문입니다.");
 			verify(questionRepository, never()).save(any());
+		}
+	}
+
+	@Nested
+	@DisplayName("질문 삭제")
+	class DeleteQuestion {
+
+		@Test
+		@DisplayName("투표 시작 전이고 질문이 3개 이상이면 질문을 삭제하고 남은 질문의 회차 상세를 돌려준다")
+		void 투표_시작_전이면_삭제() {
+			SopmodamRound round = roundStartingIn(1);
+			SopmodamQuestion question = question(QUESTION_ID, round, "삭제할 질문");
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question));
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID)).thenReturn(List.of(
+				question(11L, round, "남는 질문 1"),
+				question(12L, round, "남는 질문 2")
+			));
+			when(answerRepository.countByRoundId(ROUND_ID)).thenReturn(0L);
+
+			SopmodamRoundDetailResponse response = sopmodamAdminService.deleteQuestion(QUESTION_ID);
+
+			verify(questionRepository).delete(question);
+
+			assertThat(response.roundId()).isEqualTo(ROUND_ID);
+			assertThat(response.phase()).isEqualTo(SopmodamPhase.SCHEDULED);
+			assertThat(response.questions())
+				.extracting(SopmodamQuestionResultResponse::content)
+				.containsExactly("남는 질문 1", "남는 질문 2");
+		}
+
+		@Test
+		@DisplayName("투표가 시작된 회차의 질문이면 400 이고 질문을 삭제하지 않는다")
+		void 투표_시작_후면_400() {
+			SopmodamQuestion question = question(QUESTION_ID, roundStartingIn(0), "삭제할 질문");
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question));
+
+			assertThatThrownBy(() -> sopmodamAdminService.deleteQuestion(QUESTION_ID))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("투표가 시작된 회차의 질문은 변경할 수 없습니다.");
+			verify(questionRepository, never()).delete(any());
+		}
+
+		@Test
+		@DisplayName("회차에 질문이 2개뿐이어도 삭제하고 남은 질문을 돌려준다")
+		void 질문_2개여도_삭제() {
+			SopmodamRound round = roundStartingIn(1);
+			SopmodamQuestion question = question(QUESTION_ID, round, "삭제할 질문");
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question));
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID))
+				.thenReturn(List.of(question(11L, round, "남는 질문")));
+			when(answerRepository.countByRoundId(ROUND_ID)).thenReturn(0L);
+
+			SopmodamRoundDetailResponse response = sopmodamAdminService.deleteQuestion(QUESTION_ID);
+
+			verify(questionRepository).delete(question);
+			assertThat(response.roundId()).isEqualTo(ROUND_ID);
+			assertThat(response.questions())
+				.extracting(SopmodamQuestionResultResponse::content)
+				.containsExactly("남는 질문");
+		}
+
+		@Test
+		@DisplayName("마지막 질문도 삭제하고 빈 질문 목록을 돌려준다")
+		void 마지막_질문도_삭제() {
+			SopmodamRound round = roundStartingIn(1);
+			SopmodamQuestion question = question(QUESTION_ID, round, "삭제할 질문");
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question));
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID)).thenReturn(List.of());
+			when(answerRepository.countByRoundId(ROUND_ID)).thenReturn(0L);
+
+			SopmodamRoundDetailResponse response = sopmodamAdminService.deleteQuestion(QUESTION_ID);
+
+			verify(questionRepository).delete(question);
+			assertThat(response.roundId()).isEqualTo(ROUND_ID);
+			assertThat(response.phase()).isEqualTo(SopmodamPhase.SCHEDULED);
+			assertThat(response.questions()).isEmpty();
+		}
+
+		@Test
+		@DisplayName("질문이 없으면 404 이고 질문을 삭제하지 않는다")
+		void 질문_없으면_404() {
+			when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> sopmodamAdminService.deleteQuestion(QUESTION_ID))
+				.isInstanceOf(NotFoundException.class)
+				.hasMessageContaining("존재하지 않는 질문입니다.");
+			verify(questionRepository, never()).delete(any());
 		}
 	}
 

@@ -29,4 +29,8 @@ public class SopmodamQuestionModifier {
         question.updateContent(content);
         questionRepository.save(question);
     }
+
+    public void deleteQuestion(SopmodamQuestion question) {
+        questionRepository.delete(question);
+    }
 }

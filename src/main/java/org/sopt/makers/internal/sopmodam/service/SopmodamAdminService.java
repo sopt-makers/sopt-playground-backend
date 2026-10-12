@@ -105,6 +105,17 @@ public class SopmodamAdminService {
         return buildRoundDetail(round, now);
     }
 
+    @Transactional
+    public SopmodamRoundDetailResponse deleteQuestion(Long questionId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamQuestion question = questionRetriever.findQuestionById(questionId);
+        SopmodamRound round = question.getRound();
+        roundPolicy.validateQuestionEditable(round, now);
+
+        questionModifier.deleteQuestion(question);
+        return buildRoundDetail(round, now);
+    }
+
     private SopmodamRoundDetailResponse buildRoundDetail(SopmodamRound round, LocalDateTime now) {
         SopmodamPhase phase = SopmodamPhase.of(round, now);
         List<SopmodamQuestion> questions = questionRetriever.findAllByRoundId(round.getId());
