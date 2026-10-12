@@ -9,9 +9,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamRoundUpdateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamSelectQuestionRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
@@ -90,6 +93,47 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getRound(roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 최종 질문 지정 API",
+        description = """
+            투표 결과 동률이 발생하거나 자동 선정된 질문을 변경할 때 운영자가 최종 질문을 직접 지정합니다.
+            - 답변 모집 기간(ANSWERING)에만 지정할 수 있습니다. 투표 미종료(400) / 공개 단계(400).
+            - 이미 답변이 존재하는 회차는 변경할 수 없습니다(409).
+            - 지정한 질문만 isSelected = true 가 되고 나머지는 모두 false 로 변경됩니다.
+            - 404: 회차 없음("존재하지 않는 솝모담 회차입니다.") / 질문 없음("해당 회차에 존재하지 않는 질문입니다.")
+            - 응답은 회차 상세 조회와 같은 형식입니다.
+            """
+    )
+    @PutMapping("/rounds/{roundId}/selected-question")
+    public ResponseEntity<SopmodamRoundDetailResponse> selectQuestion(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId,
+        @RequestBody @Valid SopmodamSelectQuestionRequest request
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.selectQuestion(roundId, request.questionId()));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 전체 조회 API (어드민)",
+        description = """
+            해당 회차의 답변을 모두 조회합니다. phase 제한 없음.
+            - question: 최종 질문이 아직 선정되지 않았으면 null 입니다.
+            - answers 는 updatedAt 오름차순, id 오름차순입니다.
+            - writer.generation/part: 마지막 활동 기수 기준입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerListResponse> getAnswers(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId
+    ) {
+        adminKeyValidator.validate(adminKey);
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getAnswers(roundId));
     }
 
     @Operation(

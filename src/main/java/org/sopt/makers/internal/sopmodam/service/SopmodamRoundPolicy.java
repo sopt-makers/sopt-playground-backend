@@ -45,5 +45,4 @@ public class SopmodamRoundPolicy {
             throw new BadRequestException("투표가 시작된 회차의 질문은 변경할 수 없습니다.");
         }
     }
-
 }
