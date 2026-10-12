@@ -35,7 +35,9 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
@@ -477,37 +479,37 @@ class SopmodamServiceTest {
 		}
 
 		@Test
-		@DisplayName("공백·줄바꿈 제외 실제 글자가 20자 미만이면 400")
-		void 공백제외_20자_미만이면_400() {
-			String onlySpaces = "  짧은글  ";  // 공백 제외 3자
-
-			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(onlySpaces)))
-				.isInstanceOf(BadRequestException.class)
-				.hasMessageContaining("답변 글자수가 너무 적습니다.");
-			verifyNoInteractions(roundRepository, platformService, answerModifier);
-		}
-
-		@Test
 		@DisplayName("공백으로만 이루어진 content 는 400")
 		void 공백만_이루어진_content는_400() {
 			String allSpaces = " ".repeat(100);
 
 			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(allSpaces)))
 				.isInstanceOf(BadRequestException.class)
-				.hasMessageContaining("답변 글자수가 너무 적습니다.");
+				.hasMessageContaining("답변 내용을 입력해주세요.");
 			verifyNoInteractions(roundRepository, platformService, answerModifier);
 		}
 
 		@Test
-		@DisplayName("공백 제외 정확히 20자면 유효하다")
-		void 공백제외_정확히_20자면_유효() {
-			String exactly20 = "가".repeat(20);  // 공백 없이 20자
+		@DisplayName("탭·줄바꿈으로만 이루어진 content 도 400")
+		void 탭_줄바꿈만_이루어진_content는_400() {
+			String tabsAndNewlines = "\t\n\r";
+
+			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(tabsAndNewlines)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 내용을 입력해주세요.");
+			verifyNoInteractions(roundRepository, platformService, answerModifier);
+		}
+
+		@Test
+		@DisplayName("짧은 내용(1자)도 유효하다")
+		void 짧은_내용도_유효하다() {
+			String oneChar = "가";
 			SopmodamRound round = answeringRound();
 			SopmodamQuestion selected = selectedQuestion(10L, round);
 			Member member = Member.builder().id(USER_ID).build();
 			SopmodamAnswer answer = mock(SopmodamAnswer.class);
 			when(answer.getId()).thenReturn(10L);
-			when(answer.getContent()).thenReturn(exactly20);
+			when(answer.getContent()).thenReturn(oneChar);
 			when(answer.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
 			when(answer.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
 
@@ -516,9 +518,9 @@ class SopmodamServiceTest {
 			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
 			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
 			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
-			when(answerModifier.createAnswer(selected, member, exactly20)).thenReturn(answer);
+			when(answerModifier.createAnswer(selected, member, oneChar)).thenReturn(answer);
 
-			assertThat(sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(exactly20)).answerId()).isEqualTo(10L);
+			assertThat(sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(oneChar)).answerId()).isEqualTo(10L);
 		}
 
 		// ── 회차 검증 ──────────────────────────────────────────────────────────
@@ -656,6 +658,171 @@ class SopmodamServiceTest {
 			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
 				.isInstanceOf(NotFoundException.class);
 			verify(answerModifier, never()).createAnswer(any(), any(), any());
+		}
+	}
+
+	@Nested
+	@DisplayName("U5 답변 수정")
+	class UpdateAnswer {
+
+		private static final Long ANSWER_ID = 20L;
+		private static final String VALID_CONTENT = "솝트에서 배운 협업 경험을 바탕으로 말씀드리겠습니다.";
+		private static final String NEW_CONTENT = "수정된 답변입니다. 공백 제외 이십 자 이상이어야 합니다요.";
+
+		private SopmodamAnswer answerOf(SopmodamRound round) {
+			SopmodamQuestion question = selectedQuestion(10L, round);
+			Member member = Member.builder().id(USER_ID).build();
+			return SopmodamAnswer.builder().id(ANSWER_ID).question(question).member(member).content(VALID_CONTENT).build();
+		}
+
+		private void givenAnswer(SopmodamAnswer answer) {
+			when(answerRepository.findByIdWithDetails(ANSWER_ID)).thenReturn(Optional.of(answer));
+		}
+
+		@Test
+		@DisplayName("본인 답변을 답변 모집 기간에 유효한 내용으로 수정하면 저장한다")
+		void 정상_수정() {
+			SopmodamRound round = answeringRound();
+			SopmodamAnswer answer = answerOf(round);
+			SopmodamAnswer updated = mock(SopmodamAnswer.class);
+			when(updated.getId()).thenReturn(ANSWER_ID);
+			when(updated.getContent()).thenReturn(NEW_CONTENT);
+			when(updated.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 10, 20, 13, 0));
+			when(updated.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 10, 21, 9, 0));
+
+			givenAnswer(answer);
+			when(answerModifier.updateAnswer(answer, NEW_CONTENT)).thenReturn(updated);
+
+			SopmodamAnswerUpdateResponse response = sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(NEW_CONTENT));
+
+			assertThat(response.answerId()).isEqualTo(ANSWER_ID);
+			assertThat(response.content()).isEqualTo(NEW_CONTENT);
+			verify(answerModifier).updateAnswer(answer, NEW_CONTENT);
+		}
+
+		// ── 내용 검증 ──────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("content 가 null 이면 답변을 조회하지 않고 400")
+		void content가_null이면_400() {
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(null)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 글자수가 초과되었습니다.");
+			verifyNoInteractions(answerRepository, answerModifier);
+		}
+
+		@Test
+		@DisplayName("content 가 501자 이상이면 400")
+		void content가_500자_초과면_400() {
+			String over500 = "가".repeat(501);
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(over500)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 글자수가 초과되었습니다.");
+			verifyNoInteractions(answerRepository, answerModifier);
+		}
+
+		@Test
+		@DisplayName("공백으로만 이루어진 content 는 400")
+		void 공백만_이루어진_content는_400() {
+			String allSpaces = " ".repeat(100);
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(allSpaces)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 내용을 입력해주세요.");
+			verifyNoInteractions(answerRepository, answerModifier);
+		}
+
+		@Test
+		@DisplayName("탭·줄바꿈으로만 이루어진 content 도 400")
+		void 탭_줄바꿈만_이루어진_content는_400() {
+			String tabsAndNewlines = "\t\n\r";
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(tabsAndNewlines)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 내용을 입력해주세요.");
+			verifyNoInteractions(answerRepository, answerModifier);
+		}
+
+		// ── 답변 조회 검증 ─────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("답변이 없으면 404 이고 수정하지 않는다")
+		void 답변이_없으면_404() {
+			when(answerRepository.findByIdWithDetails(ANSWER_ID)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(VALID_CONTENT)))
+				.isInstanceOf(NotFoundException.class)
+				.hasMessageContaining("존재하지 않는 답변입니다.");
+			verifyNoInteractions(answerModifier);
+		}
+
+		// ── 소유권 검증 ────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("본인의 답변이 아니면 403 이고 phase 검사로 넘어가지 않는다")
+		void 본인_답변_아니면_403() {
+			SopmodamRound round = answeringRound();
+			SopmodamQuestion question = selectedQuestion(10L, round);
+			Member otherMember = Member.builder().id(999L).build();
+			SopmodamAnswer otherAnswer = SopmodamAnswer.builder()
+				.id(ANSWER_ID).question(question).member(otherMember).content(VALID_CONTENT).build();
+			givenAnswer(otherAnswer);
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(VALID_CONTENT)))
+				.isInstanceOf(ForbiddenException.class)
+				.hasMessageContaining("본인의 답변이 아닙니다.");
+			verifyNoInteractions(answerModifier);
+		}
+
+		@Test
+		@DisplayName("본인 답변이 아닌 경우 phase 가 ANSWERING 이 아니어도 403 이 먼저다")
+		void 비소유자_투표기간_회차면_403이_먼저() {
+			SopmodamRound round = votingRound();
+			SopmodamQuestion question = selectedQuestion(10L, round);
+			Member otherMember = Member.builder().id(999L).build();
+			SopmodamAnswer otherAnswer = SopmodamAnswer.builder()
+				.id(ANSWER_ID).question(question).member(otherMember).content(VALID_CONTENT).build();
+			givenAnswer(otherAnswer);
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(VALID_CONTENT)))
+				.isInstanceOf(ForbiddenException.class);
+			verifyNoInteractions(answerModifier);
+		}
+
+		// ── Phase 검증 ─────────────────────────────────────────────────────────
+
+		@Test
+		@DisplayName("투표 기간(VOTING)이면 400")
+		void 투표_기간이면_400() {
+			givenAnswer(answerOf(votingRound()));
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 모집 기간이 아닙니다.");
+			verifyNoInteractions(answerModifier);
+		}
+
+		@Test
+		@DisplayName("투표 시작 전(SCHEDULED)이면 400")
+		void 투표_시작전이면_400() {
+			givenAnswer(answerOf(scheduledRound()));
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 모집 기간이 아닙니다.");
+			verifyNoInteractions(answerModifier);
+		}
+
+		@Test
+		@DisplayName("공개 단계(REVEALED)면 400")
+		void 공개_단계면_400() {
+			givenAnswer(answerOf(revealedRound()));
+
+			assertThatThrownBy(() -> sopmodamService.updateAnswer(USER_ID, ANSWER_ID, new SopmodamAnswerUpdateRequest(VALID_CONTENT)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("답변 모집 기간이 아닙니다.");
+			verifyNoInteractions(answerModifier);
 		}
 	}
 

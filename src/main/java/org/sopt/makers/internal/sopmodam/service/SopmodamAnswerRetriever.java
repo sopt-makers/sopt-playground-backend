@@ -2,6 +2,8 @@ package org.sopt.makers.internal.sopmodam.service;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ConflictException;
+import org.sopt.makers.internal.exception.NotFoundException;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.springframework.stereotype.Component;
 
@@ -18,5 +20,10 @@ public class SopmodamAnswerRetriever {
     }
     public long countByRoundId(Long roundId) {
         return answerRepository.countByRoundId(roundId);
+    }
+
+    public SopmodamAnswer findAnswerById(Long answerId) {
+        return answerRepository.findByIdWithDetails(answerId)
+            .orElseThrow(() -> new NotFoundException("존재하지 않는 답변입니다."));
     }
 }
