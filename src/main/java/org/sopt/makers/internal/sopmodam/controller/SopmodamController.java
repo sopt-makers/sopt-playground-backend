@@ -6,7 +6,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
+import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamVoteRequest;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerUpdateResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionListResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamVoteResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamService;
@@ -16,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +51,62 @@ public class SopmodamController {
         @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.getQuestions(userId, roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 공개 답변 목록 조회 API",
+        description = """
+            해당 회차의 공개된 답변 목록을 전체 조회합니다.
+            - REVEALED 단계에서만 조회 가능합니다. 그 외 phase는 400입니다.
+            - 로그인한 사용자라면 유형 무관 조회 가능합니다.
+            - answers는 updatedAt 오름차순, 동일하면 answerId 오름차순으로 정렬됩니다.
+            - writer.generation·part는 작성자의 가장 최근 SOPT·Makers 활동 기준입니다.
+            - writer.profileImage는 없으면 null입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerListResponse> getAnswers(
+        @PathVariable("roundId") Long roundId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.getAnswers(roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 작성 API",
+        description = """
+            회차의 최종 선정 질문에 답변을 작성합니다.
+            - 답변 모집 기간(ANSWERING)에만 작성할 수 있습니다.
+            - 회차당 1개의 답변만 허용됩니다.
+            - 활동 OB·명예 회원만 답변할 수 있습니다. (활동 YB 불가)
+            - content: 1자 이상 500자 이하, 공백·줄바꿈만으로 이루어진 경우 불가
+            """
+    )
+    @PostMapping("/rounds/{roundId}/answers")
+    public ResponseEntity<SopmodamAnswerCreateResponse> createAnswer(
+        @PathVariable("roundId") Long roundId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+        @RequestBody @Valid SopmodamAnswerCreateRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(sopmodamService.createAnswer(userId, roundId, request));
+    }
+
+    @Operation(
+        summary = "솝모담 답변 수정 API",
+        description = """
+            작성한 답변을 수정합니다.
+            - 답변 모집 기간(ANSWERING)에만 수정할 수 있습니다.
+            - 본인의 답변만 수정할 수 있습니다.
+            - content: 1자 이상 500자 이하, 공백·줄바꿈만으로 이루어진 경우 불가
+            """
+    )
+    @PutMapping("/answers/{answerId}")
+    public ResponseEntity<SopmodamAnswerUpdateResponse> updateAnswer(
+        @PathVariable("answerId") Long answerId,
+        @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+        @RequestBody @Valid SopmodamAnswerUpdateRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(sopmodamService.updateAnswer(userId, answerId, request));
     }
 
     @Operation(
