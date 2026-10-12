@@ -15,8 +15,6 @@ public interface SopmodamQuestionRepository extends JpaRepository<SopmodamQuesti
 
     Optional<SopmodamQuestion> findByIdAndRoundId(Long id, Long roundId);
 
-    Optional<SopmodamQuestion> findByRoundIdAndIsSelectedTrue(Long roundId);
-
     @Modifying
     @Query("UPDATE SopmodamQuestion question SET question.voteCount = question.voteCount + 1 WHERE question.id = :questionId")
     int increaseVoteCount(@Param("questionId") Long questionId);

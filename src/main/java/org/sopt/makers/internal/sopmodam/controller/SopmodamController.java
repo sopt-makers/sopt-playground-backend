@@ -88,6 +88,7 @@ public class SopmodamController {
         summary = "솝모담 공개 답변 목록 조회 API",
         description = """
             해당 회차의 공개된 답변 목록을 전체 조회합니다.
+            - 최종 질문은 회차에 저장된 질문 ID로 조회합니다. 미선정이면 단독 최다 득표 질문을 자동 선정하여 저장합니다.
             - REVEALED 단계에서만 조회 가능합니다. 그 외 phase는 400입니다.
             - 로그인한 사용자라면 유형 무관 조회 가능합니다.
             - answers는 updatedAt 오름차순, 동일하면 answerId 오름차순으로 정렬됩니다.
@@ -107,6 +108,7 @@ public class SopmodamController {
         summary = "솝모담 답변 작성 API",
         description = """
             회차의 최종 선정 질문에 답변을 작성합니다.
+            - 최종 질문은 회차에 저장된 질문 ID로 조회합니다. 미선정이면 단독 최다 득표 질문을 자동 선정하여 저장합니다.
             - 답변 모집 기간(ANSWERING)에만 작성할 수 있습니다.
             - 회차당 1개의 답변만 허용됩니다.
             - 활동 OB·명예 회원만 답변할 수 있습니다. (활동 YB 불가)

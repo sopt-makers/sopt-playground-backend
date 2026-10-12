@@ -38,12 +38,8 @@ public class SopmodamQuestionRetriever {
         return questionRepository.findByIdAndRoundId(round.getSelectedQuestionId(), round.getId());
     }
 
-    public SopmodamQuestion findSelectedQuestionInRound(Long roundId) {
-        return questionRepository.findByRoundIdAndIsSelectedTrue(roundId)
+    public SopmodamQuestion findSelectedQuestionInRound(SopmodamRound round) {
+        return findFinalQuestion(round)
             .orElseThrow(() -> new BadRequestException("최종 질문이 선정되지 않았습니다."));
-    }
-
-    public Optional<SopmodamQuestion> findOptionalSelectedQuestionInRound(Long roundId) {
-        return questionRepository.findByRoundIdAndIsSelectedTrue(roundId);
     }
 }

@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +38,7 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamCardType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamCurrentCardResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
@@ -653,7 +655,7 @@ class SopmodamServiceTest {
 
 			givenRound(round);
 			givenUser(activeOb());
-			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(questionRepository.findByIdAndRoundId(selected.getId(), ROUND_ID)).thenReturn(Optional.of(selected));
 			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
 			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
 			when(answerModifier.createAnswer(selected, member, VALID_CONTENT)).thenReturn(answer);
@@ -679,7 +681,7 @@ class SopmodamServiceTest {
 
 			givenRound(round);
 			givenUser(honorary());
-			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(questionRepository.findByIdAndRoundId(selected.getId(), ROUND_ID)).thenReturn(Optional.of(selected));
 			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
 			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
 			when(answerModifier.createAnswer(selected, member, VALID_CONTENT)).thenReturn(answer);
@@ -746,7 +748,7 @@ class SopmodamServiceTest {
 
 			givenRound(round);
 			givenUser(activeOb());
-			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(questionRepository.findByIdAndRoundId(selected.getId(), ROUND_ID)).thenReturn(Optional.of(selected));
 			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
 			when(memberRetriever.findMemberById(USER_ID)).thenReturn(member);
 			when(answerModifier.createAnswer(selected, member, oneChar)).thenReturn(answer);
@@ -846,9 +848,11 @@ class SopmodamServiceTest {
 		@Test
 		@DisplayName("선정된 질문이 없으면 400 이고 회원 조회·저장으로 넘어가지 않는다")
 		void 선정_질문_없으면_400() {
-			givenRound(answeringRound());
+			SopmodamRound round = answeringRound();
+			givenRound(round);
 			givenUser(activeOb());
-			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.empty());
+			when(questionRepository.findAllByRoundIdOrderByIdAsc(ROUND_ID)).thenReturn(List.of(
+				question(1L, round, "질문 1", 5, false), question(2L, round, "질문 2", 5, false)));
 
 			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
 				.isInstanceOf(BadRequestException.class)
@@ -865,7 +869,7 @@ class SopmodamServiceTest {
 			SopmodamQuestion selected = selectedQuestion(10L, round);
 			givenRound(round);
 			givenUser(activeOb());
-			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(questionRepository.findByIdAndRoundId(selected.getId(), ROUND_ID)).thenReturn(Optional.of(selected));
 			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(true);
 
 			assertThatThrownBy(() -> sopmodamService.createAnswer(USER_ID, ROUND_ID, new SopmodamAnswerCreateRequest(VALID_CONTENT)))
@@ -882,7 +886,7 @@ class SopmodamServiceTest {
 			SopmodamQuestion selected = selectedQuestion(10L, round);
 			givenRound(round);
 			givenUser(activeOb());
-			when(questionRepository.findByRoundIdAndIsSelectedTrue(ROUND_ID)).thenReturn(Optional.of(selected));
+			when(questionRepository.findByIdAndRoundId(selected.getId(), ROUND_ID)).thenReturn(Optional.of(selected));
 			when(answerRepository.existsByQuestionIdAndMemberId(selected.getId(), USER_ID)).thenReturn(false);
 			when(memberRetriever.findMemberById(USER_ID)).thenThrow(new NotFoundException("존재하지 않는 사용자의 id값 입니다."));
 
@@ -1057,6 +1061,42 @@ class SopmodamServiceTest {
 		}
 	}
 
+	@Test
+	@DisplayName("공개 답변은 isSelected가 false여도 회차에 저장된 질문을 조회한다")
+	void 공개_답변_회차_선정값_조회() {
+		SopmodamRound round = revealedRound();
+		SopmodamQuestion selected = selectedQuestion(10L, round);
+		givenRound(round);
+		when(questionRepository.findByIdAndRoundId(10L, ROUND_ID)).thenReturn(Optional.of(selected));
+		when(answerRepository.findAllByRoundIdOrderByUpdatedAtAscIdAsc(ROUND_ID)).thenReturn(List.of());
+		when(platformService.getInternalUserDetailsMap(List.of())).thenReturn(Map.of());
+
+		SopmodamAnswerListResponse response = sopmodamService.getAnswers(ROUND_ID);
+
+		assertThat(response.question()).isEqualTo(new SopmodamQuestionResponse(10L, "선정된 질문"));
+		verify(questionRepository, never()).findAllByRoundIdOrderByIdAsc(anyLong());
+	}
+
+	@Test
+	@DisplayName("어드민 답변도 isSelected가 false여도 회차에 저장된 질문을 조회한다")
+	void 어드민_답변_회차_선정값_조회() {
+		SopmodamRound round = answeringRound();
+		SopmodamQuestion selected = selectedQuestion(10L, round);
+		givenRound(round);
+		when(questionRepository.findByIdAndRoundId(10L, ROUND_ID)).thenReturn(Optional.of(selected));
+		when(answerRepository.findAllByRoundIdOrderByUpdatedAtAscIdAsc(ROUND_ID)).thenReturn(List.of());
+		when(platformService.getInternalUserDetailsMap(List.of())).thenReturn(Map.of());
+		SopmodamAdminService adminService = new SopmodamAdminService(
+			new SopmodamRoundRetriever(roundRepository), new SopmodamQuestionRetriever(questionRepository),
+			new SopmodamAnswerRetriever(answerRepository), new SopmodamRoundModifier(roundRepository, questionRepository),
+			new SopmodamQuestionModifier(questionRepository), new SopmodamRoundPolicy(), platformService);
+
+		SopmodamAnswerListResponse response = adminService.getAnswers(ROUND_ID);
+
+		assertThat(response.question()).isEqualTo(new SopmodamQuestionResponse(10L, "선정된 질문"));
+		verify(questionRepository, never()).findAllByRoundIdOrderByIdAsc(anyLong());
+	}
+
 	private void givenRound(SopmodamRound round) {
 		when(roundRepository.findById(ROUND_ID)).thenReturn(Optional.of(round));
 	}
@@ -1131,7 +1171,8 @@ class SopmodamServiceTest {
 	}
 
 	private SopmodamQuestion selectedQuestion(Long questionId, SopmodamRound round) {
-		return SopmodamQuestion.builder().id(questionId).round(round).content("선정된 질문").isSelected(true).build();
+		ReflectionTestUtils.setField(round, "selectedQuestionId", questionId);
+		return SopmodamQuestion.builder().id(questionId).round(round).content("선정된 질문").isSelected(false).build();
 	}
 
 	private InternalUserDetails activeYb() {

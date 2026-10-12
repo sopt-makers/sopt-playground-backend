@@ -34,7 +34,7 @@ public class SopmodamRoundModifier {
         if (topQuestions.size() == 1) {
             Long questionId = topQuestions.get(0).getId();
             if (roundRepository.selectQuestionIfAbsent(round.getId(), questionId) == 1) {
-                // 기존 isSelected 조회 API와 호환되도록 회차 ID 저장에 성공한 요청만 함께 갱신한다
+                // 질문별 선정 표시도 일치하도록 회차 ID 저장에 성공한 요청만 함께 갱신한다
                 questionRepository.updateSelectedQuestionInRound(round.getId(), questionId);
             }
         }

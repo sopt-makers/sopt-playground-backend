@@ -120,7 +120,8 @@ public class SopmodamService {
             throw new BadRequestException("아직 공개되지 않은 답변입니다.");
         }
 
-        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(round);
         List<SopmodamAnswer> answers = answerRetriever.findAllByRoundId(roundId);
 
         List<Long> memberIds = answers.stream()
@@ -171,7 +172,8 @@ public class SopmodamService {
 
         roundPolicy.validateAnsweringPhase(round, now);
 
-        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(round);
         answerRetriever.validateNotAnswered(selectedQuestion.getId(), userId);
         // 회원을 먼저 확인해 두면 답변 저장 시 무결성 위반은 유니크 제약뿐이다
         Member member = memberRetriever.findMemberById(userId);

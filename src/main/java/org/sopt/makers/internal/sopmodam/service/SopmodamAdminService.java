@@ -155,8 +155,10 @@ public class SopmodamAdminService {
 
     // 최종 질문이 선정돼야 답변이 달리므로, 선정 전 조회 시 400 을 반환한다
     public SopmodamAnswerListResponse getAnswers(Long roundId) {
+        LocalDateTime now = LocalDateTime.now(KST);
         SopmodamRound round = roundRetriever.findRoundById(roundId);
-        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(round);
         List<SopmodamAnswer> answers = answerRetriever.findAllByRoundId(roundId);
 
         List<Long> memberIds = answers.stream().map(a -> a.getMember().getId()).toList();

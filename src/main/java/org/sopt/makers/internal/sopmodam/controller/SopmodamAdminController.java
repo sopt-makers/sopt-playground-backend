@@ -102,7 +102,7 @@ public class SopmodamAdminController {
             투표 결과 동률이 발생하거나 자동 선정된 질문을 변경할 때 운영자가 최종 질문을 직접 지정합니다.
             - 답변 모집 기간(ANSWERING)에만 지정할 수 있습니다. 투표 미종료(400) / 공개 단계(400).
             - 이미 답변이 존재하는 회차는 변경할 수 없습니다(409).
-            - 지정한 질문만 isSelected = true 가 되고 나머지는 모두 false 로 변경됩니다.
+            - 지정한 질문 ID를 회차의 selectedQuestionId에 저장합니다. 질문별 isSelected도 함께 갱신합니다.
             - 404: 회차 없음("존재하지 않는 솝모담 회차입니다.") / 질문 없음("해당 회차에 존재하지 않는 질문입니다.")
             - 응답은 회차 상세 조회와 같은 형식입니다.
             """
@@ -122,7 +122,8 @@ public class SopmodamAdminController {
         summary = "솝모담 답변 전체 조회 API (어드민)",
         description = """
             해당 회차의 답변을 모두 조회합니다. phase 제한 없음.
-            - question: 최종 질문이 아직 선정되지 않았으면 null 입니다.
+            - 투표 종료 후 미선정 상태이면 단독 최다 득표 질문을 자동 선정하여 저장하고, 회차의 질문 ID로 조회합니다.
+            - 최종 질문이 선정되지 않았으면 400 입니다.
             - answers 는 updatedAt 오름차순, id 오름차순입니다.
             - writer.generation/part: 마지막 활동 기수 기준입니다.
             """

@@ -55,7 +55,7 @@ class SopmodamRoundSelectionTest {
 
         SopmodamRound selected = roundModifier.selectFinalQuestionIfAbsent(round, LocalDateTime.now());
         assertThat(selected.getSelectedQuestionId()).isEqualTo(firstId);
-        assertThat(questionRepository.findByRoundIdAndIsSelectedTrue(roundId).orElseThrow().getId()).isEqualTo(firstId);
+        assertThat(questionRepository.findByIdAndRoundId(firstId, roundId).orElseThrow().isSelected()).isTrue();
         assertThat(questionRepository.findById(secondId).orElseThrow().isSelected()).isFalse();
         assertThat(roundRepository.selectQuestionIfAbsent(roundId, secondId)).isZero();
         assertThat(roundRepository.findById(roundId).orElseThrow().getSelectedQuestionId()).isEqualTo(firstId);
