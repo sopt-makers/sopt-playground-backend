@@ -125,9 +125,7 @@ public class SopmodamService {
         }
 
         SopmodamRound round = answer.getQuestion().getRound();
-        if (SopmodamPhase.of(round, now) != SopmodamPhase.ANSWERING) {
-            throw new BadRequestException("답변 모집 기간이 아닙니다.");
-        }
+        roundPolicy.validateAnsweringPhase(round, now);
 
         SopmodamAnswer updated = answerModifier.updateAnswer(answer, request.content());
         return SopmodamAnswerUpdateResponse.from(updated);
