@@ -49,7 +49,8 @@ public class SopmodamController {
             - 최종 질문은 회차에 저장된 selectedQuestionId 로 조회합니다. 투표 종료 후 미선정 상태이면 단독 최다 득표 질문을 자동 선정하여 저장합니다. 동률이면 미확정 상태를 유지합니다.
             - selectedQuestion 은 VOTING 이 아닐 때, answerCount 는 REVEALED 일 때만 내려줍니다.
             - hasVoted, hasAnswered 는 단계와 관계없이 이번 회차의 실제 투표·답변 참여 여부입니다.
-            - canVote, canAnswer 는 지금 버튼을 누를 수 있는지 여부입니다. 이미 참여했으면 false 입니다.
+            - canVote 는 투표 단계의 투표 가능한 유형이고 아직 투표하지 않았을 때 true 입니다.
+            - canAnswer 는 답변 모집 단계의 활동 OB·명예기수이면 true 입니다. 이미 답변했어도 수정할 수 있으므로 true 입니다.
             - 보여줄 카드가 없으면 204 입니다.
               - 현재 회차가 없는 경우
               - VOTING 단계의 명예기수, 회차 기수보다 뒤 기수인 회원

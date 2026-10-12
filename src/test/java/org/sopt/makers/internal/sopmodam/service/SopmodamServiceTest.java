@@ -516,7 +516,7 @@ class SopmodamServiceTest {
 		}
 
 		@Test
-		@DisplayName("답변 모집 중 명예기수가 이미 답변했으면 답변할 수 없다")
+		@DisplayName("답변 모집 중 명예기수는 이미 답변했어도 수정할 수 있다")
 		void 답변_모집_중_명예기수_답변_후() {
 			SopmodamRound round = answeringRound();
 			givenCurrentRound(round);
@@ -527,7 +527,7 @@ class SopmodamServiceTest {
 			SopmodamCurrentCardResponse response = sopmodamService.getCurrentCard(USER_ID).orElseThrow();
 
 			assertThat(response.cardType()).isEqualTo(SopmodamCardType.ANSWER_COLLECTING);
-			assertThat(response.canAnswer()).isFalse();
+			assertThat(response.canAnswer()).isTrue();
 			assertThat(response.hasAnswered()).isTrue();
 		}
 

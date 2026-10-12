@@ -257,7 +257,7 @@ public class SopmodamService {
             SopmodamQuestionResponse.from(finalQuestion),
             false,
             hasVoted,
-            isCollecting && !hasAnswered,
+            isCollecting,
             hasAnswered,
             isRevealed ? answerRetriever.countByRoundId(round.getId()) : null
         );
