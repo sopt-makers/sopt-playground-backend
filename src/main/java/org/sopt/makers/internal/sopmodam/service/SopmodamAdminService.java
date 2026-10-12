@@ -142,6 +142,17 @@ public class SopmodamAdminService {
         return buildRoundDetail(round, now);
     }
 
+    @Transactional
+    public SopmodamRoundDetailResponse deleteQuestion(Long questionId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamQuestion question = questionRetriever.findQuestionById(questionId);
+        SopmodamRound round = question.getRound();
+        roundPolicy.validateQuestionEditable(round, now);
+
+        questionModifier.deleteQuestion(question);
+        return buildRoundDetail(round, now);
+    }
+
     // 최종 질문이 선정돼야 답변이 달리므로, 선정 전 조회 시 400 을 반환한다
     public SopmodamAnswerListResponse getAnswers(Long roundId) {
         SopmodamRound round = roundRetriever.findRoundById(roundId);
