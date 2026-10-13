@@ -24,6 +24,10 @@ public class SopmodamAnswerRetriever {
         return answerRepository.countByRoundId(roundId);
     }
 
+    public boolean hasAnswered(Long roundId, Long memberId) {
+        return answerRepository.existsByRoundIdAndMemberId(roundId, memberId);
+    }
+
     public SopmodamAnswer findAnswerById(Long answerId) {
         return answerRepository.findByIdWithDetails(answerId)
             .orElseThrow(() -> new NotFoundException("존재하지 않는 답변입니다."));

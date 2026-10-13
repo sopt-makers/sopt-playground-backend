@@ -1,17 +1,47 @@
 package org.sopt.makers.internal.sopmodam.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
+import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
+import org.sopt.makers.internal.exception.NotFoundException;
+import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 public class SopmodamRoundModifier {
 
     private final SopmodamRoundRepository roundRepository;
+    private final SopmodamQuestionRepository questionRepository;
+
+    // 투표 종료 후 단독 최다 득표만 자동 선정한다. 기존 선정값을 덮어쓰지 않고 실제 저장값을 다시 읽는다
+    @Transactional
+    public SopmodamRound selectFinalQuestionIfAbsent(SopmodamRound round, LocalDateTime now) {
+        if (now.isBefore(round.getVoteEndAt()) || round.getSelectedQuestionId() != null) {
+            return round;
+        }
+
+        List<SopmodamQuestion> questions = questionRepository.findAllByRoundIdOrderByIdAsc(round.getId());
+        int maxVotes = questions.stream().mapToInt(SopmodamQuestion::getVoteCount).max().orElse(0);
+        List<SopmodamQuestion> topQuestions = questions.stream()
+            .filter(question -> question.getVoteCount() == maxVotes)
+            .toList();
+        if (topQuestions.size() == 1) {
+            Long questionId = topQuestions.get(0).getId();
+            if (roundRepository.selectQuestionIfAbsent(round.getId(), questionId) == 1) {
+                // 질문별 선정 표시도 일치하도록 회차 ID 저장에 성공한 요청만 함께 갱신한다
+                questionRepository.updateSelectedQuestionInRound(round.getId(), questionId);
+            }
+        }
+
+        return roundRepository.findById(round.getId())
+            .orElseThrow(() -> new NotFoundException("존재하지 않는 솝모담 회차입니다."));
+    }
 
     public SopmodamRound createRound(
         Integer generation,

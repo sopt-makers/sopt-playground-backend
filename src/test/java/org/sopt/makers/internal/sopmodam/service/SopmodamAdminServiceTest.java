@@ -65,7 +65,7 @@ class SopmodamAdminServiceTest {
 			new SopmodamRoundRetriever(roundRepository),
 			new SopmodamQuestionRetriever(questionRepository),
 			new SopmodamAnswerRetriever(answerRepository),
-			new SopmodamRoundModifier(roundRepository),
+			new SopmodamRoundModifier(roundRepository, questionRepository),
 			new SopmodamQuestionModifier(questionRepository),
 			new SopmodamRoundPolicy(),
 			platformService

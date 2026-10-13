@@ -8,12 +8,12 @@ public record SopmodamQuestionResultResponse(
     int voteCount,
     boolean isSelected
 ) {
-    public static SopmodamQuestionResultResponse from(SopmodamQuestion question) {
+    public static SopmodamQuestionResultResponse from(SopmodamQuestion question, Long selectedQuestionId) {
         return new SopmodamQuestionResultResponse(
             question.getId(),
             question.getContent(),
             question.getVoteCount(),
-            question.isSelected()
+            question.getId().equals(selectedQuestionId)
         );
     }
 }

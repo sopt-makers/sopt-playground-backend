@@ -15,11 +15,17 @@ public interface SopmodamQuestionRepository extends JpaRepository<SopmodamQuesti
 
     Optional<SopmodamQuestion> findByIdAndRoundId(Long id, Long roundId);
 
-    Optional<SopmodamQuestion> findByRoundIdAndIsSelectedTrue(Long roundId);
-
     @Modifying
     @Query("UPDATE SopmodamQuestion question SET question.voteCount = question.voteCount + 1 WHERE question.id = :questionId")
     int increaseVoteCount(@Param("questionId") Long questionId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE SopmodamQuestion q
+        SET q.isSelected = CASE WHEN q.id = :questionId THEN true ELSE false END
+        WHERE q.round.id = :roundId
+    """)
+    void updateSelectedQuestionInRound(@Param("roundId") Long roundId, @Param("questionId") Long questionId);
 
     // 회차 내 모든 질문을 미선정 상태로 초기화한다. clearAutomatically = true 로 영속성 컨텍스트를 비워 후속 merge 가 정확히 반영되도록 한다
     @Modifying(clearAutomatically = true)

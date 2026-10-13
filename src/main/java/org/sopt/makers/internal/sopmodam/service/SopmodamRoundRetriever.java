@@ -2,6 +2,7 @@ package org.sopt.makers.internal.sopmodam.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.ConflictException;
@@ -36,5 +37,9 @@ public class SopmodamRoundRetriever {
         if (roundRepository.existsOverlappingExcept(roundId, voteStartAt, answerEndAt)) {
             throw new ConflictException("다른 회차와 일정이 겹칩니다.");
         }
+    }
+
+    public Optional<SopmodamRound> findCurrentRound(LocalDateTime now) {
+        return roundRepository.findFirstByVoteStartAtLessThanEqualOrderByVoteStartAtDesc(now);
     }
 }

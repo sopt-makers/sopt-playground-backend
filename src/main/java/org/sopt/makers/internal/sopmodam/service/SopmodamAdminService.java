@@ -71,7 +71,7 @@ public class SopmodamAdminService {
             .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public SopmodamRoundDetailResponse getRound(Long roundId) {
         LocalDateTime now = LocalDateTime.now(KST);
         SopmodamRound round = roundRetriever.findRoundById(roundId);
@@ -155,8 +155,10 @@ public class SopmodamAdminService {
 
     // 최종 질문이 선정돼야 답변이 달리므로, 선정 전 조회 시 400 을 반환한다
     public SopmodamAnswerListResponse getAnswers(Long roundId) {
+        LocalDateTime now = LocalDateTime.now(KST);
         SopmodamRound round = roundRetriever.findRoundById(roundId);
-        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(roundId);
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion selectedQuestion = questionRetriever.findSelectedQuestionInRound(round);
         List<SopmodamAnswer> answers = answerRetriever.findAllByRoundId(roundId);
 
         List<Long> memberIds = answers.stream().map(a -> a.getMember().getId()).toList();
@@ -176,6 +178,7 @@ public class SopmodamAdminService {
     }
 
     private SopmodamRoundDetailResponse buildRoundDetail(SopmodamRound round, LocalDateTime now) {
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
         SopmodamPhase phase = SopmodamPhase.of(round, now);
         List<SopmodamQuestion> questions = questionRetriever.findAllByRoundId(round.getId());
         long answerCount = answerRetriever.countByRoundId(round.getId());
@@ -183,32 +186,20 @@ public class SopmodamAdminService {
             .mapToInt(SopmodamQuestion::getVoteCount)
             .sum();
 
+        Long selectedQuestionId = round.getSelectedQuestionId();
         return SopmodamRoundDetailResponse.of(
             round,
             phase,
             totalVoteCount,
             answerCount,
-            needsSelection(phase, questions),
-            questions.stream().map(SopmodamQuestionResultResponse::from).toList()
+            needsSelection(phase, round),
+            questions.stream().map(question -> SopmodamQuestionResultResponse.from(question, selectedQuestionId)).toList()
         );
     }
 
-    // 투표가 끝났는데 최종 질문이 없고 최다 득표가 동률이면 운영자가 최종 질문을 지정해야 한다
-    private boolean needsSelection(SopmodamPhase phase, List<SopmodamQuestion> questions) {
-        if (phase == SopmodamPhase.SCHEDULED || phase == SopmodamPhase.VOTING) {
-            return false;
-        }
-        if (questions.stream().anyMatch(SopmodamQuestion::isSelected)) {
-            return false;
-        }
-
-        int maxVoteCount = questions.stream()
-            .mapToInt(SopmodamQuestion::getVoteCount)
-            .max()
-            .orElse(0);
-        long topQuestionCount = questions.stream()
-            .filter(question -> question.getVoteCount() == maxVoteCount)
-            .count();
-        return topQuestionCount > 1;
+    // 자동 선정 후에도 최종 질문이 없으면 운영자가 지정해야 한다
+    private boolean needsSelection(SopmodamPhase phase, SopmodamRound round) {
+        return (phase == SopmodamPhase.ANSWERING || phase == SopmodamPhase.REVEALED)
+            && round.getSelectedQuestionId() == null;
     }
 }
