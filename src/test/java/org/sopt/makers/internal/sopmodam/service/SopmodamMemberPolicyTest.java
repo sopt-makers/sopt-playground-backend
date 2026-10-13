@@ -169,6 +169,22 @@ class SopmodamMemberPolicyTest {
 				.isInstanceOf(ForbiddenException.class)
 				.hasMessageContaining("질문 투표는 활동 기수만 참여할 수 있습니다.");
 		}
+
+		@ParameterizedTest
+		@DisplayName("활동 OB·명예기수는 답변 권한 검증을 통과한다")
+		@EnumSource(value = SopmodamMemberType.class, names = {"ACTIVE_OB", "HONORARY"})
+		void 활동_OB와_명예기수는_답변_가능(SopmodamMemberType memberType) {
+			assertThatCode(() -> memberPolicy.validateCanAnswer(memberType)).doesNotThrowAnyException();
+		}
+
+		@ParameterizedTest
+		@DisplayName("활동 YB·대상 아님은 답변 권한 검증에서 403")
+		@EnumSource(value = SopmodamMemberType.class, names = {"ACTIVE_YB", "NOT_TARGET"})
+		void 답변_자격이_없으면_답변_불가(SopmodamMemberType memberType) {
+			assertThatThrownBy(() -> memberPolicy.validateCanAnswer(memberType))
+				.isInstanceOf(ForbiddenException.class)
+				.hasMessageContaining("답변 권한이 없습니다.");
+		}
 	}
 
 	private static InternalUserDetails user(int lastGeneration, SoptActivity... activities) {

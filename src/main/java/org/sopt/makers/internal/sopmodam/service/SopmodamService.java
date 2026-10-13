@@ -19,7 +19,9 @@ import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamCardType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamMemberType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamCurrentCardResponse;
+import org.sopt.makers.internal.sopmodam.dto.response.SopmodamMyAnswerResponse;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamAnswerUpdateRequest;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerCreateResponse;
@@ -160,6 +162,34 @@ public class SopmodamService {
         return new SopmodamVoteResponse(roundId, questionId);
     }
 
+    public SopmodamMyAnswerResponse getMyAnswer(Long userId, Long roundId) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+        validateCanAnswer(userId, round);
+
+        SopmodamPhase phase = SopmodamPhase.of(round, now);
+        if (phase == SopmodamPhase.SCHEDULED || phase == SopmodamPhase.VOTING) {
+            throw new BadRequestException("최종 질문이 아직 선정되지 않았습니다.");
+        }
+        round = roundModifier.selectFinalQuestionIfAbsent(round, now);
+        SopmodamQuestion finalQuestion = questionRetriever.findFinalQuestion(round)
+            .orElseThrow(() -> new BadRequestException("최종 질문이 아직 선정되지 않았습니다."));
+        SopmodamAnswerResponse answer = answerRetriever.findMyAnswer(roundId, userId)
+            .map(SopmodamAnswerResponse::from)
+            .orElse(null);
+
+        // 답변 자격은 위에서 검증했으므로 답변 모집 기간인지만 보면 된다
+        boolean canEdit = phase == SopmodamPhase.ANSWERING;
+
+        return new SopmodamMyAnswerResponse(
+            round.getId(),
+            SopmodamQuestionResponse.from(finalQuestion),
+            round.getAnswerEndAt(),
+            canEdit,
+            answer
+        );
+    }
+
     public SopmodamAnswerCreateResponse createAnswer(Long userId, Long roundId, SopmodamAnswerCreateRequest request) {
         validateAnswerContent(request.content());
 
@@ -212,6 +242,12 @@ public class SopmodamService {
         InternalUserDetails user = platformService.getInternalUser(userId);
         SopmodamMemberType memberType = memberPolicy.resolveType(user, round.getGeneration());
         memberPolicy.validateCanVote(memberType);
+    }
+
+    private void validateCanAnswer(Long userId, SopmodamRound round) {
+        InternalUserDetails user = platformService.getInternalUser(userId);
+        SopmodamMemberType memberType = memberPolicy.resolveType(user, round.getGeneration());
+        memberPolicy.validateCanAnswer(memberType);
     }
 
     private SopmodamCurrentCardResponse toVoteCard(SopmodamRound round, SopmodamPhase phase, Long userId, LocalDateTime now) {

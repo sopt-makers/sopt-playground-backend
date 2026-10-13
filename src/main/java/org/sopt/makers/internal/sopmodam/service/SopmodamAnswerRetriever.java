@@ -1,8 +1,10 @@
 package org.sopt.makers.internal.sopmodam.service;
 
-import java.util.List;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.sopt.makers.internal.exception.ConflictException;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
@@ -26,6 +28,10 @@ public class SopmodamAnswerRetriever {
 
     public boolean hasAnswered(Long roundId, Long memberId) {
         return answerRepository.existsByRoundIdAndMemberId(roundId, memberId);
+    }
+
+    public Optional<SopmodamAnswer> findMyAnswer(Long roundId, Long memberId) {
+        return answerRepository.findByRoundIdAndMemberId(roundId, memberId);
     }
 
     public SopmodamAnswer findAnswerById(Long answerId) {
