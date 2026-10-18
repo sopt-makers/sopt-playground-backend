@@ -4,142 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playground Admin - Login</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-header h1 {
-            font-size: 28px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .login-header p {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #2c3e50;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            background-color: #fee;
-            color: #c33;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-    </style>
+    <link rel="icon" type="image/x-icon" href="https://playground.sopt.org/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sun-typeface/suit@2.0.5/fonts/variable/woff2/SUIT-Variable.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-login.css}">
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>Playground Admin</h1>
-            <p>관리자 키를 입력하세요</p>
-        </div>
-
-        <div id="errorMessage" class="error-message"></div>
-
-        <form id="loginForm" onsubmit="return handleLogin(event)">
-            <div class="form-group">
-                <label for="adminKey">Admin Key</label>
-                <input type="password" id="adminKey" required placeholder="관리자 키를 입력하세요" autofocus>
+    <main class="mds-login">
+        <section class="mds-card mds-login-card">
+            <div class="mds-login-header">
+                <h1 class="mds-heading2">Playground Admin</h1>
+                <p class="mds-text-subtle">관리자 키를 입력하세요</p>
             </div>
 
-            <button type="submit" class="btn-login">로그인</button>
-        </form>
-    </div>
+            <form id="loginForm" class="mds-stack" onsubmit="return handleLogin(event)">
+                <div id="errorMessage" class="mds-callout mds-callout-danger" role="alert" hidden>
+                    <span class="mds-callout-icon">
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M10 5.75v5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <circle cx="10" cy="14" r="1" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <p id="errorMessageText" class="mds-callout-body"></p>
+                </div>
+
+                <div class="mds-field">
+                    <label class="mds-field-label" for="adminKey">Admin Key</label>
+                    <input class="mds-input" type="password" id="adminKey" required placeholder="관리자 키를 입력하세요" autofocus>
+                </div>
+
+                <button type="submit" class="mds-btn mds-btn-md mds-btn-primary mds-login-submit">로그인</button>
+            </form>
+        </section>
+    </main>
 
     <script>
+        // 로그인 후 돌아갈 페이지. 오픈 리다이렉트를 막기 위해 /admin/ 아래 경로만 허용한다
+        const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+        const nextPage = redirectParam && redirectParam.startsWith('/admin/') ? redirectParam : '/admin/popups';
+
         // 이미 로그인된 경우 리다이렉트
         if (localStorage.getItem('adminKey')) {
-            window.location.href = '/admin/popups';
+            window.location.href = nextPage;
         }
 
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
+            document.getElementById('errorMessageText').textContent = message;
+            errorDiv.hidden = false;
             setTimeout(() => {
-                errorDiv.classList.remove('show');
+                errorDiv.hidden = true;
             }, 3000);
         }
 
@@ -160,8 +75,8 @@
                 if (response.ok) {
                     // 로컬 스토리지에 저장
                     localStorage.setItem('adminKey', adminKey);
-                    // 팝업 관리 페이지로 이동
-                    window.location.href = '/admin/popups';
+                    // 요청한 페이지(기본: 팝업 관리)로 이동
+                    window.location.href = nextPage;
                 } else if (response.status === 403) {
                     showError('잘못된 관리자 키입니다.');
                 } else {

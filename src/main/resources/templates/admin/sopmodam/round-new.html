@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>솝모담 회차 만들기</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <th:block th:replace="~{admin/sopmodam/fragments :: assets}"></th:block>
+
+        <div class="mds-page">
+            <a th:href="@{/admin/sopmodam/rounds}" class="mds-text-button mds-back">← 회차 목록</a>
+            <div class="mds-page-header">
+                <h2 class="mds-heading2">새 회차 만들기</h2>
+            </div>
+
+            <form id="round-form" class="mds-stack" novalidate>
+                <div th:replace="~{admin/sopmodam/fragments :: env-notice}"></div>
+                <div id="page-alert" class="mds-stack"></div>
+
+                <section class="mds-card">
+                    <div class="mds-card-header">
+                        <h3 class="mds-title4">회차 정보</h3>
+                    </div>
+                    <th:block th:replace="~{admin/sopmodam/fragments :: round-fields}"></th:block>
+                </section>
+
+                <section class="mds-card">
+                    <div class="mds-card-header">
+                        <div class="mds-card-header-title">
+                            <h3 class="mds-title4">질문</h3>
+                            <span class="mds-body3 mds-text-subtle">2개 이상 · 입력한 순서대로 등록돼요</span>
+                        </div>
+                    </div>
+                    <ol id="question-inputs" class="mds-question-inputs"></ol>
+                    <button type="button" id="add-question" class="mds-btn mds-btn-secondary">질문 추가</button>
+                </section>
+
+                <div class="mds-form-actions">
+                    <a th:href="@{/admin/sopmodam/rounds}" class="mds-btn mds-btn-md mds-btn-secondary">취소</a>
+                    <button type="submit" id="submit-round" class="mds-btn mds-btn-md mds-btn-primary">회차 만들기</button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            (() => {
+                const {
+                    api, h, showError, clearMessage, requireLogin, withPending, bindCounters, bindErrorReset, setFieldError,
+                    readRoundFields, toRoundRequest, validateRoundFields, applyFieldErrors,
+                } = SopmodamAdmin;
+                const MIN_QUESTION_COUNT = 2;
+                const form = document.getElementById('round-form');
+                const questionList = document.getElementById('question-inputs');
+
+                function questionRow(content = '') {
+                    const input = h('input', {
+                        className: 'mds-input',
+                        attrs: { type: 'text', maxlength: 255, placeholder: '질문을 입력해 주세요', autocomplete: 'off', 'aria-label': '질문' },
+                    });
+                    input.value = content;
+                    const removeButton = h('button', {
+                        className: 'mds-btn mds-btn-xs mds-btn-secondary',
+                        text: '삭제',
+                        attrs: { type: 'button' },
+                        on: { click: () => { row.remove(); refreshQuestionRows(); } },
+                    });
+                    const row = h('li', { className: 'mds-field', attrs: { 'data-field': 'question' } }, [
+                        h('div', { className: 'mds-question-input-row' }, [
+                            h('span', { className: 'mds-question-index' }),
+                            input,
+                            removeButton,
+                        ]),
+                        h('div', { className: 'mds-field-helper-row' }, h('span', { className: 'mds-field-helper' })),
+                    ]);
+                    return row;
+                }
+
+                // 번호를 다시 매기고, 최소 개수 이하일 때는 삭제를 막는다
+                function refreshQuestionRows() {
+                    const rows = [...questionList.children];
+                    rows.forEach((row, index) => {
+                        row.querySelector('.mds-question-index').textContent = index + 1;
+                        row.querySelector('button').disabled = rows.length <= MIN_QUESTION_COUNT;
+                    });
+                }
+
+                function addQuestionRow() {
+                    const row = questionRow();
+                    questionList.append(row);
+                    refreshQuestionRows();
+                    return row;
+                }
+
+                function validateQuestions(questionRows) {
+                    let valid = true;
+                    questionRows.forEach((row) => {
+                        if (row.querySelector('.mds-input').value.trim() === '') {
+                            setFieldError(row, '질문을 입력해 주세요.');
+                            valid = false;
+                        }
+                    });
+                    if (questionRows.length < MIN_QUESTION_COUNT) {
+                        showError(`질문은 ${MIN_QUESTION_COUNT}개 이상 등록해야 해요.`);
+                        valid = false;
+                    }
+                    return valid;
+                }
+
+                async function handleSubmit(event) {
+                    event.preventDefault();
+                    clearMessage();
+
+                    const fields = readRoundFields(form);
+                    const questionRows = [...questionList.children];
+                    const fieldsValid = applyFieldErrors(form, validateRoundFields(fields));
+                    const questionsValid = validateQuestions(questionRows);
+                    if (!fieldsValid || !questionsValid) {
+                        return;
+                    }
+
+                    const request = {
+                        ...toRoundRequest(fields),
+                        questions: questionRows.map((row) => row.querySelector('.mds-input').value.trim()),
+                    };
+                    try {
+                        await withPending(document.getElementById('submit-round'), '만드는 중', async () => {
+                            const round = await api('POST', '/rounds', request);
+                            location.href = `/admin/sopmodam/rounds/${round.roundId}`;
+                        });
+                    } catch (error) {
+                        showError(error.message);
+                    }
+                }
+
+                if (!requireLogin()) {
+                    return;
+                }
+                for (let i = 0; i < MIN_QUESTION_COUNT; i++) {
+                    addQuestionRow();
+                }
+                bindCounters(form);
+                bindErrorReset(form);
+                document.getElementById('add-question').addEventListener('click', () => {
+                    addQuestionRow().querySelector('.mds-input').focus();
+                });
+                form.addEventListener('submit', handleSubmit);
+            })();
+        </script>
+    </div>
+</body>
+</html>

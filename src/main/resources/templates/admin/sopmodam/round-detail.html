@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>솝모담 회차 상세</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <th:block th:replace="~{admin/sopmodam/fragments :: assets}"></th:block>
+
+        <div class="mds-page">
+            <a th:href="@{/admin/sopmodam/rounds}" class="mds-text-button mds-back">← 회차 목록</a>
+            <div class="mds-page-header">
+                <div class="mds-page-title">
+                    <h2 id="round-title" class="mds-heading2">회차 상세</h2>
+                    <span id="round-phase"></span>
+                </div>
+                <a id="answers-link" class="mds-btn mds-btn-secondary"
+                   th:href="@{/admin/sopmodam/rounds/{roundId}/answers(roundId=${roundId})}">답변 보기</a>
+            </div>
+
+            <div class="mds-stack">
+                <div th:replace="~{admin/sopmodam/fragments :: env-notice}"></div>
+                <div id="page-alert" class="mds-stack"></div>
+                <div id="round-notice" class="mds-stack"></div>
+
+                <section id="round-info" class="mds-card" hidden>
+                    <div class="mds-card-header">
+                        <h3 class="mds-title4">회차 정보</h3>
+                        <button type="button" id="edit-round" class="mds-btn mds-btn-secondary">수정</button>
+                    </div>
+                    <dl id="round-info-view" class="mds-info-grid"></dl>
+                    <form id="round-form" novalidate hidden>
+                        <th:block th:replace="~{admin/sopmodam/fragments :: round-fields}"></th:block>
+                        <div class="mds-form-actions">
+                            <button type="button" id="cancel-edit" class="mds-btn mds-btn-md mds-btn-secondary">취소</button>
+                            <button type="submit" id="save-round" class="mds-btn mds-btn-md mds-btn-primary">저장</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section id="round-questions" class="mds-card" hidden>
+                    <div class="mds-card-header">
+                        <div class="mds-card-header-title">
+                            <h3 class="mds-title4">질문</h3>
+                            <span id="question-summary" class="mds-body3 mds-text-subtle"></span>
+                        </div>
+                    </div>
+                    <p id="question-guide" class="mds-form-note mds-question-guide"></p>
+                    <ol id="question-results" class="mds-question-results"></ol>
+                    <form id="question-add-form" class="mds-question-add" novalidate hidden>
+                        <input class="mds-input" name="content" type="text" maxlength="255" autocomplete="off"
+                               placeholder="추가할 질문을 입력해 주세요" aria-label="추가할 질문">
+                        <button type="submit" id="add-question" class="mds-btn mds-btn-md mds-btn-secondary">질문 추가</button>
+                    </form>
+                </section>
+            </div>
+        </div>
+
+        <script th:inline="javascript">
+            (() => {
+                const {
+                    api, h, phaseTag, callout, formatDateTime, showError, showNotice, clearMessage, requireLogin,
+                    withPending, bindCounters, bindErrorReset, clearFieldErrors, applyFieldErrors,
+                    readRoundFields, fillRoundFields, toRoundRequest, validateRoundFields, confirmDialog,
+                } = SopmodamAdmin;
+                const MIN_QUESTION_COUNT = 2;
+                const roundId = /*[[${roundId}]]*/ 0;
+                const form = document.getElementById('round-form');
+                const addForm = document.getElementById('question-add-form');
+                let round = null;
+                let editingQuestionId = null;
+
+                function isVotingEnded() {
+                    return round.phase === 'ANSWERING' || round.phase === 'REVEALED';
+                }
+
+                function renderHeader() {
+                    document.getElementById('round-title').textContent = `#${round.roundId} ${round.eventName}`;
+                    document.getElementById('round-phase').replaceChildren(phaseTag(round.phase));
+                    document.getElementById('answers-link').textContent = `답변 보기 (${round.answerCount})`;
+                }
+
+                function renderNotice() {
+                    const notices = [];
+                    const hasSelected = round.questions.some((question) => question.isSelected);
+                    if (round.needsSelection) {
+                        notices.push(callout('danger', '최다 득표가 동률이라 최종 질문이 자동으로 정해지지 않았어요. 아래에서 최종 질문을 지정해야 사용자 홈 카드가 노출돼요.'));
+                    } else if (isVotingEnded() && !hasSelected) {
+                        notices.push(callout('information', '최종 질문은 사용자 화면에서 이 회차를 처음 조회할 때 최다 득표 질문으로 자동 선정돼요.'));
+                    }
+                    document.getElementById('round-notice').replaceChildren(...notices);
+                }
+
+                function infoItem(label, value) {
+                    return h('div', { className: 'mds-info-item' }, [h('dt', { text: label }), h('dd', { text: value })]);
+                }
+
+                function renderInfo() {
+                    document.getElementById('round-info-view').replaceChildren(
+                        infoItem('기수', `${round.generation}기`),
+                        infoItem('투표 시작', formatDateTime(round.voteStartAt)),
+                        infoItem('투표 마감', formatDateTime(round.voteEndAt)),
+                        infoItem('답변 마감·공개', formatDateTime(round.answerEndAt)),
+                        infoItem('총 투표 수', `${round.totalVoteCount}표`),
+                        infoItem('답변 수', `${round.answerCount}개`),
+                    );
+                }
+
+                // 질문 추가·수정·삭제(A5~A7)는 투표 시작 전에만, 최종 질문 지정(A8)은 투표가 끝나고 답변이 없을 때만 열어 둔다
+                function canEditQuestions() {
+                    return round.phase === 'SCHEDULED';
+                }
+
+                function canSelectQuestion() {
+                    return isVotingEnded() && round.answerCount === 0;
+                }
+
+                function questionGuide() {
+                    if (canEditQuestions()) {
+                        return `투표가 시작되기 전까지만 질문을 추가·수정·삭제할 수 있어요. 질문은 ${MIN_QUESTION_COUNT}개 이상이어야 해요.`;
+                    }
+                    if (round.phase === 'VOTING') {
+                        return '투표 중에는 질문을 바꿀 수 없어요.';
+                    }
+                    if (round.answerCount > 0) {
+                        return '답변이 있어 최종 질문을 바꿀 수 없어요.';
+                    }
+                    return '투표가 끝났어요. 최종 질문을 직접 지정하거나 바꿀 수 있어요.';
+                }
+
+                function questionActions(question) {
+                    if (canEditQuestions()) {
+                        const deletable = round.questions.length > MIN_QUESTION_COUNT;
+                        return [
+                            h('button', {
+                                className: 'mds-btn mds-btn-xs mds-btn-secondary',
+                                text: '수정',
+                                attrs: { type: 'button' },
+                                on: { click: () => startQuestionEdit(question.questionId) },
+                            }),
+                            h('button', {
+                                className: 'mds-btn mds-btn-xs mds-btn-secondary',
+                                text: '삭제',
+                                attrs: { type: 'button', disabled: !deletable, title: deletable ? null : `질문은 ${MIN_QUESTION_COUNT}개 이상 남아 있어야 해요.` },
+                                on: { click: (event) => deleteQuestion(question, event.currentTarget) },
+                            }),
+                        ];
+                    }
+                    if (canSelectQuestion() && !question.isSelected) {
+                        return [
+                            h('button', {
+                                className: 'mds-btn mds-btn-xs mds-btn-secondary',
+                                text: '최종 질문으로 지정',
+                                attrs: { type: 'button' },
+                                on: { click: (event) => selectQuestion(question, event.currentTarget) },
+                            }),
+                        ];
+                    }
+                    return [];
+                }
+
+                function questionEditRow(question) {
+                    const input = h('input', {
+                        className: 'mds-input',
+                        attrs: { type: 'text', maxlength: 255, autocomplete: 'off', 'aria-label': '질문 내용' },
+                        on: { keydown: (event) => { if (event.key === 'Escape') cancelQuestionEdit(); } },
+                    });
+                    input.value = question.content;
+                    const saveButton = h('button', { className: 'mds-btn mds-btn-md mds-btn-primary', text: '저장', attrs: { type: 'submit' } });
+                    return h('li', { className: 'mds-question-result' }, h('form', {
+                        className: 'mds-question-edit',
+                        attrs: { novalidate: true },
+                        on: {
+                            submit: (event) => {
+                                event.preventDefault();
+                                updateQuestion(question, input.value.trim(), saveButton);
+                            },
+                        },
+                    }, [
+                        input,
+                        h('button', {
+                            className: 'mds-btn mds-btn-md mds-btn-secondary',
+                            text: '취소',
+                            attrs: { type: 'button' },
+                            on: { click: cancelQuestionEdit },
+                        }),
+                        saveButton,
+                    ]));
+                }
+
+                function questionResult(question) {
+                    if (canEditQuestions() && question.questionId === editingQuestionId) {
+                        return questionEditRow(question);
+                    }
+                    const percent = round.totalVoteCount === 0 ? 0 : Math.round((question.voteCount / round.totalVoteCount) * 100);
+                    const fill = h('div', { className: 'mds-vote-bar-fill' });
+                    fill.style.width = `${percent}%`;
+                    return h('li', { className: `mds-question-result${question.isSelected ? ' is-selected' : ''}` }, [
+                        h('div', { className: 'mds-question-result-head' }, [
+                            h('div', { className: 'mds-question-result-content' }, [
+                                h('span', { text: question.content }),
+                                question.isSelected ? h('span', { className: 'mds-tag mds-tag-primary-solid', text: '최종' }) : null,
+                            ]),
+                            h('div', { className: 'mds-question-result-side' }, [
+                                h('span', { className: 'mds-question-result-count', text: `${question.voteCount}표 · ${percent}%` }),
+                                questionActions(question),
+                            ]),
+                        ]),
+                        h('div', { className: 'mds-vote-bar' }, fill),
+                    ]);
+                }
+
+                function renderQuestions() {
+                    document.getElementById('question-summary').textContent = `총 ${round.totalVoteCount}표`;
+                    document.getElementById('question-guide').textContent = questionGuide();
+                    document.getElementById('question-results').replaceChildren(...round.questions.map(questionResult));
+                    addForm.hidden = !canEditQuestions();
+                }
+
+                function startQuestionEdit(questionId) {
+                    clearMessage();
+                    editingQuestionId = questionId;
+                    renderQuestions();
+                    const input = document.querySelector('.mds-question-edit .mds-input');
+                    input.focus();
+                    input.select();
+                }
+
+                function cancelQuestionEdit() {
+                    editingQuestionId = null;
+                    renderQuestions();
+                }
+
+                // 질문 변경 공통 처리. A7(204)처럼 본문이 없으면 A3 를 다시 불러온다.
+                // 실패하면 화면을 띄워 둔 사이 단계가 바뀌었을 수 있으므로 A3 로 다시 그린다
+                async function mutateQuestions(button, pendingText, request, notice) {
+                    clearMessage();
+                    try {
+                        const updated = await withPending(button, pendingText, request);
+                        round = updated ?? await api('GET', `/rounds/${roundId}`);
+                        editingQuestionId = null;
+                        render();
+                        showNotice(notice);
+                        return true;
+                    } catch (error) {
+                        showError(error.message);
+                        await reloadRound();
+                        return false;
+                    }
+                }
+
+                async function handleAddQuestion(event) {
+                    event.preventDefault();
+                    const input = addForm.elements.content;
+                    const content = input.value.trim();
+                    if (!content) {
+                        showError('추가할 질문을 입력해 주세요.');
+                        input.focus();
+                        return;
+                    }
+                    const added = await mutateQuestions(document.getElementById('add-question'), '추가 중',
+                        () => api('POST', `/rounds/${roundId}/questions`, { content }), '질문을 추가했어요.');
+                    if (added) {
+                        input.value = '';
+                        input.focus();
+                    }
+                }
+
+                async function updateQuestion(question, content, button) {
+                    if (!content) {
+                        showError('질문 내용을 입력해 주세요.');
+                        return;
+                    }
+                    await mutateQuestions(button, '저장 중',
+                        () => api('PUT', `/questions/${question.questionId}`, { content }), '질문을 수정했어요.');
+                }
+
+                async function deleteQuestion(question, button) {
+                    const confirmed = await confirmDialog({
+                        title: '질문을 삭제할까요?',
+                        description: `${question.content}\n\n삭제한 질문은 되돌릴 수 없어요.`,
+                        confirmText: '삭제',
+                        danger: true,
+                    });
+                    if (confirmed) {
+                        await mutateQuestions(button, '삭제 중',
+                            () => api('DELETE', `/questions/${question.questionId}`), '질문을 삭제했어요.');
+                    }
+                }
+
+                async function selectQuestion(question, button) {
+                    const confirmed = await confirmDialog({
+                        title: '최종 질문으로 지정할까요?',
+                        description: `${question.content}\n\n사용자 홈 카드에 이 질문이 노출되고, 같은 회차의 다른 질문은 최종 질문에서 해제돼요.`,
+                        confirmText: '지정',
+                    });
+                    if (confirmed) {
+                        await mutateQuestions(button, '지정 중',
+                            () => api('PUT', `/rounds/${roundId}/selected-question`, { questionId: question.questionId }), '최종 질문을 지정했어요.');
+                    }
+                }
+
+                function render() {
+                    renderHeader();
+                    renderNotice();
+                    renderInfo();
+                    renderQuestions();
+                    document.getElementById('round-info').hidden = false;
+                    document.getElementById('round-questions').hidden = false;
+                }
+
+                // 지난 일정은 바꿀 수 없으므로 readonly 로 두고 기존 값을 그대로 보낸다 (A4 는 전체 덮어쓰기)
+                function lockField(name, locked, reason) {
+                    const field = form.querySelector(`[data-field="${name}"]`);
+                    const helper = field.querySelector('.mds-field-helper');
+                    form.elements[name].readOnly = locked;
+                    helper.textContent = locked ? reason : '';
+                    helper.dataset.default = helper.textContent;
+                }
+
+                function setEditing(editing) {
+                    document.getElementById('round-info-view').hidden = editing;
+                    document.getElementById('edit-round').hidden = editing;
+                    form.hidden = !editing;
+                }
+
+                function startEdit() {
+                    clearMessage();
+                    clearFieldErrors(form);
+                    fillRoundFields(form, round);
+                    lockField('voteStartAt', round.phase !== 'SCHEDULED', '투표가 시작되어 바꿀 수 없어요.');
+                    lockField('voteEndAt', isVotingEnded(), '투표가 끝나 바꿀 수 없어요.');
+                    setEditing(true);
+                    form.elements.eventName.focus();
+                }
+
+                async function handleSave(event) {
+                    event.preventDefault();
+                    clearMessage();
+
+                    const fields = readRoundFields(form);
+                    if (!applyFieldErrors(form, validateRoundFields(fields))) {
+                        return;
+                    }
+                    try {
+                        await withPending(document.getElementById('save-round'), '저장 중', async () => {
+                            round = await api('PUT', `/rounds/${roundId}`, toRoundRequest(fields));
+                        });
+                        setEditing(false);
+                        render();
+                        showNotice('회차 정보를 저장했어요.');
+                    } catch (error) {
+                        showError(error.message);
+                    }
+                }
+
+                async function loadRound() {
+                    try {
+                        round = await api('GET', `/rounds/${roundId}`);
+                        render();
+                    } catch (error) {
+                        showError(error.message);
+                    }
+                }
+
+                // 에러 메시지를 지우지 않고 최신 상태로 다시 그린다
+                async function reloadRound() {
+                    try {
+                        round = await api('GET', `/rounds/${roundId}`);
+                        editingQuestionId = null;
+                        render();
+                    } catch (error) {
+                        // 처음 에러 메시지를 그대로 둔다
+                    }
+                }
+
+                if (!requireLogin()) {
+                    return;
+                }
+                bindCounters(form);
+                bindErrorReset(form);
+                document.getElementById('edit-round').addEventListener('click', startEdit);
+                document.getElementById('cancel-edit').addEventListener('click', () => {
+                    clearMessage();
+                    setEditing(false);
+                });
+                form.addEventListener('submit', handleSave);
+                addForm.addEventListener('submit', handleAddQuestion);
+                loadRound();
+            })();
+        </script>
+    </div>
+</body>
+</html>
