@@ -31,8 +31,12 @@ import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateReque
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamQuestionResultResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.repository.MemberBlockRepository;
+import org.sopt.makers.internal.member.repository.MemberRepository;
+import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamAnswerRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionRepository;
+import org.sopt.makers.internal.sopmodam.repository.SopmodamQuestionVoteRepository;
 import org.sopt.makers.internal.sopmodam.repository.SopmodamRoundRepository;
 
 /**
@@ -54,6 +58,9 @@ class SopmodamAdminServiceTest {
 	@Mock SopmodamRoundRepository roundRepository;
 	@Mock SopmodamQuestionRepository questionRepository;
 	@Mock SopmodamAnswerRepository answerRepository;
+	@Mock SopmodamQuestionVoteRepository questionVoteRepository;
+	@Mock MemberRepository memberRepository;
+	@Mock MemberBlockRepository memberBlockRepository;
 	@Mock PlatformService platformService;
 
 	private SopmodamAdminService sopmodamAdminService;
@@ -65,9 +72,12 @@ class SopmodamAdminServiceTest {
 			new SopmodamRoundRetriever(roundRepository),
 			new SopmodamQuestionRetriever(questionRepository),
 			new SopmodamAnswerRetriever(answerRepository),
+			new SopmodamVoteRetriever(questionVoteRepository),
+			new MemberRetriever(memberRepository, memberBlockRepository),
 			new SopmodamRoundModifier(roundRepository, questionRepository),
 			new SopmodamQuestionModifier(questionRepository),
 			new SopmodamRoundPolicy(),
+			new SopmodamMemberPolicy(),
 			platformService
 		);
 		today = LocalDate.now(KST);

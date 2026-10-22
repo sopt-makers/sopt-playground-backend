@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
+import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamNotificationTargetType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.springframework.stereotype.Component;
 
@@ -43,6 +44,21 @@ public class SopmodamRoundPolicy {
     public void validateQuestionEditable(SopmodamRound round, LocalDateTime now) {
         if (SopmodamPhase.of(round, now) != SopmodamPhase.SCHEDULED) {
             throw new BadRequestException("투표가 시작된 회차의 질문은 변경할 수 없습니다.");
+        }
+    }
+
+    // 미참여·미작성 대상은 해당 기간이 아니면 의미가 없으므로 그 기간에만 추출한다
+    public void validateNotificationTargetPhase(
+        SopmodamRound round,
+        SopmodamNotificationTargetType type,
+        LocalDateTime now
+    ) {
+        SopmodamPhase phase = SopmodamPhase.of(round, now);
+        if (type == SopmodamNotificationTargetType.NOT_VOTED && phase != SopmodamPhase.VOTING) {
+            throw new BadRequestException("투표 미참여 대상은 투표 기간에만 추출할 수 있습니다.");
+        }
+        if (type == SopmodamNotificationTargetType.NOT_ANSWERED && phase != SopmodamPhase.ANSWERING) {
+            throw new BadRequestException("경험담 미작성 대상은 답변 모집 기간에만 추출할 수 있습니다.");
         }
     }
 }

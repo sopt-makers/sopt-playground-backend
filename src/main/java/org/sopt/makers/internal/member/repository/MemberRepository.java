@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.member.repository;
 
+import java.util.Collection;
 import java.util.List;
 import org.sopt.makers.internal.member.domain.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 //    List<Member> findAllByNameContaining(String name);
 
     List<Member> findAllByIdIn(List<Long> ids);
+
+    @Query("SELECT m.id FROM Member m WHERE m.id IN :memberIds")
+    List<Long> findIdsByIdIn(@Param("memberIds") Collection<Long> memberIds);
 
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
 
