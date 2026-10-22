@@ -1090,8 +1090,9 @@ class SopmodamServiceTest {
 		when(platformService.getInternalUserDetailsMap(List.of())).thenReturn(Map.of());
 		SopmodamAdminService adminService = new SopmodamAdminService(
 			new SopmodamRoundRetriever(roundRepository), new SopmodamQuestionRetriever(questionRepository),
-			new SopmodamAnswerRetriever(answerRepository), new SopmodamRoundModifier(roundRepository, questionRepository),
-			new SopmodamQuestionModifier(questionRepository), new SopmodamRoundPolicy(), platformService);
+			new SopmodamAnswerRetriever(answerRepository), new SopmodamVoteRetriever(questionVoteRepository), memberRetriever,
+			new SopmodamRoundModifier(roundRepository, questionRepository), new SopmodamQuestionModifier(questionRepository),
+			new SopmodamRoundPolicy(), new SopmodamMemberPolicy(), platformService);
 
 		SopmodamAnswerListResponse response = adminService.getAnswers(ROUND_ID);
 

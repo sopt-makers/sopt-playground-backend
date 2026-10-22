@@ -1,5 +1,8 @@
 package org.sopt.makers.internal.sopmodam.controller;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.popup.auth.AdminKeyValidator;
+import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamNotificationTargetType;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
@@ -18,7 +22,11 @@ import org.sopt.makers.internal.sopmodam.dto.response.SopmodamAnswerListResponse
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundDetailResponse;
 import org.sopt.makers.internal.sopmodam.dto.response.SopmodamRoundSummaryResponse;
 import org.sopt.makers.internal.sopmodam.service.SopmodamAdminService;
+import org.sopt.makers.internal.sopmodam.util.NotificationTargetCsvUtil;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +36,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // admin-key 헤더가 없을 때 500 이 아니라 403 을 주도록 required = false 로 받고 AdminKeyValidator 가 검증한다
@@ -36,6 +45,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/sopmodam")
 @Tag(name = "Sopmodam 어드민 API", description = "솝모담 회차·질문 운영 API (admin-key 헤더 필수)")
 public class SopmodamAdminController {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final MediaType TEXT_CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
 
     private final SopmodamAdminService sopmodamAdminService;
     private final AdminKeyValidator adminKeyValidator;
@@ -136,6 +148,35 @@ public class SopmodamAdminController {
     ) {
         adminKeyValidator.validate(adminKey);
         return ResponseEntity.status(HttpStatus.OK).body(sopmodamAdminService.getAnswers(roundId));
+    }
+
+    @Operation(
+        summary = "솝모담 알림 대상 CSV 추출 API",
+        description = """
+            솝모담 장려 알림을 보낼 사용자 ID 를 CSV 파일로 내려줍니다. 요청 시점 기준으로 계산하므로 발송 직전에 받아야 합니다.
+            - type
+              - NOT_VOTED: 투표 미참여 활동기수. 활동 YB·OB 중 이 회차에 투표하지 않은 사용자. 투표 기간(VOTING)에만 받을 수 있습니다(400).
+              - ANSWER_TARGET: 경험담 작성 대상. 활동 OB 와 34기 이후 명예기수. 단계 제한이 없습니다.
+              - NOT_ANSWERED: 경험담 미작성. ANSWER_TARGET 중 이 회차에 답변하지 않은 사용자. 답변 모집 기간(ANSWERING)에만 받을 수 있습니다(400).
+            - 사용자 유형은 회차의 기수 기준으로 판단합니다. users 테이블에 없는 사용자는 제외합니다.
+            - 형식: 첫 줄 user_id, 이후 한 줄에 "{userId}," 하나씩, userId 오름차순. 대상이 없으면 헤더만 내려갑니다.
+            - Platform 조회에 실패하거나 기수별 검색 결과를 모두 가져오지 못하면 500 입니다.
+            """
+    )
+    @GetMapping("/rounds/{roundId}/notification-targets")
+    public ResponseEntity<String> getNotificationTargets(
+        @Parameter(description = "어드민 키", required = true)
+        @RequestHeader(value = "admin-key", required = false) String adminKey,
+        @PathVariable("roundId") Long roundId,
+        @RequestParam("type") SopmodamNotificationTargetType type
+    ) {
+        adminKeyValidator.validate(adminKey);
+        List<Long> userIds = sopmodamAdminService.getNotificationTargetIds(roundId, type);
+        String fileName = NotificationTargetCsvUtil.toFileName(roundId, type, LocalDateTime.now(KST));
+        return ResponseEntity.status(HttpStatus.OK)
+            .contentType(TEXT_CSV)
+            .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(fileName).build().toString())
+            .body(NotificationTargetCsvUtil.toCsv(userIds));
     }
 
     @Operation(

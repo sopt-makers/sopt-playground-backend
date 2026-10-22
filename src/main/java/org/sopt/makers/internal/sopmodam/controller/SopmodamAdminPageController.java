@@ -3,6 +3,7 @@ package org.sopt.makers.internal.sopmodam.controller;
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.common.Constant;
+import org.sopt.makers.internal.sopmodam.service.SopmodamMemberPolicy;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +37,7 @@ public class SopmodamAdminPageController {
     public String roundDetail(@PathVariable("roundId") Long roundId, Model model) {
         addCommonAttributes(model);
         model.addAttribute("roundId", roundId);
+        model.addAttribute("answerNotificationMinGeneration", SopmodamMemberPolicy.ANSWER_NOTIFICATION_MIN_GENERATION);
         return "admin/sopmodam/round-detail";
     }
 
