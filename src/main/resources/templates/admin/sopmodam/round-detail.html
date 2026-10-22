@@ -53,18 +53,50 @@
                         <button type="submit" id="add-question" class="mds-btn mds-btn-md mds-btn-secondary">질문 추가</button>
                     </form>
                 </section>
+
+                <section id="round-targets" class="mds-card" hidden>
+                    <div class="mds-card-header">
+                        <h3 class="mds-title4">알림 대상 추출</h3>
+                    </div>
+                    <p class="mds-form-note mds-target-guide">받는 시점 기준으로 계산해요. 알림을 보내기 직전에 내려받아 주세요.</p>
+                    <ul id="target-list" class="mds-target-list"></ul>
+                </section>
             </div>
         </div>
 
         <script th:inline="javascript">
             (() => {
                 const {
-                    api, h, phaseTag, callout, formatDateTime, showError, showNotice, clearMessage, requireLogin,
+                    api, download, h, phaseTag, callout, formatDateTime, showError, showNotice, clearMessage, requireLogin,
                     withPending, bindCounters, bindErrorReset, clearFieldErrors, applyFieldErrors,
                     readRoundFields, fillRoundFields, toRoundRequest, validateRoundFields, confirmDialog,
                 } = SopmodamAdmin;
                 const MIN_QUESTION_COUNT = 2;
                 const roundId = /*[[${roundId}]]*/ 0;
+                const answerNotificationMinGeneration = /*[[${answerNotificationMinGeneration}]]*/ 34;
+                // 미참여·미작성 대상은 해당 기간에만 받을 수 있다 (서버도 같은 규칙으로 400)
+                const NOTIFICATION_TARGETS = [
+                    {
+                        type: 'NOT_VOTED',
+                        title: '투표 미참여 활동기수',
+                        description: '활동 YB·OB 중 이 회차에 투표하지 않은 사용자',
+                        phase: 'VOTING',
+                        unavailableGuide: '투표 기간에만 받을 수 있어요.',
+                    },
+                    {
+                        type: 'ANSWER_TARGET',
+                        title: '경험담 작성 대상 OB',
+                        description: `활동 OB와 ${answerNotificationMinGeneration}기 이후 명예기수`,
+                        phase: null,
+                    },
+                    {
+                        type: 'NOT_ANSWERED',
+                        title: '경험담 미작성 OB',
+                        description: '경험담 작성 대상 중 이 회차에 답변하지 않은 사용자',
+                        phase: 'ANSWERING',
+                        unavailableGuide: '답변 모집 기간에만 받을 수 있어요.',
+                    },
+                ];
                 const form = document.getElementById('round-form');
                 const addForm = document.getElementById('question-add-form');
                 let round = null;
@@ -300,13 +332,48 @@
                     }
                 }
 
+                function targetItem(target) {
+                    const available = target.phase === null || round.phase === target.phase;
+                    return h('li', { className: 'mds-target-item' }, [
+                        h('div', { className: 'mds-target-text' }, [
+                            h('span', { className: 'mds-target-title', text: target.title }),
+                            h('span', { className: 'mds-target-description', text: target.description }),
+                            available ? null : h('span', { className: 'mds-target-description', text: target.unavailableGuide }),
+                        ]),
+                        h('button', {
+                            className: 'mds-btn mds-btn-xs mds-btn-secondary',
+                            text: 'CSV 받기',
+                            attrs: { type: 'button', disabled: !available },
+                            on: { click: (event) => downloadTargets(target, event.currentTarget) },
+                        }),
+                    ]);
+                }
+
+                function renderTargets() {
+                    document.getElementById('target-list').replaceChildren(...NOTIFICATION_TARGETS.map(targetItem));
+                }
+
+                async function downloadTargets(target, button) {
+                    clearMessage();
+                    try {
+                        const content = await withPending(button, '추출 중',
+                            () => download(`/rounds/${roundId}/notification-targets?type=${target.type}`));
+                        const count = content.split('\n').length - 1;
+                        showNotice(`${target.title} ${count}명의 CSV를 내려받았어요.`);
+                    } catch (error) {
+                        showError(error.message);
+                    }
+                }
+
                 function render() {
                     renderHeader();
                     renderNotice();
                     renderInfo();
                     renderQuestions();
+                    renderTargets();
                     document.getElementById('round-info').hidden = false;
                     document.getElementById('round-questions').hidden = false;
+                    document.getElementById('round-targets').hidden = false;
                 }
 
                 // 지난 일정은 바꿀 수 없으므로 readonly 로 두고 기존 값을 그대로 보낸다 (A4 는 전체 덮어쓰기)

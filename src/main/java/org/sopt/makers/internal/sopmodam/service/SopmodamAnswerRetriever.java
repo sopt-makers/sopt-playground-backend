@@ -42,4 +42,8 @@ public class SopmodamAnswerRetriever {
     public List<SopmodamAnswer> findAllByRoundId(Long roundId) {
         return answerRepository.findAllByRoundIdOrderByUpdatedAtAscIdAsc(roundId);
     }
+
+    public List<Long> findAnsweredMemberIds(Long roundId) {
+        return answerRepository.findMemberIdsByRoundId(roundId);
+    }
 }

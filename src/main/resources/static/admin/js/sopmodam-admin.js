@@ -80,6 +80,39 @@ const SopmodamAdmin = (() => {
         return data;
     }
 
+    // 파일 응답을 저장하고 본문을 돌려준다. 실패 응답은 api() 와 같은 { message } 형식이다
+    async function download(path) {
+        let response;
+        try {
+            response = await fetch(API_BASE + path, { headers: { 'admin-key': getAdminKey() } });
+        } catch (error) {
+            throw new ApiError(0, '네트워크 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
+        }
+
+        if (response.status === 403) {
+            redirectToLogin();
+            throw new ApiError(403, '관리자 키가 올바르지 않아요. 다시 로그인해 주세요.');
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new ApiError(response.status, toDisplayMessage(data?.message) ?? `요청에 실패했어요. (${response.status})`);
+        }
+
+        const content = await response.text();
+        const url = URL.createObjectURL(new Blob([content], { type: response.headers.get('Content-Type') ?? 'text/plain' }));
+        const link = h('a', { attrs: { href: url, download: toFileName(response.headers.get('Content-Disposition')) } });
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url));
+        return content;
+    }
+
+    // 'attachment; filename="a.csv"' → "a.csv"
+    function toFileName(contentDisposition) {
+        return contentDisposition?.match(/filename="?([^";]+)"?/)?.[1] ?? 'download';
+    }
+
     // 예외 메시지 앞에 붙는 "BadRequestException: " 같은 예외 이름을 화면에서는 뗀다
     function toDisplayMessage(message) {
         return message?.replace(/^\w+Exception: /, '');
@@ -335,6 +368,7 @@ const SopmodamAdmin = (() => {
         ApiError,
         requireLogin,
         api,
+        download,
         formatDateTime,
         toInputValue,
         toRequestValue,

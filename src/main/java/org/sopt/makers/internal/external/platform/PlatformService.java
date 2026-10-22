@@ -14,6 +14,7 @@ import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.auth.common.code.BaseResponse;
 import org.sopt.makers.internal.exception.NotFoundException;
+import org.sopt.makers.internal.exception.PlaygroundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class PlatformService {
+
+    private static final int SEARCH_ALL_PAGE_SIZE = 200;
 
     private final PlatformClient platformClient;
     private final AuthConfig authConfig;
@@ -319,5 +322,32 @@ public class PlatformService {
             throw new RuntimeException("플랫폼 검색 API 호출 실패 또는 인증 오류.");
         }
         return body.getData();
+    }
+
+    /**
+     * 기수로 검색한 유저를 마지막 페이지까지 모두 조회
+     * 일부만 모인 결과를 쓰지 않도록, 모은 유저 수가 검색 결과 전체 건수와 다르면 예외를 던진다
+     */
+    public List<InternalUserDetails> searchAllInternalUsersByGeneration(int generation) {
+        Map<Long, InternalUserDetails> users = new LinkedHashMap<>();
+        int offset = 0;
+        UserSearchResponse response;
+        boolean hasNewUser;
+        do {
+            response = searchInternalUsers(generation, null, null, null, SEARCH_ALL_PAGE_SIZE, offset, null);
+            List<InternalUserDetails> profiles = response.profiles() == null ? List.of() : response.profiles();
+            int previousSize = users.size();
+            profiles.forEach(user -> users.putIfAbsent(user.userId(), user));
+            hasNewUser = users.size() > previousSize;
+            offset += profiles.size();
+        } while (response.hasNext() && hasNewUser);
+
+        if (users.size() != response.totalCount()) {
+            throw new PlaygroundException(String.format(
+                "플랫폼 기수 검색 결과를 모두 가져오지 못했습니다. generation: %d, 조회: %d, 전체: %d",
+                generation, users.size(), response.totalCount()
+            ));
+        }
+        return List.copyOf(users.values());
     }
 }

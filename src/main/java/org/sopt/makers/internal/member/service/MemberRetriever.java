@@ -1,5 +1,8 @@
 package org.sopt.makers.internal.member.service;
 
+import java.util.Collection;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.MemberBlock;
@@ -25,6 +28,14 @@ public class MemberRetriever {
         if (!memberRepository.existsById(memberId)) {
             throw new NotFoundException("존재하지 않는 사용자의 id값 입니다. id: [" + memberId + "]");
         }
+    }
+
+    // 주어진 ID 중 users 테이블에 있는 ID 만 돌려준다
+    public List<Long> findExistingMemberIds(Collection<Long> memberIds) {
+        if (memberIds.isEmpty()) {
+            return List.of();
+        }
+        return memberRepository.findIdsByIdIn(memberIds);
     }
 
     public void checkBlockedMember(Member blocker, Member blockedMember) {

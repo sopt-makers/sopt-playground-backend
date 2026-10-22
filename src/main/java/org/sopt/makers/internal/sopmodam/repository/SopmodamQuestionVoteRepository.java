@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.sopmodam.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestionVote;
@@ -21,4 +22,7 @@ public interface SopmodamQuestionVoteRepository extends JpaRepository<SopmodamQu
         @Param("roundId") Long roundId,
         @Param("memberId") Long memberId
     );
+
+    @Query("SELECT vote.member.id FROM SopmodamQuestionVote vote WHERE vote.round.id = :roundId")
+    List<Long> findMemberIdsByRoundId(@Param("roundId") Long roundId);
 }

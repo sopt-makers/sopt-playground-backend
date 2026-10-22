@@ -1,5 +1,6 @@
 package org.sopt.makers.internal.sopmodam.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,10 @@ public class SopmodamVoteRetriever {
 
     public Optional<Long> findVotedQuestionId(Long roundId, Long memberId) {
         return questionVoteRepository.findQuestionIdByRoundIdAndMemberId(roundId, memberId);
+    }
+
+    public List<Long> findVotedMemberIds(Long roundId) {
+        return questionVoteRepository.findMemberIdsByRoundId(roundId);
     }
 
     public void validateNotVoted(Long roundId, Long memberId) {

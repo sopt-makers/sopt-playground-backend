@@ -2,17 +2,23 @@ package org.sopt.makers.internal.sopmodam.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import lombok.RequiredArgsConstructor;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ConflictException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
+import org.sopt.makers.internal.member.service.MemberRetriever;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamAnswer;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamQuestion;
 import org.sopt.makers.internal.sopmodam.domain.SopmodamRound;
+import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamNotificationTargetType;
 import org.sopt.makers.internal.sopmodam.domain.enums.SopmodamPhase;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionCreateRequest;
 import org.sopt.makers.internal.sopmodam.dto.request.SopmodamQuestionUpdateRequest;
@@ -38,9 +44,12 @@ public class SopmodamAdminService {
     private final SopmodamRoundRetriever roundRetriever;
     private final SopmodamQuestionRetriever questionRetriever;
     private final SopmodamAnswerRetriever answerRetriever;
+    private final SopmodamVoteRetriever voteRetriever;
+    private final MemberRetriever memberRetriever;
     private final SopmodamRoundModifier roundModifier;
     private final SopmodamQuestionModifier questionModifier;
     private final SopmodamRoundPolicy roundPolicy;
+    private final SopmodamMemberPolicy memberPolicy;
     private final PlatformService platformService;
 
     private final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -177,6 +186,24 @@ public class SopmodamAdminService {
         );
     }
 
+    // 미참여·미작성 여부는 요청 시점 기준이다. Platform 을 호출하므로 @Transactional 을 걸지 않는다
+    public List<Long> getNotificationTargetIds(Long roundId, SopmodamNotificationTargetType type) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        SopmodamRound round = roundRetriever.findRoundById(roundId);
+        roundPolicy.validateNotificationTargetPhase(round, type, now);
+
+        Set<Long> targetIds = switch (type) {
+            case NOT_VOTED -> excludeMemberIds(findVoteTargetIds(round), voteRetriever.findVotedMemberIds(roundId));
+            case ANSWER_TARGET -> findAnswerTargetIds(round);
+            case NOT_ANSWERED -> excludeMemberIds(findAnswerTargetIds(round), answerRetriever.findAnsweredMemberIds(roundId));
+        };
+
+        // users 행이 없는 사용자는 투표·답변 시 404 가 나므로 알림 대상에서 뺀다
+        return memberRetriever.findExistingMemberIds(targetIds).stream()
+            .sorted()
+            .toList();
+    }
+
     private SopmodamRoundDetailResponse buildRoundDetail(SopmodamRound round, LocalDateTime now) {
         round = roundModifier.selectFinalQuestionIfAbsent(round, now);
         SopmodamPhase phase = SopmodamPhase.of(round, now);
@@ -201,5 +228,31 @@ public class SopmodamAdminService {
     private boolean needsSelection(SopmodamPhase phase, SopmodamRound round) {
         return (phase == SopmodamPhase.ANSWERING || phase == SopmodamPhase.REVEALED)
             && round.getSelectedQuestionId() == null;
+    }
+
+    private Set<Long> findVoteTargetIds(SopmodamRound round) {
+        int generation = round.getGeneration();
+        return platformService.searchAllInternalUsersByGeneration(generation).stream()
+            .filter(user -> memberPolicy.isVoteNotificationTarget(user, generation))
+            .map(InternalUserDetails::userId)
+            .collect(Collectors.toSet());
+    }
+
+    // 기수별 검색 결과에 같은 사용자가 여러 번 나올 수 있어 Set 으로 모은다
+    private Set<Long> findAnswerTargetIds(SopmodamRound round) {
+        int generation = round.getGeneration();
+        return IntStream.rangeClosed(SopmodamMemberPolicy.ANSWER_NOTIFICATION_MIN_GENERATION, generation)
+            .mapToObj(platformService::searchAllInternalUsersByGeneration)
+            .flatMap(List::stream)
+            .filter(user -> memberPolicy.isAnswerNotificationTarget(user, generation))
+            .map(InternalUserDetails::userId)
+            .collect(Collectors.toSet());
+    }
+
+    private Set<Long> excludeMemberIds(Set<Long> targetIds, List<Long> excludedMemberIds) {
+        Set<Long> excluded = new HashSet<>(excludedMemberIds);
+        return targetIds.stream()
+            .filter(memberId -> !excluded.contains(memberId))
+            .collect(Collectors.toSet());
     }
 }
