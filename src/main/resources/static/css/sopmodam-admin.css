@@ -166,6 +166,60 @@
     border-top: 1px solid var(--color-stroke-neutral-ghost);
 }
 
+/* 알림 대상 추출 */
+.mds-target-guide {
+    margin: -8px 0 20px;
+}
+
+.mds-target-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mds-target-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-stroke-neutral-ghost);
+}
+
+.mds-target-item:first-child {
+    padding-top: 0;
+}
+
+.mds-target-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.mds-target-item .mds-btn {
+    flex-shrink: 0;
+}
+
+.mds-target-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mds-target-title {
+    color: var(--color-fg-neutral-bold);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+    letter-spacing: -0.02em;
+}
+
+.mds-target-description {
+    color: var(--color-fg-neutral-subtle);
+    font-size: 14px;
+    line-height: 20px;
+}
+
 /* 답변 목록 (A9) */
 .mds-answer-question {
     margin-top: 4px;
