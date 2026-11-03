@@ -158,7 +158,7 @@ public class MemberService {
 
 	@Transactional(readOnly = true)
 	public MemberProfileSpecificResponse getMemberProfile(Long profileId, Long viewerId) {
-		Member member = getMemberHasProfileById(profileId);
+		Member member = getMemberById(profileId);
 		boolean isMine = Objects.equals(profileId, viewerId);
 		InternalUserDetails userDetails = platformService.getInternalUser(profileId);
 		List<MemberProfileProjectDao> memberProfileProjects = getMemberProfileProjects(profileId);
@@ -213,23 +213,13 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
-	public Member getMemberHasProfileById(Long id) {
-		Member member = memberRepository.findById(id)
-			.orElseThrow(() -> new NotFoundException("해당 id의 Member를 찾을 수 없습니다."));
-		if (member.getHasProfile())
-			return member;
-		else
-			throw new BadRequestException("해당 Member는 프로필이 없습니다.");
-	}
-
-	@Transactional(readOnly = true)
 	public List<Member> getMemberProfileListById(List<Long> idList) {
 		List<Member> members = new ArrayList<>();
 
 		for (Long id : idList) {
 			Member member = memberRepository.findById(id).orElse(null);
 
-			if (member != null && member.getHasProfile()) {
+			if (member != null) {
 				members.add(member);
 			}
 		}
@@ -317,7 +307,7 @@ public class MemberService {
 			.openToWork(null)
 			.openToSideProject(null)
 			.allowOfficial(false)
-			.hasProfile(true)
+			.hasProfile(false)
 			.editActivitiesAble(true)
 			.openToSoulmate(false)
 			.isPhoneBlind(true)
@@ -810,7 +800,7 @@ public class MemberService {
 
 	public List<MakersMemberProfileResponse> getAllMakersMembersProfiles() {
 		List<Long> makerMemberIds = MakersMemberId.getMakersMember();
-		List<Member> members = memberRepository.findAllByHasProfileTrueAndIdInWithCareers(makerMemberIds);
+		List<Member> members = memberRepository.findAllByIdInWithCareers(makerMemberIds);
 		List<InternalUserDetails> userDetails = platformService.getInternalUsers(makerMemberIds);
 
 		Map<Long, List<MemberCareer>> careerMap = members.stream()
@@ -850,7 +840,7 @@ public class MemberService {
                 .map(tlMember -> tlMember.getMember().getId())
                 .toList();
 
-        Map<Long, Member> memberById = memberRepository.findAllByHasProfileTrueAndIdIn(tlMemberIds).stream()
+        Map<Long, Member> memberById = memberRepository.findAllByIdIn(tlMemberIds).stream()
                 .collect(Collectors.toMap(Member::getId, Function.identity()));
 
         Map<Long, InternalUserDetails> tlUserDetailsById = platformService.getInternalUsers(tlMemberIds).stream()
@@ -932,7 +922,7 @@ public class MemberService {
         for (Long memberId : memberIds) {
             try {
                 Member member = memberRepository.findById(memberId).orElse(null);
-                if (member == null || !member.getHasProfile()) {
+                if (member == null) {
                     continue;
                 }
 

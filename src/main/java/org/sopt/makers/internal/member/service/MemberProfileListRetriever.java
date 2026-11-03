@@ -39,7 +39,7 @@ public class MemberProfileListRetriever {
 	private final MemberQuestionRetriever memberQuestionRetriever;
 	private final CoffeeChatRetriever coffeeChatRetriever;
 
-	/** DB 필터(hasProfile, mbti, employed)를 통과한 전체 userId. 쿼리 1회. */
+	/** DB 필터(mbti, employed)를 통과한 전체 userId. 쿼리 1회. */
 	@Transactional(readOnly = true)
 	public List<Long> findFilteredMemberIds(String mbti, Integer employed, String search) {
 		return memberProfileQueryRepository.findAllMemberIdsByDbFilters(mbti, employed, search);

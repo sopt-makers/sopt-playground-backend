@@ -186,7 +186,7 @@ class MemberServiceTest {
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
         when(tlMemberRetriever.findByTlGeneration(currentGeneration))
                 .thenReturn(List.of(tlMember1, tlMember2));
-        when(memberRepository.findAllByHasProfileTrueAndIdIn(List.of(tlMemberId1, tlMemberId2)))
+        when(memberRepository.findAllByIdIn(List.of(tlMemberId1, tlMemberId2)))
                 .thenReturn(List.of(member1, member2));
         when(platformService.getInternalUsers(List.of(tlMemberId1, tlMemberId2)))
                 .thenReturn(List.of(tlUserDetails1, tlUserDetails2));
@@ -203,7 +203,7 @@ class MemberServiceTest {
 
         verify(platformService).getInternalUser(userId);
         verify(tlMemberRetriever).findByTlGeneration(currentGeneration);
-        verify(memberRepository).findAllByHasProfileTrueAndIdIn(anyList());
+        verify(memberRepository).findAllByIdIn(anyList());
         verify(platformService).getInternalUsers(anyList());
     }
 
@@ -228,7 +228,7 @@ class MemberServiceTest {
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
         when(tlMemberRetriever.findByTlGeneration(currentGeneration))
                 .thenReturn(Collections.emptyList());
-        when(memberRepository.findAllByHasProfileTrueAndIdIn(Collections.emptyList()))
+        when(memberRepository.findAllByIdIn(Collections.emptyList()))
                 .thenReturn(Collections.emptyList());
 
         // When
@@ -241,8 +241,8 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("프로필이 없는 TL 멤버는 결과에서 제외된다")
-    void getAppjamTlMembers_ExcludesMembers_WithoutProfile() {
+    @DisplayName("프로필이 없는 TL 멤버도 결과에 포함된다")
+    void getAppjamTlMembers_IncludesMembers_WithoutProfile() {
         // Given
         Long userId = 100L;
         Long tlMemberId1 = 1L;
@@ -297,21 +297,34 @@ class MemberServiceTest {
                 List.of(new SoptActivity(1, currentGeneration, "안드로이드", null, null, true))
         );
 
+        InternalUserDetails tlUserDetails2 = new InternalUserDetails(
+                tlMemberId2,
+                "이솝트",
+                "https://example.com/profile2.jpg",
+                "2024-01-01",
+                "010-2222-2222",
+                "tl2@example.com",
+                currentGeneration,
+                List.of(new SoptActivity(2, currentGeneration, "웹", null, null, true))
+        );
+
         when(platformService.getInternalUser(userId)).thenReturn(userDetails);
         when(tlMemberRetriever.findByTlGeneration(currentGeneration))
                 .thenReturn(List.of(tlMember1, tlMember2));
-        when(memberRepository.findAllByHasProfileTrueAndIdIn(List.of(tlMemberId1, tlMemberId2)))
-                .thenReturn(List.of(member1)); // member2는 hasProfile=false라 제외됨
+        when(memberRepository.findAllByIdIn(List.of(tlMemberId1, tlMemberId2)))
+                .thenReturn(List.of(member1, member2WithoutProfile));
         when(platformService.getInternalUsers(List.of(tlMemberId1, tlMemberId2)))
-                .thenReturn(List.of(tlUserDetails1));
+                .thenReturn(List.of(tlUserDetails1, tlUserDetails2));
 
         // When
         List<TlMemberResponse> result = memberService.getAppjamTlMembers(userId);
 
         // Then
-        assertThat(result).hasSize(1);
+        assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo(tlMemberId1);
         assertThat(result.get(0).name()).isEqualTo("김솝트");
+        assertThat(result.get(1).id()).isEqualTo(tlMemberId2);
+        assertThat(result.get(1).name()).isEqualTo("이솝트");
 
         verify(platformService).getInternalUser(userId);
         verify(tlMemberRetriever).findByTlGeneration(currentGeneration);

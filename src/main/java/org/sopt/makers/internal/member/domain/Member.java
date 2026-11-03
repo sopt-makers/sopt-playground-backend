@@ -94,7 +94,7 @@ public class Member {
 
     @Builder.Default
     @Column(name = "has_profile")
-    private Boolean hasProfile = true;
+    private Boolean hasProfile = false;
 
     @Builder.Default
     @Column(name = "edit_activities_able")
