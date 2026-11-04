@@ -18,9 +18,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     List<Member> findAllByHasProfileTrueAndIdIn(List<Long> memberIds);
 
-    @Query("SELECT DISTINCT m FROM Member m LEFT JOIN FETCH m.careers WHERE m.hasProfile = true AND m.id IN :memberIds")
-    List<Member> findAllByHasProfileTrueAndIdInWithCareers(@Param("memberIds") List<Long> memberIds);
-
     /**
      * 응답 매핑에 필요한 Member 를 컬렉션까지 초기화해 로드한다. (페이지 대상에만 사용)
      *

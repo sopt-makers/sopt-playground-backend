@@ -92,7 +92,6 @@ public class MemberProfileQueryRepository {
                 .from(member)
                 .leftJoin(member.careers, memberCareer)
                 .where(
-                        checkMemberHasProfile(),
                         checkMemberMbti(mbti),
                         checkEmployed(employed)
                         // checkSearchUniversityOrCompany(search)
