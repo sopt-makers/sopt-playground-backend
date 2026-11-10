@@ -10,7 +10,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-@Table(name = "word")
+@Table(
+    name = "word",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_word_room_id_word",
+        columnNames = {"room_id", "word"}
+    )
+)
 public class Word{
 
     @Id

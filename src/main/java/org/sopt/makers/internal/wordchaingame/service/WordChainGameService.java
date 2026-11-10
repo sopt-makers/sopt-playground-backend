@@ -21,6 +21,7 @@ import lombok.val;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sopt.makers.internal.auth.AuthConfig;
+import org.sopt.makers.internal.common.util.ConstraintViolationUtil;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.MemberSimpleResonse;
@@ -36,6 +37,7 @@ import org.sopt.makers.internal.wordchaingame.repository.WordChainGameQueryRepos
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordChainGameWinnerRepository;
 import org.sopt.makers.internal.wordchaingame.repository.WordRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class WordChainGameService {
+    private static final String WORD_ROOM_WORD_UNIQUE_CONSTRAINT = "uk_word_room_id_word";
+
     private final WordRepository wordRepository;
     private final WordChainGameWinnerRepository wordChainGameWinnerRepository;
     private final WordChainGameRepository wordChainGameRepository;
@@ -67,8 +71,16 @@ public class WordChainGameService {
         checkIsInDictionary(request.word());
         checkIsLastWordWriterIsMakingNextWord(request.roomId(), member.getId());
         checkDuplicateWord(request.roomId(), request.word());
-        wordRepository.save(Word.builder().roomId(request.roomId()).memberId(member.getId())
-                .word(request.word()).createdAt(LocalDateTime.now()).build());
+        // 동시 요청이 위 중복 검사를 함께 통과하는 경우 유니크 제약으로 막는다
+        try {
+            wordRepository.saveAndFlush(Word.builder().roomId(request.roomId()).memberId(member.getId())
+                    .word(request.word()).createdAt(LocalDateTime.now()).build());
+        } catch (DataIntegrityViolationException exception) {
+            if (ConstraintViolationUtil.isViolated(exception, WORD_ROOM_WORD_UNIQUE_CONSTRAINT)) {
+                throw new BadRequestException("이미 누군가 사용한 단어예요.");
+            }
+            throw exception;
+        }
     }
 
     @Transactional
