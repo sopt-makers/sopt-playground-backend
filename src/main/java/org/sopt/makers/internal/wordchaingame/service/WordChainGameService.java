@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class WordChainGameService {
     private final WordRepository wordRepository;
+    private final WordModifier wordModifier;
     private final WordChainGameWinnerRepository wordChainGameWinnerRepository;
     private final WordChainGameRepository wordChainGameRepository;
     private final WordChainGameQueryRepository wordChainGameQueryRepository;
@@ -67,8 +68,7 @@ public class WordChainGameService {
         checkIsInDictionary(request.word());
         checkIsLastWordWriterIsMakingNextWord(request.roomId(), member.getId());
         checkDuplicateWord(request.roomId(), request.word());
-        wordRepository.save(Word.builder().roomId(request.roomId()).memberId(member.getId())
-                .word(request.word()).createdAt(LocalDateTime.now()).build());
+        wordModifier.createWord(request.roomId(), member.getId(), request.word());
     }
 
     @Transactional
