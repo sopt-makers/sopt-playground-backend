@@ -15,9 +15,11 @@ import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.external.platform.SoptActivity;
 import org.sopt.makers.internal.external.slack.SlackClient;
 import org.sopt.makers.internal.external.slack.SlackMessageUtil;
+import org.sopt.makers.internal.member.constants.AskMemberId;
 import org.sopt.makers.internal.member.domain.Member;
 import org.sopt.makers.internal.member.domain.TlMember;
 import org.sopt.makers.internal.member.domain.enums.ServiceType;
+import org.sopt.makers.internal.member.dto.response.AskMemberResponse;
 import org.sopt.makers.internal.member.dto.response.TlMemberResponse;
 import org.sopt.makers.internal.member.mapper.MemberMapper;
 import org.sopt.makers.internal.member.mapper.MemberResponseMapper;
@@ -37,6 +39,7 @@ import org.sopt.makers.internal.exception.BadRequestException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
@@ -80,6 +83,8 @@ class MemberServiceTest {
     private PlatformService platformService;
     @Mock
     private MemberSortingService memberSortingService;
+    @Mock
+    private AskMemberId askMemberId;
 
     @InjectMocks
     private MemberService memberService;
@@ -328,5 +333,120 @@ class MemberServiceTest {
 
         verify(platformService).getInternalUser(userId);
         verify(tlMemberRetriever).findByTlGeneration(currentGeneration);
+    }
+
+    @Test
+    @DisplayName("질문 대상 멤버는 DB·플랫폼 정보를 한 번씩 일괄 조회하고 대상 ID 순서대로 응답한다")
+    void getAskMembers_FetchesInBatchAndKeepsOrder() {
+        // Given
+        List<Long> memberIds = List.of(3L, 1L, 2L);
+        when(askMemberId.getAllAskMembers(false)).thenReturn(memberIds);
+        when(memberRepository.findAllByIdInWithCareers(memberIds))
+                .thenReturn(List.of(askMember(1L), askMember(2L), askMember(3L)));
+        when(platformService.getInternalUsers(memberIds)).thenReturn(List.of(
+                askUserDetails(1L),
+                askUserDetails(2L),
+                askUserDetails(3L)
+        ));
+
+        // When
+        AskMemberResponse response = memberService.getAskMembers(null);
+
+        // Then
+        assertThat(response.members())
+                .extracting(AskMemberResponse.QuestionTargetMember::id)
+                .containsExactly(3L, 1L, 2L);
+        assertThat(response.members())
+                .extracting(AskMemberResponse.QuestionTargetMember::name)
+                .containsExactly("멤버3", "멤버1", "멤버2");
+
+        verify(memberRepository, times(1)).findAllByIdInWithCareers(memberIds);
+        verify(platformService, times(1)).getInternalUsers(memberIds);
+        verify(platformService, never()).getInternalUserDetailsMap(any());
+        verify(memberRepository, never()).findById(any());
+        verify(platformService, never()).getInternalUser(any());
+    }
+
+    @Test
+    @DisplayName("DB에 없는 회원은 응답과 플랫폼 조회 대상에서 제외한다")
+    void getAskMembers_SkipsMemberNotFoundInDb() {
+        // Given
+        List<Long> memberIds = List.of(1L, 2L);
+        when(askMemberId.getAllAskMembers(false)).thenReturn(memberIds);
+        when(memberRepository.findAllByIdInWithCareers(memberIds)).thenReturn(List.of(askMember(2L)));
+        when(platformService.getInternalUsers(List.of(2L)))
+                .thenReturn(List.of(askUserDetails(2L)));
+
+        // When
+        AskMemberResponse response = memberService.getAskMembers(null);
+
+        // Then
+        assertThat(response.members())
+                .extracting(AskMemberResponse.QuestionTargetMember::id)
+                .containsExactly(2L);
+        verify(platformService).getInternalUsers(List.of(2L));
+    }
+
+    @Test
+    @DisplayName("플랫폼 정보가 누락되거나 활동 이력이 없는 회원은 단건 재조회 없이 응답에서 제외한다")
+    void getAskMembers_SkipsMemberWithoutPlatformInfoOrActivity() {
+        // Given
+        List<Long> memberIds = List.of(1L, 2L, 3L);
+        when(askMemberId.getAllAskMembers(false)).thenReturn(memberIds);
+        when(memberRepository.findAllByIdInWithCareers(memberIds))
+                .thenReturn(List.of(askMember(1L), askMember(2L), askMember(3L)));
+        InternalUserDetails noActivityUser = new InternalUserDetails(
+                3L, "멤버3", null, null, null, null, 37, List.of());
+        when(platformService.getInternalUsers(memberIds)).thenReturn(List.of(
+                askUserDetails(1L),
+                noActivityUser
+        ));
+
+        // When
+        AskMemberResponse response = memberService.getAskMembers(null);
+
+        // Then
+        assertThat(response.members())
+                .extracting(AskMemberResponse.QuestionTargetMember::id)
+                .containsExactly(1L);
+        verify(platformService, times(1)).getInternalUsers(memberIds);
+        verify(platformService, never()).getInternalUser(any());
+        verify(platformService, never()).getInternalUserDetailsMap(any());
+    }
+
+    @Test
+    @DisplayName("DB에 대상 회원이 하나도 없으면 플랫폼을 호출하지 않는다")
+    void getAskMembers_SkipsPlatformCallWhenNoMemberFound() {
+        // Given
+        List<Long> memberIds = List.of(1L);
+        when(askMemberId.getAllAskMembers(false)).thenReturn(memberIds);
+        when(memberRepository.findAllByIdInWithCareers(memberIds)).thenReturn(List.of());
+
+        // When
+        AskMemberResponse response = memberService.getAskMembers(null);
+
+        // Then
+        assertThat(response.members()).isEmpty();
+        verifyNoInteractions(platformService);
+    }
+
+    private Member askMember(Long id) {
+        return Member.builder()
+                .id(id)
+                .introduction("소개" + id)
+                .build();
+    }
+
+    private InternalUserDetails askUserDetails(Long id) {
+        return new InternalUserDetails(
+                id,
+                "멤버" + id,
+                "image" + id,
+                null,
+                null,
+                null,
+                37,
+                List.of(new SoptActivity(1, 37, "서버", null, null, true))
+        );
     }
 }
