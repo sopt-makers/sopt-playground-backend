@@ -8,6 +8,8 @@ import java.util.List;
 public interface MemberProjectRelationRepository extends JpaRepository<MemberProjectRelation, Long> {
     List<MemberProjectRelation> findAllByProjectId(Long projectId);
 
+    List<MemberProjectRelation> findAllByProjectIdIn(List<Long> projectIds);
+
     List<MemberProjectRelation> findAllByUserId(Long userId);
 
     void deleteAllByProjectId(Long projectId);

@@ -278,8 +278,7 @@ public class MemberRecommendService {
 
         if (myProjectIds.isEmpty()) return CandidatePool.empty(RecommendType.SAME_PROJECT);
 
-        Set<Long> candidateIds = myProjectIds.stream()
-            .flatMap(projectId -> memberProjectRelationRepository.findAllByProjectId(projectId).stream())
+        Set<Long> candidateIds = memberProjectRelationRepository.findAllByProjectIdIn(myProjectIds).stream()
             .map(relation -> relation.getUserId())
             .filter(id -> !id.equals(userId))
             .collect(Collectors.toSet());
