@@ -264,7 +264,7 @@ public class MemberQuestionService {
 			totalElements = memberQuestionRetriever.countUnansweredQuestions(receiverId);
 		}
 
-		QuestionResponseContext context = createQuestionResponseContext(questions);
+		QuestionResponseContext context = createQuestionResponseContext(questions, userId);
 
 		List<QuestionResponse> questionResponses = questions.stream()
 			.map(q -> toQuestionResponse(q, userId, context))
@@ -428,7 +428,28 @@ public class MemberQuestionService {
 		}
 	}
 
-	private QuestionResponseContext createQuestionResponseContext(List<MemberQuestion> questions) {
+	private QuestionResponseContext createQuestionResponseContext(List<MemberQuestion> questions, Long currentUserId) {
+		if (questions.isEmpty()) {
+			return QuestionResponseContext.empty();
+		}
+
+		// 기존처럼 로그인 회원이 존재하지 않으면 예외가 발생하도록, 반응 조회 전에 한 번만 확인한다.
+		memberRetriever.checkExistsMemberById(currentUserId);
+
+		List<Long> questionIds = questions.stream()
+			.map(MemberQuestion::getId)
+			.toList();
+		List<Long> answerIds = questions.stream()
+			.map(MemberQuestion::getAnswer)
+			.filter(Objects::nonNull)
+			.map(MemberAnswer::getId)
+			.toList();
+
+		Map<Long, Long> questionReactionCounts = questionReactionRetriever.countByQuestionIds(questionIds);
+		Set<Long> reactedQuestionIds = questionReactionRetriever.findReactedQuestionIds(currentUserId, questionIds);
+		Map<Long, Long> answerReactionCounts = answerReactionRetriever.countByAnswerIds(answerIds);
+		Set<Long> reactedAnswerIds = answerReactionRetriever.findReactedAnswerIds(currentUserId, answerIds);
+
 		// 익명 질문도 askerLatestGeneration 을 응답하므로 작성자 정보 조회 대상에 포함한다.
 		// 답변자(receiver)는 답변이 달린 질문이 있을 때만 조회한다.
 		List<Long> userIds = Stream.concat(
@@ -443,22 +464,53 @@ public class MemberQuestionService {
 			.distinct()
 			.toList();
 
-		if (userIds.isEmpty()) {
-			return new QuestionResponseContext(Map.of());
-		}
-
 		// 단건 fallback 없이 배치 1회만 호출하고, 통신 장애는 그대로 전파한다.
-		Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsersOrThrow(userIds).stream()
-			.collect(Collectors.toMap(
-				InternalUserDetails::userId,
-				Function.identity(),
-				(existing, replacement) -> existing
-			));
+		Map<Long, InternalUserDetails> userDetailsMap = userIds.isEmpty()
+			? Map.of()
+			: platformService.getInternalUsersOrThrow(userIds).stream()
+				.collect(Collectors.toMap(
+					InternalUserDetails::userId,
+					Function.identity(),
+					(existing, replacement) -> existing
+				));
 
-		return new QuestionResponseContext(userDetailsMap);
+		return new QuestionResponseContext(
+			userDetailsMap,
+			questionReactionCounts,
+			reactedQuestionIds,
+			answerReactionCounts,
+			reactedAnswerIds
+		);
 	}
 
-	private record QuestionResponseContext(Map<Long, InternalUserDetails> userDetailsMap) {
+	private record QuestionResponseContext(
+		Map<Long, InternalUserDetails> userDetailsMap,
+		Map<Long, Long> questionReactionCounts,
+		Set<Long> reactedQuestionIds,
+		Map<Long, Long> answerReactionCounts,
+		Set<Long> reactedAnswerIds
+	) {
+
+		static QuestionResponseContext empty() {
+			return new QuestionResponseContext(Map.of(), Map.of(), Set.of(), Map.of(), Set.of());
+		}
+
+		// 반응이 없는 질문·답변은 집계 결과에 없으므로 0, false 로 응답한다.
+		Long getQuestionReactionCount(Long questionId) {
+			return questionReactionCounts.getOrDefault(questionId, 0L);
+		}
+
+		Boolean isQuestionReacted(Long questionId) {
+			return reactedQuestionIds.contains(questionId);
+		}
+
+		Long getAnswerReactionCount(Long answerId) {
+			return answerReactionCounts.getOrDefault(answerId, 0L);
+		}
+
+		Boolean isAnswerReacted(Long answerId) {
+			return reactedAnswerIds.contains(answerId);
+		}
 
 		// 기존 단건 조회 실패와 동일하게, 플랫폼 정보가 없으면 질문 목록 조회 전체를 실패시킨다.
 		InternalUserDetails getUserDetails(Long userId) {
@@ -471,21 +523,15 @@ public class MemberQuestionService {
 	}
 
 	private QuestionResponse toQuestionResponse(MemberQuestion question, Long currentUserId, QuestionResponseContext context) {
-		Long reactionCount = questionReactionRetriever.countByQuestionId(question.getId());
-		Boolean isReacted = questionReactionRetriever.existsByQuestionAndMember(
-			question,
-			memberRetriever.findMemberById(currentUserId)
-		);
+		Long reactionCount = context.getQuestionReactionCount(question.getId());
+		Boolean isReacted = context.isQuestionReacted(question.getId());
 
 		AnswerResponse answerResponse = null;
 		if (question.getAnswer() != null) {
 			MemberAnswer answer = question.getAnswer();
 			InternalUserDetails receiverInfo = context.getUserDetails(question.getReceiver().getId());
-			Long answerReactionCount = answerReactionRetriever.countByAnswerId(answer.getId());
-			Boolean isAnswerReacted = answerReactionRetriever.existsByAnswerAndMember(
-				answer,
-				memberRetriever.findMemberById(currentUserId)
-			);
+			Long answerReactionCount = context.getAnswerReactionCount(answer.getId());
+			Boolean isAnswerReacted = context.isAnswerReacted(answer.getId());
 
 			answerResponse = new AnswerResponse(
 				answer.getId(),

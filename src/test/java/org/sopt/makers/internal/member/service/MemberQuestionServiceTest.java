@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -130,6 +132,47 @@ class MemberQuestionServiceTest {
 		// When & Then
 		assertThatThrownBy(() -> memberQuestionService.getQuestions(USER_ID, RECEIVER_ID, null, 0, 10))
 			.isSameAs(platformFailure);
+	}
+
+	@Test
+	@DisplayName("질문·답변 반응 정보는 목록 단위로 한 번씩 조회하고, 반응이 없으면 0과 false로 응답한다")
+	void getQuestions_FetchesReactionsInBatch() {
+		// Given
+		MemberQuestion reactedQuestion = question(10L, asker, false);
+		answer(reactedQuestion);
+		MemberQuestion noReactionQuestion = question(11L, asker, false);
+		answer(noReactionQuestion);
+		givenQuestions(List.of(reactedQuestion, noReactionQuestion));
+
+		List<Long> questionIds = List.of(10L, 11L);
+		List<Long> answerIds = List.of(100L, 110L);
+		when(questionReactionRetriever.countByQuestionIds(questionIds)).thenReturn(Map.of(10L, 3L));
+		when(questionReactionRetriever.findReactedQuestionIds(USER_ID, questionIds)).thenReturn(Set.of(10L));
+		when(answerReactionRetriever.countByAnswerIds(answerIds)).thenReturn(Map.of(100L, 2L));
+		when(answerReactionRetriever.findReactedAnswerIds(USER_ID, answerIds)).thenReturn(Set.of());
+		when(platformService.getInternalUsersOrThrow(List.of(ASKER_ID, RECEIVER_ID))).thenReturn(List.of(
+			userDetails(RECEIVER_ID, "답변자", 36),
+			userDetails(ASKER_ID, "작성자", 37)
+		));
+
+		// When
+		List<QuestionResponse> questions = memberQuestionService.getQuestions(USER_ID, RECEIVER_ID, null, 0, 10)
+			.questions();
+
+		// Then
+		assertThat(questions.get(0).reactionCount()).isEqualTo(3L);
+		assertThat(questions.get(0).isReacted()).isTrue();
+		assertThat(questions.get(0).answer().reactionCount()).isEqualTo(2L);
+		assertThat(questions.get(0).answer().isReacted()).isFalse();
+		assertThat(questions.get(1).reactionCount()).isZero();
+		assertThat(questions.get(1).isReacted()).isFalse();
+		assertThat(questions.get(1).answer().reactionCount()).isZero();
+		assertThat(questions.get(1).answer().isReacted()).isFalse();
+
+		verify(memberRetriever, times(1)).checkExistsMemberById(USER_ID);
+		verify(memberRetriever, never()).findMemberById(any());
+		verify(questionReactionRetriever, never()).existsByQuestionAndMember(any(), any());
+		verify(answerReactionRetriever, never()).existsByAnswerAndMember(any(), any());
 	}
 
 	@Test

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AnswerReactionRepository extends JpaRepository<AnswerReaction, Long> {
@@ -15,8 +16,27 @@ public interface AnswerReactionRepository extends JpaRepository<AnswerReaction, 
 
 	boolean existsByAnswerAndMember(MemberAnswer answer, Member member);
 
-	@Query("SELECT COUNT(ar) FROM AnswerReaction ar WHERE ar.answer.id = :answerId")
-	long countByAnswerId(@Param("answerId") Long answerId);
+	@Query("""
+		SELECT ar.answer.id AS answerId,
+		       COUNT(ar) AS reactionCount
+		FROM AnswerReaction ar
+		WHERE ar.answer.id IN :answerIds
+		GROUP BY ar.answer.id
+	""")
+	List<AnswerReactionCountProjection> countByAnswerIds(@Param("answerIds") List<Long> answerIds);
+
+	@Query("""
+		SELECT ar.answer.id
+		FROM AnswerReaction ar
+		WHERE ar.member.id = :memberId
+		  AND ar.answer.id IN :answerIds
+	""")
+	List<Long> findReactedAnswerIds(@Param("memberId") Long memberId, @Param("answerIds") List<Long> answerIds);
 
 	void deleteByAnswerAndMember(MemberAnswer answer, Member member);
+
+	interface AnswerReactionCountProjection {
+		Long getAnswerId();
+		Long getReactionCount();
+	}
 }
