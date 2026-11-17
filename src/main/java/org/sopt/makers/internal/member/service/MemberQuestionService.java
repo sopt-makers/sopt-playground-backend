@@ -6,6 +6,7 @@ import org.sopt.makers.internal.common.event.PushNotificationEvent;
 import org.sopt.makers.internal.common.Constant;
 import org.sopt.makers.internal.exception.BadRequestException;
 import org.sopt.makers.internal.exception.ForbiddenException;
+import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.external.platform.InternalUserDetails;
 import org.sopt.makers.internal.external.platform.PlatformService;
 import org.sopt.makers.internal.member.domain.Member;
@@ -37,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -262,8 +264,10 @@ public class MemberQuestionService {
 			totalElements = memberQuestionRetriever.countUnansweredQuestions(receiverId);
 		}
 
+		QuestionResponseContext context = createQuestionResponseContext(questions);
+
 		List<QuestionResponse> questionResponses = questions.stream()
-			.map(q -> toQuestionResponse(q, userId))
+			.map(q -> toQuestionResponse(q, userId, context))
 			.collect(Collectors.toList());
 
 		int totalPages = (int) Math.ceil((double) totalElements / pageSize);
@@ -424,7 +428,49 @@ public class MemberQuestionService {
 		}
 	}
 
-	private QuestionResponse toQuestionResponse(MemberQuestion question, Long currentUserId) {
+	private QuestionResponseContext createQuestionResponseContext(List<MemberQuestion> questions) {
+		// 익명 질문도 askerLatestGeneration 을 응답하므로 작성자 정보 조회 대상에 포함한다.
+		// 답변자(receiver)는 답변이 달린 질문이 있을 때만 조회한다.
+		List<Long> userIds = Stream.concat(
+				questions.stream()
+					.map(MemberQuestion::getAsker)
+					.filter(Objects::nonNull)
+					.map(Member::getId),
+				questions.stream()
+					.filter(question -> question.getAnswer() != null)
+					.map(question -> question.getReceiver().getId())
+			)
+			.distinct()
+			.toList();
+
+		if (userIds.isEmpty()) {
+			return new QuestionResponseContext(Map.of());
+		}
+
+		// 단건 fallback 없이 배치 1회만 호출하고, 통신 장애는 그대로 전파한다.
+		Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsersOrThrow(userIds).stream()
+			.collect(Collectors.toMap(
+				InternalUserDetails::userId,
+				Function.identity(),
+				(existing, replacement) -> existing
+			));
+
+		return new QuestionResponseContext(userDetailsMap);
+	}
+
+	private record QuestionResponseContext(Map<Long, InternalUserDetails> userDetailsMap) {
+
+		// 기존 단건 조회 실패와 동일하게, 플랫폼 정보가 없으면 질문 목록 조회 전체를 실패시킨다.
+		InternalUserDetails getUserDetails(Long userId) {
+			InternalUserDetails userDetails = userDetailsMap.get(userId);
+			if (userDetails == null) {
+				throw new NotFoundException("[INTERNAL-404] 플랫폼에 해당 유저 정보가 없습니다. 요청 ID: " + userId);
+			}
+			return userDetails;
+		}
+	}
+
+	private QuestionResponse toQuestionResponse(MemberQuestion question, Long currentUserId, QuestionResponseContext context) {
 		Long reactionCount = questionReactionRetriever.countByQuestionId(question.getId());
 		Boolean isReacted = questionReactionRetriever.existsByQuestionAndMember(
 			question,
@@ -434,7 +480,7 @@ public class MemberQuestionService {
 		AnswerResponse answerResponse = null;
 		if (question.getAnswer() != null) {
 			MemberAnswer answer = question.getAnswer();
-			InternalUserDetails receiverInfo = platformService.getInternalUser(question.getReceiver().getId());
+			InternalUserDetails receiverInfo = context.getUserDetails(question.getReceiver().getId());
 			Long answerReactionCount = answerReactionRetriever.countByAnswerId(answer.getId());
 			Boolean isAnswerReacted = answerReactionRetriever.existsByAnswerAndMember(
 				answer,
@@ -455,7 +501,7 @@ public class MemberQuestionService {
 
 		boolean isNew = question.getCreatedAt().isAfter(LocalDateTime.now().minusDays(NEW_QUESTION_DAYS));
 
-		InternalUserDetails askerInfo = platformService.getInternalUser(question.getAsker().getId());
+		InternalUserDetails askerInfo = context.getUserDetails(question.getAsker().getId());
 
 		Long askerId = question.getIsAnonymous() ? null : question.getAsker().getId();
 		String askerName = question.getIsAnonymous() ? null : askerInfo.name();

@@ -57,6 +57,17 @@ public class PlatformService {
     }
 
     /**
+     * 다중 내부 사용자 조회 (실패 시 예외 전파)
+     * 통신 장애를 빈 목록으로 바꾸지 않고 그대로 전파해, 단건 조회와 같은 방식으로 오류를 처리한다.
+     */
+    public List<InternalUserDetails> getInternalUsersOrThrow(List<Long> userIds) {
+        validateUserIds(userIds);
+        return fetchInternalUsersBatch(userIds).stream()
+            .map(this::convertUserDetailsWithRoleToTeam)
+            .toList();
+    }
+
+    /**
      * batch map helper
      */
     public Map<Long, InternalUserDetails> getInternalUserDetailsMap(List<Long> userIds) {
