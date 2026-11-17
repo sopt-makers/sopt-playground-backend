@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -31,6 +32,30 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setAwaitTerminationSeconds(30);
         executor.initialize();
         return executor;
+    }
+
+    // EC2 환경: 별도 스레드풀로 criterion 조회를 병렬 실행
+    @Bean(name = "recommendationExecutor")
+    @Profile("!lambda-dev")
+    public Executor recommendationExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("recommendation-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(10);
+        executor.initialize();
+        return executor;
+    }
+
+    // Lambda 환경: HikariCP pool=1이므로 병렬 DB 호출 불가 → 호출 스레드에서 순차 실행
+    // TODO: dev 서버가 Lambda에서 통합 서버로 전환되면 이 빈과 위 @Profile("!lambda-dev") 조건을 제거하고
+    //       recommendationExecutor 하나로 통합할 것
+    @Bean(name = "recommendationExecutor")
+    @Profile("lambda-dev")
+    public Executor recommendationExecutorLambda() {
+        return Runnable::run;
     }
 
     @Override
