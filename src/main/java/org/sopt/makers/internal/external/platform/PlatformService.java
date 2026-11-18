@@ -44,11 +44,7 @@ public class PlatformService {
         validateUserIds(userIds);
         
         try {
-            List<InternalUserDetails> batchUsers = fetchInternalUsersBatch(userIds);
-            // role을 team으로 변환하여 반환
-            return batchUsers.stream()
-                .map(this::convertUserDetailsWithRoleToTeam)
-                .toList();
+            return getInternalUsersOrThrow(userIds);
         } catch (Exception e) {
             log.warn("[INTERNAL-PLATFORM] 유저 정보 조회 실패. 요청 ID 리스트: {}, 에러: {}", userIds, e.getMessage());
         }
@@ -62,6 +58,7 @@ public class PlatformService {
      */
     public List<InternalUserDetails> getInternalUsersOrThrow(List<Long> userIds) {
         validateUserIds(userIds);
+        // role을 team으로 변환하여 반환
         return fetchInternalUsersBatch(userIds).stream()
             .map(this::convertUserDetailsWithRoleToTeam)
             .toList();
