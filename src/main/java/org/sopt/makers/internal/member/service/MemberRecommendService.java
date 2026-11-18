@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -68,6 +69,7 @@ public class MemberRecommendService {
     private static final int RECOMMENDATION_SET_SIZE = 5;
     private static final int SAME_GENERATION_AND_PART_SET_SIZE = 4;
     private static final int PLATFORM_SEARCH_LIMIT = 200;
+    private static final long CRITERION_TIMEOUT_SECONDS = 5;
 
     private enum RecommendCriterion {
         SAME_PART, SAME_CREW, SAME_MBTI, SAME_PROJECT, SAME_UNIVERSITY, SAME_GENERATION
@@ -140,6 +142,7 @@ public class MemberRecommendService {
         String university = currentMember.getUniversity();
 
         // 1. 모든 criterion 조회를 병렬 실행
+        Instant deadline = Instant.now().plusSeconds(CRITERION_TIMEOUT_SECONDS);
         Map<RecommendCriterion, CompletableFuture<CandidatePool>> futures = new EnumMap<>(RecommendCriterion.class);
         for (RecommendCriterion criterion : criteria) {
             Supplier<CandidatePool> task = switch (criterion) {
@@ -150,11 +153,11 @@ public class MemberRecommendService {
                 case SAME_UNIVERSITY -> () -> fetchSameUniversityCandidates(university, userId);
                 case SAME_GENERATION -> () -> fetchSameGenerationCandidates(myLatestGeneration, userId);
             };
-            futures.put(criterion, submitCriterion(criterion, task));
+            futures.put(criterion, submitCriterion(criterion, task, deadline));
         }
         try {
             CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]))
-                .get(5, TimeUnit.SECONDS);
+                .get(CRITERION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             log.warn("멤버 추천 criterion 조회 타임아웃 - 완료된 결과로만 응답 구성");
         } catch (ExecutionException e) {
@@ -373,10 +376,23 @@ public class MemberRecommendService {
      * 스레드풀 제출 단계의 RejectedExecutionException을 잡아 빈 풀 future로 변환한다.
      * supplyAsync는 executor에 태스크를 제출하는 시점에 예외를 던지므로
      * future가 생성되기 전이라 exceptionally()로 잡을 수 없다.
+     *
+     * deadline: 태스크가 실행을 시작할 때 기한이 지났으면 외부 호출 없이 빈 풀을 즉시 반환한다.
+     * allOf().get() 타임아웃은 대기만 종료하고 제출된 태스크를 취소하지 않는다.
+     * CompletableFuture.cancel()도 실행 중인 작업을 중단하지 않으므로,
+     * 기한 초과 태스크가 executor 스레드를 계속 점유해 후속 요청을 지연시킬 수 있다.
+     * 태스크 진입 시점에 기한을 확인해 만료된 작업이 외부 호출을 수행하지 않도록 한다.
      */
-    private CompletableFuture<CandidatePool> submitCriterion(RecommendCriterion criterion, Supplier<CandidatePool> task) {
+    private CompletableFuture<CandidatePool> submitCriterion(RecommendCriterion criterion, Supplier<CandidatePool> task, Instant deadline) {
+        Supplier<CandidatePool> timedTask = () -> {
+            if (Instant.now().isAfter(deadline)) {
+                log.warn("criterion {} 기한 초과로 건너뜀", criterion);
+                return CandidatePool.empty(toRecommendType(criterion));
+            }
+            return task.get();
+        };
         try {
-            return CompletableFuture.supplyAsync(task, recommendationExecutor)
+            return CompletableFuture.supplyAsync(timedTask, recommendationExecutor)
                 .exceptionally(ex -> {
                     log.warn("criterion {} 조회 실패: {}", criterion, ex.getMessage());
                     return CandidatePool.empty(toRecommendType(criterion));
