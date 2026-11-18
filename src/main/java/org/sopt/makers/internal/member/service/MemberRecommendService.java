@@ -12,7 +12,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.sopt.makers.internal.member.dto.response.SameGenerationAndPartRecommendResponse;
@@ -152,16 +155,28 @@ public class MemberRecommendService {
                 return CandidatePool.empty(toRecommendType(criterion));
             }));
         }
-        CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0])).join();
+        try {
+            CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]))
+                .get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            log.warn("멤버 추천 criterion 조회 타임아웃 - 완료된 결과로만 응답 구성");
+        } catch (ExecutionException e) {
+            log.warn("멤버 추천 criterion 조회 실패: {}", e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("멤버 추천 criterion 조회 인터럽트: {}", e.getMessage());
+        }
 
-        // 2. 우선순위 순서대로 중복 없이 1명씩 선택
+        // 2. 우선순위 순서대로 중복 없이 1명씩 선택 (타임아웃된 future는 건너뜀)
         Set<Long> excludeIds = new HashSet<>();
         excludeIds.add(userId);
         List<AbstractMap.SimpleEntry<Long, CandidatePool>> picks = new ArrayList<>();
 
         for (RecommendCriterion criterion : criteria) {
             if (picks.size() >= RECOMMENDATION_SET_SIZE) break;
-            CandidatePool pool = futures.get(criterion).join();
+            CompletableFuture<CandidatePool> future = futures.get(criterion);
+            if (!future.isDone()) continue;
+            CandidatePool pool = future.join();
             List<Long> available = pool.candidates().stream()
                 .filter(id -> !excludeIds.contains(id))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -178,9 +193,16 @@ public class MemberRecommendService {
             .filter(e -> !e.getValue().platformInfoCache().containsKey(e.getKey()))
             .map(Map.Entry::getKey)
             .toList();
-        Map<Long, InternalUserDetails> batchResult = needsFetch.isEmpty()
-            ? Collections.emptyMap()
-            : platformService.getInternalUserDetailsMap(needsFetch);
+        Map<Long, InternalUserDetails> batchResultTemp;
+        try {
+            batchResultTemp = needsFetch.isEmpty()
+                ? Collections.emptyMap()
+                : platformService.getInternalUserDetailsMap(needsFetch);
+        } catch (Exception e) {
+            log.warn("멤버 platform 정보 배치 조회 실패: {}", e.getMessage());
+            batchResultTemp = Collections.emptyMap();
+        }
+        final Map<Long, InternalUserDetails> batchResult = batchResultTemp;
 
         // 4. 최종 응답 빌드
         List<RecommendedMember> recommendations = picks.stream()
