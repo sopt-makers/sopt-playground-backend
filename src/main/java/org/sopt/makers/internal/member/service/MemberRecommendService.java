@@ -14,8 +14,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.sopt.makers.internal.member.dto.response.SameGenerationAndPartRecommendResponse;
@@ -74,19 +76,25 @@ public class MemberRecommendService {
     /**
      * criterion 조회 결과를 담는 DTO.
      * platformInfoCache: 이미 플랫폼 API를 호출한 경우 결과를 보관해 중복 호출을 방지한다.
+     * fallbackCandidates: SAME_CREW에서 현기수 후보가 excludeIds에 의해 모두 제외됐을 때
+     *                     사용할 이전기수 후보. 현기수 우선순위를 pick 단계에서 보장하기 위해 분리 보관한다.
      */
     private record CandidatePool(
         List<Long> candidates,
+        List<Long> fallbackCandidates,
         Map<Long, InternalUserDetails> platformInfoCache,
         RecommendType type
     ) {
         static CandidatePool empty(RecommendType type) {
-            return new CandidatePool(List.of(), Map.of(), type);
+            return new CandidatePool(List.of(), List.of(), Map.of(), type);
+        }
+
+        static CandidatePool of(List<Long> candidates, Map<Long, InternalUserDetails> cache, RecommendType type) {
+            return new CandidatePool(candidates, List.of(), cache, type);
         }
     }
 
     // /recommend/me
-    @Transactional(readOnly = true)
     public MemberRecommendResponse getRecommendations(Long userId) {
         List<RecommendCriterion> criteria = List.of(
             RecommendCriterion.SAME_PART,
@@ -99,7 +107,6 @@ public class MemberRecommendService {
     }
 
     // /recommend/{userId}
-    @Transactional(readOnly = true)
     public MemberRecommendResponse getRecommendationsForUser(Long userId) {
         List<RecommendCriterion> criteria = List.of(
             RecommendCriterion.SAME_PART,
@@ -135,25 +142,15 @@ public class MemberRecommendService {
         // 1. 모든 criterion 조회를 병렬 실행
         Map<RecommendCriterion, CompletableFuture<CandidatePool>> futures = new EnumMap<>(RecommendCriterion.class);
         for (RecommendCriterion criterion : criteria) {
-            CompletableFuture<CandidatePool> future = switch (criterion) {
-                case SAME_PART -> CompletableFuture.supplyAsync(
-                    () -> fetchSamePartCandidates(myParts, userId), recommendationExecutor);
-                case SAME_CREW -> CompletableFuture.supplyAsync(
-                    () -> fetchSameCrewCandidates(userId), recommendationExecutor);
-                case SAME_MBTI -> CompletableFuture.supplyAsync(
-                    () -> fetchSameMbtiCandidates(mbti, userId), recommendationExecutor);
-                case SAME_PROJECT -> CompletableFuture.supplyAsync(
-                    () -> fetchSameProjectCandidates(userId), recommendationExecutor);
-                case SAME_UNIVERSITY -> CompletableFuture.supplyAsync(
-                    () -> fetchSameUniversityCandidates(university, userId), recommendationExecutor);
-                case SAME_GENERATION -> CompletableFuture.supplyAsync(
-                    () -> fetchSameGenerationCandidates(myLatestGeneration, userId), recommendationExecutor);
+            Supplier<CandidatePool> task = switch (criterion) {
+                case SAME_PART -> () -> fetchSamePartCandidates(myParts, userId);
+                case SAME_CREW -> () -> fetchSameCrewCandidates(userId);
+                case SAME_MBTI -> () -> fetchSameMbtiCandidates(mbti, userId);
+                case SAME_PROJECT -> () -> fetchSameProjectCandidates(userId);
+                case SAME_UNIVERSITY -> () -> fetchSameUniversityCandidates(university, userId);
+                case SAME_GENERATION -> () -> fetchSameGenerationCandidates(myLatestGeneration, userId);
             };
-            // 개별 future 실패 시 빈 풀로 fallback
-            futures.put(criterion, future.exceptionally(ex -> {
-                log.warn("criterion {} 조회 실패: {}", criterion, ex.getMessage());
-                return CandidatePool.empty(toRecommendType(criterion));
-            }));
+            futures.put(criterion, submitCriterion(criterion, task));
         }
         try {
             CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]))
@@ -177,9 +174,17 @@ public class MemberRecommendService {
             CompletableFuture<CandidatePool> future = futures.get(criterion);
             if (!future.isDone()) continue;
             CandidatePool pool = future.join();
+
+            // primary candidates 먼저, 없을 때만 fallback 사용 (SAME_CREW 현기수/이전기수 우선순위 보장)
             List<Long> available = pool.candidates().stream()
                 .filter(id -> !excludeIds.contains(id))
                 .collect(Collectors.toCollection(ArrayList::new));
+            if (available.isEmpty() && !pool.fallbackCandidates().isEmpty()) {
+                available = pool.fallbackCandidates().stream()
+                    .filter(id -> !excludeIds.contains(id))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            }
+
             if (!available.isEmpty()) {
                 Collections.shuffle(available);
                 Long picked = available.get(0);
@@ -249,7 +254,7 @@ public class MemberRecommendService {
                 .anyMatch(a -> a.isSopt() && normalizedMyParts.contains(toPartEnumName(a.part()))))
             .toList();
 
-        return new CandidatePool(candidates, platformInfoMap, RecommendType.SAME_PART);
+        return CandidatePool.of(candidates, platformInfoMap, RecommendType.SAME_PART);
     }
 
     private CandidatePool fetchSameCrewCandidates(Long userId) {
@@ -268,9 +273,6 @@ public class MemberRecommendService {
             .collect(Collectors.toSet());
         currentIds.remove(userId);
         List<Long> currentCandidates = filterHasProfileMembers(currentIds);
-        if (!currentCandidates.isEmpty()) {
-            return new CandidatePool(currentCandidates, Collections.emptyMap(), RecommendType.SAME_CREW);
-        }
 
         Set<Long> pastIds = response.pastGenerationUserIds().stream()
             .map(InternalUserWithMeetingUsersResponse.UserOrgId::orgUserId)
@@ -279,7 +281,11 @@ public class MemberRecommendService {
             .collect(Collectors.toSet());
         pastIds.remove(userId);
         List<Long> pastCandidates = filterHasProfileMembers(pastIds);
-        return new CandidatePool(pastCandidates, Collections.emptyMap(), RecommendType.SAME_CREW);
+
+        // 현기수(primary)와 이전기수(fallback)를 분리 보관
+        // excludeIds 적용은 pick 단계에서 수행하므로, 여기서 미리 필터하면 현기수가 비었을 때
+        // 이전기수로 fallback해야 하는지 판단할 수 없다
+        return new CandidatePool(currentCandidates, pastCandidates, Collections.emptyMap(), RecommendType.SAME_CREW);
     }
 
     private CandidatePool fetchSameMbtiCandidates(String currentMbti, Long excludeId) {
@@ -290,7 +296,7 @@ public class MemberRecommendService {
             .filter(id -> !id.equals(excludeId))
             .toList();
 
-        return new CandidatePool(candidates, Collections.emptyMap(), RecommendType.SAME_MBTI);
+        return CandidatePool.of(candidates, Collections.emptyMap(), RecommendType.SAME_MBTI);
     }
 
     private CandidatePool fetchSameProjectCandidates(Long userId) {
@@ -309,7 +315,7 @@ public class MemberRecommendService {
             .map(Member::getId)
             .toList();
 
-        return new CandidatePool(candidates, Collections.emptyMap(), RecommendType.SAME_PROJECT);
+        return CandidatePool.of(candidates, Collections.emptyMap(), RecommendType.SAME_PROJECT);
     }
 
     private CandidatePool fetchSameUniversityCandidates(String currentUniversity, Long excludeId) {
@@ -320,7 +326,7 @@ public class MemberRecommendService {
             .filter(id -> !id.equals(excludeId))
             .toList();
 
-        return new CandidatePool(candidates, Collections.emptyMap(), RecommendType.SAME_UNIVERSITY);
+        return CandidatePool.of(candidates, Collections.emptyMap(), RecommendType.SAME_UNIVERSITY);
     }
 
     private CandidatePool fetchSameGenerationCandidates(int myLatestGeneration, Long excludeId) {
@@ -342,7 +348,7 @@ public class MemberRecommendService {
                 .anyMatch(a -> a.isSopt() && a.generation() == myLatestGeneration))
             .toList();
 
-        return new CandidatePool(candidates, platformInfoMap, RecommendType.SAME_GENERATION);
+        return CandidatePool.of(candidates, platformInfoMap, RecommendType.SAME_GENERATION);
     }
 
     private RecommendedMember buildRecommendedMember(Long id, InternalUserDetails details, RecommendType type) {
@@ -361,6 +367,24 @@ public class MemberRecommendService {
             : (latestSoptActivity != null ? latestSoptActivity.part() : null);
 
         return new RecommendedMember(id, details.name(), details.profileImage(), generation, part, type);
+    }
+
+    /**
+     * 스레드풀 제출 단계의 RejectedExecutionException을 잡아 빈 풀 future로 변환한다.
+     * supplyAsync는 executor에 태스크를 제출하는 시점에 예외를 던지므로
+     * future가 생성되기 전이라 exceptionally()로 잡을 수 없다.
+     */
+    private CompletableFuture<CandidatePool> submitCriterion(RecommendCriterion criterion, Supplier<CandidatePool> task) {
+        try {
+            return CompletableFuture.supplyAsync(task, recommendationExecutor)
+                .exceptionally(ex -> {
+                    log.warn("criterion {} 조회 실패: {}", criterion, ex.getMessage());
+                    return CandidatePool.empty(toRecommendType(criterion));
+                });
+        } catch (RejectedExecutionException e) {
+            log.warn("criterion {} 작업 제출 거부 (스레드풀 포화): {}", criterion, e.getMessage());
+            return CompletableFuture.completedFuture(CandidatePool.empty(toRecommendType(criterion)));
+        }
     }
 
     private RecommendType toRecommendType(RecommendCriterion criterion) {
