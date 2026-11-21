@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.sopt.makers.internal.auth.AuthConfig;
 import org.sopt.makers.internal.auth.common.code.BaseResponse;
+import org.sopt.makers.internal.common.cache.CacheConstant;
 import org.sopt.makers.internal.exception.NotFoundException;
 import org.sopt.makers.internal.exception.PlaygroundException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -315,6 +317,7 @@ public class PlatformService {
     /**
      * 유저 검색 관련 메서드
      */
+    @Cacheable(value = CacheConstant.PLATFORM_USER_SEARCH, key = "{#generation, #part, #team, #name, #limit, #offset}")
     public UserSearchResponse searchInternalUsers(
         Integer generation, String part, String team, String name,
         Integer limit, Integer offset, String orderBy
