@@ -44,16 +44,24 @@ public class PlatformService {
         validateUserIds(userIds);
         
         try {
-            List<InternalUserDetails> batchUsers = fetchInternalUsersBatch(userIds);
-            // role을 team으로 변환하여 반환
-            return batchUsers.stream()
-                .map(this::convertUserDetailsWithRoleToTeam)
-                .toList();
+            return getInternalUsersOrThrow(userIds);
         } catch (Exception e) {
             log.warn("[INTERNAL-PLATFORM] 유저 정보 조회 실패. 요청 ID 리스트: {}, 에러: {}", userIds, e.getMessage());
         }
 
         return Collections.emptyList();
+    }
+
+    /**
+     * 다중 내부 사용자 조회 (실패 시 예외 전파)
+     * 통신 장애를 빈 목록으로 바꾸지 않고 그대로 전파해, 단건 조회와 같은 방식으로 오류를 처리한다.
+     */
+    public List<InternalUserDetails> getInternalUsersOrThrow(List<Long> userIds) {
+        validateUserIds(userIds);
+        // role을 team으로 변환하여 반환
+        return fetchInternalUsersBatch(userIds).stream()
+            .map(this::convertUserDetailsWithRoleToTeam)
+            .toList();
     }
 
     /**

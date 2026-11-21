@@ -919,14 +919,36 @@ public class MemberService {
             memberIds = askMemberId.getAllAskMembers(isProd);
         }
 
+        if (memberIds.isEmpty()) {
+            return new AskMemberResponse(targetMembers);
+        }
+
+        Map<Long, Member> memberMap = memberRepository.findAllByIdInWithCareers(memberIds).stream()
+                .collect(Collectors.toMap(Member::getId, Function.identity(), (existing, replacement) -> existing));
+
+        List<Long> foundMemberIds = memberIds.stream()
+                .filter(memberMap::containsKey)
+                .distinct()
+                .toList();
+        if (foundMemberIds.isEmpty()) {
+            return new AskMemberResponse(targetMembers);
+        }
+
+        // 단건 fallback 없이 배치 1회만 호출하고, 플랫폼 정보가 누락된 회원은 응답에서 제외한다.
+        Map<Long, InternalUserDetails> userDetailsMap = platformService.getInternalUsers(foundMemberIds).stream()
+                .collect(Collectors.toMap(InternalUserDetails::userId, Function.identity(), (existing, replacement) -> existing));
+
         for (Long memberId : memberIds) {
             try {
-                Member member = memberRepository.findById(memberId).orElse(null);
+                Member member = memberMap.get(memberId);
                 if (member == null) {
                     continue;
                 }
 
-                InternalUserDetails userDetails = platformService.getInternalUser(memberId);
+                InternalUserDetails userDetails = userDetailsMap.get(memberId);
+                if (userDetails == null) {
+                    continue;
+                }
 
                 // 최근 활동 정보 가져오기 - 같은 generation에서 SOPT 우선
                 SoptActivity latestActivity = userDetails.soptActivities().stream()

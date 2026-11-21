@@ -13,6 +13,9 @@ import java.util.List;
 public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, Long> {
 
 	@Query("SELECT q FROM MemberQuestion q " +
+			"LEFT JOIN FETCH q.answer " +
+			"LEFT JOIN FETCH q.anonymousNickname " +
+			"LEFT JOIN FETCH q.anonymousProfileImage " +
 			"WHERE q.receiver.id = :receiverId " +
 			"AND q.answer IS NOT NULL " +
 			"ORDER BY q.createdAt DESC, q.id DESC")
@@ -22,6 +25,9 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	);
 
 	@Query("SELECT q FROM MemberQuestion q " +
+			"LEFT JOIN FETCH q.answer " +
+			"LEFT JOIN FETCH q.anonymousNickname " +
+			"LEFT JOIN FETCH q.anonymousProfileImage " +
 			"WHERE q.receiver.id = :receiverId " +
 			"AND NOT EXISTS (SELECT a FROM MemberAnswer a WHERE a.question = q) " +
 			"ORDER BY q.createdAt DESC, q.id DESC")
@@ -31,6 +37,9 @@ public interface MemberQuestionRepository extends JpaRepository<MemberQuestion, 
 	);
 
 	@Query("SELECT q FROM MemberQuestion q " +
+			"LEFT JOIN FETCH q.answer " +
+			"LEFT JOIN FETCH q.anonymousNickname " +
+			"LEFT JOIN FETCH q.anonymousProfileImage " +
 			"WHERE q.receiver.id = :receiverId " +
 			"ORDER BY q.createdAt DESC, q.id DESC")
 	List<MemberQuestion> findAllQuestions(
